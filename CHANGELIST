@@ -1,0 +1,18 @@
+14 April 2012
+=============
+
+Hello, world!
+
+Submitted paper to UIST on HCSS yesterday. Going with HCSS (Hierarchical
+Cascading Stylesheets) as the name.
+
+For posterity's sake, the original name was "Lossless Templates", which became
+"Data Stylesheets", which became "Hierarchical Stylesheets", which became
+"Hierarchical Cascading Stylesheets". 
+
+Starting an empty repository with intent to rewrite the code such that it is
+suitable for general-purpose use instead of just a research prototype. (unit
+tests, here I come)
+
+
+
