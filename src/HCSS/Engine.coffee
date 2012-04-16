@@ -31,10 +31,7 @@ class Engine
     @evaluator = evaluator
     @commands = []
     @commandDict = {}
-
-  addCommand: (command) ->
-    @commandDict[command.property] = command
-    @commands.push(command)
+    @._loadBasicCommandSet()
 
   render: (node, data) ->
     # Default to node=HTML and data=window
@@ -46,8 +43,8 @@ class Engine
   _render: (node, context) ->
     recurse = true
     for command in commands
-      if @.commandApplies(node, command)
-        args = @.argsForCommand(node, command)
+      if @._commandApplies(node, command)
+        args = @._argsForCommand(node, command)
         res = command.applyTo(node, context, args, @)
         # The result object has two values. The first tell us whether
         # or not to continue with the commands for this node. The second
@@ -58,8 +55,15 @@ class Engine
       for kid in node.children()
         @._render(kid, context)
     
-  commandApplies: (node, command) ->
+  _commandApplies: (node, command) ->
     true
 
-  argsForCommand: (node, command) ->
+  _argsForCommand: (node, command) ->
     null
+
+  _loadBasicCommandSet: () ->
+
+  _addCommand: (command) ->
+    @commandDict[command.property] = command
+    @commands.push(command)
+
