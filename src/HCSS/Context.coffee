@@ -39,14 +39,18 @@ class Context
   push: (data) ->
     @stack.push(data)
 
-  context: (data) ->
+  pushKeypath: (keypath) ->
+    obj = @.resolve(keypath)
+    @.push(obj)
+
+  pop: (data) ->
     @stack.pop()
 
   # aliasedKeypath must be of the form `Foo.Bar.Baz` -- none of the special prefixes
   # are allowed
-  alias: (aliasedKeypath, dataKeypath) ->
+  alias: (dataKeypath, aliasedKeypath) ->
     value = @.resolve(dataKeypath)
-    _setKetypath(aliasedKeypath, value, @.aliases)
+    @._setKetypath(aliasedKeypath, value, @.aliases)
 
   # There are three types of keypaths that are each evaluated in a separate
   # manner.
@@ -56,9 +60,9 @@ class Context
   #     *  The alias object
   #     *  Each frame of the context stack
   # *  A sequence of dot-separated keys /beginning with a dot/ .Foo.Bar.Baz 
-  #    is matched only against the context stack, not the alias object
-  # *  A sequence of dot-separated keys /beginning with a bang/ !Foo.Bar.Baz
   #    is matched only against the head of the stack
+  # *  A sequence of dot-separated keys /beginning with a question/ ?Foo.Bar.Baz
+  #    is matched against the stack but not the alias
   #
   resolve: (keypath) ->
     # Remove all whitespace
@@ -69,10 +73,10 @@ class Context
     else
       tryAliases = true
       stepDownStack = true
-      if kp[0] == '.'
+      if kp[0] == '?'
         tryAliases = false
         kp = kp[1..kp.length - 1]
-      else if kp[0] == '!'
+      else if kp[0] == '.'
         tryAliases = false
         stepDownStack = false
         kp = kp[1..kp.length - 1]
@@ -108,14 +112,31 @@ class Context
   _resolveParsedKeypathAgainst: (kp, obj) ->
     ptr = obj
     for key in kp
-      if key of ptr # TODO: This will ignore null values, I believe
+      if typeof ptr == "object" and key of ptr # TODO: This will ignore null values, I believe
         ptr = ptr[key]
       else
         # TODO: Need a good way to distinguish between null and "absence"
         return null
     return ptr
 
+  # Copies `value` into `inObject` at location `kp`
+  # Builds the keypath if it does not exist and does so
+  # destructively if necessary, overwriting values
   _setKetypath: (kp, value, inObject) ->
     kp = kp.replace /^\s+/g, ""
     kp = @._parseKeyPath(kp)
+    ptr = inObject
+    last = kp.pop()
+    for key in kp
+      if key of ptr
+        if typeof ptr[key] == 'object'
+          ptr = ptr[key]
+        else
+          ptr[key] = {}
+          ptr = ptr[key]
+      else
+        ptr[key] = {}
+        ptr = ptr[key]
+    ptr[last] = value
+      
 

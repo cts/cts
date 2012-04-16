@@ -9446,14 +9446,20 @@ var HCSS = {};
       return this.stack.push(data);
     };
 
-    Context.prototype.context = function(data) {
+    Context.prototype.pushKeypath = function(keypath) {
+      var obj;
+      obj = this.resolve(keypath);
+      return this.push(obj);
+    };
+
+    Context.prototype.pop = function(data) {
       return this.stack.pop();
     };
 
-    Context.prototype.alias = function(aliasedKeypath, dataKeypath) {
+    Context.prototype.alias = function(dataKeypath, aliasedKeypath) {
       var value;
       value = this.resolve(dataKeypath);
-      return _setKetypath(aliasedKeypath, value, this.aliases);
+      return this._setKetypath(aliasedKeypath, value, this.aliases);
     };
 
     Context.prototype.resolve = function(keypath) {
@@ -9464,10 +9470,10 @@ var HCSS = {};
       } else {
         tryAliases = true;
         stepDownStack = true;
-        if (kp[0] === '.') {
+        if (kp[0] === '?') {
           tryAliases = false;
           kp = kp.slice(1, (kp.length - 1) + 1 || 9e9);
-        } else if (kp[0] === '!') {
+        } else if (kp[0] === '.') {
           tryAliases = false;
           stepDownStack = false;
           kp = kp.slice(1, (kp.length - 1) + 1 || 9e9);
@@ -9504,7 +9510,7 @@ var HCSS = {};
       ptr = obj;
       for (_i = 0, _len = kp.length; _i < _len; _i++) {
         key = kp[_i];
-        if (key in ptr) {
+        if (typeof ptr === "object" && key in ptr) {
           ptr = ptr[key];
         } else {
           return null;
@@ -9514,8 +9520,26 @@ var HCSS = {};
     };
 
     Context.prototype._setKetypath = function(kp, value, inObject) {
+      var key, last, ptr, _i, _len;
       kp = kp.replace(/^\s+/g, "");
-      return kp = this._parseKeyPath(kp);
+      kp = this._parseKeyPath(kp);
+      ptr = inObject;
+      last = kp.pop();
+      for (_i = 0, _len = kp.length; _i < _len; _i++) {
+        key = kp[_i];
+        if (key in ptr) {
+          if (typeof ptr[key] === 'object') {
+            ptr = ptr[key];
+          } else {
+            ptr[key] = {};
+            ptr = ptr[key];
+          }
+        } else {
+          ptr[key] = {};
+          ptr = ptr[key];
+        }
+      }
+      return ptr[last] = value;
     };
 
     return Context;
