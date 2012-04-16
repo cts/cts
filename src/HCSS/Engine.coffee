@@ -40,21 +40,36 @@ class Engine
     context = new HCSS.Context(data)
     @._render(node, context)
 
+  # TODO: Have this also look at the global sheets
+  hcssForNode: (node) ->
+    ret = {}
+    block = node.data()["bind"]
+    jadSpecific = no
+    if typeof block != "undefined"
+      hadSpecific = yes
+      parsed = HCSS.Parser.parseBlock(block)
+      ret = $.extend(ret, parsed)
+    if hadSpecific
+      return ret
+    else
+      return null
+
   _render: (node, context) ->
     recurse = true
-    for command in commands
-      if @._commandApplies(node, command)
-        args = @._argsForCommand(node, command)
-        res = command.applyTo(node, context, args, @)
-        # The result object has two values. The first tell us whether
-        # or not to continue with the commands for this node. The second
-        # tells us whether or not to recurse at the end.
-        recurse = recurse and res[1]
-        break unless res[0]
+    hcss = @.hcssForNode(node)
+    if hcss != null
+      for command in commands
+        if command.signature() of hcss
+          res = command.applyTo(node, context, hcss[command.signature()], @)
+          # The result object has two values. The first tell us whether
+          # or not to continue with the commands for this node. The second
+          # tells us whether or not to recurse at the end.
+          recurse = recurse and res[1]
+          break unless res[0]
     if recurse
       for kid in node.children()
         @._render(kid, context)
-    
+   
   _commandApplies: (node, command) ->
     true
 

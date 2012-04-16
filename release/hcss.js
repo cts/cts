@@ -9433,6 +9433,43 @@ var HCSS = {};
 
   $ = jQueryHcss;
 
+  __t('HCSS.Commands').ValueCommand = (function() {
+
+    ValueCommand.name = 'ValueCommand';
+
+    function ValueCommand() {}
+
+    ValueCommand.prototype.signature = function() {
+      return "value";
+    };
+
+    ValueCommand.prototype.applyTo = function(node, context, args, engine) {
+      var value;
+      value = context.resolve(args[0]);
+      node.html(value);
+      if (HCSS.Options.DyeNodes) {
+        node.addClass(HCSS.Options.ClassForValueNode);
+      }
+      return false;
+    };
+
+    ValueCommand.prototype.recoverData = function(node, context, args, engine) {
+      var value;
+      value = node.html();
+      context.set(args[0], value);
+      return false;
+    };
+
+    ValueCommand.prototype.recoverTemplate = function(node, context) {
+      return node.clone();
+    };
+
+    return ValueCommand;
+
+  })();
+
+  $ = jQueryHcss;
+
   __t('HCSS').Context = (function() {
 
     Context.name = 'Context';
@@ -9543,6 +9580,154 @@ var HCSS = {};
     };
 
     return Context;
+
+  })();
+
+  $ = jQueryHcss;
+
+  __t('HCSS').Engine = (function() {
+
+    Engine.name = 'Engine';
+
+    function Engine(evaluator) {
+      this.evaluator = evaluator;
+      this.commands = [];
+      this.commandDict = {};
+      this._loadBasicCommandSet();
+    }
+
+    Engine.prototype.render = function(node, data) {
+      var context;
+      node = node || $('html');
+      data = data || window;
+      context = new HCSS.Context(data);
+      return this._render(node, context);
+    };
+
+    Engine.prototype.hcssForNode = function(node) {
+      var block, hadSpecific, jadSpecific, parsed, ret;
+      ret = {};
+      block = node.data()["bind"];
+      jadSpecific = false;
+      if (typeof block !== "undefined") {
+        hadSpecific = true;
+        parsed = HCSS.Parser.parseBlock(block);
+        ret = $.extend(ret, parsed);
+      }
+      if (hadSpecific) {
+        return ret;
+      } else {
+        return null;
+      }
+    };
+
+    Engine.prototype._render = function(node, context) {
+      var command, hcss, kid, recurse, res, _i, _j, _len, _len1, _ref, _results;
+      recurse = true;
+      hcss = this.hcssForNode(node);
+      if (hcss !== null) {
+        for (_i = 0, _len = commands.length; _i < _len; _i++) {
+          command = commands[_i];
+          if (command.signature() in hcss) {
+            res = command.applyTo(node, context, hcss[command.signature()], this);
+            recurse = recurse && res[1];
+            if (!res[0]) {
+              break;
+            }
+          }
+        }
+      }
+      if (recurse) {
+        _ref = node.children();
+        _results = [];
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          kid = _ref[_j];
+          _results.push(this._render(kid, context));
+        }
+        return _results;
+      }
+    };
+
+    Engine.prototype._commandApplies = function(node, command) {
+      return true;
+    };
+
+    Engine.prototype._argsForCommand = function(node, command) {
+      return null;
+    };
+
+    Engine.prototype._loadBasicCommandSet = function() {};
+
+    Engine.prototype._addCommand = function(command) {
+      this.commandDict[command.property] = command;
+      return this.commands.push(command);
+    };
+
+    return Engine;
+
+  })();
+
+  __t('HCSS').Options = (function() {
+
+    Options.name = 'Options';
+
+    function Options() {}
+
+    Options.DyeNodes = true;
+
+    Options.ClassForValueNode = "hcssValueNode";
+
+    return Options;
+
+  })();
+
+  $ = jQueryHcss;
+
+  __t('HCSS').Parser = (function() {
+
+    Parser.name = 'Parser';
+
+    function Parser() {}
+
+    Parser.parseBlocks = function(blocks) {
+      var block, chunk, chunks, clean, pair, ret, selector, _i, _len;
+      ret = {};
+      clean = blocks.replace(/\/\*(\r|\n|.)*\*\//g, "");
+      chunks = blocks.split("}");
+      chunks.pop();
+      for (_i = 0, _len = chunks.length; _i < _len; _i++) {
+        chunk = chunks[_i];
+        pair = chunk.split('{');
+        selector = $.trim(pair[0]);
+        block = $.trim(pair[1]);
+        block = this.parseBlock(block);
+        if (selector !== "") {
+          ret[selector] = block;
+        }
+      }
+      return ret;
+    };
+
+    Parser.parseBlock = function(block) {
+      var loc, parsedValue, property, ret, rule, rules, value, _i, _len;
+      ret = {};
+      rules = block.split(';');
+      for (_i = 0, _len = rules.length; _i < _len; _i++) {
+        rule = rules[_i];
+        loc = rule.indexOf(':');
+        if (loc >= 0) {
+          property = $.trim(rule.substring(0, loc));
+          value = $.trim(rule.substring(loc + 1));
+          if (property !== "" && value !== "") {
+            parsedValue = value.split(",");
+            ret[property] = parsedValue;
+          }
+        }
+      }
+      return ret;
+    };
+
+    return Parser;
 
   })();
 
