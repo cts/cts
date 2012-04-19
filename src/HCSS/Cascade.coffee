@@ -18,34 +18,28 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## Context
+# Author: Ted Benson <eob@csail.mit.edu>
+
+#### Preamble
 $ = jQueryHcss
 
-class Value
-  constructor: () ->
+#### Cascade
+class Cascade
+  # TODO: Have this also look at the global sheets
+  @rulesForNode: (node) ->
+    ret = {}
+    hadSpecific = no
+    if node.data?
+      block = node.data()["bind"]
+      if typeof block != "undefined"
+        hadSpecific = yes
+        parsed = HCSS.Parser.parseBlock(block)
+        ret = $.extend(ret, parsed)
+    if hadSpecific
+      return ret
+    else
+      return null
 
-  signature: () ->
-    "value"
-
-  # Interprets arg1 as key-path into context
-  # Replaces the contents of this node with resolution 
-  # Tells engine not to recurse into contents
-  applyTo: (node, context, args, engine) ->
-    value = context.resolve(args[0])
-    node.html(value)
-    if engine.opts.DyeNodes
-      node.addClass(HCSS.Options.ClassForValueNode)
-    [false, false]
-
-  # Recovers data
-  #### Side Effects
-  #
-  recoverData: (node, context, args, engine) ->
-    value = node.html()
-    context.set(args[0], value)
-    [false, false]
-
-  # Recovers template
-  recoverTemplate: (node, context) ->
-    node.clone()
- 
 

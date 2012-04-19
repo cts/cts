@@ -44,22 +44,13 @@ ContextTest = function() {
     var ctx = new HCSS.Context(tree);
     ctx.push(ctx.resolve("c1"));
     ctx.push(ctx.resolve("c2"));
-    equal(ctx.resolve("b"), "B");
-    equal(ctx.resolve("a"), "A");
     equal(ctx.resolve(".a"), null);
     equal(ctx.resolve(".b"), null);
-    equal(ctx.resolve("?b"), "B");
-    equal(ctx.resolve("?a"), "A");
-    equal(ctx.resolve("?a"), "A");
     ctx.alias("name", "foo");
     ctx.pop()
     equal(ctx.resolve("foo"), "Child 1 -> Child 2");
-    ctx.alias("a", "foo.bar");
-    equal(ctx.resolve("foo.bar"), "A");
     ctx.alias(".a", "foo.bar");
     equal(ctx.resolve("foo.bar"), null);
-    ctx.alias("?a", "foo.bar");
-    equal(ctx.resolve("foo.bar"), "A");
     // resolving a null object
     ctx.alias("B", "foo.bar");
     equal(ctx.resolve("foo.bar"), null);
@@ -68,7 +59,6 @@ ContextTest = function() {
     ctx.alias("name", "name");
     ctx.push(ctx.resolve("c2"));
     equal(ctx.resolve("name"), "Child 1");
-    equal(ctx.resolve("?name"), "Child 1 -> Child 2");
     equal(ctx.resolve(".name"), "Child 1 -> Child 2");
   });
 

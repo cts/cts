@@ -27,10 +27,9 @@ $ = jQueryHcss
 
 #### Engine
 class Engine
-  constructor: (evaluator) ->
-    @evaluator = evaluator
+  constructor: (options) ->
+    @opts = $.extend {}, HCSS.Options.Default(), options
     @commands = []
-    @commandDict = {}
     @._loadBasicCommandSet()
 
   render: (node, data) ->
@@ -40,25 +39,17 @@ class Engine
     context = new HCSS.Context(data)
     @._render(node, context)
 
-  # TODO: Have this also look at the global sheets
-  hcssForNode: (node) ->
-    ret = {}
-    block = node.data()["bind"]
-    jadSpecific = no
-    if typeof block != "undefined"
-      hadSpecific = yes
-      parsed = HCSS.Parser.parseBlock(block)
-      ret = $.extend(ret, parsed)
-    if hadSpecific
-      return ret
-    else
-      return null
+  recoverData: (node) ->
+    node = node || $('html')
+    context = new HCSS.Context({})
+    @._recoverData(node, context)
+    context.head()
 
   _render: (node, context) ->
     recurse = true
-    hcss = @.hcssForNode(node)
+    hcss = HCSS.Cascade.rulesForNode(node)
     if hcss != null
-      for command in commands
+      for command in @commands
         if command.signature() of hcss
           res = command.applyTo(node, context, hcss[command.signature()], @)
           # The result object has two values. The first tell us whether
@@ -68,17 +59,24 @@ class Engine
           break unless res[0]
     if recurse
       for kid in node.children()
-        @._render(kid, context)
-   
-  _commandApplies: (node, command) ->
-    true
-
-  _argsForCommand: (node, command) ->
-    null
+        @._render($(kid), context)
+  
+  _recoverData: (node, context) ->
+    recurse = true
+    hcss = HCSS.Cascade.rulesForNode(node)
+    if hcss != null
+      for command in @commands
+        if command.signature() of hcss
+          res = command.recoverData(node, context, hcss[command.signature()], @)
+          recurse = recurse and res[1]
+          break unless res[0]
+    if recurse
+      for kid in node.children()
+        @._recoverData($(kid), context)
 
   _loadBasicCommandSet: () ->
+    @._addCommand(new HCSS.Commands.Value())
 
   _addCommand: (command) ->
-    @commandDict[command.property] = command
     @commands.push(command)
 

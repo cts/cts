@@ -1,3 +1,6 @@
 class Options
-  @DyeNodes = true
-  @ClassForValueNode = "hcssValueNode"
+  @Default: () ->
+    return {
+      "DyeNodes" : true,
+      "ClassForValueNode" : "hcssValueNode"
+    }

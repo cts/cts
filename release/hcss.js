@@ -9433,38 +9433,69 @@ var HCSS = {};
 
   $ = jQueryHcss;
 
-  __t('HCSS.Commands').ValueCommand = (function() {
+  __t('HCSS').Cascade = (function() {
 
-    ValueCommand.name = 'ValueCommand';
+    Cascade.name = 'Cascade';
 
-    function ValueCommand() {}
+    function Cascade() {}
 
-    ValueCommand.prototype.signature = function() {
+    Cascade.rulesForNode = function(node) {
+      var block, hadSpecific, parsed, ret;
+      ret = {};
+      hadSpecific = false;
+      if (node.data != null) {
+        block = node.data()["bind"];
+        if (typeof block !== "undefined") {
+          hadSpecific = true;
+          parsed = HCSS.Parser.parseBlock(block);
+          ret = $.extend(ret, parsed);
+        }
+      }
+      if (hadSpecific) {
+        return ret;
+      } else {
+        return null;
+      }
+    };
+
+    return Cascade;
+
+  })();
+
+  $ = jQueryHcss;
+
+  __t('HCSS.Commands').Value = (function() {
+
+    Value.name = 'Value';
+
+    function Value() {}
+
+    Value.prototype.signature = function() {
       return "value";
     };
 
-    ValueCommand.prototype.applyTo = function(node, context, args, engine) {
+    Value.prototype.applyTo = function(node, context, args, engine) {
       var value;
       value = context.resolve(args[0]);
       node.html(value);
-      if (HCSS.Options.DyeNodes) {
+      if (engine.opts.DyeNodes) {
         node.addClass(HCSS.Options.ClassForValueNode);
       }
-      return false;
+      return [false, false];
     };
 
-    ValueCommand.prototype.recoverData = function(node, context, args, engine) {
+    Value.prototype.recoverData = function(node, context, args, engine) {
       var value;
       value = node.html();
       context.set(args[0], value);
-      return false;
+      return [false, false];
     };
 
-    ValueCommand.prototype.recoverTemplate = function(node, context) {
+    Value.prototype.recoverTemplate = function(node, context) {
       return node.clone();
     };
 
-    return ValueCommand;
+    return Value;
 
   })();
 
@@ -9478,6 +9509,10 @@ var HCSS = {};
       this.aliases = {};
       this.stack = [data];
     }
+
+    Context.prototype.head = function() {
+      return this.stack[this.stack.length - 1];
+    };
 
     Context.prototype.push = function(data) {
       return this.stack.push(data);
@@ -9496,50 +9531,43 @@ var HCSS = {};
     Context.prototype.alias = function(dataKeypath, aliasedKeypath) {
       var value;
       value = this.resolve(dataKeypath);
-      return this._setKetypath(aliasedKeypath, value, this.aliases);
+      return this._setKeypath(aliasedKeypath, value, this.aliases);
     };
 
     Context.prototype.resolve = function(keypath) {
-      var kp, stepDownStack, tryAliases;
+      var kp, tryAliases;
       kp = keypath.replace(/^\s+/g, "");
       if (kp === '.') {
         return this.stack[this.stack.length - 1];
       } else {
         tryAliases = true;
-        stepDownStack = true;
-        if (kp[0] === '?') {
+        if (kp[0] === '.') {
           tryAliases = false;
-          kp = kp.slice(1, (kp.length - 1) + 1 || 9e9);
-        } else if (kp[0] === '.') {
-          tryAliases = false;
-          stepDownStack = false;
           kp = kp.slice(1, (kp.length - 1) + 1 || 9e9);
         }
         kp = this._parseKeyPath(kp);
-        return this._resolveParsedKeypath(kp, tryAliases, stepDownStack);
+        return this._resolveParsedKeypath(kp, tryAliases);
       }
+    };
+
+    Context.prototype.set = function(keypath, value) {
+      return this._setKeypath(keypath, value, this.stack[this.stack.length - 1]);
     };
 
     Context.prototype._parseKeyPath = function(kp) {
       return kp.split(".");
     };
 
-    Context.prototype._resolveParsedKeypath = function(kp, tryAliases, stepDownStack) {
-      var attempt, i, lowerBound, _i, _ref;
+    Context.prototype._resolveParsedKeypath = function(kp, tryAliases) {
+      var attempt;
       if (tryAliases) {
         attempt = this._resolveParsedKeypathAgainst(kp, this.aliases);
         if (attempt !== null) {
           return attempt;
         }
       }
-      lowerBound = stepDownStack ? 0 : this.stack.length - 1;
-      for (i = _i = _ref = this.stack.length - 1; _ref <= lowerBound ? _i <= lowerBound : _i >= lowerBound; i = _ref <= lowerBound ? ++_i : --_i) {
-        attempt = this._resolveParsedKeypathAgainst(kp, this.stack[i]);
-        if (attempt !== null) {
-          return attempt;
-        }
-      }
-      return null;
+      attempt = this._resolveParsedKeypathAgainst(kp, this.stack[this.stack.length - 1]);
+      return attempt;
     };
 
     Context.prototype._resolveParsedKeypathAgainst = function(kp, obj) {
@@ -9556,7 +9584,7 @@ var HCSS = {};
       return ptr;
     };
 
-    Context.prototype._setKetypath = function(kp, value, inObject) {
+    Context.prototype._setKeypath = function(kp, value, inObject) {
       var key, last, ptr, _i, _len;
       kp = kp.replace(/^\s+/g, "");
       kp = this._parseKeyPath(kp);
@@ -9589,10 +9617,9 @@ var HCSS = {};
 
     Engine.name = 'Engine';
 
-    function Engine(evaluator) {
-      this.evaluator = evaluator;
+    function Engine(options) {
+      this.opts = $.extend({}, HCSS.Options.Default(), options);
       this.commands = [];
-      this.commandDict = {};
       this._loadBasicCommandSet();
     }
 
@@ -9604,30 +9631,22 @@ var HCSS = {};
       return this._render(node, context);
     };
 
-    Engine.prototype.hcssForNode = function(node) {
-      var block, hadSpecific, jadSpecific, parsed, ret;
-      ret = {};
-      block = node.data()["bind"];
-      jadSpecific = false;
-      if (typeof block !== "undefined") {
-        hadSpecific = true;
-        parsed = HCSS.Parser.parseBlock(block);
-        ret = $.extend(ret, parsed);
-      }
-      if (hadSpecific) {
-        return ret;
-      } else {
-        return null;
-      }
+    Engine.prototype.recoverData = function(node) {
+      var context;
+      node = node || $('html');
+      context = new HCSS.Context({});
+      this._recoverData(node, context);
+      return context.head();
     };
 
     Engine.prototype._render = function(node, context) {
-      var command, hcss, kid, recurse, res, _i, _j, _len, _len1, _ref, _results;
+      var command, hcss, kid, recurse, res, _i, _j, _len, _len1, _ref, _ref1, _results;
       recurse = true;
-      hcss = this.hcssForNode(node);
+      hcss = HCSS.Cascade.rulesForNode(node);
       if (hcss !== null) {
-        for (_i = 0, _len = commands.length; _i < _len; _i++) {
-          command = commands[_i];
+        _ref = this.commands;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          command = _ref[_i];
           if (command.signature() in hcss) {
             res = command.applyTo(node, context, hcss[command.signature()], this);
             recurse = recurse && res[1];
@@ -9638,28 +9657,49 @@ var HCSS = {};
         }
       }
       if (recurse) {
-        _ref = node.children();
+        _ref1 = node.children();
         _results = [];
-        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
-          kid = _ref[_j];
-          _results.push(this._render(kid, context));
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          kid = _ref1[_j];
+          _results.push(this._render($(kid), context));
         }
         return _results;
       }
     };
 
-    Engine.prototype._commandApplies = function(node, command) {
-      return true;
+    Engine.prototype._recoverData = function(node, context) {
+      var command, hcss, kid, recurse, res, _i, _j, _len, _len1, _ref, _ref1, _results;
+      recurse = true;
+      hcss = HCSS.Cascade.rulesForNode(node);
+      if (hcss !== null) {
+        _ref = this.commands;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          command = _ref[_i];
+          if (command.signature() in hcss) {
+            res = command.recoverData(node, context, hcss[command.signature()], this);
+            recurse = recurse && res[1];
+            if (!res[0]) {
+              break;
+            }
+          }
+        }
+      }
+      if (recurse) {
+        _ref1 = node.children();
+        _results = [];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          kid = _ref1[_j];
+          _results.push(this._recoverData($(kid), context));
+        }
+        return _results;
+      }
     };
 
-    Engine.prototype._argsForCommand = function(node, command) {
-      return null;
+    Engine.prototype._loadBasicCommandSet = function() {
+      return this._addCommand(new HCSS.Commands.Value());
     };
-
-    Engine.prototype._loadBasicCommandSet = function() {};
 
     Engine.prototype._addCommand = function(command) {
-      this.commandDict[command.property] = command;
       return this.commands.push(command);
     };
 
@@ -9673,9 +9713,12 @@ var HCSS = {};
 
     function Options() {}
 
-    Options.DyeNodes = true;
-
-    Options.ClassForValueNode = "hcssValueNode";
+    Options.Default = function() {
+      return {
+        "DyeNodes": true,
+        "ClassForValueNode": "hcssValueNode"
+      };
+    };
 
     return Options;
 

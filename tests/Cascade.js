@@ -1,17 +1,16 @@
 window.Tests = window.Tests || [];
 
-RenderTest = function() {
+CascadeTest = function() {
   
-  module("Render");
+  module("Cascade");
   
-  var engine = new HCSS.Engine();
   test("Node Decoration Retrieval", function() {
     var node = $("<div data-bind='value:foo'>Bar</div>");
-    var props = engine.hcssForNode(node);
+    var props = HCSS.Cascade.rulesForNode(node);
     console.log(props);
     equal(props["value"][0], "foo");
   });
 
 };
 
-window.Tests.push(RenderTest);
+window.Tests.push(CascadeTest);
