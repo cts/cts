@@ -39,6 +39,9 @@ class Context
   head: () ->
     @stack[@stack.length - 1]
 
+  tail: () ->
+    @stack[0]
+
   push: (data) ->
     @stack.push(data)
 
@@ -107,6 +110,8 @@ class Context
   # Attempt to resolve the keypath against the given object
   # FUTURE: This function can be overridden to handle, i.e., RDF 
   _resolveParsedKeypathAgainst: (kp, obj) ->
+    if obj == null
+      return null
     ptr = obj
     for key in kp
       if typeof ptr == "object" and key of ptr # TODO: This will ignore null values, I believe

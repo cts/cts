@@ -43,7 +43,7 @@ class Engine
     node = node || $('html')
     context = new HCSS.Context({})
     @._recoverData(node, context)
-    context.head()
+    context.tail()
 
   _render: (node, context) ->
     recurse = true
@@ -75,6 +75,7 @@ class Engine
         @._recoverData($(kid), context)
 
   _loadBasicCommandSet: () ->
+    @._addCommand(new HCSS.Commands.With())
     @._addCommand(new HCSS.Commands.Value())
 
   _addCommand: (command) ->

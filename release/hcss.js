@@ -9501,6 +9501,39 @@ var HCSS = {};
 
   $ = jQueryHcss;
 
+  __t('HCSS.Commands').With = (function() {
+
+    With.name = 'With';
+
+    function With() {}
+
+    With.prototype.signature = function() {
+      return "with";
+    };
+
+    With.prototype.applyTo = function(node, context, args, engine) {
+      console.log("apply");
+      context.pushKeypath(args[0]);
+      return [true, true];
+    };
+
+    With.prototype.recoverData = function(node, context, args, engine) {
+      console.log("recover");
+      context.set(args[0], {});
+      context.pushKeypath(args[0]);
+      return [true, true];
+    };
+
+    With.prototype.recoverTemplate = function(node, context) {
+      return node.clone();
+    };
+
+    return With;
+
+  })();
+
+  $ = jQueryHcss;
+
   __t('HCSS').Context = (function() {
 
     Context.name = 'Context';
@@ -9512,6 +9545,10 @@ var HCSS = {};
 
     Context.prototype.head = function() {
       return this.stack[this.stack.length - 1];
+    };
+
+    Context.prototype.tail = function() {
+      return this.stack[0];
     };
 
     Context.prototype.push = function(data) {
@@ -9572,6 +9609,9 @@ var HCSS = {};
 
     Context.prototype._resolveParsedKeypathAgainst = function(kp, obj) {
       var key, ptr, _i, _len;
+      if (obj === null) {
+        return null;
+      }
       ptr = obj;
       for (_i = 0, _len = kp.length; _i < _len; _i++) {
         key = kp[_i];
@@ -9636,7 +9676,7 @@ var HCSS = {};
       node = node || $('html');
       context = new HCSS.Context({});
       this._recoverData(node, context);
-      return context.head();
+      return context.tail();
     };
 
     Engine.prototype._render = function(node, context) {
@@ -9696,6 +9736,7 @@ var HCSS = {};
     };
 
     Engine.prototype._loadBasicCommandSet = function() {
+      this._addCommand(new HCSS.Commands.With());
       return this._addCommand(new HCSS.Commands.Value());
     };
 

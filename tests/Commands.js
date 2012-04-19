@@ -14,7 +14,14 @@ CommandTests = {
      'd':{'foo':'oof'},
      'h':'<div><span data-bind="value:foo">oof</span></div>'
    }
-
+  ],
+  'with':[
+   {
+     'c':'Basic with traversal',
+     't':'<div data-bind="with:ted"><span data-bind="value:name">Bar</span></div>',
+     'd':{'ted':{'name':'Ted'}},
+     'h':'<div data-bind="with:ted"><span data-bind="value:name">Ted</span></div>'
+   }
   ]
 };
 
@@ -33,38 +40,47 @@ DataEquals = function(obj, hash) {
   return true;
 }
 
-CommandTest = function() {
+CreateTest = function(command, idx) {
+  var T = CommandTests[command][idx];
+  var c = T['c'];
+  var t = T['t'];
+  var d = T['d'];
+  var h = T['h'];
   var engine = new HCSS.Engine({
     "DyeNodes":false
   });
+
+  var testFunc = function() {
+    // Forward rendering works
+    var tNode = $(t);
+    engine.render(tNode,d);
+    
+    html = $("<div />").append(tNode).html() 
+    equal(html, h);
+
+    // Can reuse recovered data on own template
+    var dPrime = engine.recoverData(tNode);
+    console.log(dPrime);
+    var tPrime = $(t);
+    engine.render(tPrime,dPrime);
+
+    htmlPrime = $("<div />").append(tPrime).html(); 
+    equal(htmlPrime, h);
+    // Data in object also within original
+    equal(DataEquals(dPrime, d), true);
+
+    // We won't enforce this one
+    // equal(DataEquals(d, dPrime), true);
+  }
+  return [c, testFunc];
+}
+
+CommandTest = function() {
   for (command in CommandTests) {
     module(command + " Command");
-    for (Tidx in CommandTests[command]) {
-      T = CommandTests[command][Tidx];
-      test(T['c'], function() {
-        var t = $(T['t']);
-        var d = T['d'];
-        var h = $(T['h']);
-        console.log(t);
-        console.log(d);
-        console.log(h);
-
-        // Forward rendering works
-        engine.render(t,d);
-        equal(t.html(), h.html());
-
-        // Can reuse data on own template
-        var dPrime = engine.recoverData(t);
-        var tPrime = $(T['t']);
-        engine.render(tPrime,dPrime);
-        equal(tPrime.html(), h.html());
-
-        // Data in object also within original
-        equal(DataEquals(dPrime, d), true);
-
-        // We won't enforce this one
-        // equal(DataEquals(d, dPrime), true);
-      }); // End test function
+    for (idx in CommandTests[command]) {
+      var tuple = CreateTest(command, idx);
+      test(tuple[0], tuple[1]);
     } // End for each test in command
   } // End for each command
 }; // End command test
