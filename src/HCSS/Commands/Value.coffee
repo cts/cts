@@ -30,7 +30,13 @@ class Value
   # Replaces the contents of this node with resolution 
   # Tells engine not to recurse into contents
   applyTo: (node, context, args, engine) ->
+    console.log("applying value")
+    console.log(node)
+    console.log(args)
+
     value = context.resolve(args[0])
+    console.log(value)
+    console.log("--")
     node.html(value)
     if engine.opts.DyeNodes
       node.addClass(HCSS.Options.ClassForValueNode)

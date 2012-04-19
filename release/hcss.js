@@ -9476,7 +9476,12 @@ var HCSS = {};
 
     Value.prototype.applyTo = function(node, context, args, engine) {
       var value;
+      console.log("applying value");
+      console.log(node);
+      console.log(args);
       value = context.resolve(args[0]);
+      console.log(value);
+      console.log("--");
       node.html(value);
       if (engine.opts.DyeNodes) {
         node.addClass(HCSS.Options.ClassForValueNode);
@@ -9518,7 +9523,7 @@ var HCSS = {};
     };
 
     With.prototype.recoverData = function(node, context, args, engine) {
-      console.log("recover");
+      console.log("recover data for with");
       context.set(args[0], {});
       context.pushKeypath(args[0]);
       return [true, true];
@@ -9588,6 +9593,9 @@ var HCSS = {};
     };
 
     Context.prototype.set = function(keypath, value) {
+      console.log("set keypath");
+      console.log(keypath);
+      console.log(value);
       return this._setKeypath(keypath, value, this.stack[this.stack.length - 1]);
     };
 
@@ -9664,18 +9672,24 @@ var HCSS = {};
     }
 
     Engine.prototype.render = function(node, data) {
-      var context;
+      var context,
+        _this = this;
       node = node || $('html');
       data = data || window;
       context = new HCSS.Context(data);
-      return this._render(node, context);
+      return $.each(node, function(i, e) {
+        return _this._render($(e), context);
+      });
     };
 
     Engine.prototype.recoverData = function(node) {
-      var context;
+      var context,
+        _this = this;
       node = node || $('html');
       context = new HCSS.Context({});
-      this._recoverData(node, context);
+      $.each(node, function(i, e) {
+        return _this._recoverData($(e), context);
+      });
       return context.tail();
     };
 

@@ -38,7 +38,7 @@ class With
   #### Side Effects
   #
   recoverData: (node, context, args, engine) ->
-    console.log("recover")
+    console.log("recover data for with")
     context.set(args[0], {})
     context.pushKeypath(args[0])
     [true, true]

@@ -21,7 +21,14 @@ CommandTests = {
      't':'<div data-bind="with:ted"><span data-bind="value:name">Bar</span></div>',
      'd':{'ted':{'name':'Ted'}},
      'h':'<div data-bind="with:ted"><span data-bind="value:name">Ted</span></div>'
+   },
+   {
+     'c':'Mixed depth value with traversal',
+     't':'<div data-bind="value:foo">bar</div><div data-bind="with:ted"><span data-bind="value:name">Bar</span></div>',
+     'd':{'foo':'ABC','ted':{'name':'Ted'}},
+     'h':'<div data-bind="value:foo">ABC</div><div data-bind="with:ted"><span data-bind="value:name">Ted</span></div>'
    }
+
   ]
 };
 
@@ -60,6 +67,7 @@ CreateTest = function(command, idx) {
 
     // Can reuse recovered data on own template
     var dPrime = engine.recoverData(tNode);
+    console.log("recovered data");
     console.log(dPrime);
     var tPrime = $(t);
     engine.render(tPrime,dPrime);

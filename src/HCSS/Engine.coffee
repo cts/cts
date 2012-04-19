@@ -37,12 +37,17 @@ class Engine
     node = node || $('html')
     data = data || window
     context = new HCSS.Context(data)
-    @._render(node, context)
+    # Account for the fact that node might actually be a jQuery selector
+    # that has returned a list of elements
+    # TODO: consider failing unless node.length == 1
+    $.each node, (i,e) =>
+      @._render($(e), context)
 
   recoverData: (node) ->
     node = node || $('html')
     context = new HCSS.Context({})
-    @._recoverData(node, context)
+    $.each node, (i,e) =>
+      @._recoverData($(e), context)
     context.tail()
 
   _render: (node, context) ->

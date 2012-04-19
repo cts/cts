@@ -83,6 +83,9 @@ class Context
       return @._resolveParsedKeypath(kp, tryAliases)
 
   set: (keypath, value) ->
+    console.log("set keypath")
+    console.log(keypath)
+    console.log(value)
     @._setKeypath(keypath, value, @stack[@stack.length - 1])
 
   # Parses a keypath using dot notation after stripping it of whitespace
