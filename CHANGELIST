@@ -3,12 +3,14 @@
 
 Hello, world!
 
-Submitted paper to UIST on HCSS yesterday. Going with HCSS (Hierarchical
-Cascading Stylesheets) as the name.
+Submitted paper to UIST yesterday; now trying to kick this thing out the door.
 
 For posterity's sake, the original name was "Lossless Templates", which became
 "Data Stylesheets", which became "Hierarchical Stylesheets", which became
-"Hierarchical Cascading Stylesheets". 
+"Hierarchical Cascading Stylesheets", which became "Tree Sheets", which became
+CATS (Cascading Tree Sheets). 
+
+Every website needs CATS on it.
 
 Starting an empty repository with intent to rewrite the code such that it is
 suitable for general-purpose use instead of just a research prototype. (unit

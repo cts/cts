@@ -6,7 +6,7 @@ vendor 'jquery', 'vendors/jquery.js'
 src 'src'
 
 # MODULES
-module 'HCSS' # module folder name (inside src)
+module 'cats' # module folder name (inside src)
 	vendors: ['jquery'] # (ordered vendor's array)
 	bare: false # default = false (compile coffeescript with bare option)
 	packaging: true # default = true
@@ -18,9 +18,9 @@ module 'HCSS' # module folder name (inside src)
 
 # BUILD ROUTINES
 build "main"
-	modules: ['HCSS']
-	release: 'release/hcss.js'
-	debug: 'release/hcss-debug.js'
+	modules: ['cats']
+	release: 'release/cats.js'
+	debug: 'release/cats-debug.js'
 
 # build 'another_build_routine'
 # 	(...)

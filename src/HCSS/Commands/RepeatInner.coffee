@@ -20,32 +20,77 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 $ = jQueryHcss
 
-class Value
+class RepeatInner
   constructor: () ->
 
   signature: () ->
-    "value"
+    "repeat-inner"
 
   # Interprets arg1 as key-path into context
   # Replaces the contents of this node with resolution 
   # Tells engine not to recurse into contents
   applyTo: (node, context, args, engine) ->
-    value = context.resolve(args[0])
-    node.html(value)
-    if engine.opts.DyeNodes
-      node.addClass(HCSS.Options.ClassForValueNode)
+    n = 1
+    kp = args[0]
+    if args.length == 2
+      n = parseInt(args[0])
+      kp = args[1]
+      
+    collection = context.resolve(kp)
+
+    template = []
+    $.each node.children(), (idx, child) =>
+      if idx<n
+        template.push($(child))
+      else
+        $(child).remove()
+
+    if collection.length == 0
+      # XXX
+      # TODO: Need to do this in recoverable fashion
+      template.hide()
+    else
+      templateHtml = node.html()
+      node.html("")
+      zeroIndex = 0
+      for elem in collection
+        context.setZeroIndex(zeroIndex)
+        newNode = $(templateHtml)
+        context.push(elem)
+        node.append(newNode)
+        engine._render(newNode, context)
+        context.pop()
+        zeroIndex += 1
+    context.setZeroIndex(0)
     [false, false]
 
   # Recovers data
   #### Side Effects
   #
   recoverData: (node, context, args, engine) ->
-    value = node.html()
-    context.set(args[0], value)
+    n = 1
+    kp = args[0]
+    if args.length == 2
+      n = parseInt(args[0])
+      kp = args[1]
+    
+    context.set(kp, [])
+    context.pushKeypath(kp)
+
+    container = $("<div />")
+    $.each(node.children, (idx, child) =>
+      if idx % n
+        context.pushIterable({})
+        # extract data
+        # push
+        # clear head
+      else
+        container.append(child.clone())
+    
+    context.set(kp, collection)
     [false, false]
 
   # Recovers template
   recoverTemplate: (node, context) ->
-    node.clone()
  
 

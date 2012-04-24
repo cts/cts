@@ -35,6 +35,7 @@ class Context
   constructor: (data) ->
     @aliases = {}
     @stack = [data]
+    @contextVars = {}
 
   head: () ->
     @stack[@stack.length - 1]
@@ -44,6 +45,10 @@ class Context
 
   push: (data) ->
     @stack.push(data)
+
+  pushIterable: (data) ->
+    @.head().append(data)
+    @stack.push(@.head()[@.head().length - 1])
 
   pushKeypath: (keypath) ->
     obj = @.resolve(keypath)
@@ -58,10 +63,15 @@ class Context
     value = @.resolve(dataKeypath)
     @._setKeypath(aliasedKeypath, value, @.aliases)
 
+  setZeroIndex: (idx) ->
+    @contextVars['zeroIndex'] = idx
+    @contextVars['oneIndex'] = idx + 1
+
   # There are three types of keypaths that are each evaluated in a separate
   # manner.
   #
   # *  A single dot '.' refers to the top of the Context stack
+  # *  A $-prefixed variable is a special context-sensitive variable
   # *  A sequence of dot-separated keys Foo.Bar.Baz is matched against
   #     *  The alias object
   #     *  The top of the stack
@@ -79,6 +89,9 @@ class Context
       if kp[0] == '.'
         tryAliases = false
         kp = kp[1..kp.length - 1]
+      else if kp[0] == '$'
+        kp = kp[1..kp.length - 1]
+        return @._resolveContextVar(kp)
       kp = @._parseKeyPath(kp)
       return @._resolveParsedKeypath(kp, tryAliases)
 
@@ -91,6 +104,12 @@ class Context
   # Parses a keypath using dot notation after stripping it of whitespace
   _parseKeyPath: (kp) ->
     kp.split(".")
+
+  _resolveContextVar: (kp) ->
+    if kp of @contextVars
+      return @contextVars[kp]
+    else
+      return null
 
   # Resolves the parsed keypath by first checking against the alias object
   # and then stepping down the stack, checking each frame along the way

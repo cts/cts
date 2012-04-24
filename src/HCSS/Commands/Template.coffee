@@ -20,7 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 $ = jQueryHcss
 
-class Value
+class Template
   constructor: () ->
 
   signature: () ->
@@ -30,11 +30,16 @@ class Value
   # Replaces the contents of this node with resolution 
   # Tells engine not to recurse into contents
   applyTo: (node, context, args, engine) ->
-    value = context.resolve(args[0])
+    templateRef = context.resolve(args[0])
+    template = @.fetchTemplate(templateRef)
+    remainingData = 
     node.html(value)
     if engine.opts.DyeNodes
       node.addClass(HCSS.Options.ClassForValueNode)
     [false, false]
+
+  fetchTemplate: (value) ->
+    $(value).first()
 
   # Recovers data
   #### Side Effects

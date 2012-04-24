@@ -9464,6 +9464,110 @@ var HCSS = {};
 
   $ = jQueryHcss;
 
+  __t('HCSS.Commands').RepeatInner = (function() {
+
+    RepeatInner.name = 'RepeatInner';
+
+    function RepeatInner() {}
+
+    RepeatInner.prototype.signature = function() {
+      return "repeat-inner";
+    };
+
+    RepeatInner.prototype.applyTo = function(node, context, args, engine) {
+      var collection, elem, n, newNode, template, templateHtml, zeroIndex, _i, _len,
+        _this = this;
+      n = 1;
+      collection = [];
+      if (args.length === 2) {
+        n = parseInt(args[0]);
+        collection = context.resolve(args[1]);
+      } else {
+        collection = context.resolve(args[0]);
+      }
+      template = [];
+      $.each(node.children(), function(idx, child) {
+        if (idx < n) {
+          return template.push($(child));
+        } else {
+          return $(child).remove();
+        }
+      });
+      if (collection.length === 0) {
+        template.hide();
+      } else {
+        templateHtml = node.html();
+        node.html("");
+        zeroIndex = 0;
+        for (_i = 0, _len = collection.length; _i < _len; _i++) {
+          elem = collection[_i];
+          context.setZeroIndex(zeroIndex);
+          newNode = $(templateHtml);
+          context.push(elem);
+          node.append(newNode);
+          engine._render(newNode, context);
+          context.pop();
+          zeroIndex += 1;
+        }
+      }
+      context.setZeroIndex(0);
+      return [false, false];
+    };
+
+    RepeatInner.prototype.recoverData = function(node, context, args, engine) {
+      return [false, false];
+    };
+
+    RepeatInner.prototype.recoverTemplate = function(node, context) {};
+
+    return RepeatInner;
+
+  })();
+
+  $ = jQueryHcss;
+
+  __t('HCSS.Commands').Template = (function() {
+
+    Template.name = 'Template';
+
+    function Template() {}
+
+    Template.prototype.signature = function() {
+      return "value";
+    };
+
+    Template.prototype.applyTo = function(node, context, args, engine) {
+      var remainingData, template, templateRef;
+      templateRef = context.resolve(args[0]);
+      template = this.fetchTemplate(templateRef);
+      remainingData = node.html(value);
+      if (engine.opts.DyeNodes) {
+        node.addClass(HCSS.Options.ClassForValueNode);
+      }
+      return [false, false];
+    };
+
+    Template.prototype.fetchTemplate = function(value) {
+      return $(value).first();
+    };
+
+    Template.prototype.recoverData = function(node, context, args, engine) {
+      var value;
+      value = node.html();
+      context.set(args[0], value);
+      return [false, false];
+    };
+
+    Template.prototype.recoverTemplate = function(node, context) {
+      return node.clone();
+    };
+
+    return Template;
+
+  })();
+
+  $ = jQueryHcss;
+
   __t('HCSS.Commands').Value = (function() {
 
     Value.name = 'Value';
@@ -9476,12 +9580,7 @@ var HCSS = {};
 
     Value.prototype.applyTo = function(node, context, args, engine) {
       var value;
-      console.log("applying value");
-      console.log(node);
-      console.log(args);
       value = context.resolve(args[0]);
-      console.log(value);
-      console.log("--");
       node.html(value);
       if (engine.opts.DyeNodes) {
         node.addClass(HCSS.Options.ClassForValueNode);
@@ -9517,13 +9616,11 @@ var HCSS = {};
     };
 
     With.prototype.applyTo = function(node, context, args, engine) {
-      console.log("apply");
       context.pushKeypath(args[0]);
       return [true, true];
     };
 
     With.prototype.recoverData = function(node, context, args, engine) {
-      console.log("recover data for with");
       context.set(args[0], {});
       context.pushKeypath(args[0]);
       return [true, true];
@@ -9546,6 +9643,7 @@ var HCSS = {};
     function Context(data) {
       this.aliases = {};
       this.stack = [data];
+      this.contextVars = {};
     }
 
     Context.prototype.head = function() {
@@ -9576,6 +9674,11 @@ var HCSS = {};
       return this._setKeypath(aliasedKeypath, value, this.aliases);
     };
 
+    Context.prototype.setZeroIndex = function(idx) {
+      this.contextVars['zeroIndex'] = idx;
+      return this.contextVars['oneIndex'] = idx + 1;
+    };
+
     Context.prototype.resolve = function(keypath) {
       var kp, tryAliases;
       kp = keypath.replace(/^\s+/g, "");
@@ -9586,6 +9689,9 @@ var HCSS = {};
         if (kp[0] === '.') {
           tryAliases = false;
           kp = kp.slice(1, (kp.length - 1) + 1 || 9e9);
+        } else if (kp[0] === '$') {
+          kp = kp.slice(1, (kp.length - 1) + 1 || 9e9);
+          return this._resolveContextVar(kp);
         }
         kp = this._parseKeyPath(kp);
         return this._resolveParsedKeypath(kp, tryAliases);
@@ -9601,6 +9707,14 @@ var HCSS = {};
 
     Context.prototype._parseKeyPath = function(kp) {
       return kp.split(".");
+    };
+
+    Context.prototype._resolveContextVar = function(kp) {
+      if (kp in this.contextVars) {
+        return this.contextVars[kp];
+      } else {
+        return null;
+      }
     };
 
     Context.prototype._resolveParsedKeypath = function(kp, tryAliases) {
@@ -9751,6 +9865,7 @@ var HCSS = {};
 
     Engine.prototype._loadBasicCommandSet = function() {
       this._addCommand(new HCSS.Commands.With());
+      this._addCommand(new HCSS.Commands.RepeatInner());
       return this._addCommand(new HCSS.Commands.Value());
     };
 

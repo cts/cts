@@ -28,7 +28,14 @@ CommandTests = {
      'd':{'foo':'ABC','ted':{'name':'Ted'}},
      'h':'<div data-bind="value:foo">ABC</div><div data-bind="with:ted"><span data-bind="value:name">Ted</span></div>'
    }
-
+  ],
+  'repeat-inner':[
+   {
+     'c':'Basic repeat inner',
+     't':'<ul data-bind="repeat-inner:names"><li data-bind="value:."></li></ul>',
+     'd':{'names':['A','B']},
+     'h':'<ul data-bind="repeat-inner:names"><li data-bind="value:.">A</li><li data-bind="value:.">B</li></ul>'
+   }
   ]
 };
 

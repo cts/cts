@@ -81,6 +81,7 @@ class Engine
 
   _loadBasicCommandSet: () ->
     @._addCommand(new HCSS.Commands.With())
+    @._addCommand(new HCSS.Commands.RepeatInner())
     @._addCommand(new HCSS.Commands.Value())
 
   _addCommand: (command) ->

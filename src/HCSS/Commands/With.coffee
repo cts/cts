@@ -30,7 +30,6 @@ class With
   # Replaces the contents of this node with resolution 
   # Tells engine not to recurse into contents
   applyTo: (node, context, args, engine) ->
-    console.log("apply")
     context.pushKeypath(args[0])
     [true, true]
 
@@ -38,7 +37,6 @@ class With
   #### Side Effects
   #
   recoverData: (node, context, args, engine) ->
-    console.log("recover data for with")
     context.set(args[0], {})
     context.pushKeypath(args[0])
     [true, true]
