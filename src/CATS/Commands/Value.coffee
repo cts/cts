@@ -33,7 +33,7 @@ class Value
     value = context.resolve(args[0])
     node.html(value)
     if engine.opts.DyeNodes
-      node.addClass(HCSS.Options.ClassForValueNode)
+      node.addClass(CATS.Options.ClassForValueNode)
     [false, false]
 
   # Recovers data

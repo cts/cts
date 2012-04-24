@@ -28,7 +28,7 @@ $ = jQueryHcss
 #### Engine
 class Engine
   constructor: (options) ->
-    @opts = $.extend {}, HCSS.Options.Default(), options
+    @opts = $.extend {}, CATS.Options.Default(), options
     @commands = []
     @._loadBasicCommandSet()
 
@@ -36,7 +36,7 @@ class Engine
     # Default to node=HTML and data=window
     node = node || $('html')
     data = data || window
-    context = new HCSS.Context(data)
+    context = new CATS.Context(data)
     # Account for the fact that node might actually be a jQuery selector
     # that has returned a list of elements
     # TODO: consider failing unless node.length == 1
@@ -45,18 +45,18 @@ class Engine
 
   recoverData: (node) ->
     node = node || $('html')
-    context = new HCSS.Context({})
+    context = new CATS.Context({})
     $.each node, (i,e) =>
       @._recoverData($(e), context)
     context.tail()
 
   _render: (node, context) ->
     recurse = true
-    hcss = HCSS.Cascade.rulesForNode(node)
-    if hcss != null
+    cats = CATS.Cascade.rulesForNode(node)
+    if cats != null
       for command in @commands
-        if command.signature() of hcss
-          res = command.applyTo(node, context, hcss[command.signature()], @)
+        if command.signature() of cats 
+          res = command.applyTo(node, context, cats[command.signature()], @)
           # The result object has two values. The first tell us whether
           # or not to continue with the commands for this node. The second
           # tells us whether or not to recurse at the end.
@@ -68,11 +68,11 @@ class Engine
   
   _recoverData: (node, context) ->
     recurse = true
-    hcss = HCSS.Cascade.rulesForNode(node)
-    if hcss != null
+    cats = CATS.Cascade.rulesForNode(node)
+    if cats != null
       for command in @commands
-        if command.signature() of hcss
-          res = command.recoverData(node, context, hcss[command.signature()], @)
+        if command.signature() of cats 
+          res = command.recoverData(node, context, cats[command.signature()], @)
           recurse = recurse and res[1]
           break unless res[0]
     if recurse
@@ -80,9 +80,9 @@ class Engine
         @._recoverData($(kid), context)
 
   _loadBasicCommandSet: () ->
-    @._addCommand(new HCSS.Commands.With())
-    @._addCommand(new HCSS.Commands.RepeatInner())
-    @._addCommand(new HCSS.Commands.Value())
+    @._addCommand(new CATS.Commands.With())
+    @._addCommand(new CATS.Commands.RepeatInner())
+    @._addCommand(new CATS.Commands.Value())
 
   _addCommand: (command) ->
     @commands.push(command)

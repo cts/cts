@@ -77,20 +77,28 @@ class RepeatInner
     context.set(kp, [])
     context.pushKeypath(kp)
 
-    container = $("<div />")
+    firstPush = false
     $.each(node.children, (idx, child) =>
-      if idx % n
-        context.pushIterable({})
-        # extract data
-        # push
-        # clear head
+      if not firstPush
+        firstPush = true
+        context.push({})
+      if idx % n and idx != 0
+        iterable = context.pop()
+        context.head.push(iterable)
+        context.push({})
+        ctx.pushIterable({})
       else
+        container = $("<div />")
         container.append(child.clone())
-    
-    context.set(kp, collection)
+        engine._recoverData(container, context)
+    )
+
+    iterable = context.pop()
+    context.head.push(iterable)
+    context.pop() # popping container
     [false, false]
 
   # Recovers template
   recoverTemplate: (node, context) ->
- 
-
+    # Nothing
+    [false, false]

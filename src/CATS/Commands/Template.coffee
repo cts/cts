@@ -35,7 +35,7 @@ class Template
     remainingData = 
     node.html(value)
     if engine.opts.DyeNodes
-      node.addClass(HCSS.Options.ClassForValueNode)
+      node.addClass(CATS.Options.ClassForValueNode)
     [false, false]
 
   fetchTemplate: (value) ->

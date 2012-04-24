@@ -35,7 +35,7 @@ class Cascade
       block = node.data()["bind"]
       if typeof block != "undefined"
         hadSpecific = yes
-        parsed = HCSS.Parser.parseBlock(block)
+        parsed = CATS.Parser.parseBlock(block)
         ret = $.extend(ret, parsed)
     if hadSpecific
       return ret
