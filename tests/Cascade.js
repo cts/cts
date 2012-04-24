@@ -6,7 +6,7 @@ CascadeTest = function() {
   
   test("Node Decoration Retrieval", function() {
     var node = $("<div data-bind='value:foo'>Bar</div>");
-    var props = HCSS.Cascade.rulesForNode(node);
+    var props = CATS.Cascade.rulesForNode(node);
     equal(props["value"][0], "foo");
   });
 

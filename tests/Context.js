@@ -23,7 +23,7 @@ ContextTest = function() {
   module("Context");
 
   test("Key-path handling", function() {
-    var ctx = new HCSS.Context(tree);
+    var ctx = new CATS.Context(tree);
     equal(ctx.resolve("root"), true);
     equal(ctx.resolve("c1.name"), "Child 1");
     equal(ctx.resolve("c2.name"), "Child 2");
@@ -31,7 +31,7 @@ ContextTest = function() {
   });
 
   test("Stack push and pop", function() {
-    var ctx = new HCSS.Context(tree);
+    var ctx = new CATS.Context(tree);
     ctx.push(ctx.resolve("c1"));
     equal(ctx.resolve("name"), "Child 1");
     ctx.push(ctx.resolve("c2"));
@@ -41,7 +41,7 @@ ContextTest = function() {
   });
 
   test("Cascade", function() {
-    var ctx = new HCSS.Context(tree);
+    var ctx = new CATS.Context(tree);
     ctx.push(ctx.resolve("c1"));
     ctx.push(ctx.resolve("c2"));
     equal(ctx.resolve(".a"), null);

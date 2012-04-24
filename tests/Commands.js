@@ -60,7 +60,7 @@ CreateTest = function(command, idx) {
   var t = T['t'];
   var d = T['d'];
   var h = T['h'];
-  var engine = new HCSS.Engine({
+  var engine = new CATS.Engine({
     "DyeNodes":false
   });
 

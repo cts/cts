@@ -6,7 +6,7 @@ vendor 'jquery', 'vendors/jquery.js'
 src 'src'
 
 # MODULES
-module 'cats' # module folder name (inside src)
+module 'CATS' # module folder name (inside src)
 	vendors: ['jquery'] # (ordered vendor's array)
 	bare: false # default = false (compile coffeescript with bare option)
 	packaging: true # default = true
@@ -18,7 +18,7 @@ module 'cats' # module folder name (inside src)
 
 # BUILD ROUTINES
 build "main"
-	modules: ['cats']
+	modules: ['CATS']
 	release: 'release/cats.js'
 	debug: 'release/cats-debug.js'
 
