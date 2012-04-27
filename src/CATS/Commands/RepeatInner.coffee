@@ -77,24 +77,29 @@ class RepeatInner
     context.set(kp, [])
     context.pushKeypath(kp)
 
-    firstPush = false
-    $.each(node.children, (idx, child) =>
-      if not firstPush
-        firstPush = true
+    addIterable = (c) ->
+      console.log("Adding Iterable")
+      iterable = c.pop()
+      console.log(iterable)
+      c.head().push(iterable)
+      console.log("Container is  is: " + JSON.stringify(c.head()))
+   
+    firstPush = true 
+    $.each(node.children(), (idx, child) =>
+      console.log("Head on iteration " + idx + " is: " + JSON.stringify(context.head()))
+      if firstPush
+        firstPush = false 
         context.push({})
-      if idx % n and idx != 0
-        iterable = context.pop()
-        context.head.push(iterable)
+      if (idx % n == 0) and (idx != 0)
+        addIterable(context)
         context.push({})
-        ctx.pushIterable({})
-      else
-        container = $("<div />")
-        container.append(child.clone())
-        engine._recoverData(container, context)
+      
+      container = $("<div />")
+      container.append($(child).clone())
+      console.log("Recovering data: " + container.html())
+      engine._recoverData(container, context)
     )
-
-    iterable = context.pop()
-    context.head.push(iterable)
+    addIterable(context)
     context.pop() # popping container
     [false, false]
 

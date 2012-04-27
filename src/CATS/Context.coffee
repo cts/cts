@@ -90,6 +90,7 @@ class Context
       return @._resolveParsedKeypath(kp, tryAliases)
 
   set: (keypath, value) ->
+    console.log("SET " + keypath + " to " + value)
     if keypath == "."
       @stack[@stack.length - 1] = value
     else 

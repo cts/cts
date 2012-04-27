@@ -1,7 +1,7 @@
 window.Tests = window.Tests || [];
 
 CommandTests = {
- 'value':[
+/* 'value':[
    {
      'c':'Basic Value Printing',
      't':'<span data-bind="value:foo">Bar</span>',
@@ -28,7 +28,7 @@ CommandTests = {
      'd':{'foo':'ABC','ted':{'name':'Ted'}},
      'h':'<div data-bind="value:foo">ABC</div><div data-bind="with:ted"><span data-bind="value:name">Ted</span></div>'
    }
-  ],
+  ], */
   'repeat-inner':[
    {
      'c':'Basic repeat inner',
@@ -74,8 +74,8 @@ CreateTest = function(command, idx) {
 
     // Can reuse recovered data on own template
     var dPrime = engine.recoverData(tNode);
-    console.log("recovered data");
-    console.log(dPrime);
+    //console.log("recovered data");
+    //console.log(dPrime);
     var tPrime = $(t);
     engine.render(tPrime,dPrime);
 
