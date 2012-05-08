@@ -81,6 +81,10 @@ class Engine
 
   _loadBasicCommandSet: () ->
     @._addCommand(new CATS.Commands.With())
+    @._addCommand(new CATS.Commands.Data())
+    @._addCommand(new CATS.Commands.IfExist())
+    @._addCommand(new CATS.Commands.IfNExist())
+    @._addCommand(new CATS.Commands.Template())
     @._addCommand(new CATS.Commands.RepeatInner())
     @._addCommand(new CATS.Commands.Value())
 

@@ -1,6 +1,6 @@
 class Options
   @Default: () ->
-    return {
-      "DyeNodes" : true,
-      "ClassForValueNode" : "hcssValueNode"
-    }
+  @AttrForSavedData = "catsdatastash" 
+  @ClassForValueNode= "cats-DataValueNode" 
+  @ClassForInvisible = "cats-InsivibleNode" 
+  @DyeNodes = true

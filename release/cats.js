@@ -9464,6 +9464,133 @@ var CATS = {};
 
   $ = jQueryHcss;
 
+  __t('CATS.Commands').Data = (function() {
+
+    Data.name = 'Data';
+
+    function Data() {}
+
+    Data.prototype.signature = function() {
+      return "data";
+    };
+
+    Data.prototype.applyTo = function(node, context, args, engine) {
+      engine._recoverData(node, context);
+      return [true, true];
+    };
+
+    Data.prototype.recoverData = function(node, context, args, engine) {
+      return [true, true];
+    };
+
+    Data.prototype.recoverTemplate = function(node, context) {
+      return node.clone();
+    };
+
+    return Data;
+
+  })();
+
+  $ = jQueryHcss;
+
+  __t('CATS.Commands').IfExist = (function() {
+
+    IfExist.name = 'IfExist';
+
+    function IfExist() {}
+
+    IfExist.prototype.signature = function() {
+      return "if-exist";
+    };
+
+    IfExist.prototype.applyTo = function(node, context, args, engine) {
+      var data, value;
+      value = context.resolve(args[0]);
+      if (value === null) {
+        console.log("MAKING NULL");
+        CATS.Util.hideNode(node);
+        return [false, false];
+      } else {
+        CATS.Util.showNode(node);
+        data = {};
+        data[args[0]] = value;
+        CATS.Util.stashData(node, this.signature(), data);
+        return [true, true];
+      }
+    };
+
+    IfExist.prototype.recoverData = function(node, context, args, engine) {
+      var data, k, v;
+      if (CATS.Util.nodeHidden(node)) {
+        return [false, false];
+      }
+      data = CATS.Util.getDataStash(node, this.signature());
+      for (k in data) {
+        v = data[k];
+        context.set(k, v);
+      }
+      return [true, true];
+    };
+
+    IfExist.prototype.recoverTemplate = function(node, context) {
+      return node.clone();
+    };
+
+    return IfExist;
+
+  })();
+
+  $ = jQueryHcss;
+
+  __t('CATS.Commands').IfNExist = (function() {
+
+    IfNExist.name = 'IfNExist';
+
+    function IfNExist() {}
+
+    IfNExist.prototype.signature = function() {
+      return "if-nexist";
+    };
+
+    IfNExist.prototype.applyTo = function(node, context, args, engine) {
+      var data, value;
+      value = context.resolve(args[0]);
+      if (value !== null) {
+        CATS.Util.hideNode(node);
+        data = {};
+        data[args[0]] = value;
+        CATS.Util.stashData(node, this.signature(), data);
+        return [false, false];
+      } else {
+        CATS.Util.showNode(node);
+        return [true, true];
+      }
+    };
+
+    IfNExist.prototype.recoverData = function(node, context, args, engine) {
+      var data, k, v;
+      if (CATS.Util.nodeHidden(node)) {
+        data = CATS.Util.getDataStash(node, this.signature());
+        for (k in data) {
+          v = data[k];
+          context.set(k, v);
+        }
+        return [false, false];
+      } else {
+        return [true, true];
+      }
+    };
+
+    IfNExist.prototype.recoverTemplate = function(node, context) {
+      return node.clone();
+    };
+
+    return IfNExist;
+
+  })();
+
+  $ = jQueryHcss;
+
   __t('CATS.Commands').RepeatInner = (function() {
 
     RepeatInner.name = 'RepeatInner';
@@ -9571,29 +9698,31 @@ var CATS = {};
     function Template() {}
 
     Template.prototype.signature = function() {
-      return "value";
+      return "template";
     };
 
     Template.prototype.applyTo = function(node, context, args, engine) {
-      var remainingData, template, templateRef;
-      templateRef = context.resolve(args[0]);
+      var template, templateRef;
+      templateRef = args[0];
       template = this.fetchTemplate(templateRef);
-      remainingData = node.html(value);
-      if (engine.opts.DyeNodes) {
-        node.addClass(CATS.Options.ClassForValueNode);
-      }
-      return [false, false];
+      return this._applyTo(node, context, args, engine, template);
     };
 
-    Template.prototype.fetchTemplate = function(value) {
-      return $(value).first();
+    Template.prototype.fetchTemplate = function(ref) {
+      return $(ref).html();
+    };
+
+    Template.prototype._applyTo = function(node, context, args, engine, template) {
+      console.log(node.parent().html());
+      node.html(template);
+      console.log("Just resplaced TEMPLATE of node");
+      console.log(node.html());
+      console.log(node.parent().html());
+      return [true, true];
     };
 
     Template.prototype.recoverData = function(node, context, args, engine) {
-      var value;
-      value = node.html();
-      context.set(args[0], value);
-      return [false, false];
+      return [true, true];
     };
 
     Template.prototype.recoverTemplate = function(node, context) {
@@ -9909,6 +10038,10 @@ var CATS = {};
 
     Engine.prototype._loadBasicCommandSet = function() {
       this._addCommand(new CATS.Commands.With());
+      this._addCommand(new CATS.Commands.Data());
+      this._addCommand(new CATS.Commands.IfExist());
+      this._addCommand(new CATS.Commands.IfNExist());
+      this._addCommand(new CATS.Commands.Template());
       this._addCommand(new CATS.Commands.RepeatInner());
       return this._addCommand(new CATS.Commands.Value());
     };
@@ -9927,12 +10060,15 @@ var CATS = {};
 
     function Options() {}
 
-    Options.Default = function() {
-      return {
-        "DyeNodes": true,
-        "ClassForValueNode": "hcssValueNode"
-      };
-    };
+    Options.Default = function() {};
+
+    Options.AttrForSavedData = "catsdatastash";
+
+    Options.ClassForValueNode = "cats-DataValueNode";
+
+    Options.ClassForInvisible = "cats-InsivibleNode";
+
+    Options.DyeNodes = true;
 
     return Options;
 
@@ -9985,6 +10121,60 @@ var CATS = {};
     };
 
     return Parser;
+
+  })();
+
+  __t('CATS').Util = (function() {
+
+    Util.name = 'Util';
+
+    function Util() {}
+
+    Util.hideNode = function(node) {
+      return node.addClass(CATS.Options.ClassForInvisible);
+    };
+
+    Util.showNode = function(node) {
+      return node.removeClass(CATS.Options.ClassForInvisible);
+    };
+
+    Util.nodeHidden = function(node) {
+      return node.hasClass(CATS.Options.ClassForInvisible);
+    };
+
+    Util.stashData = function(node, command, dict) {
+      var attr, str;
+      attr = node.attr("data-" + CATS.Options.AttrForSavedData);
+      if (!(attr != null) || attr === null) {
+        attr = {};
+      }
+      attr[command] = dict;
+      str = JSON.stringify(attr);
+      str = str.replace(/\\/g, "\\\\");
+      str = str.replace(/'/g, "\\'");
+      str = str.replace(/"/g, "'");
+      return node.attr("data-" + CATS.Options.AttrForSavedData, str);
+    };
+
+    Util.getDataStash = function(node, command) {
+      var stash, str;
+      str = node.attr("data-" + CATS.Options.AttrForSavedData);
+      if (typeof str !== "undefined") {
+        str = str.replace(/([^\\])'/g, '$1"');
+        str = str.replace(/\\'/g, "'");
+        str = str.replace(/\\\\/g, "\\");
+        stash = JSON.parse(str);
+        if (command in stash) {
+          return stash[command];
+        } else {
+          return {};
+        }
+      } else {
+        return {};
+      }
+    };
+
+    return Util;
 
   })();
 

@@ -20,39 +20,48 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 $ = jQueryHcss
 
-class Template
+class IfNExist
   constructor: () ->
 
   signature: () ->
-    "template"
+    "if-nexist"
 
+  # Interprets arg1 as key-path into context
+  # Replaces the contents of this node with resolution 
+  # Tells engine not to recurse into contents
   applyTo: (node, context, args, engine) ->
-    # TODO: Enable cross-site linking here.
-    templateRef = args[0]
-    template = @.fetchTemplate(templateRef)
-    @._applyTo(node, context, args, engine, template)
-
-  fetchTemplate: (ref) ->
-    $(ref).html()
-
-  # This method is partitioned out here for testing
-  # purposes (so we can test the method in isolation from
-  # fetching some fragment from the dom.
-  _applyTo: (node, context, args, engine, template) ->
-    console.log(node.parent().html())
-    node.html(template)
-    console.log("Just resplaced TEMPLATE of node")
-    console.log(node.html())
-    console.log(node.parent().html())
-    [true, true]
+    value = context.resolve(args[0])
+    if value != null
+      # XXX TODO: This is going to cause recovery problems
+      # if it came from the bookmarks. Need to account for that somehow
+      CATS.Util.hideNode(node)
+      data = {} # Odd, I can't seem to do this in one line w/o coffee failing
+      data[args[0]] = value
+      CATS.Util.stashData(node, @.signature(), data)
+      return [false, false]
+    else
+      CATS.Util.showNode(node)
+      return [true, true]
 
   # Recovers data
   #### Side Effects
-  #
   recoverData: (node, context, args, engine) ->
-    [true, true]
+    if CATS.Util.nodeHidden(node)
+      # Oddly, if the node is hidden, it means something was there.
+      # So we recover the data but we do not continue recursion.
+      # Bizarre
+      data = CATS.Util.getDataStash(node, @.signature())
+      for k of data
+        v = data[k]
+        context.set(k,v)
+      return [false, false]
+    else
+      # If it's not hidden, it means the thing *didn't* exist, which means
+      # there is no data to recover but we should continue extraction down this 
+      # subtree
+      return [true, true]
 
   # Recovers template
   recoverTemplate: (node, context) ->
     node.clone()
-
+ 

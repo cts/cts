@@ -20,30 +20,15 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 $ = jQueryHcss
 
-class Template
+class Data
   constructor: () ->
 
   signature: () ->
-    "template"
+    "data"
 
   applyTo: (node, context, args, engine) ->
-    # TODO: Enable cross-site linking here.
-    templateRef = args[0]
-    template = @.fetchTemplate(templateRef)
-    @._applyTo(node, context, args, engine, template)
-
-  fetchTemplate: (ref) ->
-    $(ref).html()
-
-  # This method is partitioned out here for testing
-  # purposes (so we can test the method in isolation from
-  # fetching some fragment from the dom.
-  _applyTo: (node, context, args, engine, template) ->
-    console.log(node.parent().html())
-    node.html(template)
-    console.log("Just resplaced TEMPLATE of node")
-    console.log(node.html())
-    console.log(node.parent().html())
+    # TODO: Decide if we want to offer an option to blow away context
+    engine._recoverData(node, context)
     [true, true]
 
   # Recovers data
