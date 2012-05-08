@@ -9464,6 +9464,44 @@ var CATS = {};
 
   $ = jQueryHcss;
 
+  __t('CATS.Commands').Attr = (function() {
+
+    Attr.name = 'Attr';
+
+    function Attr() {}
+
+    Attr.prototype.signature = function() {
+      return "attr";
+    };
+
+    Attr.prototype.applyTo = function(node, context, args, engine) {
+      var attr, keypath, value;
+      attr = args[0];
+      keypath = args[1];
+      value = context.resolve(keypath);
+      node.attr(attr, value);
+      return [true, true];
+    };
+
+    Attr.prototype.recoverData = function(node, context, args, engine) {
+      var attr, keypath, value;
+      attr = args[0];
+      keypath = args[1];
+      value = node.attr(attr);
+      context.set(keypath, value);
+      return [true, true];
+    };
+
+    Attr.prototype.recoverTemplate = function(node, context) {
+      return node.clone();
+    };
+
+    return Attr;
+
+  })();
+
+  $ = jQueryHcss;
+
   __t('CATS.Commands').Data = (function() {
 
     Data.name = 'Data';
@@ -9507,7 +9545,6 @@ var CATS = {};
       var data, value;
       value = context.resolve(args[0]);
       if (value === null) {
-        console.log("MAKING NULL");
         CATS.Util.hideNode(node);
         return [false, false];
       } else {
@@ -9620,7 +9657,7 @@ var CATS = {};
         }
       });
       if (collection.length === 0) {
-        template.hide();
+        CATS.Util.hideNode(template);
       } else {
         templateHtml = node.html();
         node.html("");
@@ -9631,6 +9668,8 @@ var CATS = {};
           newNode = $(templateHtml);
           context.push(elem);
           node.append(newNode);
+          console.log("repeat-inner rending");
+          console.log(newNode);
           engine._render(newNode, context);
           context.pop();
           zeroIndex += 1;
@@ -9959,14 +9998,11 @@ var CATS = {};
     }
 
     Engine.prototype.render = function(node, data) {
-      var context,
-        _this = this;
+      var context;
       node = node || $('html');
       data = data || window;
       context = new CATS.Context(data);
-      return $.each(node, function(i, e) {
-        return _this._render($(e), context);
-      });
+      return this._render(node, context);
     };
 
     Engine.prototype.recoverData = function(node) {
@@ -9980,32 +10016,36 @@ var CATS = {};
       return context.tail();
     };
 
-    Engine.prototype._render = function(node, context) {
-      var cats, command, kid, recurse, res, _i, _j, _len, _len1, _ref, _ref1, _results;
-      recurse = true;
-      cats = CATS.Cascade.rulesForNode(node);
-      if (cats !== null) {
-        _ref = this.commands;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          command = _ref[_i];
-          if (command.signature() in cats) {
-            res = command.applyTo(node, context, cats[command.signature()], this);
-            recurse = recurse && res[1];
-            if (!res[0]) {
-              break;
+    Engine.prototype._render = function(jqnode, context) {
+      var _this = this;
+      return $.each(jqnode, function(i, node) {
+        var cats, command, kid, recurse, res, _i, _j, _len, _len1, _ref, _ref1, _results;
+        node = $(node);
+        recurse = true;
+        cats = CATS.Cascade.rulesForNode(node);
+        if (cats !== null) {
+          _ref = _this.commands;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            command = _ref[_i];
+            if (command.signature() in cats) {
+              res = command.applyTo(node, context, cats[command.signature()], _this);
+              recurse = recurse && res[1];
+              if (!res[0]) {
+                break;
+              }
             }
           }
         }
-      }
-      if (recurse) {
-        _ref1 = node.children();
-        _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          kid = _ref1[_j];
-          _results.push(this._render($(kid), context));
+        if (recurse) {
+          _ref1 = node.children();
+          _results = [];
+          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+            kid = _ref1[_j];
+            _results.push(_this._render($(kid), context));
+          }
+          return _results;
         }
-        return _results;
-      }
+      });
     };
 
     Engine.prototype._recoverData = function(node, context) {
@@ -10041,6 +10081,7 @@ var CATS = {};
       this._addCommand(new CATS.Commands.Data());
       this._addCommand(new CATS.Commands.IfExist());
       this._addCommand(new CATS.Commands.IfNExist());
+      this._addCommand(new CATS.Commands.Attr());
       this._addCommand(new CATS.Commands.Template());
       this._addCommand(new CATS.Commands.RepeatInner());
       return this._addCommand(new CATS.Commands.Value());

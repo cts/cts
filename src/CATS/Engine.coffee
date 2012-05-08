@@ -37,11 +37,7 @@ class Engine
     node = node || $('html')
     data = data || window
     context = new CATS.Context(data)
-    # Account for the fact that node might actually be a jQuery selector
-    # that has returned a list of elements
-    # TODO: consider failing unless node.length == 1
-    $.each node, (i,e) =>
-      @._render($(e), context)
+    @._render(node, context)
 
   recoverData: (node) ->
     node = node || $('html')
@@ -50,21 +46,25 @@ class Engine
       @._recoverData($(e), context)
     context.tail()
 
-  _render: (node, context) ->
-    recurse = true
-    cats = CATS.Cascade.rulesForNode(node)
-    if cats != null
-      for command in @commands
-        if command.signature() of cats 
-          res = command.applyTo(node, context, cats[command.signature()], @)
-          # The result object has two values. The first tell us whether
-          # or not to continue with the commands for this node. The second
-          # tells us whether or not to recurse at the end.
-          recurse = recurse and res[1]
-          break unless res[0]
-    if recurse
-      for kid in node.children()
-        @._render($(kid), context)
+  _render: (jqnode, context) ->
+   # Account for the fact that node might actually be a jQuery selector
+   # that has returned a list of elements
+   $.each jqnode, (i,node) =>
+     node = $(node)
+     recurse = true
+     cats = CATS.Cascade.rulesForNode(node)
+     if cats != null
+       for command in @commands
+         if command.signature() of cats 
+           res = command.applyTo(node, context, cats[command.signature()], @)
+           # The result object has two values. The first tell us whether
+           # or not to continue with the commands for this node. The second
+           # tells us whether or not to recurse at the end.
+           recurse = recurse and res[1]
+           break unless res[0]
+     if recurse
+       for kid in node.children()
+         @._render($(kid), context)
   
   _recoverData: (node, context) ->
     recurse = true
@@ -84,6 +84,7 @@ class Engine
     @._addCommand(new CATS.Commands.Data())
     @._addCommand(new CATS.Commands.IfExist())
     @._addCommand(new CATS.Commands.IfNExist())
+    @._addCommand(new CATS.Commands.Attr())
     @._addCommand(new CATS.Commands.Template())
     @._addCommand(new CATS.Commands.RepeatInner())
     @._addCommand(new CATS.Commands.Value())

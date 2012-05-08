@@ -20,42 +20,31 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 $ = jQueryHcss
 
-class IfExist
+class Attr
   constructor: () ->
 
   signature: () ->
-    "if-exist"
+    "attr"
 
   # Interprets arg1 as key-path into context
   # Replaces the contents of this node with resolution 
   # Tells engine not to recurse into contents
   applyTo: (node, context, args, engine) ->
-    value = context.resolve(args[0])
-    if value == null
-      CATS.Util.hideNode(node)
-      return [false, false]
-    else
-      CATS.Util.showNode(node)
-      # Save the data used to make this decision 
-      # XXX TODO: This is going to cause recovery problems
-      # if it came from the bookmarks. Need to account for that somehow
-      data = {} # Odd, I can't seem to do this in one line w/o coffee failing
-      data[args[0]] = value
-      CATS.Util.stashData(node, @.signature(), data)
-      return [true, true]
+    attr = args[0]
+    keypath = args[1]
+    value = context.resolve(keypath)
+    node.attr(attr, value)
+    [true, true]
 
   # Recovers data
   #### Side Effects
+  #
   recoverData: (node, context, args, engine) ->
-    if CATS.Util.nodeHidden(node)
-      return [false, false]
-    
-    data = CATS.Util.getDataStash(node, @.signature())
-    for k of data
-      v = data[k]
-      context.set(k,v)
-    
-    return [true, true]
+    attr = args[0]
+    keypath = args[1]
+    value = node.attr(attr)   
+    context.set(keypath, value)
+    [true, true]
 
   # Recovers template
   recoverTemplate: (node, context) ->

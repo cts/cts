@@ -46,9 +46,7 @@ class RepeatInner
         $(child).remove()
 
     if collection.length == 0
-      # XXX
-      # TODO: Need to do this in recoverable fashion
-      template.hide()
+      CATS.Util.hideNode(template)
     else
       templateHtml = node.html()
       node.html("")
@@ -58,6 +56,8 @@ class RepeatInner
         newNode = $(templateHtml)
         context.push(elem)
         node.append(newNode)
+        console.log("repeat-inner rending")
+        console.log(newNode)
         engine._render(newNode, context)
         context.pop()
         zeroIndex += 1
