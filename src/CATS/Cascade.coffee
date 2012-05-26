@@ -26,20 +26,53 @@
 $ = jQueryHcss
 
 #### Cascade
+# TODO: This doesn't implement the cascade correctly
 class Cascade
-  # TODO: Have this also look at the global sheets
-  @rulesForNode: (node) ->
+  @.blocks = {}
+
+  @attachSheet: (str) ->
+    blks = CATS.Parser.parseBlocks(str)
+    # TODO: This will blow over old keys
+    # Need to fix
+    console.log(Cascade.blocks)
+    $.extend(Cascade.blocks, blks)
+    console.log(Cascade.blocks)
+
+  @sheetRulesForNode: (node) ->
+    ret = {}
+    hit = false
+    for key of Cascade.blocks
+      if node.is(key)
+        hit = true
+        $.extend(ret,Cascade.blocks[key])
+    if not hit
+      return null
+    ret
+
+  @inlineRulesForNode: (node) ->
     ret = {}
     hadSpecific = no
     if node.data?
-      block = node.data()["bind"]
-      if typeof block != "undefined"
-        hadSpecific = yes
-        parsed = CATS.Parser.parseBlock(block)
-        ret = $.extend(ret, parsed)
+      data = node.data()
+      if typeof data != "undefined"
+        block = node.data()["bind"]
+        if typeof block != "undefined"
+          hadSpecific = yes
+          parsed = CATS.Parser.parseBlock(block)
+          ret = $.extend(ret, parsed)
     if hadSpecific
       return ret
     else
       return null
 
-
+  @rulesForNode: (node) ->
+    sheetRules = Cascade.sheetRulesForNode(node)
+    inlineRules = Cascade.inlineRulesForNode(node)
+    if sheetRules == null and inlineRules == null
+      return null
+    rules = {}
+    if sheetRules != null
+      $.extend(rules,sheetRules)
+    if inlineRules != null
+      $.extend(rules,inlineRules)
+    rules

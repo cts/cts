@@ -93,11 +93,7 @@ class RepeatInner
       if (idx % n == 0) and (idx != 0)
         addIterable(context)
         context.push({})
-      
-      container = $("<div />")
-      container.append($(child).clone())
-      console.log("Recovering data: " + container.html())
-      engine._recoverData(container, context)
+      engine._recoverData($(child), context)
     )
     addIterable(context)
     context.pop() # popping container

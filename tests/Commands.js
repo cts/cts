@@ -1,7 +1,7 @@
 window.Tests = window.Tests || [];
 
 CommandTests = {
-/* 'value':[
+ 'value':[
    {
      'c':'Basic Value Printing',
      't':'<span data-bind="value:foo">Bar</span>',
@@ -54,7 +54,7 @@ CommandTests = {
      'd':{'data':{'names':[{'name':'A'},{'name':'B'}]}},
      'h':'<ul data-bind="with:data; repeat-inner:names"><li data-bind="value:name">A</li><li data-bind="value:name">B</li></ul>'
    }
-  ], */
+  ], 
   'if-exist':[
   {
      'c':'Basic if-exist',
