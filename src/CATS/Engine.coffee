@@ -31,6 +31,7 @@ class Engine
     @opts = $.extend {}, CATS.Options.Default(), options
     @commands = []
     @._loadBasicCommandSet()
+    CATS.Cascade.attachInlineSheets()
 
   render: (node, data) ->
     # Default to node=HTML and data=window
@@ -55,7 +56,7 @@ class Engine
      cats = CATS.Cascade.rulesForNode(node)
      if cats != null
        for command in @commands
-         if command.signature() of cats 
+         if command.signature() of cats
            res = command.applyTo(node, context, cats[command.signature()], @)
            # The result object has two values. The first tell us whether
            # or not to continue with the commands for this node. The second
@@ -71,7 +72,7 @@ class Engine
     cats = CATS.Cascade.rulesForNode(node)
     if cats != null
       for command in @commands
-        if command.signature() of cats 
+        if command.signature() of cats
           res = command.recoverData(node, context, cats[command.signature()], @)
           recurse = recurse and res[1]
           break unless res[0]

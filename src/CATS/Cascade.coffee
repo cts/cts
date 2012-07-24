@@ -30,14 +30,27 @@ $ = jQueryHcss
 class Cascade
   @.blocks = {}
 
-  @attachSheet: (str) ->
+  # Searches through the page and attaches the contents of any
+  # linked elements with type text/cts.
+  @attachRemoteSheets: () =>
+    alert("implement remote cts import!")
+
+  # Searches through the page and attaches the contents of any
+  # link element with type text/cts.
+  @attachInlineSheets: () =>
+    $.each($('script[type="text/cts"]'), (idx, elem) =>
+      @.attachCtsString($(elem).html())
+    )
+
+  # Parses in a string containng CTS rules.
+  @attachCtsString: (str) ->
     blks = CATS.Parser.parseBlocks(str)
-    # TODO: This will blow over old keys
-    # Need to fix
+    # TODO(eob): This will blow over old keys
     console.log(Cascade.blocks)
     $.extend(Cascade.blocks, blks)
     console.log(Cascade.blocks)
 
+  # Returns externally defined CTS rules that apply to a node
   @sheetRulesForNode: (node) ->
     ret = {}
     hit = false
@@ -49,6 +62,7 @@ class Cascade
       return null
     ret
 
+  # Returns any inlined CTS rules that apply to a node
   @inlineRulesForNode: (node) ->
     ret = {}
     hadSpecific = no
@@ -65,6 +79,7 @@ class Cascade
     else
       return null
 
+  # Returns the complete set of CTS rules that apply to a node
   @rulesForNode: (node) ->
     sheetRules = Cascade.sheetRulesForNode(node)
     inlineRules = Cascade.inlineRulesForNode(node)
