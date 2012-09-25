@@ -1,6 +1,6 @@
 class Options
   @Default: () ->
-  @AttrForSavedData = "catsdatastash" 
-  @ClassForValueNode= "cats-DataValueNode" 
-  @ClassForInvisible = "cats-InvisibleNode" 
+  @AttrForSavedData = "ctsstash" 
+  @ClassForValueNode= "cts-DataValueNode" 
+  @ClassForInvisible = "cts-InvisibleNode" 
   @DyeNodes = true

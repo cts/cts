@@ -9423,92 +9423,9 @@ __t = function(ns) {
 var CATS = {};
 
 (function() {
-  var $;
-
-  $ = jQueryHcss;
-
-  __t('CATS').Cascade = (function() {
-
-    function Cascade() {}
-
-    Cascade.blocks = {};
-
-    Cascade.attachRemoteSheets = function() {
-      return alert("implement remote cts import!");
-    };
-
-    Cascade.attachInlineSheets = function() {
-      return $.each($('script[type="text/cts"]'), function(idx, elem) {
-        return Cascade.attachCtsString($(elem).html());
-      });
-    };
-
-    Cascade.attachCtsString = function(str) {
-      var blks;
-      blks = CATS.Parser.parseBlocks(str);
-      console.log(Cascade.blocks);
-      $.extend(Cascade.blocks, blks);
-      return console.log(Cascade.blocks);
-    };
-
-    Cascade.sheetRulesForNode = function(node) {
-      var hit, key, ret;
-      ret = {};
-      hit = false;
-      for (key in Cascade.blocks) {
-        if (node.is(key)) {
-          hit = true;
-          $.extend(ret, Cascade.blocks[key]);
-        }
-      }
-      if (!hit) {
-        return null;
-      }
-      return ret;
-    };
-
-    Cascade.inlineRulesForNode = function(node) {
-      var block, data, hadSpecific, parsed, ret;
-      ret = {};
-      hadSpecific = false;
-      if (node.data != null) {
-        data = node.data();
-        if (typeof data !== "undefined") {
-          block = node.data()["bind"];
-          if (typeof block !== "undefined") {
-            hadSpecific = true;
-            parsed = CATS.Parser.parseBlock(block);
-            ret = $.extend(ret, parsed);
-          }
-        }
-      }
-      if (hadSpecific) {
-        return ret;
-      } else {
-        return null;
-      }
-    };
-
-    Cascade.rulesForNode = function(node) {
-      var inlineRules, rules, sheetRules;
-      sheetRules = Cascade.sheetRulesForNode(node);
-      inlineRules = Cascade.inlineRulesForNode(node);
-      if (sheetRules === null && inlineRules === null) {
-        return null;
-      }
-      rules = {};
-      if (sheetRules !== null) {
-        $.extend(rules, sheetRules);
-      }
-      if (inlineRules !== null) {
-        $.extend(rules, inlineRules);
-      }
-      return rules;
-    };
-
-    return Cascade;
-
-  }).call(this);
+  var $, RulesState,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   $ = jQueryHcss;
 
@@ -10126,11 +10043,11 @@ var CATS = {};
 
     Options.Default = function() {};
 
-    Options.AttrForSavedData = "catsdatastash";
+    Options.AttrForSavedData = "ctsstash";
 
-    Options.ClassForValueNode = "cats-DataValueNode";
+    Options.ClassForValueNode = "cts-DataValueNode";
 
-    Options.ClassForInvisible = "cats-InvisibleNode";
+    Options.ClassForInvisible = "cts-InvisibleNode";
 
     Options.DyeNodes = true;
 
@@ -10186,8 +10103,6 @@ var CATS = {};
     };
 
     Parser.foldInPropertyValue = function(ret, pv) {
-      console.log(pv.property);
-      console.log(ret);
       if (!("target" in pv)) {
         pv["target"] = ".";
       }
@@ -10235,6 +10150,196 @@ var CATS = {};
     };
 
     return Parser;
+
+  })();
+
+  $ = jQueryHcss;
+
+  RulesState = {
+    NONE_LOADED: 0,
+    WAIT_FOR_REMOTE: 1
+  };
+
+  __t('CATS').Rules = (function() {
+
+    function Rules() {
+      this._loadLinkResponse = __bind(this._loadLinkResponse, this);
+
+      this._remoteLoadFinished = __bind(this._remoteLoadFinished, this);
+
+      this._findCtsLinks = __bind(this._findCtsLinks, this);
+
+      this._globalRulesForNode = __bind(this._globalRulesForNode, this);
+
+      this._inlineRulesForNode = __bind(this._inlineRulesForNode, this);
+
+      this._incorporateBlocks = __bind(this._incorporateBlocks, this);
+
+      this.rulesForNode = __bind(this.rulesForNode, this);
+
+      this.loadLocalElement = __bind(this.loadLocalElement, this);
+
+      this.loadLocal = __bind(this.loadLocal, this);
+
+      this.loadLink = __bind(this.loadLink, this);
+
+      this.loadLinked = __bind(this.loadLinked, this);
+
+      this.load = __bind(this.load, this);
+
+      this.setCallback = __bind(this.setCallback, this);
+      this.blocks = {};
+      this.loadedUrls = [];
+      this.urlsToLoad = 0;
+      this.callback = null;
+      this.state = RulesState.NONE_LOADED;
+    }
+
+    Rules.prototype.setCallback = function(callback) {
+      return this.callback = callback;
+    };
+
+    Rules.prototype.load = function() {
+      this.loadLinked();
+      if (this.state === !RulesState.WAIT_FOR_REMOTE) {
+        return this._remoteLoadFinished();
+      }
+    };
+
+    Rules.prototype.loadLinked = function() {
+      var link, links, linksToLoad, _i, _j, _len, _len1, _results;
+      links = this._findCtsLinks();
+      linksToLoad = [];
+      for (_i = 0, _len = links.length; _i < _len; _i++) {
+        link = links[_i];
+        if (__indexOf.call(this.loadedUrls, link) < 0) {
+          linksToLoad.push(link);
+        }
+      }
+      this.urlsToLoad = linksToLoad.length;
+      _results = [];
+      for (_j = 0, _len1 = linksToLoad.length; _j < _len1; _j++) {
+        link = linksToLoad[_j];
+        this.state = RulesState.WAIT_FOR_REMOTE;
+        _results.push(this.loadLink(link));
+      }
+      return _results;
+    };
+
+    Rules.prototype.loadLink = function(link) {
+      var _this = this;
+      return $.ajax({
+        url: link,
+        dataType: 'text',
+        success: this._loadLinkResponse,
+        beforeSend: function(xhr, settings) {
+          return xhr.url = link;
+        }
+      });
+    };
+
+    Rules.prototype.loadLocal = function() {
+      var _this = this;
+      return $.each($('script[type="text/cts"]'), function(idx, elem) {
+        var e;
+        e = $(elem);
+        if (!e.attr("src")) {
+          return _this.loadLocalElement(e);
+        }
+      });
+    };
+
+    Rules.prototype.loadLocalElement = function(elem) {
+      var blocks, ctsText;
+      ctsText = elem.html();
+      blocks = CATS.Parser.parseBlocks(ctsText);
+      return this._incorporateBlocks(blocks);
+    };
+
+    Rules.prototype.rulesForNode = function(node) {
+      var global, inline, rules;
+      global = this._globalRulesForNode(node);
+      inline = this._inlineRulesForNode(node);
+      if (!global && !inline) {
+        return null;
+      }
+      rules = {};
+      if (global) {
+        $.extend(rules, global);
+      }
+      if (inline) {
+        $.extend(rules, inline);
+      }
+      return rules;
+    };
+
+    Rules.prototype._incorporateBlocks = function(blocks) {
+      return $.extend(this.blocks, blocks);
+    };
+
+    Rules.prototype._inlineRulesForNode = function(node) {
+      var block, data;
+      if (node.data != null) {
+        data = node.data();
+        if (data != null) {
+          block = node.data()["cts"];
+          if (block != null) {
+            block = CATS.Parser.parseBlock(block);
+            return block;
+          }
+        }
+      }
+      return null;
+    };
+
+    Rules.prototype._globalRulesForNode = function(node) {
+      var hit, key, ret;
+      ret = {};
+      hit = false;
+      for (key in this.blocks) {
+        if (node.is(key)) {
+          hit = true;
+          $.extend(ret, this.blocks[key]);
+        }
+      }
+      if (hit) {
+        return ret;
+      }
+      return null;
+    };
+
+    Rules.prototype._findCtsLinks = function() {
+      var ret,
+        _this = this;
+      ret = [];
+      $.each($('script[type="text/cts"]'), function(idx, elem) {
+        var e;
+        e = $(elem);
+        if (e.attr("src")) {
+          return ret.push(e.attr("src"));
+        }
+      });
+      return ret;
+    };
+
+    Rules.prototype._remoteLoadFinished = function() {
+      if (this.callback) {
+        return this.callback(this);
+      }
+    };
+
+    Rules.prototype._loadLinkResponse = function(text, status, xhr) {
+      var blocks;
+      blocks = CATS.Parser.parseBlocks(text);
+      this._incorporateBlocks(blocks);
+      this.loadedUrls.push[xhr.url];
+      this.urlsToLoad = this.urlsToLoad - 1;
+      if (this.urlsToLoad === 0) {
+        return this._remoteLoadFinished();
+      }
+    };
+
+    return Rules;
 
   })();
 

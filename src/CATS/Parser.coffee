@@ -98,8 +98,6 @@ class Parser
     return ret
 
   @foldInPropertyValue: (ret, pv) ->
-    console.log(pv.property)
-    console.log(ret)
     if not ("target" of pv)
       pv["target"] = "."
     if not ("variant" of pv)
