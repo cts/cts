@@ -21,6 +21,15 @@
 $ = jQueryHcss
 
 class Value
+  #     value(href): link;
+  #     value: name;
+  #     value-append: true;
+  #
+  #   Would result in the following return result
+  #
+  #     { value: { href: { .: "link" },
+  #                   .: { .: "name",
+  #                        append: "true" } } }
   constructor: () ->
 
   signature: () ->
@@ -30,22 +39,55 @@ class Value
   # Replaces the contents of this node with resolution 
   # Tells engine not to recurse into contents
   applyTo: (node, context, args, engine) ->
-    value = context.resolve(args[0])
-    node.html(value)
+    shouldContinue = false
+    shouldRecurse = true
+
+    for target of args
+      tup = @._applyToTarget(node, context, args[target], engine, target) 
+      shouldContinue = shouldContinue or tup[0]
+      shouldRecurse = shouldRecurse and tup[1]
+    
+    [shouldContinue, shouldRecurse]
+
+  _applyToTarget: (node, context, args, engine, target) ->
+    value = context.resolve(args["."])  #  The bare argument is the keypath
+
     if engine.opts.DyeNodes
       node.addClass(CTS.Options.ClassForValueNode)
-    [false, false]
+
+    if target == "."
+      node.html(value)
+      return [false, false]  # Continue? Recurse?
+    else if target[0] == "@"
+      node.attr(target.substr(1), value)
+      return [true, true]  # Continue? Recurse?
+
 
   # Recovers data
   #### Side Effects
   #
   recoverData: (node, context, args, engine) ->
-    value = node.html()
-    context.set(args[0], value)
-    [false, false]
+    shouldContinue = false
+    shouldRecurse = true
+
+    for target of args
+      tup = @._recoverDataFromTarget(node, context, args[target], engine, target) 
+      shouldContinue = shouldContinue or tup[0]
+      shouldRecurse = shouldRecurse and tup[1]
+    
+    [shouldContinue, shouldRecurse]
+
+  _recoverDataFromTarget: (node, context, args, engine, target) ->
+    if target == "."
+      value = node.html()
+      context.set(args["."], value)
+      return [false, false]  # Continue? Recurse?
+    else if target[0] == "@"
+      value = node.attr(target.substr(1))
+      context.set(args["."], value)
+      return [true, true]  # Coneinut? Recurse?
 
   # Recovers template
   recoverTemplate: (node, context) ->
     node.clone()
  
-

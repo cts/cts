@@ -38,8 +38,8 @@ class Engine
   constructor: (options) ->
     @opts = $.extend {}, CTS.Options.Default(), options
     @commands = []
+    @rules = new CTS.Rules()
     @._loadBasicCommandSet()
-    CTS.Cascade.attachInlineSheets()
 
   render: (node, data) ->
     # Default to node=HTML and data=window
@@ -61,11 +61,11 @@ class Engine
    $.each jqnode, (i,node) =>
      node = $(node)
      recurse = true
-     cats = CTS.Cascade.rulesForNode(node)
-     if cats != null
+     rules = @rules.rulesForNode(node)
+     if rules != null
        for command in @commands
-         if command.signature() of cats
-           res = command.applyTo(node, context, cats[command.signature()], @)
+         if command.signature() of rules
+           res = command.applyTo(node, context, rules[command.signature()], @)
            # The result object has two values. The first tell us whether
            # or not to continue with the commands for this node. The second
            # tells us whether or not to recurse at the end.
@@ -77,7 +77,7 @@ class Engine
   
   _recoverData: (node, context) ->
     recurse = true
-    cats = CTS.Cascade.rulesForNode(node)
+    cats = @rules.rulesForNode(node)
     if cats != null
       for command in @commands
         if command.signature() of cats
