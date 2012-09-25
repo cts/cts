@@ -25,32 +25,32 @@
 $ = jQueryHcss
 
 #### Dependencies
-#<< Options.coffee
-#<< Context.coffee
-#<< Parser.coffee
-#<< Rules.coffee
-#<< Utils.coffee
-#<< Commands/*
+#<< CTS/Options
+#<< CTS/Context
+#<< CTS/Parser
+#<< CTS/Rules
+#<< CTS/Util
+#<< CTS/Commands/*
 
 
 #### Engine
 class Engine
   constructor: (options) ->
-    @opts = $.extend {}, CATS.Options.Default(), options
+    @opts = $.extend {}, CTS.Options.Default(), options
     @commands = []
     @._loadBasicCommandSet()
-    CATS.Cascade.attachInlineSheets()
+    CTS.Cascade.attachInlineSheets()
 
   render: (node, data) ->
     # Default to node=HTML and data=window
     node = node || $('html')
     data = data || window
-    context = new CATS.Context(data)
+    context = new CTS.Context(data)
     @._render(node, context)
 
   recoverData: (node) ->
     node = node || $('html')
-    context = new CATS.Context({})
+    context = new CTS.Context({})
     $.each node, (i,e) =>
       @._recoverData($(e), context)
     context.tail()
@@ -61,7 +61,7 @@ class Engine
    $.each jqnode, (i,node) =>
      node = $(node)
      recurse = true
-     cats = CATS.Cascade.rulesForNode(node)
+     cats = CTS.Cascade.rulesForNode(node)
      if cats != null
        for command in @commands
          if command.signature() of cats
@@ -77,7 +77,7 @@ class Engine
   
   _recoverData: (node, context) ->
     recurse = true
-    cats = CATS.Cascade.rulesForNode(node)
+    cats = CTS.Cascade.rulesForNode(node)
     if cats != null
       for command in @commands
         if command.signature() of cats
@@ -89,14 +89,14 @@ class Engine
         @._recoverData($(kid), context)
 
   _loadBasicCommandSet: () ->
-    @._addCommand(new CATS.Commands.With())
-    @._addCommand(new CATS.Commands.Data())
-    @._addCommand(new CATS.Commands.IfExist())
-    @._addCommand(new CATS.Commands.IfNExist())
-    @._addCommand(new CATS.Commands.Attr())
-    @._addCommand(new CATS.Commands.Template())
-    @._addCommand(new CATS.Commands.RepeatInner())
-    @._addCommand(new CATS.Commands.Value())
+    @._addCommand(new CTS.Commands.With())
+    @._addCommand(new CTS.Commands.Data())
+    @._addCommand(new CTS.Commands.IfExist())
+    @._addCommand(new CTS.Commands.IfNExist())
+    @._addCommand(new CTS.Commands.Attr())
+    @._addCommand(new CTS.Commands.Template())
+    @._addCommand(new CTS.Commands.RepeatInner())
+    @._addCommand(new CTS.Commands.Value())
 
   _addCommand: (command) ->
     @commands.push(command)

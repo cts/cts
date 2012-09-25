@@ -32,25 +32,25 @@ class IfExist
   applyTo: (node, context, args, engine) ->
     value = context.resolve(args[0])
     if value == null
-      CATS.Util.hideNode(node)
+      CTS.Util.hideNode(node)
       return [false, false]
     else
-      CATS.Util.showNode(node)
+      CTS.Util.showNode(node)
       # Save the data used to make this decision 
       # XXX TODO: This is going to cause recovery problems
       # if it came from the bookmarks. Need to account for that somehow
       data = {} # Odd, I can't seem to do this in one line w/o coffee failing
       data[args[0]] = value
-      CATS.Util.stashData(node, @.signature(), data)
+      CTS.Util.stashData(node, @.signature(), data)
       return [true, true]
 
   # Recovers data
   #### Side Effects
   recoverData: (node, context, args, engine) ->
-    if CATS.Util.nodeHidden(node)
+    if CTS.Util.nodeHidden(node)
       return [false, false]
     
-    data = CATS.Util.getDataStash(node, @.signature())
+    data = CTS.Util.getDataStash(node, @.signature())
     for k of data
       v = data[k]
       context.set(k,v)

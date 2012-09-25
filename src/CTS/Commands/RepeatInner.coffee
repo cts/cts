@@ -46,7 +46,7 @@ class RepeatInner
         $(child).remove()
 
     if collection.length == 0
-      CATS.Util.hideNode(template)
+      CTS.Util.hideNode(template)
     else
       templateHtml = node.html()
       node.html("")

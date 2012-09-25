@@ -34,23 +34,23 @@ class IfNExist
     if value != null
       # XXX TODO: This is going to cause recovery problems
       # if it came from the bookmarks. Need to account for that somehow
-      CATS.Util.hideNode(node)
+      CTS.Util.hideNode(node)
       data = {} # Odd, I can't seem to do this in one line w/o coffee failing
       data[args[0]] = value
-      CATS.Util.stashData(node, @.signature(), data)
+      CTS.Util.stashData(node, @.signature(), data)
       return [false, false]
     else
-      CATS.Util.showNode(node)
+      CTS.Util.showNode(node)
       return [true, true]
 
   # Recovers data
   #### Side Effects
   recoverData: (node, context, args, engine) ->
-    if CATS.Util.nodeHidden(node)
+    if CTS.Util.nodeHidden(node)
       # Oddly, if the node is hidden, it means something was there.
       # So we recover the data but we do not continue recursion.
       # Bizarre
-      data = CATS.Util.getDataStash(node, @.signature())
+      data = CTS.Util.getDataStash(node, @.signature())
       for k of data
         v = data[k]
         context.set(k,v)
