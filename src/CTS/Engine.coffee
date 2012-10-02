@@ -39,6 +39,7 @@ class Engine
     @opts = $.extend {}, CTS.Options.Default(), options
     @commands = []
     @rules = new CTS.Rules()
+    @templates = new CTS.Templates()
     @._loadBasicCommandSet()
 
   render: (node, data) ->
@@ -93,7 +94,6 @@ class Engine
     @._addCommand(new CTS.Commands.Data())
     @._addCommand(new CTS.Commands.IfExist())
     @._addCommand(new CTS.Commands.IfNExist())
-    @._addCommand(new CTS.Commands.Attr())
     @._addCommand(new CTS.Commands.Template())
     @._addCommand(new CTS.Commands.RepeatInner())
     @._addCommand(new CTS.Commands.Value())
