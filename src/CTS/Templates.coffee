@@ -9,6 +9,7 @@ class Templates
     @templateCommand = new CTS.Commands.Template()
 
   fetch: (name) ->
+    console.log("Fetching template", name)
     return @templates[name]
 
   needsLoad: (rules) ->
