@@ -9967,6 +9967,54 @@ var CTS = {};
       });
     };
 
+    Util.fetchRemoteStringSameDomain = function(url, callback, xhrParams, params) {
+      var firstCallback, urlParts;
+      urlParts = url.split("#");
+      params = params || {};
+      params['url'] = urlParts[0];
+      if (urlParts.length > 1) {
+        params['id'] = urlParts[1];
+      }
+      firstCallback = function(text, status, xhr) {
+        var cb, hitNode, textNode,
+          _this = this;
+        cb = xhr._requestedCallback;
+        if (xhr._idPart) {
+          textNode = $(text);
+          hitNode = null;
+          $.each(textNode, function(idx, elem) {
+            var n, res;
+            n = $(elem);
+            if (n.is(xhr._idPart)) {
+              return hitNode = n;
+            } else {
+              res = n.find(xhr._idPart).html();
+              if (res !== null) {
+                return hitNode = res;
+              }
+            }
+          });
+        }
+        return cb(text, status, xhr);
+      };
+      return $.ajax({
+        url: urlParts[0],
+        dataType: 'text',
+        success: firstCallback,
+        beforeSend: function(xhr, settings) {
+          var key;
+          for (key in xhrParams) {
+            xhr[key] = xhrParams[key];
+          }
+          xhr['_requestedCallback'] = callback;
+          if (urlParts.length > 1) {
+            return xhr['_idPart'] = "#" + urlParts[1];
+          }
+        },
+        data: params
+      });
+    };
+
     Util.fetchRemoteStringBullfrog = function(url, callback, xhrParams, params) {
       var ribbitUrl, urlParts;
       urlParts = url.split("#");
@@ -9976,15 +10024,15 @@ var CTS = {};
         params['id'] = urlParts[1];
       }
       ribbitUrl = "http://localhost:9999/ribbit?callback=?";
-      return this.ajax({
+      return $.ajax({
         url: urlParts[0],
         dataType: 'text',
         success: callback,
         beforeSend: function(xhr, settings) {
           var key, _results;
           _results = [];
-          for (key in params) {
-            _results.push(xhr[key] = params[key]);
+          for (key in xhrParams) {
+            _results.push(xhr[key] = xhrParams[key]);
           }
           return _results;
         },
@@ -10215,6 +10263,8 @@ var CTS = {};
   __t('CTS').Templates = (function() {
 
     function Templates() {
+      this._loadRemoteResponse = __bind(this._loadRemoteResponse, this);
+
       this.loadRemote = __bind(this.loadRemote, this);
       this.templates = {};
       this.templateCommand = new CTS.Commands.Template();
@@ -10274,13 +10324,15 @@ var CTS = {};
         'tname': tName,
         'callback': callback
       };
-      return CTS.Util.fetchRemoteStringBullfrog(tName, this._loadRemoteResponse, save);
+      return CTS.Util.fetchRemoteStringSameDomain(tName, this._loadRemoteResponse, save);
     };
 
     Templates.prototype._loadRemoteResponse = function(text, status, xhr) {
       var callback, tName;
+      console.log(xhr);
       callback = xhr.callback;
       tName = xhr.tname;
+      console.log("Gor response for", tName);
       this.templates[tName] = text;
       return callback();
     };

@@ -45,11 +45,13 @@ class Templates
 
   loadRemote: (tName, callback) =>
     save = { 'tname': tName, 'callback': callback }
-    CTS.Util.fetchRemoteStringBullfrog(tName, @._loadRemoteResponse, save)
+    CTS.Util.fetchRemoteStringSameDomain(tName, @._loadRemoteResponse, save)
 
-  _loadRemoteResponse: (text, status, xhr) ->
+  _loadRemoteResponse: (text, status, xhr) =>
+    console.log(xhr)
     callback  = xhr.callback
     tName = xhr.tname
+    console.log("Gor response for", tName)
     @templates[tName] = text
     callback()
 

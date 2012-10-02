@@ -46,6 +46,42 @@ class Util
         for key of params
           xhr[key] = params[key]
     })
+
+  @fetchRemoteStringSameDomain: (url, callback, xhrParams, params) ->
+    urlParts = url.split("#")
+    params = params || {}
+    params['url'] = urlParts[0]
+    if urlParts.length > 1
+      params['id'] = urlParts[1]
+
+    firstCallback = (text, status, xhr) ->
+      cb = xhr._requestedCallback
+      if xhr._idPart
+        textNode = $(text)
+        hitNode = null
+        $.each(textNode, (idx, elem) =>
+          n = $(elem)
+          if n.is(xhr._idPart)
+            hitNode = n
+          else
+            res = n.find(xhr._idPart).html()
+            if res != null
+              hitNode = res
+        )
+      cb(text, status, xhr)
+
+    $.ajax({
+      url: urlParts[0],
+      dataType: 'text',
+      success: firstCallback,
+      beforeSend: (xhr, settings) ->
+        for key of xhrParams
+          xhr[key] = xhrParams[key]
+        xhr['_requestedCallback'] = callback
+        if urlParts.length > 1
+          xhr['_idPart'] = "#" + urlParts[1]
+      data: params
+    })
   
   @fetchRemoteStringBullfrog: (url, callback, xhrParams, params) ->
     urlParts = url.split("#")
@@ -56,12 +92,12 @@ class Util
 
     ribbitUrl = "http://localhost:9999/ribbit?callback=?"
 
-    @.ajax({
+    $.ajax({
       url: urlParts[0],
       dataType: 'text',
       success: callback,
       beforeSend: (xhr, settings) ->
-        for key of params
-          xhr[key] = params[key]
+        for key of xhrParams
+          xhr[key] = xhrParams[key]
       data: params
     })
