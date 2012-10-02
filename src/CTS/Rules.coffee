@@ -50,7 +50,7 @@ class Rules
   load: () =>
     # Loads all CTS rules.
     @.loadLinked()
-    if @state is not RulesState.WAIT_FOR_REMOTE
+    if @state != RulesState.WAIT_FOR_REMOTE
       @._remoteLoadFinished()
 
   loadLinked: () =>

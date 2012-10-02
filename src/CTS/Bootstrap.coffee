@@ -42,19 +42,15 @@ class Bootstrap
     # Load the default engine
     CTS.engine = new CTS.Engine()
     CTS.engine.rules.setCallback(@.remoteRulesLoaded)
-    CTS.engine.templates.setCallback(@.templatesLoaded)
-    CTS.engine.rules.loadLinked()
+    CTS.engine.rules.load()
 
   # Called once remote rules have been loaded.
   # Loads local rules and then requests template load.
   remoteRulesLoaded: () ->
     CTS.engine.rules.loadLocal()
-    CTS.engine.templates.loadAll(CTS.engine.rules)
-
-  # Called once templates have been loaded.
-  # Renders the page with CTS.
-  templatesLoaded: () ->
-    CTS.engine.render()
+    $(() ->
+      CTS.engine.render()
+    )
 
 # 5..4..3..2..
 CTS.bootstrap = new CTS.Bootstrap()

@@ -30,6 +30,7 @@ $ = jQueryHcss
 #<< CTS/Parser
 #<< CTS/Rules
 #<< CTS/Util
+#<< CTS/Templates
 #<< CTS/Commands/*
 
 
@@ -56,26 +57,37 @@ class Engine
       @._recoverData($(e), context)
     context.tail()
 
-  _render: (jqnode, context) ->
+  _render: (jqnode, context) =>
    # Account for the fact that node might actually be a jQuery selector
    # that has returned a list of elements
    $.each jqnode, (i,node) =>
      node = $(node)
      recurse = true
      rules = @rules.rulesForNode(node)
-     if rules != null
-       for command in @commands
-         if command.signature() of rules
-           res = command.applyTo(node, context, rules[command.signature()], @)
-           # The result object has two values. The first tell us whether
-           # or not to continue with the commands for this node. The second
-           # tells us whether or not to recurse at the end.
-           recurse = recurse and res[1]
-           break unless res[0]
-     if recurse
-       for kid in node.children()
-         @._render($(kid), context)
-  
+
+     # Wrap the rendering in a closure. We'll call it now, if no template
+     # load is necessary and later if a template load is necessary.
+     render = () =>
+       if rules != null
+         for command in @commands
+           if command.signature() of rules
+             res = command.applyTo(node, context, rules[command.signature()], @)
+             # The result object has two values. The first tell us whether
+             # or not to continue with the commands for this node. The second
+             # tells us whether or not to recurse at the end.
+             recurse = recurse and res[1]
+             break unless res[0]
+
+       if recurse
+         for kid in node.children()
+           @._render($(kid), context)
+
+     # If we need to load a template, do that now.
+     if @templates.needsLoad(rules)
+       @templates.load(rules, render)
+     else
+       render()
+
   _recoverData: (node, context) ->
     recurse = true
     cats = @rules.rulesForNode(node)

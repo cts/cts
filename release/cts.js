@@ -9427,6 +9427,45 @@ var CTS = {};
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
+  $ = jQueryHcss;
+
+  __t('CTS.Commands').Template = (function() {
+
+    function Template() {}
+
+    Template.prototype.signature = function() {
+      return "template";
+    };
+
+    Template.prototype.applyTo = function(node, context, args, engine) {
+      var defaultTargetArgs, template, templateAddress;
+      defaultTargetArgs = args["."];
+      if (defaultTargetArgs) {
+        templateAddress = defaultTargetArgs["."];
+        if (templateAddress) {
+          template = engine.templates.fetch(templateAddress);
+          return this._applyTo(node, context, args, engine, template);
+        }
+      }
+    };
+
+    Template.prototype._applyTo = function(node, context, args, engine, template) {
+      node.html(template);
+      return [true, true];
+    };
+
+    Template.prototype.recoverData = function(node, context, args, engine) {
+      return [true, true];
+    };
+
+    Template.prototype.recoverTemplate = function(node, context) {
+      return node.clone();
+    };
+
+    return Template;
+
+  })();
+
   __t('CTS').Options = (function() {
 
     function Options() {}
@@ -9732,7 +9771,7 @@ var CTS = {};
 
     Rules.prototype.load = function() {
       this.loadLinked();
-      if (this.state === !RulesState.WAIT_FOR_REMOTE) {
+      if (this.state !== RulesState.WAIT_FOR_REMOTE) {
         return this._remoteLoadFinished();
       }
     };
@@ -10173,46 +10212,80 @@ var CTS = {};
 
   })();
 
-  $ = jQueryHcss;
+  __t('CTS').Templates = (function() {
 
-  __t('CTS.Commands').Template = (function() {
+    function Templates() {
+      this.loadRemote = __bind(this.loadRemote, this);
+      this.templates = {};
+      this.templateCommand = new CTS.Commands.Template();
+    }
 
-    function Template() {}
-
-    Template.prototype.signature = function() {
-      return "template";
+    Templates.prototype.fetch = function(name) {
+      return this.templates[name];
     };
 
-    Template.prototype.applyTo = function(node, context, args, engine) {
-      var defaultTargetArgs, template, templateAddress;
-      defaultTargetArgs = args["."];
-      if (defaultTargetArgs) {
-        templateAddress = defaultTargetArgs["."];
-        if (templateAddress) {
-          template = CTS.Util.FetchSnippit(templateAddress);
-          return this._applyTo(node, context, args, engine, template);
+    Templates.prototype.needsLoad = function(rules) {
+      var tBlock, tName;
+      if (rules !== null && this.templateCommand.signature() in rules) {
+        tBlock = rules[this.templateCommand.signature()];
+        tName = tBlock["."]["."];
+        if (__indexOf.call(this.templates, tName) >= 0) {
+          return false;
+        } else {
+          return true;
+        }
+      } else {
+        return false;
+      }
+    };
+
+    Templates.prototype.load = function(rules, callback) {
+      var tBlock, tName;
+      if (rules !== null && this.templateCommand.signature() in rules) {
+        tBlock = rules[this.templateCommand.signature()];
+        tName = tBlock["."]["."];
+        if (__indexOf.call(this.templates, tName) >= 0) {
+          return this.templates[tName];
+        } else {
+          if (this.isLocal(tName)) {
+            this.loadLocal(tName);
+            return callback();
+          } else {
+            return this.loadRemote(tName, callback);
+          }
         }
       }
     };
 
-    Template.prototype._applyTo = function(node, context, args, engine, template) {
-      console.log(node.parent().html());
-      node.html(template);
-      console.log("Just resplaced TEMPLATE of node");
-      console.log(node.html());
-      console.log(node.parent().html());
-      return [true, true];
+    Templates.prototype.isLocal = function(tName) {
+      return tName[0] === "#";
     };
 
-    Template.prototype.recoverData = function(node, context, args, engine) {
-      return [true, true];
+    Templates.prototype.loadLocal = function(tName) {
+      var value;
+      value = $(tName).html();
+      this.templates[tName] = value;
+      return value;
     };
 
-    Template.prototype.recoverTemplate = function(node, context) {
-      return node.clone();
+    Templates.prototype.loadRemote = function(tName, callback) {
+      var save;
+      save = {
+        'tname': tName,
+        'callback': callback
+      };
+      return CTS.Util.fetchRemoteStringBullfrog(tName, this._loadRemoteResponse, save);
     };
 
-    return Template;
+    Templates.prototype._loadRemoteResponse = function(text, status, xhr) {
+      var callback, tName;
+      callback = xhr.callback;
+      tName = xhr.tname;
+      this.templates[tName] = text;
+      return callback();
+    };
+
+    return Templates;
 
   })();
 
@@ -10320,6 +10393,7 @@ var CTS = {};
   __t('CTS').Engine = (function() {
 
     function Engine(options) {
+      this._render = __bind(this._render, this);
       this.opts = $.extend({}, CTS.Options.Default(), options);
       this.commands = [];
       this.rules = new CTS.Rules();
@@ -10349,31 +10423,39 @@ var CTS = {};
     Engine.prototype._render = function(jqnode, context) {
       var _this = this;
       return $.each(jqnode, function(i, node) {
-        var command, kid, recurse, res, rules, _i, _j, _len, _len1, _ref, _ref1, _results;
+        var recurse, render, rules;
         node = $(node);
         recurse = true;
         rules = _this.rules.rulesForNode(node);
-        if (rules !== null) {
-          _ref = _this.commands;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            command = _ref[_i];
-            if (command.signature() in rules) {
-              res = command.applyTo(node, context, rules[command.signature()], _this);
-              recurse = recurse && res[1];
-              if (!res[0]) {
-                break;
+        render = function() {
+          var command, kid, res, _i, _j, _len, _len1, _ref, _ref1, _results;
+          if (rules !== null) {
+            _ref = _this.commands;
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              command = _ref[_i];
+              if (command.signature() in rules) {
+                res = command.applyTo(node, context, rules[command.signature()], _this);
+                recurse = recurse && res[1];
+                if (!res[0]) {
+                  break;
+                }
               }
             }
           }
-        }
-        if (recurse) {
-          _ref1 = node.children();
-          _results = [];
-          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-            kid = _ref1[_j];
-            _results.push(_this._render($(kid), context));
+          if (recurse) {
+            _ref1 = node.children();
+            _results = [];
+            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+              kid = _ref1[_j];
+              _results.push(_this._render($(kid), context));
+            }
+            return _results;
           }
-          return _results;
+        };
+        if (_this.templates.needsLoad(rules)) {
+          return _this.templates.load(rules, render);
+        } else {
+          return render();
         }
       });
     };
@@ -10435,17 +10517,14 @@ var CTS = {};
     Bootstrap.prototype.loadCTS = function() {
       CTS.engine = new CTS.Engine();
       CTS.engine.rules.setCallback(this.remoteRulesLoaded);
-      CTS.engine.templates.setCallback(this.templatesLoaded);
-      return CTS.engine.rules.loadLinked();
+      return CTS.engine.rules.load();
     };
 
     Bootstrap.prototype.remoteRulesLoaded = function() {
       CTS.engine.rules.loadLocal();
-      return CTS.engine.templates.loadAll(CTS.engine.rules);
-    };
-
-    Bootstrap.prototype.templatesLoaded = function() {
-      return CTS.engine.render();
+      return $(function() {
+        return CTS.engine.render();
+      });
     };
 
     return Bootstrap;
@@ -10453,70 +10532,5 @@ var CTS = {};
   })();
 
   CTS.bootstrap = new CTS.Bootstrap();
-
-  __t('CTS').Templates = (function() {
-
-    function Templates() {
-      this.setCallback = __bind(this.setCallback, this);
-      this.toLoad = [];
-      this.loaded = [];
-      this.callback = null;
-    }
-
-    Templates.prototype.setCallback = function(callback) {
-      return this.callback = callback;
-    };
-
-    Templates.prototype.loadAll = function(rules) {
-      var address, block, selector, template, _i, _len, _ref, _results;
-      for (selector in rules) {
-        block = rules[selector];
-        if ("template" in block) {
-          template = block["template"];
-          address = template["."]["."];
-          this.toLoad.append(address);
-        }
-      }
-      if (this.toLoad.length === 0 && this.callback) {
-        return this.callback();
-      } else if (this.toLoad.length > 0) {
-        _ref = this.toLoad;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          address = _ref[_i];
-          _results.push(this._load(address));
-        }
-        return _results;
-      }
-    };
-
-    Templates.prototype.getCached = function(address) {};
-
-    Templates.prototype._load = function(address) {
-      console.log("loading template: " + address);
-      if (address[0] === '#') {
-        return this._loadResponse(address, $(address).html());
-      } else {
-        return CTS.Util.fetchRemoteStringBullfrog(address, this._loadResponse);
-      }
-    };
-
-    Templates.prototype._loadResponse = function(address, html) {
-      this.templates[address] = $(address).html();
-      this.loaded.append(address);
-      if (this.loaded.length === this.toLoad.length) {
-        return this._loadComplete();
-      }
-    };
-
-    Templates.prototype._loadComplete = function() {
-      if (this.callback) {
-        return this.callback();
-      }
-    };
-
-    return Templates;
-
-  })();
 
 }).call(this);

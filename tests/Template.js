@@ -1,6 +1,6 @@
 var afterLink = function() {
   test("Template Tests", function() {
-    ok($("#shouldBeBar").html() == "bar", "Should be foo");
+    ok($("#t1").html() == "<h1>Hello</h1>", "H1 Hello");
   });
 };
 setTimeout(afterLink, 3000);

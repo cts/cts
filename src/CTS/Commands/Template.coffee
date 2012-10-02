@@ -37,18 +37,14 @@ class Template
     if defaultTargetArgs
       templateAddress = defaultTargetArgs["."]
       if templateAddress
-        template = CTS.Util.FetchSnippit(templateAddress)
+        template = engine.templates.fetch(templateAddress)
         @._applyTo(node, context, args, engine, template)
 
   # This method is partitioned out here for testing
   # purposes (so we can test the method in isolation from
   # fetching some fragment from the dom.
   _applyTo: (node, context, args, engine, template) ->
-    console.log(node.parent().html())
     node.html(template)
-    console.log("Just resplaced TEMPLATE of node")
-    console.log(node.html())
-    console.log(node.parent().html())
     [true, true]
 
   # Recovers data
