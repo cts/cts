@@ -36,3 +36,32 @@ class Util
         return {}
     else
       return {}
+
+  @fetchRemoteStringPlain: (url, callback, xhrParams, params) ->
+    $.ajax({
+      url: url,
+      dataType: 'text',
+      success: callback,
+      beforeSend: (xhr, settings) ->
+        for key of params
+          xhr[key] = params[key]
+    })
+  
+  @fetchRemoteStringBullfrog: (url, callback, xhrParams, params) ->
+    urlParts = url.split("#")
+    params = params || {}
+    params['url'] = urlParts[0]
+    if urlParts.length > 1
+      params['id'] = urlParts[1]
+
+    ribbitUrl = "http://localhost:9999/ribbit?callback=?"
+
+    @.ajax({
+      url: urlParts[0],
+      dataType: 'text',
+      success: callback,
+      beforeSend: (xhr, settings) ->
+        for key of params
+          xhr[key] = params[key]
+      data: params
+    })
