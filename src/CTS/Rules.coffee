@@ -64,6 +64,7 @@ class Rules
     @urlsToLoad = linksToLoad.length
     for link in linksToLoad
       @state = RulesState.WAIT_FOR_REMOTE
+      console.log("Loading remote: ", link)
       CTS.Util.fetchRemoteStringPlain(link, @._loadLinkResponse, {url: link})
 
   loadLocal: () =>
