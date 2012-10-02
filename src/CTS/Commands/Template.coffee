@@ -21,6 +21,11 @@
 $ = jQueryHcss
 
 class Template
+  #     template: foo.html#bar
+  #
+  #   Would result in the following return result
+  #
+  #     { template: { .: { .: "foo.html#bar" }}}
   constructor: () ->
 
   signature: () ->
@@ -28,12 +33,12 @@ class Template
 
   applyTo: (node, context, args, engine) ->
     # TODO: Enable cross-site linking here.
-    templateRef = args[0]
-    template = @.fetchTemplate(templateRef)
-    @._applyTo(node, context, args, engine, template)
-
-  fetchTemplate: (ref) ->
-    $(ref).html()
+    defaultTargetArgs = args["."]
+    if defaultTargetArgs
+      templateAddress = defaultTargetArgs["."]
+      if templateAddress
+        template = CTS.Util.FetchSnippit(templateAddress)
+        @._applyTo(node, context, args, engine, template)
 
   # This method is partitioned out here for testing
   # purposes (so we can test the method in isolation from
