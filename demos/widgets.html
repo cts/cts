@@ -2,25 +2,21 @@
 <body>
   <section id="map"><div>
 
-
     <!-- This is the visible section of the CTS template -->
 
     <div class="themap">
+    Foo
     </div>
 
     <!-- This is the data section, insivible but present in the DOM -->
 
     <div class="themapdata" style="display:none">
-      <table class="markers"> <tr>
-        <th>Name</th><th>Lat</th><th>Lng</th>
-      </tr>
-      <tbody>
+      <table class="markers"> 
         <tr>
-          <td class="title">Ted's House</td>
-          <td class="lat">-34.397</td>
-          <td class="lng">150.644</td>
+          <td class="title">title</td>
+          <td class="lat">lat</td>
+          <td class="lng">lng</td>
         </tr>
-      </tbody>
       </table>
     </div>
 
@@ -29,7 +25,7 @@
     <script>
 
     // First, get the data
-    var widget = CTS.Util.GetLastInserted();
+    var widget = CTS.Util.getLastInserted();
 
     var RenderMap = function(origElem, origData, resultElem, resultData) {
       var mapOptions = {

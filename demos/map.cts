@@ -1,13 +1,13 @@
 .map {
-  template: widgets.html#map
-  callback-after: RenderMap;
+  template: http://localhost:8000/demos/widgets.html#map;
+  data: .
 }
 
 .map .api-key {
   value: apikey;
 }
 
-.map table.markers tbody {
+.map table.markers {
   repeat: markers;
 }
 
