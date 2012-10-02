@@ -44,6 +44,7 @@ class Template
   # purposes (so we can test the method in isolation from
   # fetching some fragment from the dom.
   _applyTo: (node, context, args, engine, template) ->
+    CTS.Util.setLastInserted(node)
     node.html(template)
     [true, true]
 
