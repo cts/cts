@@ -36,21 +36,25 @@ $ = jQueryHcss
 class Bootstrap
   constructor: () ->
     # TODO(eob): Option to suppress CTS load
-    @.loadCTS()
+    $(() =>
+      @.loadCTS()
+    )
 
   loadCTS: () ->
     # Load the default engine
     CTS.engine = new CTS.Engine()
+    console.log("Bootstrap: Loading Remote")
     CTS.engine.rules.setCallback(@.remoteRulesLoaded)
     CTS.engine.rules.load()
 
   # Called once remote rules have been loaded.
   # Loads local rules and then requests template load.
   remoteRulesLoaded: () ->
+    console.log("Bootstrap: Loading Local")
     CTS.engine.rules.loadLocal()
-    $(() ->
-      CTS.engine.render()
-    )
+    console.log("Done with Rules", CTS.engine.rules.blocks)
+    console.log("Bootstrap: Rendering CTS")
+    CTS.engine.render()
 
 # 5..4..3..2..
 CTS.bootstrap = new CTS.Bootstrap()
