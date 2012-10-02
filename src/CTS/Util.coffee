@@ -1,4 +1,12 @@
 class Util
+  @lastInserted = null
+
+  @getLastInserted: () ->
+    return @lastInserted
+
+  @setLastInserted: (node) ->
+    @lastInserted = node
+
   @hideNode: (node) ->
     node.addClass(CTS.Options.ClassForInvisible)
 
