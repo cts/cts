@@ -24,23 +24,23 @@ class RepeatInner
   constructor: () ->
 
   signature: () ->
-    "repeat-inner"
+    "repeat"
 
   # Interprets arg1 as key-path into context
   # Replaces the contents of this node with resolution 
   # Tells engine not to recurse into contents
   applyTo: (node, context, args, engine) ->
-    n = 1
-    kp = args[0]
-    if args.length == 2
-      n = parseInt(args[0])
-      kp = args[1]
-      
-    collection = context.resolve(kp)
+    defaultTarget = args["."]
+    defaultArg = defaultTarget["."]
+    step = 1
+    if "step" in defaultTarget
+      step = parseInt(defaultTarget["step"])
+    
+    collection = context.resolve(defaultArg)
 
     template = []
     $.each node.children(), (idx, child) =>
-      if idx<n
+      if idx<step
         template.push($(child))
       else
         $(child).remove()
@@ -56,8 +56,6 @@ class RepeatInner
         newNode = $(templateHtml)
         context.push(elem)
         node.append(newNode)
-        console.log("repeat-inner rending")
-        console.log(newNode)
         engine._render(newNode, context)
         context.pop()
         zeroIndex += 1
@@ -68,29 +66,27 @@ class RepeatInner
   #### Side Effects
   #
   recoverData: (node, context, args, engine) ->
-    n = 1
-    kp = args[0]
-    if args.length == 2
-      n = parseInt(args[0])
-      kp = args[1]
-    
-    context.set(kp, [])
-    context.pushKeypath(kp)
+    defaultTarget = args["."]
+    defaultArg = defaultTarget["."]
+    console.log("Recover kp", defaultArg)
+    step = 1
+    if "step" in defaultTarget
+      step = parseInt(defaultTarget["step"])
+ 
+    context.set(defaultArg, [])
+    context.pushKeypath(defaultArg)
 
     addIterable = (c) ->
-      console.log("Adding Iterable")
       iterable = c.pop()
-      console.log(iterable)
       c.head().push(iterable)
-      console.log("Container is  is: " + JSON.stringify(c.head()))
    
     firstPush = true 
+
     $.each(node.children(), (idx, child) =>
-      console.log("Head on iteration " + idx + " is: " + JSON.stringify(context.head()))
       if firstPush
         firstPush = false 
         context.push({})
-      if (idx % n == 0) and (idx != 0)
+      if (idx % step == 0) and (idx != 0)
         addIterable(context)
         context.push({})
       engine._recoverData($(child), context)
