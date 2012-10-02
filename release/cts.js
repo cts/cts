@@ -9450,6 +9450,7 @@ var CTS = {};
     };
 
     Template.prototype._applyTo = function(node, context, args, engine, template) {
+      CTS.Util.setLastInserted(node);
       node.html(template);
       return [true, true];
     };
@@ -9791,6 +9792,7 @@ var CTS = {};
       for (_j = 0, _len1 = linksToLoad.length; _j < _len1; _j++) {
         link = linksToLoad[_j];
         this.state = RulesState.WAIT_FOR_REMOTE;
+        console.log("Loading remote: ", link);
         _results.push(CTS.Util.fetchRemoteStringPlain(link, this._loadLinkResponse, {
           url: link
         }));
@@ -9906,6 +9908,16 @@ var CTS = {};
   __t('CTS').Util = (function() {
 
     function Util() {}
+
+    Util.lastInserted = null;
+
+    Util.getLastInserted = function() {
+      return this.lastInserted;
+    };
+
+    Util.setLastInserted = function(node) {
+      return this.lastInserted = node;
+    };
 
     Util.hideNode = function(node) {
       return node.addClass(CTS.Options.ClassForInvisible);
@@ -10171,22 +10183,22 @@ var CTS = {};
     function RepeatInner() {}
 
     RepeatInner.prototype.signature = function() {
-      return "repeat-inner";
+      return "repeat";
     };
 
     RepeatInner.prototype.applyTo = function(node, context, args, engine) {
-      var collection, elem, kp, n, newNode, template, templateHtml, zeroIndex, _i, _len,
+      var collection, defaultArg, defaultTarget, elem, newNode, step, template, templateHtml, zeroIndex, _i, _len,
         _this = this;
-      n = 1;
-      kp = args[0];
-      if (args.length === 2) {
-        n = parseInt(args[0]);
-        kp = args[1];
+      defaultTarget = args["."];
+      defaultArg = defaultTarget["."];
+      step = 1;
+      if (__indexOf.call(defaultTarget, "step") >= 0) {
+        step = parseInt(defaultTarget["step"]);
       }
-      collection = context.resolve(kp);
+      collection = context.resolve(defaultArg);
       template = [];
       $.each(node.children(), function(idx, child) {
-        if (idx < n) {
+        if (idx < step) {
           return template.push($(child));
         } else {
           return $(child).remove();
@@ -10204,8 +10216,6 @@ var CTS = {};
           newNode = $(templateHtml);
           context.push(elem);
           node.append(newNode);
-          console.log("repeat-inner rending");
-          console.log(newNode);
           engine._render(newNode, context);
           context.pop();
           zeroIndex += 1;
@@ -10216,32 +10226,29 @@ var CTS = {};
     };
 
     RepeatInner.prototype.recoverData = function(node, context, args, engine) {
-      var addIterable, firstPush, kp, n,
+      var addIterable, defaultArg, defaultTarget, firstPush, step,
         _this = this;
-      n = 1;
-      kp = args[0];
-      if (args.length === 2) {
-        n = parseInt(args[0]);
-        kp = args[1];
+      defaultTarget = args["."];
+      defaultArg = defaultTarget["."];
+      console.log("Recover kp", defaultArg);
+      step = 1;
+      if (__indexOf.call(defaultTarget, "step") >= 0) {
+        step = parseInt(defaultTarget["step"]);
       }
-      context.set(kp, []);
-      context.pushKeypath(kp);
+      context.set(defaultArg, []);
+      context.pushKeypath(defaultArg);
       addIterable = function(c) {
         var iterable;
-        console.log("Adding Iterable");
         iterable = c.pop();
-        console.log(iterable);
-        c.head().push(iterable);
-        return console.log("Container is  is: " + JSON.stringify(c.head()));
+        return c.head().push(iterable);
       };
       firstPush = true;
       $.each(node.children(), function(idx, child) {
-        console.log("Head on iteration " + idx + " is: " + JSON.stringify(context.head()));
         if (firstPush) {
           firstPush = false;
           context.push({});
         }
-        if ((idx % n === 0) && (idx !== 0)) {
+        if ((idx % step === 0) && (idx !== 0)) {
           addIterable(context);
           context.push({});
         }
@@ -10271,6 +10278,7 @@ var CTS = {};
     }
 
     Templates.prototype.fetch = function(name) {
+      console.log("Fetching template", name);
       return this.templates[name];
     };
 
@@ -10482,6 +10490,7 @@ var CTS = {};
         render = function() {
           var command, kid, res, _i, _j, _len, _len1, _ref, _ref1, _results;
           if (rules !== null) {
+            console.log("rules", rules);
             _ref = _this.commands;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               command = _ref[_i];
@@ -10563,20 +10572,25 @@ var CTS = {};
   __t('CTS').Bootstrap = (function() {
 
     function Bootstrap() {
-      this.loadCTS();
+      var _this = this;
+      $(function() {
+        return _this.loadCTS();
+      });
     }
 
     Bootstrap.prototype.loadCTS = function() {
       CTS.engine = new CTS.Engine();
+      console.log("Bootstrap: Loading Remote");
       CTS.engine.rules.setCallback(this.remoteRulesLoaded);
       return CTS.engine.rules.load();
     };
 
     Bootstrap.prototype.remoteRulesLoaded = function() {
+      console.log("Bootstrap: Loading Local");
       CTS.engine.rules.loadLocal();
-      return $(function() {
-        return CTS.engine.render();
-      });
+      console.log("Done with Rules", CTS.engine.rules.blocks);
+      console.log("Bootstrap: Rendering CTS");
+      return CTS.engine.render();
     };
 
     return Bootstrap;
