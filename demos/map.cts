@@ -1,5 +1,5 @@
 .map {
-  template: http://localhost:8000/demos/widgets.html#map;
+  template: #map;
   data: .
 }
 
@@ -7,7 +7,7 @@
   value: apikey;
 }
 
-.map table.markers {
+.map table.markers tbody {
   repeat: markers;
 }
 

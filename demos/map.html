@@ -19,5 +19,69 @@
   </table>
 </section>
 
+
+  <section id="map" style="display:none"><div>
+
+    <!-- This is the visible section of the CTS template -->
+
+    <div class="themap" style="width: 300px; height: 300px;">
+    Foo
+    </div>
+
+    <!-- This is the data section, insivible but present in the DOM -->
+
+    <div class="themapdata" style="display:none">
+      <table class="markers"> 
+        <tr>
+          <td class="title">title</td>
+          <td class="lat">lat</td>
+          <td class="lng">lng</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- This is a script that will execute upon DOM insert -->
+
+    <script>
+
+    var RenderMap = function(widget) {
+      console.log("Render Map");
+
+      var dataElem = widget.find(".themapdata");
+      var mapElem = widget.find(".themap").first()[0];
+      var data = CTS.engine.recoverData(dataElem);
+      console.log("Data recovered", data);
+
+      var mapOptions = {
+        center: new google.maps.LatLng(-34.397, 150.644),
+        zoom: 8,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+
+      var map = new google.maps.Map(mapElem, mapOptions);
+      
+      for (var i = 0; i < data["markers"]; i++) {
+        var markerData = data["markers"][i];
+        var latlng = new google.maps.LatLng(marker["lat"], marker["lng"]);
+        var markerOpts = {
+          "position": latlng,
+          "map": map,
+          "title": marker["title"]
+        };
+        var marker = new google.maps.Marker(markerOpts);
+      }
+  
+    };
+    
+    // First, get the data
+    var widget = CTS.Util.getLastInserted();
+    if (widget) {
+      RenderMap(widget);
+    }
+    </script>
+
+  </div></section>
+
+
 </body>
 </html>

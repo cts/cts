@@ -26,14 +26,17 @@
 
     // First, get the data
     var widget = CTS.Util.getLastInserted();
+    console.log(widget);
 
     var RenderMap = function(origElem, origData, resultElem, resultData) {
+      console.log("Render Map");
+      var elem = $(resultElem).find(".themap").first();
+      console.log(elem);
       var mapOptions = {
         center: new google.maps.LatLng(-34.397, 150.644),
         zoom: 8,
         mapTypeId: google.maps.MapTypeId.ROADMAP
       };
-      var elem = $(resultElem).find(".themap").first();
       var map = new google.maps.Map(elem[0], mapOptions);
       for (var i = 0; i < origData["markers"]; i++) {
         var markerData = origData["markers"][i];
@@ -46,6 +49,7 @@
       }
   
     };
+    //RenderMap();
     </script>
 
   </div></section>
