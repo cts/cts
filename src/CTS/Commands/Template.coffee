@@ -45,8 +45,20 @@ class Template
   # fetching some fragment from the dom.
   _applyTo: (node, context, args, engine, template) ->
     CTS.Util.setLastInserted(node)
+    # Get any script elements in the template
+    scripts = $(template).find('script')
+    console.log("Scripts we found", scripts, template)
+    scriptsToReturn = []
+    $.each(scripts, (idx, elem) =>
+      scriptsToReturn.append(elem)
+    )
     node.html(template)
-    [true, true]
+    if scriptsToReturn.length > 0
+      console.log("Returning scripts with template command", scriptsToReturn)
+      # REMOVE THE SCRIPTS FROM THE TEMPLATE BEFORE RENDER
+      [true, true, scriptsToReturn]
+    else
+      [true, true]
 
   # Recovers data
   #### Side Effects
