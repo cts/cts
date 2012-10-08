@@ -9450,9 +9450,22 @@ var CTS = {};
     };
 
     Template.prototype._applyTo = function(node, context, args, engine, template) {
+      var scripts, scriptsToReturn,
+        _this = this;
       CTS.Util.setLastInserted(node);
+      scripts = $(template).find('script');
+      console.log("Scripts we found", scripts, template);
+      scriptsToReturn = [];
+      $.each(scripts, function(idx, elem) {
+        return scriptsToReturn.append(elem);
+      });
       node.html(template);
-      return [true, true];
+      if (scriptsToReturn.length > 0) {
+        console.log("Returning scripts with template command", scriptsToReturn);
+        return [true, true, scriptsToReturn];
+      } else {
+        return [true, true];
+      }
     };
 
     Template.prototype.recoverData = function(node, context, args, engine) {
@@ -10085,94 +10098,65 @@ var CTS = {};
 
   $ = jQueryHcss;
 
-  __t('CTS.Commands').IfExist = (function() {
+  __t('CTS.Commands').If = (function() {
 
-    function IfExist() {}
+    function If() {}
 
-    IfExist.prototype.signature = function() {
-      return "if-exist";
+    If.prototype.signature = function() {
+      return "if";
     };
 
-    IfExist.prototype.applyTo = function(node, context, args, engine) {
-      var data, value;
-      value = context.resolve(args[0]);
-      if (value === null) {
+    If.prototype.applyTo = function(node, context, args, engine) {
+      var data, defaultArgs, show, value, valueKey;
+      defaultArgs = args['.'];
+      show = true;
+      data = {};
+      if ('exist' in defaultArgs) {
+        valueKey = defaultArgs['exist'];
+        value = context.resolve(valueKey);
+        if (value !== null) {
+          data[valueKey] = value;
+        } else {
+          show = false;
+        }
+      }
+      if ('nexist' in defaultArgs) {
+        valueKey = defaultArgs['nexist'];
+        value = context.resolve(valueKey);
+        if (value !== null) {
+          data[valueKey] = value;
+          show = false;
+        }
+      }
+      CTS.Util.stashData(node, this.signature(), data);
+      if (show) {
+        CTS.Util.showNode(node);
+        return [true, true];
+      } else {
         CTS.Util.hideNode(node);
         return [false, false];
-      } else {
-        CTS.Util.showNode(node);
-        data = {};
-        data[args[0]] = value;
-        CTS.Util.stashData(node, this.signature(), data);
-        return [true, true];
       }
     };
 
-    IfExist.prototype.recoverData = function(node, context, args, engine) {
+    If.prototype.recoverData = function(node, context, args, engine) {
       var data, k, v;
-      if (CTS.Util.nodeHidden(node)) {
-        return [false, false];
-      }
       data = CTS.Util.getDataStash(node, this.signature());
       for (k in data) {
         v = data[k];
         context.set(k, v);
       }
-      return [true, true];
-    };
-
-    IfExist.prototype.recoverTemplate = function(node, context) {
-      return node.clone();
-    };
-
-    return IfExist;
-
-  })();
-
-  $ = jQueryHcss;
-
-  __t('CTS.Commands').IfNExist = (function() {
-
-    function IfNExist() {}
-
-    IfNExist.prototype.signature = function() {
-      return "if-nexist";
-    };
-
-    IfNExist.prototype.applyTo = function(node, context, args, engine) {
-      var data, value;
-      value = context.resolve(args[0]);
-      if (value !== null) {
-        CTS.Util.hideNode(node);
-        data = {};
-        data[args[0]] = value;
-        CTS.Util.stashData(node, this.signature(), data);
-        return [false, false];
-      } else {
-        CTS.Util.showNode(node);
-        return [true, true];
-      }
-    };
-
-    IfNExist.prototype.recoverData = function(node, context, args, engine) {
-      var data, k, v;
       if (CTS.Util.nodeHidden(node)) {
-        data = CTS.Util.getDataStash(node, this.signature());
-        for (k in data) {
-          v = data[k];
-          context.set(k, v);
-        }
         return [false, false];
       } else {
         return [true, true];
       }
     };
 
-    IfNExist.prototype.recoverTemplate = function(node, context) {
+    If.prototype.recoverTemplate = function(node, context) {
       return node.clone();
     };
 
-    return IfNExist;
+    return If;
 
   })();
 
@@ -10215,6 +10199,7 @@ var CTS = {};
           context.setZeroIndex(zeroIndex);
           newNode = $(templateHtml);
           context.push(elem);
+          console.log("console head (render repeat)", context.head(), newNode);
           node.append(newNode);
           engine._render(newNode, context);
           context.pop();
@@ -10402,6 +10387,7 @@ var CTS = {};
       var value;
       if (target === ".") {
         value = node.html();
+        console.log("RECOVER DATA", args["."], value);
         context.set(args["."], value);
         return [false, false];
       } else if (target[0] === "@") {
@@ -10430,13 +10416,19 @@ var CTS = {};
     };
 
     With.prototype.applyTo = function(node, context, args, engine) {
-      context.pushKeypath(args[0]);
+      var defaultTarget, defaultVariant;
+      defaultTarget = args["."];
+      defaultVariant = defaultTarget["."];
+      context.pushKeypath(defaultVariant);
       return [true, true];
     };
 
     With.prototype.recoverData = function(node, context, args, engine) {
-      context.set(args[0], {});
-      context.pushKeypath(args[0]);
+      var defaultTarget, defaultVariant;
+      defaultTarget = args["."];
+      defaultVariant = defaultTarget["."];
+      context.set(defaultVariant, {});
+      context.pushKeypath(defaultVariant);
       return [true, true];
     };
 
@@ -10453,6 +10445,8 @@ var CTS = {};
   __t('CTS').Engine = (function() {
 
     function Engine(options) {
+      this._renderNodeWithRules = __bind(this._renderNodeWithRules, this);
+
       this._render = __bind(this._render, this);
       this.opts = $.extend({}, CTS.Options.Default(), options);
       this.commands = [];
@@ -10483,42 +10477,58 @@ var CTS = {};
     Engine.prototype._render = function(jqnode, context) {
       var _this = this;
       return $.each(jqnode, function(i, node) {
-        var recurse, render, rules;
+        var rules;
         node = $(node);
-        recurse = true;
         rules = _this.rules.rulesForNode(node);
-        render = function() {
-          var command, kid, res, _i, _j, _len, _len1, _ref, _ref1, _results;
-          if (rules !== null) {
-            console.log("rules", rules);
-            _ref = _this.commands;
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              command = _ref[_i];
-              if (command.signature() in rules) {
-                res = command.applyTo(node, context, rules[command.signature()], _this);
-                recurse = recurse && res[1];
-                if (!res[0]) {
-                  break;
-                }
-              }
-            }
-          }
-          if (recurse) {
-            _ref1 = node.children();
-            _results = [];
-            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-              kid = _ref1[_j];
-              _results.push(_this._render($(kid), context));
-            }
-            return _results;
-          }
-        };
         if (_this.templates.needsLoad(rules)) {
-          return _this.templates.load(rules, render);
+          return _this.templates.load(rules, function() {
+            return _this._renderNodeWithRules(node, rules, context);
+          });
         } else {
-          return render();
+          return _this._renderNodeWithRules(node, rules, context);
         }
       });
+    };
+
+    Engine.prototype._renderNodeWithRules = function(node, rules, context) {
+      var command, kid, recurse, res, script, scripts, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _results;
+      recurse = true;
+      scripts = [];
+      if (rules !== null) {
+        console.log("rules", rules);
+        _ref = this.commands;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          command = _ref[_i];
+          if (command.signature() in rules) {
+            res = command.applyTo(node, context, rules[command.signature()], this);
+            if (res.length > 2) {
+              _ref1 = res[2];
+              for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+                script = _ref1[_j];
+                scripts.push(script);
+              }
+            }
+            recurse = recurse && res[1];
+            if (!res[0]) {
+              break;
+            }
+          }
+        }
+      }
+      if (recurse) {
+        _ref2 = node.children();
+        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+          kid = _ref2[_k];
+          this._render($(kid), context);
+        }
+      }
+      _results = [];
+      for (_l = 0, _len3 = scripts.length; _l < _len3; _l++) {
+        script = scripts[_l];
+        console.log("OMG RNUNING SCRIPT");
+        _results.push($('body').append(scriptTags));
+      }
+      return _results;
     };
 
     Engine.prototype._recoverData = function(node, context) {
@@ -10552,8 +10562,7 @@ var CTS = {};
     Engine.prototype._loadBasicCommandSet = function() {
       this._addCommand(new CTS.Commands.With());
       this._addCommand(new CTS.Commands.Data());
-      this._addCommand(new CTS.Commands.IfExist());
-      this._addCommand(new CTS.Commands.IfNExist());
+      this._addCommand(new CTS.Commands.If());
       this._addCommand(new CTS.Commands.Template());
       this._addCommand(new CTS.Commands.RepeatInner());
       return this._addCommand(new CTS.Commands.Value());
