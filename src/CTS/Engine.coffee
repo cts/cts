@@ -92,10 +92,11 @@ class Engine
       for kid in node.children()
         @._render($(kid), context)
     for script in scripts
-      # TED: the probnlem is this code never runs.
-      # and the script tag executes upon load
-      console.log("OMG RNUNING SCRIPT")
-      $('body').append(scriptTags)
+      # Convert to a real script tag
+      scriptBody = script.html();
+      console.log("SCRIPT", scriptBody)
+      realScript = $('<script />').html(scriptBody)
+      $('body').append(realScript)
 
 
   _recoverData: (node, context) ->

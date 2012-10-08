@@ -46,13 +46,22 @@ class Template
   _applyTo: (node, context, args, engine, template) ->
     CTS.Util.setLastInserted(node)
     # Get any script elements in the template
-    scripts = $(template).find('script')
+    template = template.replace(/<script>/g, "<xscript>")
+    template = template.replace(/<\/script>/g, "</xscript>")
+
+    templateElem = $('<div class="cts-template" />')
+    console.log("template lelem", templateElem)
+    templateElem.html(template)
+    console.log("template elem", templateElem)
+    scripts = templateElem.find('xscript')
     console.log("Scripts we found", scripts, template)
     scriptsToReturn = []
     $.each(scripts, (idx, elem) =>
-      scriptsToReturn.append(elem)
+      e = $(elem)
+      e.remove()
+      scriptsToReturn.push(e)
     )
-    node.html(template)
+    node.html(templateElem)
     if scriptsToReturn.length > 0
       console.log("Returning scripts with template command", scriptsToReturn)
       # REMOVE THE SCRIPTS FROM THE TEMPLATE BEFORE RENDER

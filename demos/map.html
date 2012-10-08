@@ -59,17 +59,17 @@
       };
 
       var map = new google.maps.Map(mapElem, mapOptions);
-      
-      for (var i = 0; i < data["markers"]; i++) {
+
+      jQueryHcss.each(data["markers"], function(i, markerData) {
         var markerData = data["markers"][i];
-        var latlng = new google.maps.LatLng(marker["lat"], marker["lng"]);
+        var latlng = new google.maps.LatLng(markerData["lat"], markerData["lng"]);
         var markerOpts = {
           "position": latlng,
           "map": map,
-          "title": marker["title"]
+          "title": markerData["title"]
         };
         var marker = new google.maps.Marker(markerOpts);
-      }
+      });
   
     };
     

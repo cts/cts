@@ -9450,16 +9450,25 @@ var CTS = {};
     };
 
     Template.prototype._applyTo = function(node, context, args, engine, template) {
-      var scripts, scriptsToReturn,
+      var scripts, scriptsToReturn, templateElem,
         _this = this;
       CTS.Util.setLastInserted(node);
-      scripts = $(template).find('script');
+      template = template.replace(/<script>/g, "<xscript>");
+      template = template.replace(/<\/script>/g, "</xscript>");
+      templateElem = $('<div class="cts-template" />');
+      console.log("template lelem", templateElem);
+      templateElem.html(template);
+      console.log("template elem", templateElem);
+      scripts = templateElem.find('xscript');
       console.log("Scripts we found", scripts, template);
       scriptsToReturn = [];
       $.each(scripts, function(idx, elem) {
-        return scriptsToReturn.append(elem);
+        var e;
+        e = $(elem);
+        e.remove();
+        return scriptsToReturn.push(e);
       });
-      node.html(template);
+      node.html(templateElem);
       if (scriptsToReturn.length > 0) {
         console.log("Returning scripts with template command", scriptsToReturn);
         return [true, true, scriptsToReturn];
@@ -10491,7 +10500,7 @@ var CTS = {};
     };
 
     Engine.prototype._renderNodeWithRules = function(node, rules, context) {
-      var command, kid, recurse, res, script, scripts, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _results;
+      var command, kid, realScript, recurse, res, script, scriptBody, scripts, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _results;
       recurse = true;
       scripts = [];
       if (rules !== null) {
@@ -10525,8 +10534,10 @@ var CTS = {};
       _results = [];
       for (_l = 0, _len3 = scripts.length; _l < _len3; _l++) {
         script = scripts[_l];
-        console.log("OMG RNUNING SCRIPT");
-        _results.push($('body').append(scriptTags));
+        scriptBody = script.html();
+        console.log("SCRIPT", scriptBody);
+        realScript = $('<script />').html(scriptBody);
+        _results.push($('body').append(realScript));
       }
       return _results;
     };
