@@ -62,32 +62,41 @@ class Engine
      # that has returned a list of elements
      $.each jqnode, (i,node) =>
        node = $(node)
-       recurse = true
        rules = @rules.rulesForNode(node)
-
-       # Wrap the rendering in a closure. We'll call it now, if no template
-       # load is necessary and later if a template load is necessary.
-       render = () =>
-         if rules != null
-           console.log("rules", rules)
-           for command in @commands
-             if command.signature() of rules
-               res = command.applyTo(node, context, rules[command.signature()], @)
-               # The result object has two values. The first tell us whether
-               # or not to continue with the commands for this node. The second
-               # tells us whether or not to recurse at the end.
-               recurse = recurse and res[1]
-               break unless res[0]
-  
-         if recurse
-           for kid in node.children()
-             @._render($(kid), context)
-  
-       # If we need to load a template, do that now.
        if @templates.needsLoad(rules)
-         @templates.load(rules, render)
+         @templates.load(rules, () =>
+           @._renderNodeWithRules(node, rules, context)
+         )
        else
-         render()
+         @._renderNodeWithRules(node, rules, context)
+
+  _renderNodeWithRules: (node, rules, context) =>
+    recurse = true
+    scripts = []
+    if rules != null
+      console.log("rules", rules)
+      for command in @commands
+        if command.signature() of rules
+          res = command.applyTo(node, context, rules[command.signature()], @)
+          # The result object has two values. The first tell us whether
+          # or not to continue with the commands for this node. The second
+          if res.length > 2
+            for script in res[2]
+              scripts.push(script)
+  
+          # tells us whether or not to recurse at the end.
+          recurse = recurse and res[1]
+          break unless res[0]
+      
+    if recurse
+      for kid in node.children()
+        @._render($(kid), context)
+    for script in scripts
+      # TED: the probnlem is this code never runs.
+      # and the script tag executes upon load
+      console.log("OMG RNUNING SCRIPT")
+      $('body').append(scriptTags)
+
 
   _recoverData: (node, context) ->
     recurse = true
@@ -105,8 +114,7 @@ class Engine
   _loadBasicCommandSet: () ->
     @._addCommand(new CTS.Commands.With())
     @._addCommand(new CTS.Commands.Data())
-    @._addCommand(new CTS.Commands.IfExist())
-    @._addCommand(new CTS.Commands.IfNExist())
+    @._addCommand(new CTS.Commands.If())
     @._addCommand(new CTS.Commands.Template())
     @._addCommand(new CTS.Commands.RepeatInner())
     @._addCommand(new CTS.Commands.Value())
