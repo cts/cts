@@ -55,6 +55,7 @@ class RepeatInner
         context.setZeroIndex(zeroIndex)
         newNode = $(templateHtml)
         context.push(elem)
+        console.log("console head (render repeat)", context.head(), newNode)
         node.append(newNode)
         engine._render(newNode, context)
         context.pop()
