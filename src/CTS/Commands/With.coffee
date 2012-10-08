@@ -30,15 +30,19 @@ class With
   # Replaces the contents of this node with resolution 
   # Tells engine not to recurse into contents
   applyTo: (node, context, args, engine) ->
-    context.pushKeypath(args[0])
+    defaultTarget = args["."]
+    defaultVariant = defaultTarget["."]
+    context.pushKeypath(defaultVariant)
     [true, true]
 
   # Recovers data
   #### Side Effects
   #
   recoverData: (node, context, args, engine) ->
-    context.set(args[0], {})
-    context.pushKeypath(args[0])
+    defaultTarget = args["."]
+    defaultVariant = defaultTarget["."]
+    context.set(defaultVariant, {})
+    context.pushKeypath(defaultVariant)
     [true, true]
 
   # Recovers template
