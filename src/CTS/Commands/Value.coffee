@@ -80,6 +80,7 @@ class Value
   _recoverDataFromTarget: (node, context, args, engine, target) ->
     if target == "."
       value = node.html()
+      console.log("RECOVER DATA", args["."], value)
       context.set(args["."], value)
       return [false, false]  # Continue? Recurse?
     else if target[0] == "@"
