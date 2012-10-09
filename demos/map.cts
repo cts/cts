@@ -1,5 +1,5 @@
 .map {
-  template-proxy: http://localhost:8080/ribbit;
+  template-proxy: http://localhost:8080/fragment;
   template: #map;
   data: .
 }
