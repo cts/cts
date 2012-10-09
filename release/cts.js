@@ -9443,7 +9443,7 @@ var CTS = {};
       if (defaultTargetArgs) {
         templateAddress = defaultTargetArgs["."];
         if (templateAddress) {
-          template = engine.templates.fetch(templateAddress);
+          template = engine.templates.fetch(templateAddress, defaultTargetArgs["proxy"]);
           return this._applyTo(node, context, args, engine, template);
         }
       }
@@ -10261,88 +10261,6 @@ var CTS = {};
 
   })();
 
-  __t('CTS').Templates = (function() {
-
-    function Templates() {
-      this._loadRemoteResponse = __bind(this._loadRemoteResponse, this);
-
-      this.loadRemote = __bind(this.loadRemote, this);
-      this.templates = {};
-      this.templateCommand = new CTS.Commands.Template();
-    }
-
-    Templates.prototype.fetch = function(name) {
-      console.log("Fetching template", name);
-      return this.templates[name];
-    };
-
-    Templates.prototype.needsLoad = function(rules) {
-      var tBlock, tName;
-      if (rules !== null && this.templateCommand.signature() in rules) {
-        tBlock = rules[this.templateCommand.signature()];
-        tName = tBlock["."]["."];
-        if (__indexOf.call(this.templates, tName) >= 0) {
-          return false;
-        } else {
-          return true;
-        }
-      } else {
-        return false;
-      }
-    };
-
-    Templates.prototype.load = function(rules, callback) {
-      var tBlock, tName;
-      if (rules !== null && this.templateCommand.signature() in rules) {
-        tBlock = rules[this.templateCommand.signature()];
-        tName = tBlock["."]["."];
-        if (__indexOf.call(this.templates, tName) >= 0) {
-          return this.templates[tName];
-        } else {
-          if (this.isLocal(tName)) {
-            this.loadLocal(tName);
-            return callback();
-          } else {
-            return this.loadRemote(tName, callback);
-          }
-        }
-      }
-    };
-
-    Templates.prototype.isLocal = function(tName) {
-      return tName[0] === "#";
-    };
-
-    Templates.prototype.loadLocal = function(tName) {
-      var value;
-      value = $(tName).html();
-      this.templates[tName] = value;
-      return value;
-    };
-
-    Templates.prototype.loadRemote = function(tName, callback) {
-      var save;
-      save = {
-        'tname': tName,
-        'callback': callback
-      };
-      return CTS.Util.fetchRemoteStringSameDomain(tName, this._loadRemoteResponse, save);
-    };
-
-    Templates.prototype._loadRemoteResponse = function(text, status, xhr) {
-      var callback, tName;
-      console.log(xhr);
-      callback = xhr.callback;
-      tName = xhr.tname;
-      console.log("Gor response for", tName);
-      this.templates[tName] = text;
-      return callback();
-    };
-
-    return Templates;
-
-  })();
-
   $ = jQueryHcss;
 
   __t('CTS.Commands').Value = (function() {
@@ -10618,5 +10536,92 @@ var CTS = {};
   })();
 
   CTS.bootstrap = new CTS.Bootstrap();
+
+  __t('.CTS').Templates = (function() {
+
+    function Templates() {
+      this._loadRemoteResponse = __bind(this._loadRemoteResponse, this);
+
+      this.loadRemote = __bind(this.loadRemote, this);
+      this.templates = {};
+      this.templateCommand = new CTS.Commands.Template();
+    }
+
+    Templates.prototype.fetch = function(name, proxy) {
+      console.log("Fetching template", name);
+      return this.templates[name];
+    };
+
+    Templates.prototype.needsLoad = function(rules) {
+      var tBlock, tName;
+      if (rules !== null && this.templateCommand.signature() in rules) {
+        tBlock = rules[this.templateCommand.signature()];
+        tName = tBlock["."]["."];
+        if (__indexOf.call(this.templates, tName) >= 0) {
+          return false;
+        } else {
+          return true;
+        }
+      } else {
+        return false;
+      }
+    };
+
+    Templates.prototype.load = function(rules, callback) {
+      var tBlock, tName, tProxy;
+      if (rules !== null && this.templateCommand.signature() in rules) {
+        tBlock = rules[this.templateCommand.signature()];
+        tName = tBlock["."]["."];
+        tProxy = tBlock["."]["proxy"];
+        if (__indexOf.call(this.templates, tName) >= 0) {
+          return this.templates[tName];
+        } else {
+          if (this.isLocal(tName)) {
+            this.loadLocal(tName);
+            return callback();
+          } else {
+            return this.loadRemote(tName, tProxy, callback);
+          }
+        }
+      }
+    };
+
+    Templates.prototype.isLocal = function(tName) {
+      return tName[0] === "#";
+    };
+
+    Templates.prototype.loadLocal = function(tName) {
+      var value;
+      value = $(tName).html();
+      this.templates[tName] = value;
+      return value;
+    };
+
+    Templates.prototype.loadRemote = function(tName, proxy, callback) {
+      var save;
+      save = {
+        'tname': tName,
+        'callback': callback
+      };
+      if (proxy != null) {
+        return CTS.Util.fetch;
+      } else {
+        return CTS.Util.fetchRemoteStringSameDomain(tName, this._loadRemoteResponse, save);
+      }
+    };
+
+    Templates.prototype._loadRemoteResponse = function(text, status, xhr) {
+      var callback, tName;
+      console.log(xhr);
+      callback = xhr.callback;
+      tName = xhr.tname;
+      console.log("Gor response for", tName);
+      this.templates[tName] = text;
+      return callback();
+    };
+
+    return Templates;
+
+  })();
 
 }).call(this);

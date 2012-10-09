@@ -37,7 +37,7 @@ class Template
     if defaultTargetArgs
       templateAddress = defaultTargetArgs["."]
       if templateAddress
-        template = engine.templates.fetch(templateAddress)
+        template = engine.templates.fetch(templateAddress, defaultTargetArgs["proxy"])
         @._applyTo(node, context, args, engine, template)
 
   # This method is partitioned out here for testing

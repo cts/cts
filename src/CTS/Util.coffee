@@ -91,14 +91,14 @@ class Util
       data: params
     })
   
-  @fetchRemoteStringBullfrog: (url, callback, xhrParams, params) ->
+  @fetchRemoteStringBullfrog: (template, proxyUrl, callback, xhrParams, params) ->
     urlParts = url.split("#")
     params = params || {}
     params['url'] = urlParts[0]
     if urlParts.length > 1
       params['id'] = urlParts[1]
 
-    ribbitUrl = "http://localhost:9999/ribbit?callback=?"
+    ribbitUrl = proxyUrl + "?callback=?"
 
     $.ajax({
       url: urlParts[0],

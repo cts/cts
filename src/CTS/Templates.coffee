@@ -8,7 +8,7 @@ class Templates
     @templates = {}
     @templateCommand = new CTS.Commands.Template()
 
-  fetch: (name) ->
+  fetch: (name, proxy) ->
     console.log("Fetching template", name)
     return @templates[name]
 
@@ -27,6 +27,7 @@ class Templates
     if rules != null and @templateCommand.signature() of rules
       tBlock = rules[@templateCommand.signature()]
       tName = tBlock["."]["."]  # Default target, default variant
+      tProxy = tBlock["."]["proxy"]
       if tName in @templates
         @templates[tName]
       else
@@ -34,7 +35,7 @@ class Templates
           @.loadLocal(tName)
           callback() # Load Complete
         else
-          @.loadRemote(tName, callback)
+          @.loadRemote(tName, tProxy, callback)
 
   isLocal: (tName) ->
     return tName[0] == "#"
@@ -44,9 +45,12 @@ class Templates
     @templates[tName] = value
     return value
 
-  loadRemote: (tName, callback) =>
+  loadRemote: (tName, proxy, callback) =>
     save = { 'tname': tName, 'callback': callback }
-    CTS.Util.fetchRemoteStringSameDomain(tName, @._loadRemoteResponse, save)
+    if proxy?
+      CTS.Util.fetchRemoteStringBullfrog(tName, proxy, @._loadRemoteResponse, save)
+    else
+      CTS.Util.fetchRemoteStringSameDomain(tName, @._loadRemoteResponse, save)
 
   _loadRemoteResponse: (text, status, xhr) =>
     console.log(xhr)
