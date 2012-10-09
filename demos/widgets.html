@@ -1,10 +1,10 @@
 <html>
 <body>
-  <section id="map"><div>
+  <section id="map" style="display:none"><div>
 
     <!-- This is the visible section of the CTS template -->
 
-    <div class="themap">
+    <div class="themap" style="width: 300px; height: 300px;">
     Foo
     </div>
 
@@ -13,9 +13,9 @@
     <div class="themapdata" style="display:none">
       <table class="markers"> 
         <tr>
-          <td class="title">NO TITLE</td>
-          <td class="lat">NO LAT</td>
-          <td class="lng">NO LNG</td>
+          <td class="title">title</td>
+          <td class="lat">lat</td>
+          <td class="lng">lng</td>
         </tr>
       </table>
     </div>
@@ -24,31 +24,40 @@
 
     <script>
 
-    // First, get the data
-    var widget = CTS.Util.getLastInserted();
-
-    var RenderMap = function(origElem, origData, resultElem, resultData) {
+    var RenderMap = function(widget) {
       console.log("Render Map");
-      var elem = $(resultElem).find(".themap").first();
-      console.log(elem);
+
+      var dataElem = widget.find(".themapdata");
+      var mapElem = widget.find(".themap").first()[0];
+      var data = CTS.engine.recoverData(dataElem);
+      console.log("Data recovered", data);
+
       var mapOptions = {
         center: new google.maps.LatLng(-34.397, 150.644),
         zoom: 8,
         mapTypeId: google.maps.MapTypeId.ROADMAP
       };
-      var map = new google.maps.Map(elem[0], mapOptions);
-      for (var i = 0; i < origData["markers"]; i++) {
-        var markerData = origData["markers"][i];
-        var latlng = new google.maps.LatLng(marker["lat"], marker["lng"]);
-        var marker = new google.maps.Marker({
-          position: latlng,
-          map: map,
-          title: marker["title"]
-        });
-      }
+
+      var map = new google.maps.Map(mapElem, mapOptions);
+
+      jQueryHcss.each(data["markers"], function(i, markerData) {
+        var markerData = data["markers"][i];
+        var latlng = new google.maps.LatLng(markerData["lat"], markerData["lng"]);
+        var markerOpts = {
+          "position": latlng,
+          "map": map,
+          "title": markerData["title"]
+        };
+        var marker = new google.maps.Marker(markerOpts);
+      });
   
     };
-    //RenderMap();
+    
+    // First, get the data
+    var widget = CTS.Util.getLastInserted();
+    if (widget) {
+      RenderMap(widget);
+    }
     </script>
 
   </div></section>
