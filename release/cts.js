@@ -9453,14 +9453,12 @@ var CTS = {};
       var scripts, scriptsToReturn, templateElem,
         _this = this;
       CTS.Util.setLastInserted(node);
+      console.log("----- Begin Template Application ------");
       template = template.replace(/<script>/g, "<xscript>");
       template = template.replace(/<\/script>/g, "</xscript>");
       templateElem = $('<div class="cts-template" />');
-      console.log("template lelem", templateElem);
       templateElem.html(template);
-      console.log("template elem", templateElem);
       scripts = templateElem.find('xscript');
-      console.log("Scripts we found", scripts, template);
       scriptsToReturn = [];
       $.each(scripts, function(idx, elem) {
         var e;
@@ -9470,7 +9468,6 @@ var CTS = {};
       });
       node.html(templateElem);
       if (scriptsToReturn.length > 0) {
-        console.log("Returning scripts with template command", scriptsToReturn);
         return [true, true, scriptsToReturn];
       } else {
         return [true, true];
@@ -9536,10 +9533,16 @@ var CTS = {};
     Context.prototype.pushKeypath = function(keypath) {
       var obj;
       obj = this.resolve(keypath);
-      return this.push(obj);
+      if ((obj != null) && obj !== null) {
+        this.push(obj);
+        return true;
+      } else {
+        return false;
+      }
     };
 
     Context.prototype.pop = function(data) {
+      console.log("Context.pop()");
       return this.stack.pop();
     };
 
@@ -9574,7 +9577,7 @@ var CTS = {};
     };
 
     Context.prototype.set = function(keypath, value) {
-      console.log("SET " + keypath + " to " + value);
+      console.log("Context.push(", keypath, ", ", value, ")");
       if (keypath === ".") {
         return this.stack[this.stack.length - 1] = value;
       } else {
@@ -9814,7 +9817,7 @@ var CTS = {};
       for (_j = 0, _len1 = linksToLoad.length; _j < _len1; _j++) {
         link = linksToLoad[_j];
         this.state = RulesState.WAIT_FOR_REMOTE;
-        console.log("Loading remote: ", link);
+        console.log("Rules: Loading remote", link);
         _results.push(CTS.Util.fetchRemoteStringPlain(link, this._loadLinkResponse, {
           url: link
         }));
@@ -9824,6 +9827,7 @@ var CTS = {};
 
     Rules.prototype.loadLocal = function() {
       var _this = this;
+      console.log("Rules: Loading local");
       return $.each($('script[type="text/cts"]'), function(idx, elem) {
         var e;
         e = $(elem);
@@ -10049,18 +10053,18 @@ var CTS = {};
       });
     };
 
-    Util.fetchRemoteStringBullfrog = function(url, callback, xhrParams, params) {
+    Util.fetchRemoteStringBullfrog = function(template, proxyUrl, callback, xhrParams, params) {
       var ribbitUrl, urlParts;
-      urlParts = url.split("#");
+      urlParts = template.split("#");
       params = params || {};
       params['url'] = urlParts[0];
       if (urlParts.length > 1) {
         params['id'] = urlParts[1];
       }
-      ribbitUrl = "http://localhost:9999/ribbit?callback=?";
+      ribbitUrl = proxyUrl + "?callback=?";
       return $.ajax({
-        url: urlParts[0],
-        dataType: 'text',
+        url: proxyUrl,
+        dataType: 'jsonp',
         success: callback,
         beforeSend: function(xhr, settings) {
           var key, _results;
@@ -10089,7 +10093,9 @@ var CTS = {};
     };
 
     Data.prototype.applyTo = function(node, context, args, engine) {
+      console.log("----------------------------------- Data Rebase (BEGIN) --------");
       engine._recoverData(node, context);
+      console.log("----------------------------------- Data Rebase (END) --------");
       return [true, true];
     };
 
@@ -10171,15 +10177,15 @@ var CTS = {};
 
   $ = jQueryHcss;
 
-  __t('CTS.Commands').RepeatInner = (function() {
+  __t('CTS.Commands').Repeat = (function() {
 
-    function RepeatInner() {}
+    function Repeat() {}
 
-    RepeatInner.prototype.signature = function() {
+    Repeat.prototype.signature = function() {
       return "repeat";
     };
 
-    RepeatInner.prototype.applyTo = function(node, context, args, engine) {
+    Repeat.prototype.applyTo = function(node, context, args, engine) {
       var collection, defaultArg, defaultTarget, elem, newNode, step, template, templateHtml, zeroIndex, _i, _len,
         _this = this;
       defaultTarget = args["."];
@@ -10197,8 +10203,8 @@ var CTS = {};
           return $(child).remove();
         }
       });
-      if (collection.length === 0) {
-        CTS.Util.hideNode(template);
+      if (!(collection != null) || collection.length === 0) {
+        CTS.Util.hideNode(node);
       } else {
         templateHtml = node.html();
         node.html("");
@@ -10219,7 +10225,7 @@ var CTS = {};
       return [false, false];
     };
 
-    RepeatInner.prototype.recoverData = function(node, context, args, engine) {
+    Repeat.prototype.recoverData = function(node, context, args, engine) {
       var addIterable, defaultArg, defaultTarget, firstPush, step,
         _this = this;
       defaultTarget = args["."];
@@ -10253,303 +10259,69 @@ var CTS = {};
       return [false, false];
     };
 
-    RepeatInner.prototype.recoverTemplate = function(node, context) {
+    Repeat.prototype.recoverTemplate = function(node, context) {
       return [false, false];
     };
 
-    return RepeatInner;
+    return Repeat;
 
   })();
 
-  $ = jQueryHcss;
-
-  __t('CTS.Commands').Value = (function() {
-
-    function Value() {}
-
-    Value.prototype.signature = function() {
-      return "value";
-    };
-
-    Value.prototype.applyTo = function(node, context, args, engine) {
-      var shouldContinue, shouldRecurse, target, tup;
-      shouldContinue = false;
-      shouldRecurse = true;
-      for (target in args) {
-        tup = this._applyToTarget(node, context, args[target], engine, target);
-        shouldContinue = shouldContinue || tup[0];
-        shouldRecurse = shouldRecurse && tup[1];
-      }
-      return [shouldContinue, shouldRecurse];
-    };
-
-    Value.prototype._applyToTarget = function(node, context, args, engine, target) {
-      var value;
-      value = context.resolve(args["."]);
-      if (engine.opts.DyeNodes) {
-        node.addClass(CTS.Options.ClassForValueNode);
-      }
-      if (target === ".") {
-        node.html(value);
-        return [false, false];
-      } else if (target[0] === "@") {
-        node.attr(target.substr(1), value);
-        return [true, true];
-      }
-    };
-
-    Value.prototype.recoverData = function(node, context, args, engine) {
-      var shouldContinue, shouldRecurse, target, tup;
-      shouldContinue = false;
-      shouldRecurse = true;
-      for (target in args) {
-        tup = this._recoverDataFromTarget(node, context, args[target], engine, target);
-        shouldContinue = shouldContinue || tup[0];
-        shouldRecurse = shouldRecurse && tup[1];
-      }
-      return [shouldContinue, shouldRecurse];
-    };
-
-    Value.prototype._recoverDataFromTarget = function(node, context, args, engine, target) {
-      var value;
-      if (target === ".") {
-        value = node.html();
-        console.log("RECOVER DATA", args["."], value);
-        context.set(args["."], value);
-        return [false, false];
-      } else if (target[0] === "@") {
-        value = node.attr(target.substr(1));
-        context.set(args["."], value);
-        return [true, true];
-      }
-    };
-
-    Value.prototype.recoverTemplate = function(node, context) {
-      return node.clone();
-    };
-
-    return Value;
-
-  })();
-
-  $ = jQueryHcss;
-
-  __t('CTS.Commands').With = (function() {
-
-    function With() {}
-
-    With.prototype.signature = function() {
-      return "with";
-    };
-
-    With.prototype.applyTo = function(node, context, args, engine) {
-      var defaultTarget, defaultVariant;
-      defaultTarget = args["."];
-      defaultVariant = defaultTarget["."];
-      context.pushKeypath(defaultVariant);
-      return [true, true];
-    };
-
-    With.prototype.recoverData = function(node, context, args, engine) {
-      var defaultTarget, defaultVariant;
-      defaultTarget = args["."];
-      defaultVariant = defaultTarget["."];
-      context.set(defaultVariant, {});
-      context.pushKeypath(defaultVariant);
-      return [true, true];
-    };
-
-    With.prototype.recoverTemplate = function(node, context) {
-      return node.clone();
-    };
-
-    return With;
-
-  })();
-
-  $ = jQueryHcss;
-
-  __t('CTS').Engine = (function() {
-
-    function Engine(options) {
-      this._renderNodeWithRules = __bind(this._renderNodeWithRules, this);
-
-      this._render = __bind(this._render, this);
-      this.opts = $.extend({}, CTS.Options.Default(), options);
-      this.commands = [];
-      this.rules = new CTS.Rules();
-      this.templates = new CTS.Templates();
-      this._loadBasicCommandSet();
-    }
-
-    Engine.prototype.render = function(node, data) {
-      var context;
-      node = node || $('html');
-      data = data || window;
-      context = new CTS.Context(data);
-      return this._render(node, context);
-    };
-
-    Engine.prototype.recoverData = function(node) {
-      var context,
-        _this = this;
-      node = node || $('html');
-      context = new CTS.Context({});
-      $.each(node, function(i, e) {
-        return _this._recoverData($(e), context);
-      });
-      return context.tail();
-    };
-
-    Engine.prototype._render = function(jqnode, context) {
-      var _this = this;
-      return $.each(jqnode, function(i, node) {
-        var rules;
-        node = $(node);
-        rules = _this.rules.rulesForNode(node);
-        if (_this.templates.needsLoad(rules)) {
-          return _this.templates.load(rules, function() {
-            return _this._renderNodeWithRules(node, rules, context);
-          });
-        } else {
-          return _this._renderNodeWithRules(node, rules, context);
-        }
-      });
-    };
-
-    Engine.prototype._renderNodeWithRules = function(node, rules, context) {
-      var command, kid, realScript, recurse, res, script, scriptBody, scripts, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _results;
-      recurse = true;
-      scripts = [];
-      if (rules !== null) {
-        console.log("rules", rules);
-        _ref = this.commands;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          command = _ref[_i];
-          if (command.signature() in rules) {
-            res = command.applyTo(node, context, rules[command.signature()], this);
-            if (res.length > 2) {
-              _ref1 = res[2];
-              for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-                script = _ref1[_j];
-                scripts.push(script);
-              }
-            }
-            recurse = recurse && res[1];
-            if (!res[0]) {
-              break;
-            }
-          }
-        }
-      }
-      if (recurse) {
-        _ref2 = node.children();
-        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-          kid = _ref2[_k];
-          this._render($(kid), context);
-        }
-      }
-      _results = [];
-      for (_l = 0, _len3 = scripts.length; _l < _len3; _l++) {
-        script = scripts[_l];
-        scriptBody = script.html();
-        console.log("SCRIPT", scriptBody);
-        realScript = $('<script />').html(scriptBody);
-        _results.push($('body').append(realScript));
-      }
-      return _results;
-    };
-
-    Engine.prototype._recoverData = function(node, context) {
-      var cats, command, kid, recurse, res, _i, _j, _len, _len1, _ref, _ref1, _results;
-      recurse = true;
-      cats = this.rules.rulesForNode(node);
-      if (cats !== null) {
-        _ref = this.commands;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          command = _ref[_i];
-          if (command.signature() in cats) {
-            res = command.recoverData(node, context, cats[command.signature()], this);
-            recurse = recurse && res[1];
-            if (!res[0]) {
-              break;
-            }
-          }
-        }
-      }
-      if (recurse) {
-        _ref1 = node.children();
-        _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          kid = _ref1[_j];
-          _results.push(this._recoverData($(kid), context));
-        }
-        return _results;
-      }
-    };
-
-    Engine.prototype._loadBasicCommandSet = function() {
-      this._addCommand(new CTS.Commands.With());
-      this._addCommand(new CTS.Commands.Data());
-      this._addCommand(new CTS.Commands.If());
-      this._addCommand(new CTS.Commands.Template());
-      this._addCommand(new CTS.Commands.RepeatInner());
-      return this._addCommand(new CTS.Commands.Value());
-    };
-
-    Engine.prototype._addCommand = function(command) {
-      return this.commands.push(command);
-    };
-
-    return Engine;
-
-  })();
-
-  $ = jQueryHcss;
-
-  __t('CTS').Bootstrap = (function() {
-
-    function Bootstrap() {
-      var _this = this;
-      $(function() {
-        return _this.loadCTS();
-      });
-    }
-
-    Bootstrap.prototype.loadCTS = function() {
-      CTS.engine = new CTS.Engine();
-      console.log("Bootstrap: Loading Remote");
-      CTS.engine.rules.setCallback(this.remoteRulesLoaded);
-      return CTS.engine.rules.load();
-    };
-
-    Bootstrap.prototype.remoteRulesLoaded = function() {
-      console.log("Bootstrap: Loading Local");
-      CTS.engine.rules.loadLocal();
-      console.log("Done with Rules", CTS.engine.rules.blocks);
-      console.log("Bootstrap: Rendering CTS");
-      return CTS.engine.render();
-    };
-
-    return Bootstrap;
-
-  })();
-
-  CTS.bootstrap = new CTS.Bootstrap();
-
-  __t('.CTS').Templates = (function() {
+  __t('CTS').Templates = (function() {
 
     function Templates() {
       this._loadRemoteResponse = __bind(this._loadRemoteResponse, this);
 
       this.loadRemote = __bind(this.loadRemote, this);
+
+      this._preloadResponse = __bind(this._preloadResponse, this);
+
+      this.preLoad = __bind(this.preLoad, this);
       this.templates = {};
       this.templateCommand = new CTS.Commands.Template();
+      this.preloadCount = 0;
+      this.preloadCallback = null;
     }
 
     Templates.prototype.fetch = function(name, proxy) {
-      console.log("Fetching template", name);
+      console.log("Templates: Fetching", name);
       return this.templates[name];
+    };
+
+    Templates.prototype.preLoad = function(rules, callback) {
+      var block, selector, template, toLoad, _i, _len, _results;
+      this.preloadCount = 0;
+      this.preloadCallback = callback;
+      toLoad = [];
+      template = this.templateCommand.signature();
+      for (selector in rules) {
+        block = rules[selector];
+        if (this.needsLoad(block)) {
+          this.preloadCount += 1;
+          toLoad.push(block);
+        }
+      }
+      if (this.preloadCount === 0) {
+        console.log("Templates: No templates to preload. Calling callback.");
+        return this.preloadCallback();
+      } else {
+        console.log("Templates: Preloading", this.preloadCount, "templates");
+        _results = [];
+        for (_i = 0, _len = toLoad.length; _i < _len; _i++) {
+          block = toLoad[_i];
+          _results.push(this.load(block, this._preloadResponse));
+        }
+        return _results;
+      }
+    };
+
+    Templates.prototype._preloadResponse = function() {
+      this.preloadCount -= 1;
+      console.log("Templates: Preload Callback", this.preloadCount);
+      if (this.preloadCount === 0 && this.preloadCallback !== null) {
+        this.preloadCallback();
+      }
+      return this.preloadCallback = null;
     };
 
     Templates.prototype.needsLoad = function(rules) {
@@ -10557,9 +10329,10 @@ var CTS = {};
       if (rules !== null && this.templateCommand.signature() in rules) {
         tBlock = rules[this.templateCommand.signature()];
         tName = tBlock["."]["."];
-        if (__indexOf.call(this.templates, tName) >= 0) {
+        if (tName in this.templates) {
           return false;
         } else {
+          console.log("Templates needs load because of", tName);
           return true;
         }
       } else {
@@ -10604,7 +10377,7 @@ var CTS = {};
         'callback': callback
       };
       if (proxy != null) {
-        return CTS.Util.fetch;
+        return CTS.Util.fetchRemoteStringBullfrog(tName, proxy, this._loadRemoteResponse, save);
       } else {
         return CTS.Util.fetchRemoteStringSameDomain(tName, this._loadRemoteResponse, save);
       }
@@ -10612,10 +10385,9 @@ var CTS = {};
 
     Templates.prototype._loadRemoteResponse = function(text, status, xhr) {
       var callback, tName;
-      console.log(xhr);
       callback = xhr.callback;
       tName = xhr.tname;
-      console.log("Gor response for", tName);
+      console.log("Templates: Loaded remote", tName);
       this.templates[tName] = text;
       return callback();
     };
@@ -10623,5 +10395,360 @@ var CTS = {};
     return Templates;
 
   })();
+
+  $ = jQueryHcss;
+
+  __t('CTS.Commands').Value = (function() {
+
+    function Value() {}
+
+    Value.prototype.signature = function() {
+      return "value";
+    };
+
+    Value.prototype.applyTo = function(node, context, args, engine) {
+      var shouldContinue, shouldRecurse, target, tup;
+      shouldContinue = false;
+      shouldRecurse = true;
+      for (target in args) {
+        tup = this._applyToTarget(node, context, args[target], engine, target);
+        shouldContinue = shouldContinue || tup[0];
+        shouldRecurse = shouldRecurse && tup[1];
+      }
+      return [shouldContinue, shouldRecurse];
+    };
+
+    Value.prototype._applyToTarget = function(node, context, args, engine, target) {
+      var value;
+      value = context.resolve(args["."]);
+      if (engine.opts.DyeNodes) {
+        node.addClass(CTS.Options.ClassForValueNode);
+      }
+      if (target === ".") {
+        console.log("SetValue(", args["."], ",", value, ")");
+        node.html(value);
+        return [false, false];
+      } else if (target[0] === "@") {
+        node.attr(target.substr(1), value);
+        return [true, true];
+      }
+    };
+
+    Value.prototype.recoverData = function(node, context, args, engine) {
+      var shouldContinue, shouldRecurse, target, tup;
+      shouldContinue = false;
+      shouldRecurse = true;
+      for (target in args) {
+        tup = this._recoverDataFromTarget(node, context, args[target], engine, target);
+        shouldContinue = shouldContinue || tup[0];
+        shouldRecurse = shouldRecurse && tup[1];
+      }
+      return [shouldContinue, shouldRecurse];
+    };
+
+    Value.prototype._recoverDataFromTarget = function(node, context, args, engine, target) {
+      var value;
+      if (target === ".") {
+        value = node.html();
+        console.log("Recovered(", args["."], ",", value, ")");
+        context.set(args["."], value);
+        return [false, false];
+      } else if (target[0] === "@") {
+        value = node.attr(target.substr(1));
+        context.set(args["."], value);
+        return [true, true];
+      }
+    };
+
+    Value.prototype.recoverTemplate = function(node, context) {
+      return node.clone();
+    };
+
+    return Value;
+
+  })();
+
+  $ = jQueryHcss;
+
+  __t('CTS.Commands').With = (function() {
+
+    function With() {}
+
+    With.prototype.signature = function() {
+      return "with";
+    };
+
+    With.prototype.applyTo = function(node, context, args, engine) {
+      var defaultTarget, defaultVariant, pop, success;
+      defaultTarget = args["."];
+      defaultVariant = defaultTarget["."];
+      success = context.pushKeypath(defaultVariant);
+      if (success) {
+        console.log("With (render, success):", node.clone(), defaultVariant, " = ", JSON.stringify(context.head()));
+      } else {
+        console.log("With (render, fail):", node.clone(), defaultVariant);
+      }
+      pop = function(node, rules, context) {
+        console.log("With (render, end)", node.clone());
+        return context.pop();
+      };
+      if (success) {
+        return [true, true, null, [pop]];
+      } else {
+        return [true, true];
+      }
+    };
+
+    With.prototype.recoverData = function(node, context, args, engine) {
+      var defaultTarget, defaultVariant, pop;
+      defaultTarget = args["."];
+      defaultVariant = defaultTarget["."];
+      console.log("With (recover):", node.clone(), defaultVariant);
+      context.set(defaultVariant, {});
+      context.pushKeypath(defaultVariant);
+      pop = function(node, rules, context) {
+        console.log("With (recover, end)", node.clone());
+        return context.pop();
+      };
+      return [true, true, null, [pop]];
+    };
+
+    With.prototype.recoverTemplate = function(node, context) {
+      return node.clone();
+    };
+
+    return With;
+
+  })();
+
+  $ = jQueryHcss;
+
+  __t('CTS').Engine = (function() {
+
+    function Engine(options) {
+      this._recoverData = __bind(this._recoverData, this);
+
+      this._renderNodeWithRules = __bind(this._renderNodeWithRules, this);
+
+      this._render = __bind(this._render, this);
+      this.opts = $.extend({}, CTS.Options.Default(), options);
+      this.commands = [];
+      this.rules = new CTS.Rules();
+      this.templates = new CTS.Templates();
+      this._loadBasicCommandSet();
+    }
+
+    Engine.prototype.render = function(node, data) {
+      var context;
+      node = node || $('html');
+      data = data || window;
+      context = new CTS.Context(data);
+      return this._render(node, context);
+    };
+
+    Engine.prototype.recoverData = function(node) {
+      var context,
+        _this = this;
+      console.log("RECOVER", node);
+      node = node || $('html');
+      context = new CTS.Context({});
+      $.each(node, function(i, e) {
+        return _this._recoverData($(e), context);
+      });
+      return context.tail();
+    };
+
+    Engine.prototype._render = function(jqnode, context) {
+      var _this = this;
+      return $.each(jqnode, function(i, node) {
+        var rules;
+        node = $(node);
+        rules = _this.rules.rulesForNode(node);
+        if (_this.templates.needsLoad(rules)) {
+          return _this.templates.load(rules, function() {
+            return _this._renderNodeWithRules(node, rules, context);
+          });
+        } else {
+          return _this._renderNodeWithRules(node, rules, context);
+        }
+      });
+    };
+
+    Engine.prototype._renderNodeWithRules = function(node, rules, context) {
+      var command, f, functions, kid, realScript, recurse, res, script, scriptBody, scripts, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _ref, _ref1, _ref2, _ref3, _results;
+      recurse = true;
+      scripts = [];
+      functions = [];
+      if (rules !== null) {
+        _ref = this.commands;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          command = _ref[_i];
+          if (command.signature() in rules) {
+            res = command.applyTo(node, context, rules[command.signature()], this);
+            if (res.length > 2 && res[2] !== null) {
+              _ref1 = res[2];
+              for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+                script = _ref1[_j];
+                scripts.push(script);
+              }
+            }
+            if (res.length > 3 && res[3] !== null) {
+              _ref2 = res[3];
+              for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+                f = _ref2[_k];
+                functions.push(f);
+              }
+            }
+            recurse = recurse && res[1];
+            if (!res[0]) {
+              break;
+            }
+          }
+        }
+      }
+      if (recurse) {
+        _ref3 = node.children();
+        for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+          kid = _ref3[_l];
+          this._render($(kid), context);
+        }
+      }
+      for (_m = 0, _len4 = functions.length; _m < _len4; _m++) {
+        f = functions[_m];
+        f(node, rules, context);
+      }
+      _results = [];
+      for (_n = 0, _len5 = scripts.length; _n < _len5; _n++) {
+        script = scripts[_n];
+        console.log("Engine: Executing scripts");
+        scriptBody = script.html();
+        scriptBody = scriptBody.replace(/&gt;/g, ">");
+        scriptBody = scriptBody.replace(/&amp;/g, "&");
+        scriptBody = scriptBody.replace(/&lt;/g, "<");
+        realScript = $('<script />').html(scriptBody);
+        _results.push($('body').append(realScript));
+      }
+      return _results;
+    };
+
+    Engine.prototype._recoverData = function(jqnode, context) {
+      var _this = this;
+      return $.each(jqnode, function(i, node) {
+        var rules;
+        node = $(node);
+        rules = _this.rules.rulesForNode(node);
+        if (_this.templates.needsLoad(rules)) {
+          console.log("Engine: Recover data (needs load)", node.clone(), rules);
+          return _this.templates.load(rules, function() {
+            return _this._recoverDataWithRules(node, rules, context);
+          });
+        } else {
+          console.log("Engine: Recover data", node.clone(), rules);
+          return _this._recoverDataWithRules(node, rules, context);
+        }
+      });
+    };
+
+    Engine.prototype._recoverDataWithRules = function(node, rules, context) {
+      var command, f, functions, kid, recurse, res, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _results;
+      console.log("Engine: Recover data with rules", node.clone(), rules);
+      recurse = true;
+      functions = [];
+      if (rules !== null) {
+        _ref = this.commands;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          command = _ref[_i];
+          if (command.signature() in rules) {
+            res = command.recoverData(node, context, rules[command.signature()], this);
+            if (res.length > 3 && res[3] !== null) {
+              _ref1 = res[3];
+              for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+                f = _ref1[_j];
+                functions.push(f);
+              }
+            }
+            recurse = recurse && res[1];
+            if (!res[0]) {
+              break;
+            }
+          }
+        }
+      }
+      if (recurse) {
+        _ref2 = node.children();
+        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+          kid = _ref2[_k];
+          this._recoverData($(kid), context);
+        }
+      }
+      _results = [];
+      for (_l = 0, _len3 = functions.length; _l < _len3; _l++) {
+        f = functions[_l];
+        _results.push(f(node, rules, context));
+      }
+      return _results;
+    };
+
+    Engine.prototype._loadBasicCommandSet = function() {
+      this._addCommand(new CTS.Commands.Data());
+      this._addCommand(new CTS.Commands.With());
+      this._addCommand(new CTS.Commands.If());
+      this._addCommand(new CTS.Commands.Template());
+      this._addCommand(new CTS.Commands.Repeat());
+      return this._addCommand(new CTS.Commands.Value());
+    };
+
+    Engine.prototype._addCommand = function(command) {
+      return this.commands.push(command);
+    };
+
+    return Engine;
+
+  })();
+
+  $ = jQueryHcss;
+
+  __t('CTS').Bootstrap = (function() {
+
+    function Bootstrap() {
+      this.remoteTemplatesLoaded = __bind(this.remoteTemplatesLoaded, this);
+
+      this.remoteRulesLoaded = __bind(this.remoteRulesLoaded, this);
+
+      this.loadCTS = __bind(this.loadCTS, this);
+
+      var _this = this;
+      $(function() {
+        return _this.loadCTS();
+      });
+    }
+
+    Bootstrap.prototype.loadCTS = function() {
+      CTS.engine = new CTS.Engine();
+      console.log("Bootstrap: Loading Remote Rules");
+      CTS.engine.rules.setCallback(this.remoteRulesLoaded);
+      return CTS.engine.rules.load();
+    };
+
+    Bootstrap.prototype.remoteRulesLoaded = function() {
+      console.log("Bootstrap: Done loading Remote Rules");
+      console.log("Bootstrap: Loading Local Rules");
+      CTS.engine.rules.loadLocal();
+      console.log("Bootstrap: Done loading Local Rules", CTS.engine.rules.blocks);
+      console.log("Bootstrap: Prefetching Templates");
+      return CTS.engine.templates.preLoad(CTS.engine.rules.blocks, this.remoteTemplatesLoaded);
+    };
+
+    Bootstrap.prototype.remoteTemplatesLoaded = function() {
+      console.log("Bootstrap: Done prefetching Templates");
+      console.log("Bootstrap: Rendering CTS");
+      return CTS.engine.render();
+    };
+
+    return Bootstrap;
+
+  })();
+
+  CTS.bootstrap = new CTS.Bootstrap();
 
 }).call(this);
