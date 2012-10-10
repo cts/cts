@@ -5,7 +5,7 @@
 # Javascript sources, which is allowed.
 #
 # Usage:
-#   ruby proxy_server.rb
+#   ruby proxy_server.rb -p 9999
 #
 # Author:
 #   Ted Benson (eob@csail.mit.edu)
@@ -16,6 +16,16 @@ require 'open-uri'
 require 'nokogiri'
 require 'json'
 
+use Rack::Logger
+
+##
+# Set up logging
+#
+helpers do
+  def logger
+    request.logger
+  end
+end
 
 ##
 # Gets a fragment of a web page, identified by DOM ID.
@@ -30,12 +40,16 @@ get '/fragment' do
   headers 'Access-Control-Allow-Origin' => '*'  
   url = params[:url]
   id = "#" + params[:id]
+  logger.info("Fragment request: #{url} with id #{id}")
   callback = params[:callback]
   doc = Nokogiri::HTML(open(url))
-  frag = doc.css(id).to_s
+  node = doc.css(id)
+  frag = node.children.map {|x| x.to_s }.join("\n")
+  logger.info(frag)
   frag_json = frag.to_json
+  logger.info(callback)
   return "#{callback}(#{frag_json})" if callback
-  return "#{frag_json}"
+  return "#{frag}"
 end
 
 ##
