@@ -56,6 +56,7 @@ class Value
       node.addClass(CTS.Options.ClassForValueNode)
 
     if target == "."
+      console.log("SetValue(", args["."], ",", value, ")")
       node.html(value)
       return [false, false]  # Continue? Recurse?
     else if target[0] == "@"
@@ -80,7 +81,7 @@ class Value
   _recoverDataFromTarget: (node, context, args, engine, target) ->
     if target == "."
       value = node.html()
-      console.log("RECOVER DATA", args["."], value)
+      console.log("Recovered(", args["."], ",", value, ")")
       context.set(args["."], value)
       return [false, false]  # Continue? Recurse?
     else if target[0] == "@"
