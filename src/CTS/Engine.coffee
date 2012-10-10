@@ -51,6 +51,7 @@ class Engine
     @._render(node, context)
 
   recoverData: (node) ->
+    console.log("RECOVER", node)
     node = node || $('html')
     context = new CTS.Context({})
     $.each node, (i,e) =>
@@ -73,16 +74,19 @@ class Engine
   _renderNodeWithRules: (node, rules, context) =>
     recurse = true
     scripts = []
+    functions = []
     if rules != null
-      console.log("rules", rules)
       for command in @commands
         if command.signature() of rules
           res = command.applyTo(node, context, rules[command.signature()], @)
           # The result object has two values. The first tell us whether
           # or not to continue with the commands for this node. The second
-          if res.length > 2
+          if res.length > 2 and res[2] != null
             for script in res[2]
               scripts.push(script)
+          if res.length > 3 and res[3] != null
+            for f in res[3]
+              functions.push(f)
   
           # tells us whether or not to recurse at the end.
           recurse = recurse and res[1]
@@ -90,34 +94,64 @@ class Engine
       
     if recurse
       for kid in node.children()
+        #console.log("Parent->Child", node, $(kid))
         @._render($(kid), context)
+    for f in functions
+      f(node, rules, context)
     for script in scripts
       # Convert to a real script tag
+      # TODO(eob): Fix this terrible hack.
+      console.log("Engine: Executing scripts")
       scriptBody = script.html();
-      console.log("SCRIPT", scriptBody)
+      scriptBody = scriptBody.replace(/&gt;/g, ">");
+      scriptBody = scriptBody.replace(/&amp;/g, "&");
+      scriptBody = scriptBody.replace(/&lt;/g, "<");
       realScript = $('<script />').html(scriptBody)
       $('body').append(realScript)
 
 
-  _recoverData: (node, context) ->
+  _recoverData: (jqnode, context) =>
+    # Account for the fact that node might actually be a jQuery selector
+    # that has returned a list of elements
+    $.each jqnode, (i,node) =>
+      node = $(node)
+      rules = @rules.rulesForNode(node)
+      if @templates.needsLoad(rules)
+        console.log("Engine: Recover data (needs load)", node.clone(), rules)
+        @templates.load(rules, () =>
+          @._recoverDataWithRules(node, rules, context)
+        )
+      else
+        console.log("Engine: Recover data", node.clone(), rules)
+        @._recoverDataWithRules(node, rules, context)
+
+
+  _recoverDataWithRules: (node, rules, context) ->
+    console.log("Engine: Recover data with rules", node.clone(), rules)
     recurse = true
-    cats = @rules.rulesForNode(node)
-    if cats != null
+    functions = []
+    if rules != null
       for command in @commands
-        if command.signature() of cats
-          res = command.recoverData(node, context, cats[command.signature()], @)
+        if command.signature() of rules 
+          res = command.recoverData(node, context, rules[command.signature()], @)
+          if res.length > 3 and res[3] != null
+            for f in res[3]
+              functions.push(f)
+ 
           recurse = recurse and res[1]
           break unless res[0]
     if recurse
       for kid in node.children()
         @._recoverData($(kid), context)
+    for f in functions
+      f(node, rules, context)
 
   _loadBasicCommandSet: () ->
-    @._addCommand(new CTS.Commands.With())
     @._addCommand(new CTS.Commands.Data())
+    @._addCommand(new CTS.Commands.With())
     @._addCommand(new CTS.Commands.If())
     @._addCommand(new CTS.Commands.Template())
-    @._addCommand(new CTS.Commands.RepeatInner())
+    @._addCommand(new CTS.Commands.Repeat())
     @._addCommand(new CTS.Commands.Value())
 
   _addCommand: (command) ->
