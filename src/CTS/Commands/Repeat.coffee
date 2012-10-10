@@ -20,7 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 $ = jQueryHcss
 
-class RepeatInner
+class Repeat
   constructor: () ->
 
   signature: () ->
@@ -45,8 +45,8 @@ class RepeatInner
       else
         $(child).remove()
 
-    if collection.length == 0
-      CTS.Util.hideNode(template)
+    if not collection? or collection.length == 0
+      CTS.Util.hideNode(node)
     else
       templateHtml = node.html()
       node.html("")
