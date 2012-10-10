@@ -64,10 +64,11 @@ class Rules
     @urlsToLoad = linksToLoad.length
     for link in linksToLoad
       @state = RulesState.WAIT_FOR_REMOTE
-      console.log("Loading remote: ", link)
+      console.log("Rules: Loading remote", link)
       CTS.Util.fetchRemoteStringPlain(link, @._loadLinkResponse, {url: link})
 
   loadLocal: () =>
+    console.log("Rules: Loading local")
     # Searches through the page and attaches the contents of any
     # link element with type text/cts.
     $.each($('script[type="text/cts"]'), (idx, elem) =>
