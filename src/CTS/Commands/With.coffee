@@ -32,8 +32,18 @@ class With
   applyTo: (node, context, args, engine) ->
     defaultTarget = args["."]
     defaultVariant = defaultTarget["."]
-    context.pushKeypath(defaultVariant)
-    [true, true]
+    success = context.pushKeypath(defaultVariant)
+    if success
+      console.log("With (render, success):", node.clone(), defaultVariant, " = ", JSON.stringify(context.head()))
+    else
+      console.log("With (render, fail):", node.clone(), defaultVariant)
+    pop = (node, rules, context) ->
+      console.log("With (render, end)", node.clone())
+      context.pop()
+    if success
+      [true, true, null, [pop]]
+    else
+      [true, true]
 
   # Recovers data
   #### Side Effects
@@ -41,9 +51,13 @@ class With
   recoverData: (node, context, args, engine) ->
     defaultTarget = args["."]
     defaultVariant = defaultTarget["."]
+    console.log("With (recover):", node.clone(), defaultVariant)
     context.set(defaultVariant, {})
     context.pushKeypath(defaultVariant)
-    [true, true]
+    pop = (node, rules, context) ->
+      console.log("With (recover, end)", node.clone())
+      context.pop()
+    [true, true, null, [pop]]
 
   # Recovers template
   recoverTemplate: (node, context) ->
