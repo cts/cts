@@ -4,9 +4,7 @@
 
     <!-- This is the visible section of the CTS template -->
 
-    <div class="themap" style="width: 300px; height: 300px;">
-    Foo
-    </div>
+    <div class="themap"></div>
 
     <!-- This is the data section, insivible but present in the DOM -->
 
@@ -14,6 +12,9 @@
       <ul class="properties">
         <li class="center-lat">42.361335</li>
         <li class="center-lng">-71.089482</li>
+        <li class="zoom-level">2</li>
+        <li class="width">100</li>
+        <li class="height">100</li>
       </ul>
 
       <table class="markers"> 
@@ -38,10 +39,13 @@
 
       var centerLat = data["properties"]["centerLat"];
       var centerLng = data["properties"]["centerLng"];
+      var zoomLevel = data["properties"]["zoomLevel"];
+      $(mapElem).css("width", data["properties"]["width"]);
+      $(mapElem).css("height", data["properties"]["height"]);
 
       var mapOptions = {
         center: new google.maps.LatLng(centerLat, centerLng),
-        zoom: 8,
+        zoom: parseInt(zoomLevel),
         mapTypeId: google.maps.MapTypeId.ROADMAP
       };
 
@@ -68,6 +72,7 @@
               markerOpts["title"] = titleText;
             }
           }
+
           console.log("Marker", markerOpts);
           var marker = new google.maps.Marker(markerOpts);
         });

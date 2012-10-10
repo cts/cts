@@ -9,6 +9,18 @@
   with: properties;
 }
 
+.map .properties .width {
+  value: width;
+}
+
+.map .properties .height {
+  value: height;
+}
+
+.map .properties .zoom-level {
+  value: zoomLevel;
+}
+
 .map .properties .center-lat {
   value: centerLat;
 }
