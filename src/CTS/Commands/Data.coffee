@@ -27,13 +27,12 @@ class Data
     "data"
 
   applyTo: (node, context, args, engine) ->
+    console.log("----------------------------------- Data Rebase (BEGIN) --------")
     # TODO: Decide if we want to offer an option to blow away context
     engine._recoverData(node, context)
+    console.log("----------------------------------- Data Rebase (END) --------")
     [true, true]
 
-  # Recovers data
-  #### Side Effects
-  #
   recoverData: (node, context, args, engine) ->
     [true, true]
 
