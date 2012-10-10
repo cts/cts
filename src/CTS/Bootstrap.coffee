@@ -40,21 +40,29 @@ class Bootstrap
       @.loadCTS()
     )
 
-  loadCTS: () ->
+  loadCTS: () =>
     # Load the default engine
     CTS.engine = new CTS.Engine()
-    console.log("Bootstrap: Loading Remote")
+    console.log("Bootstrap: Loading Remote Rules")
     CTS.engine.rules.setCallback(@.remoteRulesLoaded)
     CTS.engine.rules.load()
 
   # Called once remote rules have been loaded.
   # Loads local rules and then requests template load.
-  remoteRulesLoaded: () ->
-    console.log("Bootstrap: Loading Local")
+  remoteRulesLoaded: () =>
+    console.log("Bootstrap: Done loading Remote Rules")
+    console.log("Bootstrap: Loading Local Rules")
     CTS.engine.rules.loadLocal()
-    console.log("Done with Rules", CTS.engine.rules.blocks)
+    console.log("Bootstrap: Done loading Local Rules", CTS.engine.rules.blocks)
+    console.log("Bootstrap: Prefetching Templates")
+    CTS.engine.templates.preLoad(CTS.engine.rules.blocks, @.remoteTemplatesLoaded)
+
+  remoteTemplatesLoaded: () =>
+    console.log("Bootstrap: Done prefetching Templates")
     console.log("Bootstrap: Rendering CTS")
     CTS.engine.render()
+
+
 
 # 5..4..3..2..
 CTS.bootstrap = new CTS.Bootstrap()
