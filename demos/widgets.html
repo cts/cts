@@ -10,12 +10,17 @@
 
     <!-- This is the data section, insivible but present in the DOM -->
 
-    <div class="themapdata" style="display:none">
+    <div class="themapdata">
+      <ul class="properties">
+        <li class="center-lat">42.361335</li>
+        <li class="center-lng">-71.089482</li>
+      </ul>
+
       <table class="markers"> 
         <tr>
-          <td class="title">title</td>
-          <td class="lat">lat</td>
-          <td class="lng">lng</td>
+          <td class="title">Dummy Title</td>
+          <td class="lat">Dummy Lat</td>
+          <td class="lng">Dummy Lng</td>
         </tr>
       </table>
     </div>
@@ -25,31 +30,48 @@
     <script>
 
     var RenderMap = function(widget) {
-      console.log("Render Map");
-
+      console.log("------ WIDGET Render JavaScript -------");
       var dataElem = widget.find(".themapdata");
       var mapElem = widget.find(".themap").first()[0];
       var data = CTS.engine.recoverData(dataElem);
-      console.log("Data recovered", data);
+      console.log("WIDGET: Recovered Data", data);
+
+      var centerLat = data["properties"]["centerLat"];
+      var centerLng = data["properties"]["centerLng"];
 
       var mapOptions = {
-        center: new google.maps.LatLng(-34.397, 150.644),
+        center: new google.maps.LatLng(centerLat, centerLng),
         zoom: 8,
         mapTypeId: google.maps.MapTypeId.ROADMAP
       };
 
       var map = new google.maps.Map(mapElem, mapOptions);
 
-      jQueryHcss.each(data["markers"], function(i, markerData) {
-        var markerData = data["markers"][i];
-        var latlng = new google.maps.LatLng(markerData["lat"], markerData["lng"]);
-        var markerOpts = {
-          "position": latlng,
-          "map": map,
-          "title": markerData["title"]
-        };
-        var marker = new google.maps.Marker(markerOpts);
-      });
+      if ("markers" in data) {
+        jQueryHcss.each(data["markers"], function(i, markerData) {
+          var markerData = data["markers"][i];
+          var latlng = new google.maps.LatLng(markerData["lat"], markerData["lng"]);
+          var markerOpts = {
+            "position": latlng,
+            "map": map
+          };
+  
+          if (("image" in markerData) && (markerData["image"] != null)) {
+            var imageUrl = markerData["image"].replace(/^\s+|\s+$/g, '');
+            if (imageUrl.length > 0) {
+              markerOpts["image"] = imageUrl;
+            }
+          }
+          if (("title" in markerData) && (markerData["title"] != null)) {
+            var titleText = markerData["title"].replace(/^\s+|\s+$/g, '');
+            if (titleText.length > 0) {
+              markerOpts["title"] = titleText;
+            }
+          }
+          console.log("Marker", markerOpts);
+          var marker = new google.maps.Marker(markerOpts);
+        });
+      }
   
     };
     

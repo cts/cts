@@ -1,11 +1,20 @@
 .map {
-  template-proxy: http://localhost:8080/fragment;
-  template: #map;
-  data: .
+  template: http://localhost:8000/demos/widgets.html#map;
+  template-proxy: http://localhost:9999/fragment;
+  data: .;
+  with: map;
 }
 
-.map .api-key {
-  value: apikey;
+.map .properties {
+  with: properties;
+}
+
+.map .properties .center-lat {
+  value: centerLat;
+}
+
+.map .properties .center-lng {
+  value: centerLng;
 }
 
 .map table.markers tbody {
@@ -18,6 +27,14 @@
 
 .map table.markers td.lat {
   value: lat;
+}
+
+.map table.markers td.image {
+  value: image;
+}
+
+.map table.markers td.description{
+  value: description;
 }
 
 .map table.markers td.lng {

@@ -9,77 +9,28 @@
 <h1>A Google Map</h1>
 
 <section class="map">
+  <ul class="properties">
+    <li class="center-lat">42.361335</li>
+    <li class="center-lng">-71.089482</li>
+  </ul>
+
   <table class="markers">
     <tr>
-      <td class="title">Ted's House</td>
-      <td class="lat">-34.397</td>
-      <td class="lng">150.644</td>
+      <td class="title">The Stata Center</td>
+      <td class="lat">42.361335</td>
+      <td class="lng">-71.089482</td>
+      <td class="image"></td>
+      <td class="description"></td>
+    </tr>
+    <tr>
+      <td class="title">Media Lab</td>
+      <td class="lat">42.360859</td>
+      <td class="lng">-71.08592</td>
+      <td class="image"></td>
+      <td class="description"></td>
     </tr>
   </table>
 </section>
-
-  <section id="map" style="display:none"><div>
-
-    <!-- This is the visible section of the CTS template -->
-
-    <div class="themap" style="width: 300px; height: 300px;">
-    Foo
-    </div>
-
-    <!-- This is the data section, insivible but present in the DOM -->
-
-    <div class="themapdata" style="display:none">
-      <table class="markers"> 
-        <tr>
-          <td class="title">title</td>
-          <td class="lat">lat</td>
-          <td class="lng">lng</td>
-        </tr>
-      </table>
-    </div>
-
-    <!-- This is a script that will execute upon DOM insert -->
-
-    <script>
-
-    var RenderMap = function(widget) {
-      console.log("Render Map");
-
-      var dataElem = widget.find(".themapdata");
-      var mapElem = widget.find(".themap").first()[0];
-      var data = CTS.engine.recoverData(dataElem);
-      console.log("Data recovered", data);
-
-      var mapOptions = {
-        center: new google.maps.LatLng(-34.397, 150.644),
-        zoom: 8,
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-      };
-
-      var map = new google.maps.Map(mapElem, mapOptions);
-
-      jQueryHcss.each(data["markers"], function(i, markerData) {
-        var markerData = data["markers"][i];
-        var latlng = new google.maps.LatLng(markerData["lat"], markerData["lng"]);
-        var markerOpts = {
-          "position": latlng,
-          "map": map,
-          "title": markerData["title"]
-        };
-        var marker = new google.maps.Marker(markerOpts);
-      });
-  
-    };
-    
-    // First, get the data
-    var widget = CTS.Util.getLastInserted();
-    if (widget) {
-      RenderMap(widget);
-    }
-    </script>
-
-  </div></section>
-
 
 </body>
 </html>
