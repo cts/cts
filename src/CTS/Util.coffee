@@ -56,6 +56,7 @@ class Util
     })
 
   @fetchRemoteStringSameDomain: (url, callback, xhrParams, params) ->
+    #console.log("Fetching remote string (same domain)", url)
     urlParts = url.split("#")
     params = params || {}
     params['url'] = urlParts[0]
@@ -92,7 +93,8 @@ class Util
     })
   
   @fetchRemoteStringBullfrog: (template, proxyUrl, callback, xhrParams, params) ->
-    urlParts = url.split("#")
+    #console.log("Fetching remote string with bullfrog", template, proxyUrl)
+    urlParts = template.split("#")
     params = params || {}
     params['url'] = urlParts[0]
     if urlParts.length > 1
@@ -101,8 +103,8 @@ class Util
     ribbitUrl = proxyUrl + "?callback=?"
 
     $.ajax({
-      url: urlParts[0],
-      dataType: 'text',
+      url: proxyUrl,
+      dataType: 'jsonp',
       success: callback,
       beforeSend: (xhr, settings) ->
         for key of xhrParams
