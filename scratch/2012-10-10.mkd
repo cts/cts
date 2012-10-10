@@ -31,6 +31,19 @@ ul {
   repeat-offsetend: 1;
 }
 
+the "Children" we're going to look at are ul[offsetstart:ul.len() - offsetend]
 
+
+
+
+To get new changes:
+
+git pull cats-js master
+
+To push a new change to your repo
+
+git push origin master
+
+To do a pull request to the official repo (use website)
 
 

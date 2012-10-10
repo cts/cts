@@ -12,7 +12,7 @@ get around browser security restrictions.
 
    2. A proxy server to help with import of DOM fragments across the web. This
       can be found in the extras/ folder at the root of the cats-javascript
-      project.
+      project. (note: this depends on ruby and sinatra)
 
         ruby proxy_server.rb -p 9999
 

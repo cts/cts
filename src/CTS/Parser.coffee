@@ -68,6 +68,7 @@ class Parser
   #
   #   Would result in the following return result
   #
+  #      COMMAND  TARGET   VAR  VALUE
   #     { value: { href: { .: "link" },
   #                   .: { .: "name",
   #                        append: "true" } },

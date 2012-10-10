@@ -29,11 +29,37 @@ class Repeat
   # Interprets arg1 as key-path into context
   # Replaces the contents of this node with resolution 
   # Tells engine not to recurse into contents
+  # Notation: COMMAND(TARGET)-VARIANT: VALUE
+  #
+  # { target1: {target config} }
+  # target config:
+  # { variant1: value, ... }
+  # Defaults are a period '.'
+  # 
+  # If you have the CTS command
+  #  repeat: people
+  #
+  # That gives you the args
+  # { '.': { '.': 'people'} }
+  # 
+  # If you have
+  #  repeat: people
+  #  repeat-offsetstart: 4
+  #  repeat-step: 2
+  #
+  # You'll get
+  #
+  # { '.': { '.': people,
+  #          'offsetstart': '4',
+  #          'step': '2' }}
+  #             
   applyTo: (node, context, args, engine) ->
     defaultTarget = args["."]
     defaultArg = defaultTarget["."]
+
     step = 1
-    if "step" in defaultTarget
+    # HASH MEMBERSHIP IS of, NOT in
+    if "step" of defaultTarget
       step = parseInt(defaultTarget["step"])
     
     collection = context.resolve(defaultArg)
