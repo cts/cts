@@ -1,0 +1,26 @@
+CTS Demos Readme
+================
+
+To run these demos, you'll need two servers in order to properly load files and
+get around browser security restrictions.
+
+
+   1. A simple python server to host the files, running from the cats-javscript
+      parent directory:
+
+        python -m SimpleHTTPServer
+
+   2. A proxy server to help with import of DOM fragments across the web. This
+      can be found in the extras/ folder at the root of the cats-javascript
+      project.
+
+        ruby proxy_server.rb -p 9999
+
+Demos
+=====
+
+   1. Google Map
+   2. Demographic Map
+   3. Latest Tweets
+   4. Follow me on Twitter Button
+   5. Sports Scorecard
