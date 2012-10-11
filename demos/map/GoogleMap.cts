@@ -1,5 +1,5 @@
 .map {
-  template: http://localhost:8000/demos/widgets.html#map;
+  template: http://localhost:8000/demos/map/GoogleMap.html#map;
   template-proxy: http://localhost:9999/fragment;
   data: .;
   with: map;
