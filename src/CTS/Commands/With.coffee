@@ -35,7 +35,7 @@ class With extends CTS.Commands.Command
   # Tells engine not to recurse into contents
   applyTo: (node, context, args, engine) ->
     defaultTarget = args["."]
-    defaultVariant = defaultTarget["."]
+    defaultVariant = @._resolveArgument(defaultTarget["."], node)
     success = context.pushKeypath(defaultVariant)
     if success
       console.log("With (render, success):", node.clone(), defaultVariant, " = ", JSON.stringify(context.head()))
@@ -54,7 +54,7 @@ class With extends CTS.Commands.Command
   #
   recoverData: (node, context, args, engine) ->
     defaultTarget = args["."]
-    defaultVariant = defaultTarget["."]
+    defaultVariant = @._resolveArgument(defaultTarget["."], node)
     console.log("With (recover):", node.clone(), defaultVariant)
     context.set(defaultVariant, {})
     context.pushKeypath(defaultVariant)

@@ -59,7 +59,7 @@ class Repeat extends CTS.Commands.Command
   #             
   applyTo: (node, context, args, engine) ->
     defaultTarget = args["."]
-    defaultArg = defaultTarget["."]
+    defaultArg = @._resolveArgument(defaultTarget["."], node)
 
     step = 1
     # HASH MEMBERSHIP IS of, NOT in
@@ -98,7 +98,7 @@ class Repeat extends CTS.Commands.Command
   #
   recoverData: (node, context, args, engine) ->
     defaultTarget = args["."]
-    defaultArg = defaultTarget["."]
+    defaultArg = @._resolveArgument(defaultTarget["."], node)
     console.log("Recover kp", defaultArg)
     step = 1
     if "step" in defaultTarget

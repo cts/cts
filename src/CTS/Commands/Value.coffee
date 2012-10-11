@@ -54,13 +54,14 @@ class Value extends CTS.Commands.Command
     [shouldContinue, shouldRecurse]
 
   _applyToTarget: (node, context, args, engine, target) ->
-    value = context.resolve(args["."])  #  The bare argument is the keypath
+    argument = @._resolveArgument(args["."], node)
+    value = context.resolve(argument)  #  The bare argument is the keypath
 
     if engine.opts.DyeNodes
       node.addClass(CTS.Options.ClassForValueNode)
 
     if target == "."
-      console.log("SetValue(", args["."], ",", value, ")")
+      console.log("SetValue(", argument, ",", value, ")")
       node.html(value)
       return [false, false]  # Continue? Recurse?
     else if target[0] == "@"
@@ -83,14 +84,16 @@ class Value extends CTS.Commands.Command
     [shouldContinue, shouldRecurse]
 
   _recoverDataFromTarget: (node, context, args, engine, target) ->
+    argument = @._resolveArgument(args["."], node)
     if target == "."
       value = node.html()
-      console.log("Recovered(", args["."], ",", value, ")")
-      context.set(args["."], value)
+      console.log("Recovered(", argument, ",", value, ")")
+      context.set(argument, value)
       return [false, false]  # Continue? Recurse?
-    else if target[0] == "@"
-      value = node.attr(target.substr(1))
-      context.set(args["."], value)
+    else
+      value = node.attr(target)
+      if value?
+        context.set(argument, value)
       return [true, true]  # Coneinut? Recurse?
 
   # Recovers template

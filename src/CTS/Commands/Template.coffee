@@ -39,7 +39,7 @@ class Template extends CTS.Commands.Command
     # TODO: Enable cross-site linking here.
     defaultTargetArgs = args["."]
     if defaultTargetArgs
-      templateAddress = defaultTargetArgs["."]
+      templateAddress = @._resolveArgument(defaultTargetArgs["."], node)
       if templateAddress
         template = engine.templates.fetch(templateAddress, defaultTargetArgs["proxy"])
         @._applyTo(node, context, args, engine, template)

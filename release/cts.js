@@ -9433,9 +9433,26 @@ var CTS = {};
 
   __t('CTS.Commands').Command = (function() {
 
-    function Command() {
-      console.log("Command Constructor");
-    }
+    function Command() {}
+
+    Command.prototype._resolveArgument = function(arg, node) {
+      var attribute, retval;
+      if ((arg != null) && arg.length > 0) {
+        if (arg[0] === "@") {
+          attribute = arg.substring(1);
+          retval = node.attr(attribute);
+          if (retval != null) {
+            return retval;
+          } else {
+            return null;
+          }
+        } else {
+          return arg;
+        }
+      } else {
+        return null;
+      }
+    };
 
     return Command;
 
@@ -9457,7 +9474,7 @@ var CTS = {};
       var defaultTargetArgs, template, templateAddress;
       defaultTargetArgs = args["."];
       if (defaultTargetArgs) {
-        templateAddress = defaultTargetArgs["."];
+        templateAddress = this._resolveArgument(defaultTargetArgs["."], node);
         if (templateAddress) {
           template = engine.templates.fetch(templateAddress, defaultTargetArgs["proxy"]);
           return this._applyTo(node, context, args, engine, template);
@@ -10147,7 +10164,7 @@ var CTS = {};
       show = true;
       data = {};
       if ('exist' in defaultArgs) {
-        valueKey = defaultArgs['exist'];
+        valueKey = this._resolveArgument(defaultArgs['exist'], node);
         value = context.resolve(valueKey);
         if (value !== null) {
           data[valueKey] = value;
@@ -10156,7 +10173,7 @@ var CTS = {};
         }
       }
       if ('nexist' in defaultArgs) {
-        valueKey = defaultArgs['nexist'];
+        valueKey = this._resolveArgument(defaultArgs['nexist'], node);
         value = context.resolve(valueKey);
         if (value !== null) {
           data[valueKey] = value;
@@ -10211,7 +10228,7 @@ var CTS = {};
       var collection, defaultArg, defaultTarget, elem, newNode, step, template, templateHtml, zeroIndex, _i, _len,
         _this = this;
       defaultTarget = args["."];
-      defaultArg = defaultTarget["."];
+      defaultArg = this._resolveArgument(defaultTarget["."], node);
       step = 1;
       if ("step" in defaultTarget) {
         step = parseInt(defaultTarget["step"]);
@@ -10251,7 +10268,7 @@ var CTS = {};
       var addIterable, defaultArg, defaultTarget, firstPush, step,
         _this = this;
       defaultTarget = args["."];
-      defaultArg = defaultTarget["."];
+      defaultArg = this._resolveArgument(defaultTarget["."], node);
       console.log("Recover kp", defaultArg);
       step = 1;
       if (__indexOf.call(defaultTarget, "step") >= 0) {
@@ -10443,13 +10460,14 @@ var CTS = {};
     };
 
     Value.prototype._applyToTarget = function(node, context, args, engine, target) {
-      var value;
-      value = context.resolve(args["."]);
+      var argument, value;
+      argument = this._resolveArgument(args["."], node);
+      value = context.resolve(argument);
       if (engine.opts.DyeNodes) {
         node.addClass(CTS.Options.ClassForValueNode);
       }
       if (target === ".") {
-        console.log("SetValue(", args["."], ",", value, ")");
+        console.log("SetValue(", argument, ",", value, ")");
         node.html(value);
         return [false, false];
       } else if (target[0] === "@") {
@@ -10471,15 +10489,18 @@ var CTS = {};
     };
 
     Value.prototype._recoverDataFromTarget = function(node, context, args, engine, target) {
-      var value;
+      var argument, value;
+      argument = this._resolveArgument(args["."], node);
       if (target === ".") {
         value = node.html();
-        console.log("Recovered(", args["."], ",", value, ")");
-        context.set(args["."], value);
+        console.log("Recovered(", argument, ",", value, ")");
+        context.set(argument, value);
         return [false, false];
-      } else if (target[0] === "@") {
-        value = node.attr(target.substr(1));
-        context.set(args["."], value);
+      } else {
+        value = node.attr(target);
+        if (value != null) {
+          context.set(argument, value);
+        }
         return [true, true];
       }
     };
@@ -10507,7 +10528,7 @@ var CTS = {};
     With.prototype.applyTo = function(node, context, args, engine) {
       var defaultTarget, defaultVariant, pop, success;
       defaultTarget = args["."];
-      defaultVariant = defaultTarget["."];
+      defaultVariant = this._resolveArgument(defaultTarget["."], node);
       success = context.pushKeypath(defaultVariant);
       if (success) {
         console.log("With (render, success):", node.clone(), defaultVariant, " = ", JSON.stringify(context.head()));
@@ -10528,7 +10549,7 @@ var CTS = {};
     With.prototype.recoverData = function(node, context, args, engine) {
       var defaultTarget, defaultVariant, pop;
       defaultTarget = args["."];
-      defaultVariant = defaultTarget["."];
+      defaultVariant = this._resolveArgument(defaultTarget["."], node);
       console.log("With (recover):", node.clone(), defaultVariant);
       context.set(defaultVariant, {});
       context.pushKeypath(defaultVariant);

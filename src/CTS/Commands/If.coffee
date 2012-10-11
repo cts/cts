@@ -35,14 +35,14 @@ class If extends CTS.Commands.Command
     show = true
     data = {}
     if 'exist' of defaultArgs
-      valueKey = defaultArgs['exist']
+      valueKey = @._resolveArgument(defaultArgs['exist'], node)
       value = context.resolve(valueKey)
       if value != null
         data[valueKey] = value
       else
         show = false
     if 'nexist' of defaultArgs
-      valueKey = defaultArgs['nexist']
+      valueKey = @._resolveArgument(defaultArgs['nexist'], node)
       value = context.resolve(valueKey)
       if value != null
         data[valueKey] = value

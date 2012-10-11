@@ -27,5 +27,18 @@ $ = jQueryHcss
 #### Dependencies
 
 class Command
-  constructor: () ->
-    console.log("Command Constructor")
+  _resolveArgument: (arg, node) ->
+    if arg? and arg.length > 0
+      if arg[0] == "@"
+        # It's an indirection into an attribute
+        attribute = arg.substring(1)
+        retval = node.attr(attribute)
+        if retval?
+          return retval
+        else # jQuery will provide undefined
+          return null
+      else
+        return arg
+    else
+      return null
+
