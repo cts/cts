@@ -25,13 +25,14 @@
 #### Preamble
 $ = jQueryHcss
 
-RulesState = 
-  NONE_LOADED : 0
-  WAIT_FOR_REMOTE: 1
-
 #### Dependencies
 #<< CTS/Options
 #<< CTS/Parser
+#<< CTS/Util
+
+RulesState = 
+  NONE_LOADED : 0
+  WAIT_FOR_REMOTE: 1
 
 ##
 # Contains methods for loading rules and providing rules for a node.
