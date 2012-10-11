@@ -1,12 +1,27 @@
 <?php
 /* 
- * Pulls a particular element out of a web page and returns it.
+ * Same as the Sinatra proxy server for Ruby but in PHP, so easier
+ * to deploy on the CSAIL servers.
  *
- * For security, only proxies items on a pre-defined whitelist.
+ * Arguments:
+ *   url: The URL to be proxied
+ *   id: (optional) The element whose inner_html is to be returned
+ *   callback: (optional) A JSONP callback
+ *
+ * Unlike the Ruby version, this version has a hard-coded whitelist
+ * of templates to proxy, since this file is to be used on a public server.
+ * This is to prevent us from providing an open-door proxy to the world.
+ *
+ * Author:
+ *   Ted Benson (eob@csail.mit.edu)
  */
 
-// borrows code examples from comments in http://us.php.net/fsockopen
+
+/**
+ * WebTools contains several utilities for fetching a remote web site.
+ */
 class WebTools {
+   // borrows code examples from comments in http://us.php.net/fsockopen
     static function do_get_request( $url ) {
         $parsed = parse_url($url);
         $host = $parsed['host'];
@@ -108,6 +123,9 @@ class WebTools {
     }
 }
 
+/**
+ * Return true if the URL in question passes the whitelist.
+ */
 function PassesWhitelist($url) {
   $WHITELIST = [
     "http://www.edwardbenson.com"
@@ -115,6 +133,9 @@ function PassesWhitelist($url) {
   return in_array($url, $WHITELIST);
 }
 
+/**
+ * Snags the inner html out of a Node.
+ */
 function InnerHtml( $node ) { 
   $innerHTML= ''; 
   $children = $node->childNodes; 
@@ -124,6 +145,10 @@ function InnerHtml( $node ) {
   return $innerHTML; 
 } 
 
+/**
+ * Return the fragment, or whole web page, requested, or an
+ * error if something went wrong.
+ */
 function DoProxy($url, $id, $callback) {
   $result = "";
   if ($url && (PassesWhitelist($url))) {
@@ -155,6 +180,12 @@ function DoProxy($url, $id, $callback) {
     echo "$results";
   }
 }
+
+/********************************************
+ * main()
+ *
+ * .. or as close as PHP gets to having a main()
+ */
 
 $url = NULL;
 $id = NULL;
