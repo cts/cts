@@ -10469,9 +10469,13 @@ var CTS = {};
       if (target === ".") {
         console.log("SetValue(", argument, ",", value, ")");
         node.html(value);
-        return [false, false];
-      } else if (target[0] === "@") {
-        node.attr(target.substr(1), value);
+        if ("format" in args && args["format"] === "html") {
+          return [true, true];
+        } else {
+          return [false, false];
+        }
+      } else {
+        node.attr(target, value);
         return [true, true];
       }
     };

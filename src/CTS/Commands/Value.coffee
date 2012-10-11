@@ -63,9 +63,12 @@ class Value extends CTS.Commands.Command
     if target == "."
       console.log("SetValue(", argument, ",", value, ")")
       node.html(value)
-      return [false, false]  # Continue? Recurse?
-    else if target[0] == "@"
-      node.attr(target.substr(1), value)
+      if "format" of args and args["format"] == "html"
+        return [true, true]  # Continue? Recurse?
+      else
+        return [false, false]  # Continue? Recurse?
+    else
+      node.attr(target, value)
       return [true, true]  # Continue? Recurse?
 
 
@@ -89,7 +92,10 @@ class Value extends CTS.Commands.Command
       value = node.html()
       console.log("Recovered(", argument, ",", value, ")")
       context.set(argument, value)
-      return [false, false]  # Continue? Recurse?
+      if "format" of args and args["format"] == "html"
+        return [true, true]
+      else
+        return [false, false]  # Continue? Recurse?
     else
       value = node.attr(target)
       if value?
