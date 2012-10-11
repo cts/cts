@@ -9519,157 +9519,6 @@ var CTS = {};
 
   })(CTS.Commands.Command);
 
-  __t('CTS').Util = (function() {
-
-    function Util() {}
-
-    Util.lastInserted = null;
-
-    Util.getLastInserted = function() {
-      return this.lastInserted;
-    };
-
-    Util.setLastInserted = function(node) {
-      return this.lastInserted = node;
-    };
-
-    Util.hideNode = function(node) {
-      return node.addClass(CTS.Options.ClassForInvisible);
-    };
-
-    Util.showNode = function(node) {
-      return node.removeClass(CTS.Options.ClassForInvisible);
-    };
-
-    Util.nodeHidden = function(node) {
-      return node.hasClass(CTS.Options.ClassForInvisible);
-    };
-
-    Util.stashData = function(node, command, dict) {
-      var attr, str;
-      attr = node.attr("data-" + CTS.Options.AttrForSavedData);
-      if (!(attr != null) || attr === null) {
-        attr = {};
-      }
-      attr[command] = dict;
-      str = JSON.stringify(attr);
-      str = str.replace(/\\/g, "\\\\");
-      str = str.replace(/'/g, "\\'");
-      str = str.replace(/"/g, "'");
-      return node.attr("data-" + CTS.Options.AttrForSavedData, str);
-    };
-
-    Util.getDataStash = function(node, command) {
-      var stash, str;
-      str = node.attr("data-" + CTS.Options.AttrForSavedData);
-      if (typeof str !== "undefined") {
-        str = str.replace(/([^\\])'/g, '$1"');
-        str = str.replace(/\\'/g, "'");
-        str = str.replace(/\\\\/g, "\\");
-        stash = JSON.parse(str);
-        if (command in stash) {
-          return stash[command];
-        } else {
-          return {};
-        }
-      } else {
-        return {};
-      }
-    };
-
-    Util.fetchRemoteStringPlain = function(url, callback, xhrParams, params) {
-      return $.ajax({
-        url: url,
-        dataType: 'text',
-        success: callback,
-        beforeSend: function(xhr, settings) {
-          var key, _results;
-          _results = [];
-          for (key in params) {
-            _results.push(xhr[key] = params[key]);
-          }
-          return _results;
-        }
-      });
-    };
-
-    Util.fetchRemoteStringSameDomain = function(url, callback, xhrParams, params) {
-      var firstCallback, urlParts;
-      urlParts = url.split("#");
-      params = params || {};
-      params['url'] = urlParts[0];
-      if (urlParts.length > 1) {
-        params['id'] = urlParts[1];
-      }
-      firstCallback = function(text, status, xhr) {
-        var cb, hitNode, textNode,
-          _this = this;
-        cb = xhr._requestedCallback;
-        if (xhr._idPart) {
-          textNode = $(text);
-          hitNode = null;
-          $.each(textNode, function(idx, elem) {
-            var n, res;
-            n = $(elem);
-            if (n.is(xhr._idPart)) {
-              return hitNode = n;
-            } else {
-              res = n.find(xhr._idPart).html();
-              if (res !== null) {
-                return hitNode = res;
-              }
-            }
-          });
-        }
-        return cb(text, status, xhr);
-      };
-      return $.ajax({
-        url: urlParts[0],
-        dataType: 'text',
-        success: firstCallback,
-        beforeSend: function(xhr, settings) {
-          var key;
-          for (key in xhrParams) {
-            xhr[key] = xhrParams[key];
-          }
-          xhr['_requestedCallback'] = callback;
-          if (urlParts.length > 1) {
-            return xhr['_idPart'] = "#" + urlParts[1];
-          }
-        },
-        data: params
-      });
-    };
-
-    Util.fetchRemoteStringBullfrog = function(template, proxyUrl, callback, xhrParams, params) {
-      var ribbitUrl, urlParts;
-      urlParts = template.split("#");
-      params = params || {};
-      params['url'] = urlParts[0];
-      if (urlParts.length > 1) {
-        params['id'] = urlParts[1];
-      }
-      ribbitUrl = proxyUrl + "?callback=?";
-      return $.ajax({
-        url: proxyUrl,
-        dataType: 'jsonp',
-        success: callback,
-        beforeSend: function(xhr, settings) {
-          var key, _results;
-          _results = [];
-          for (key in xhrParams) {
-            _results.push(xhr[key] = xhrParams[key]);
-          }
-          return _results;
-        },
-        data: params
-      });
-    };
-
-    return Util;
-
-  })();
-
   __t('CTS').Options = (function() {
 
     function Options() {}
@@ -9834,6 +9683,157 @@ var CTS = {};
     };
 
     return Context;
+
+  })();
+
+  __t('CTS').Util = (function() {
+
+    function Util() {}
+
+    Util.lastInserted = null;
+
+    Util.getLastInserted = function() {
+      return this.lastInserted;
+    };
+
+    Util.setLastInserted = function(node) {
+      return this.lastInserted = node;
+    };
+
+    Util.hideNode = function(node) {
+      return node.addClass(CTS.Options.ClassForInvisible);
+    };
+
+    Util.showNode = function(node) {
+      return node.removeClass(CTS.Options.ClassForInvisible);
+    };
+
+    Util.nodeHidden = function(node) {
+      return node.hasClass(CTS.Options.ClassForInvisible);
+    };
+
+    Util.stashData = function(node, command, dict) {
+      var attr, str;
+      attr = node.attr("data-" + CTS.Options.AttrForSavedData);
+      if (!(attr != null) || attr === null) {
+        attr = {};
+      }
+      attr[command] = dict;
+      str = JSON.stringify(attr);
+      str = str.replace(/\\/g, "\\\\");
+      str = str.replace(/'/g, "\\'");
+      str = str.replace(/"/g, "'");
+      return node.attr("data-" + CTS.Options.AttrForSavedData, str);
+    };
+
+    Util.getDataStash = function(node, command) {
+      var stash, str;
+      str = node.attr("data-" + CTS.Options.AttrForSavedData);
+      if (typeof str !== "undefined") {
+        str = str.replace(/([^\\])'/g, '$1"');
+        str = str.replace(/\\'/g, "'");
+        str = str.replace(/\\\\/g, "\\");
+        stash = JSON.parse(str);
+        if (command in stash) {
+          return stash[command];
+        } else {
+          return {};
+        }
+      } else {
+        return {};
+      }
+    };
+
+    Util.fetchRemoteStringPlain = function(url, callback, xhrParams, params) {
+      return $.ajax({
+        url: url,
+        dataType: 'text',
+        success: callback,
+        beforeSend: function(xhr, settings) {
+          var key, _results;
+          _results = [];
+          for (key in params) {
+            _results.push(xhr[key] = params[key]);
+          }
+          return _results;
+        }
+      });
+    };
+
+    Util.fetchRemoteStringSameDomain = function(url, callback, xhrParams, params) {
+      var firstCallback, urlParts;
+      urlParts = url.split("#");
+      params = params || {};
+      params['url'] = urlParts[0];
+      if (urlParts.length > 1) {
+        params['id'] = urlParts[1];
+      }
+      firstCallback = function(text, status, xhr) {
+        var cb, hitNode, textNode,
+          _this = this;
+        cb = xhr._requestedCallback;
+        if (xhr._idPart) {
+          textNode = $(text);
+          hitNode = null;
+          $.each(textNode, function(idx, elem) {
+            var n, res;
+            n = $(elem);
+            if (n.is(xhr._idPart)) {
+              return hitNode = n;
+            } else {
+              res = n.find(xhr._idPart).html();
+              if (res !== null) {
+                return hitNode = res;
+              }
+            }
+          });
+        }
+        return cb(text, status, xhr);
+      };
+      return $.ajax({
+        url: urlParts[0],
+        dataType: 'text',
+        success: firstCallback,
+        beforeSend: function(xhr, settings) {
+          var key;
+          for (key in xhrParams) {
+            xhr[key] = xhrParams[key];
+          }
+          xhr['_requestedCallback'] = callback;
+          if (urlParts.length > 1) {
+            return xhr['_idPart'] = "#" + urlParts[1];
+          }
+        },
+        data: params
+      });
+    };
+
+    Util.fetchRemoteStringBullfrog = function(template, proxyUrl, callback, xhrParams, params) {
+      var ribbitUrl, urlParts;
+      urlParts = template.split("#");
+      params = params || {};
+      params['url'] = urlParts[0];
+      if (urlParts.length > 1) {
+        params['id'] = urlParts[1];
+      }
+      ribbitUrl = proxyUrl + "?callback=?";
+      return $.ajax({
+        url: proxyUrl,
+        dataType: 'jsonp',
+        success: callback,
+        beforeSend: function(xhr, settings) {
+          var key, _results;
+          _results = [];
+          for (key in xhrParams) {
+            _results.push(xhr[key] = xhrParams[key]);
+          }
+          return _results;
+        },
+        data: params
+      });
+    };
+
+    return Util;
 
   })();
 
@@ -10469,7 +10469,7 @@ var CTS = {};
       if (target === ".") {
         console.log("SetValue(", argument, ",", value, ")");
         node.html(value);
-        if ("format" in args && args["format"] === "html") {
+        if ("type" in args && args["type"] === "html") {
           return [true, true];
         } else {
           return [false, false];
@@ -10499,7 +10499,11 @@ var CTS = {};
         value = node.html();
         console.log("Recovered(", argument, ",", value, ")");
         context.set(argument, value);
-        return [false, false];
+        if ("type" in args && args["type"] === "html") {
+          return [true, true];
+        } else {
+          return [false, false];
+        }
       } else {
         value = node.attr(target);
         if (value != null) {
