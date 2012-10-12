@@ -16,11 +16,11 @@ get around browser security restrictions.
 
         ruby proxy_server.rb -p 9999
 
-Demos
-=====
+Demos Ideas
+===========
 
    1. Google Map
    2. Demographic Map
-   3. Latest Tweets
-   4. Follow me on Twitter Button
+   3. Code Editor
+   4. CTS Example Block for API Docs
    5. Sports Scorecard
