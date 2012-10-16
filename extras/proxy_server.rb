@@ -65,7 +65,7 @@ get '/everything' do
   url = params[:url]
   callback = params[:callback]
   frag = open(url) { |f| f.read }
-  frag_json = frag.to_json
+G frag_json = frag.to_json
   return "#{callback}(#{frag_json})" if callback
   return "#{frag_json}"
 end

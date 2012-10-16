@@ -10680,6 +10680,9 @@ var CTS = {};
         scriptBody = scriptBody.replace(/&gt;/g, ">");
         scriptBody = scriptBody.replace(/&amp;/g, "&");
         scriptBody = scriptBody.replace(/&lt;/g, "<");
+        scriptBody = scriptBody.replace(/<!--\[CDATA\[/g, "");
+        scriptBody = scriptBody.replace(/]]>/g, "");
+        console.log("Script", scriptBody);
         realScript = $('<script />').html(scriptBody);
         _results.push($('body').append(realScript));
       }

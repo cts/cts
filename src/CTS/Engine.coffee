@@ -102,10 +102,15 @@ class Engine
       # Convert to a real script tag
       # TODO(eob): Fix this terrible hack.
       console.log("Engine: Executing scripts")
-      scriptBody = script.html();
-      scriptBody = scriptBody.replace(/&gt;/g, ">");
-      scriptBody = scriptBody.replace(/&amp;/g, "&");
-      scriptBody = scriptBody.replace(/&lt;/g, "<");
+      scriptBody = script.html()
+      scriptBody = scriptBody.replace(/&gt;/g, ">")
+      scriptBody = scriptBody.replace(/&amp;/g, "&")
+      scriptBody = scriptBody.replace(/&lt;/g, "<")
+      # For some reason the CDATA wrapper that jQuery's parser adds to script
+      # tags has to be removed.
+      scriptBody = scriptBody.replace(/<!--\[CDATA\[/g, "")
+      scriptBody = scriptBody.replace(/]]>/g, "")
+      console.log("Script", scriptBody)
       realScript = $('<script />').html(scriptBody)
       $('body').append(realScript)
 

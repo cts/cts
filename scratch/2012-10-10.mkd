@@ -47,3 +47,11 @@ git push origin master
 To do a pull request to the official repo (use website)
 
 
+
+----
+
+slide show
+rounded rect
+pagination
+
+
