@@ -68,7 +68,10 @@ class Value extends CTS.Commands.Command
       else
         return [false, false]  # Continue? Recurse?
     else
-      node.attr(target, value)
+      if target[0] == "@"
+        node.attr(target.substring(1), value)
+      else
+        console.log("Error: do not understand target", target)
       return [true, true]  # Continue? Recurse?
 
 
@@ -97,7 +100,10 @@ class Value extends CTS.Commands.Command
       else
         return [false, false]  # Continue? Recurse?
     else
-      value = node.attr(target)
+      if target[0] == "@"
+        value = node.attr(target.substring(1))
+      else
+        console.log("Error: do not understand target", target)
       if value?
         context.set(argument, value)
       return [true, true]  # Coneinut? Recurse?

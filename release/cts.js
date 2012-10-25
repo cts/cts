@@ -10475,7 +10475,11 @@ var CTS = {};
           return [false, false];
         }
       } else {
-        node.attr(target, value);
+        if (target[0] === "@") {
+          node.attr(target.substring(1), value);
+        } else {
+          console.log("Error: do not understand target", target);
+        }
         return [true, true];
       }
     };
@@ -10505,7 +10509,11 @@ var CTS = {};
           return [false, false];
         }
       } else {
-        value = node.attr(target);
+        if (target[0] === "@") {
+          value = node.attr(target.substring(1));
+        } else {
+          console.log("Error: do not understand target", target);
+        }
         if (value != null) {
           context.set(argument, value);
         }
