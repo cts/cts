@@ -1,0 +1,57 @@
+<ul>
+  <li class="featured-posts">  | ignore / handle differently
+     <ul class="important-posts">
+     </ul>
+  </li>
+  <li class="post">...</li>    | iteration block
+  <li class="clear">...</li>   |
+  <li class="post">...</li>
+  <li class="clear">...</li>
+  <li class="post">...</li>
+  <li class="clear">...</li>
+  <li class="post">...</li>
+  <li class="clear">...</li>
+  <li class="advert">BUY SOME SPROCKETS</li>
+</ul>
+
+Address into first child
+(can already accomplish via selectors)
+
+ul :first-child {
+  CTS commands to handle differently
+  (or omit to ignore)
+}
+
+How to handle 2-block repeat starting at second child
+
+ul {
+  repeat: posts;    // exists
+  repeat-step: 2;   // exists
+  repeat-offsetstart: 1;
+  repeat-offsetend: 1;
+}
+
+the "Children" we're going to look at are ul[offsetstart:ul.len() - offsetend]
+
+
+
+
+To get new changes:
+
+git pull cats-js master
+
+To push a new change to your repo
+
+git push origin master
+
+To do a pull request to the official repo (use website)
+
+
+
+----
+
+slide show
+rounded rect
+pagination
+
+

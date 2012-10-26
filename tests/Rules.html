@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Rules.coffee Tests</title>
+  <link rel="stylesheet" href="lib/qunit.css">
+  <script type="text/cts" src="Rules.cts"></script>
+  <script type="text/javascript" src="lib/jquery.js"></script>
+  <script type="text/javascript" src="../release/cts.js"></script>
+  <script type="text/cts">
+  .articles div {
+    value: content;
+  }
+  </script>
+
+</head>
+<body>
+  <div id="qunit"></div>
+  <script src="lib/qunit.js"></script>
+  <script src="Rules.js"></script>
+
+  <script type="text/cts">
+  .articles {
+    repeat: all;
+  }
+  </script>
+  <script type="text/cts">
+  .articles .h1 {
+    value: title;
+    value(href): link;
+  }
+  </script>
+
+</body>
+</html>
