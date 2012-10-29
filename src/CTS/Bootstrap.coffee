@@ -43,6 +43,7 @@ class Bootstrap
   loadCTS: () =>
     # Load the default engine
     CTS.engine = new CTS.Engine()
+    $("head").append($("<style>.cts-template {display:inline; margin:0; padding:0;}</style>"))
     console.log("Bootstrap: Loading Remote Rules")
     CTS.engine.rules.setCallback(@.remoteRulesLoaded)
     CTS.engine.rules.load()

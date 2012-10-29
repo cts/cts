@@ -9501,9 +9501,9 @@ var CTS = {};
       });
       node.html(templateElem);
       if (scriptsToReturn.length > 0) {
-        return [true, true, scriptsToReturn];
+        return [false, true, scriptsToReturn];
       } else {
-        return [true, true];
+        return [false, true];
       }
     };
 
@@ -10791,6 +10791,7 @@ var CTS = {};
 
     Bootstrap.prototype.loadCTS = function() {
       CTS.engine = new CTS.Engine();
+      $("head").append($("<style>.cts-template {display:inline; margin:0; padding:0;}</style>"));
       console.log("Bootstrap: Loading Remote Rules");
       CTS.engine.rules.setCallback(this.remoteRulesLoaded);
       return CTS.engine.rules.load();

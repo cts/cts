@@ -70,9 +70,9 @@ class Template extends CTS.Commands.Command
     if scriptsToReturn.length > 0
       #console.log("Returning scripts with template command", scriptsToReturn)
       # REMOVE THE SCRIPTS FROM THE TEMPLATE BEFORE RENDER
-      [true, true, scriptsToReturn]
+      [false, true, scriptsToReturn] # Continue? Recurse?
     else
-      [true, true]
+      [false, true]  # Continue? Recurse?
 
   # Recovers data
   #### Side Effects
