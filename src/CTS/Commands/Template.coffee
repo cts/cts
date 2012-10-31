@@ -51,25 +51,22 @@ class Template extends CTS.Commands.Command
     CTS.Util.setLastInserted(node)
     console.log("----- Begin Template Application ------")
     # Get any script elements in the template
-    template = template.replace(/<script>/g, "<xscript>")
-    template = template.replace(/<\/script>/g, "</xscript>")
+
+    tup = CTS.Util.stripScriptTags(template)
+
+    templateNoScript = tup[0]
+    templateScript = tup[1]
 
     templateElem = $('<div class="cts-template" />')
-    #console.log("template lelem", templateElem)
-    templateElem.html(template)
-    #console.log("template elem", templateElem)
-    scripts = templateElem.find('xscript')
-    #console.log("Scripts we found", scripts, template)
-    scriptsToReturn = []
-    $.each(scripts, (idx, elem) =>
-      e = $(elem)
-      e.remove()
-      scriptsToReturn.push(e)
-    )
+    templateElem.html(templateNoScript)
+
+    scriptsToReturn = null
+    if templateScript.length > 0
+      scriptsToReturn = templateScript
+    
     node.html(templateElem)
-    if scriptsToReturn.length > 0
-      #console.log("Returning scripts with template command", scriptsToReturn)
-      # REMOVE THE SCRIPTS FROM THE TEMPLATE BEFORE RENDER
+
+    if scriptsToReturn
       [false, true, scriptsToReturn] # Continue? Recurse?
     else
       [false, true]  # Continue? Recurse?
@@ -83,4 +80,6 @@ class Template extends CTS.Commands.Command
   # Recovers template
   recoverTemplate: (node, context) ->
     node.clone()
+
+
 

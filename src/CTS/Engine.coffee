@@ -73,7 +73,7 @@ class Engine
 
   _renderNodeWithRules: (node, rules, context) =>
     recurse = true
-    scripts = []
+    scripts = null 
     functions = []
     if rules != null
       for command in @commands
@@ -82,8 +82,7 @@ class Engine
           # The result object has two values. The first tell us whether
           # or not to continue with the commands for this node. The second
           if res.length > 2 and res[2] != null
-            for script in res[2]
-              scripts.push(script)
+            scripts = res[2]
           if res.length > 3 and res[3] != null
             for f in res[3]
               functions.push(f)
@@ -98,21 +97,17 @@ class Engine
         @._render($(kid), context)
     for f in functions
       f(node, rules, context)
-    for script in scripts
-      # Convert to a real script tag
-      # TODO(eob): Fix this terrible hack.
-      console.log("Engine: Executing scripts")
-      scriptBody = script.html()
-      scriptBody = scriptBody.replace(/&gt;/g, ">")
-      scriptBody = scriptBody.replace(/&amp;/g, "&")
-      scriptBody = scriptBody.replace(/&lt;/g, "<")
+    if scripts
+      console.log("scripts before replace", scripts)
+      #scripts = scripts.replace(/&gt;/g, ">")
+      #scripts = scripts.replace(/&amp;/g, "&")
+      #scripts = scripts.replace(/&lt;/g, "<")
       # For some reason the CDATA wrapper that jQuery's parser adds to script
       # tags has to be removed.
-      scriptBody = scriptBody.replace(/<!--\[CDATA\[/g, "")
-      scriptBody = scriptBody.replace(/]]>/g, "")
-      console.log("Script", scriptBody)
-      realScript = $('<script />').html(scriptBody)
-      $('body').append(realScript)
+      scripts = scripts.replace(/<!--\[CDATA\[/g, "")
+      scripts = scripts.replace(/]]>/g, "")
+      console.log("Scripts after replace", scripts)
+      $('body').append(scripts)
 
 
   _recoverData: (jqnode, context) =>

@@ -9483,24 +9483,20 @@ var CTS = {};
     };
 
     Template.prototype._applyTo = function(node, context, args, engine, template) {
-      var scripts, scriptsToReturn, templateElem,
-        _this = this;
+      var scriptsToReturn, templateElem, templateNoScript, templateScript, tup;
       CTS.Util.setLastInserted(node);
       console.log("----- Begin Template Application ------");
-      template = template.replace(/<script>/g, "<xscript>");
-      template = template.replace(/<\/script>/g, "</xscript>");
+      tup = CTS.Util.stripScriptTags(template);
+      templateNoScript = tup[0];
+      templateScript = tup[1];
       templateElem = $('<div class="cts-template" />');
-      templateElem.html(template);
-      scripts = templateElem.find('xscript');
-      scriptsToReturn = [];
-      $.each(scripts, function(idx, elem) {
-        var e;
-        e = $(elem);
-        e.remove();
-        return scriptsToReturn.push(e);
-      });
+      templateElem.html(templateNoScript);
+      scriptsToReturn = null;
+      if (templateScript.length > 0) {
+        scriptsToReturn = templateScript;
+      }
       node.html(templateElem);
-      if (scriptsToReturn.length > 0) {
+      if (scriptsToReturn) {
         return [false, true, scriptsToReturn];
       } else {
         return [false, true];
@@ -9724,6 +9720,20 @@ var CTS = {};
       str = str.replace(/'/g, "\\'");
       str = str.replace(/"/g, "'");
       return node.attr("data-" + CTS.Options.AttrForSavedData, str);
+    };
+
+    Util.stripScriptTags = function(htmlString) {
+      var justscripts, noscripts, script, scripts, _i, _len;
+      noscripts = document.createElement('div');
+      noscripts.innerHTML = htmlString;
+      justscripts = document.createElement('div');
+      scripts = noscripts.getElementsByTagName('script');
+      for (_i = 0, _len = scripts.length; _i < _len; _i++) {
+        script = scripts[_i];
+        script.parentNode.removeChild(script);
+        justscripts.appendChild(script);
+      }
+      return [noscripts.innerHTML, justscripts.innerHTML];
     };
 
     Util.getDataStash = function(node, command) {
@@ -10638,9 +10648,9 @@ var CTS = {};
     };
 
     Engine.prototype._renderNodeWithRules = function(node, rules, context) {
-      var command, f, functions, kid, realScript, recurse, res, script, scriptBody, scripts, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _ref, _ref1, _ref2, _ref3, _results;
+      var command, f, functions, kid, recurse, res, scripts, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2;
       recurse = true;
-      scripts = [];
+      scripts = null;
       functions = [];
       if (rules !== null) {
         _ref = this.commands;
@@ -10649,16 +10659,12 @@ var CTS = {};
           if (command.signature() in rules) {
             res = command.applyTo(node, context, rules[command.signature()], this);
             if (res.length > 2 && res[2] !== null) {
-              _ref1 = res[2];
-              for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-                script = _ref1[_j];
-                scripts.push(script);
-              }
+              scripts = res[2];
             }
             if (res.length > 3 && res[3] !== null) {
-              _ref2 = res[3];
-              for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-                f = _ref2[_k];
+              _ref1 = res[3];
+              for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+                f = _ref1[_j];
                 functions.push(f);
               }
             }
@@ -10670,31 +10676,23 @@ var CTS = {};
         }
       }
       if (recurse) {
-        _ref3 = node.children();
-        for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
-          kid = _ref3[_l];
+        _ref2 = node.children();
+        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+          kid = _ref2[_k];
           this._render($(kid), context);
         }
       }
-      for (_m = 0, _len4 = functions.length; _m < _len4; _m++) {
-        f = functions[_m];
+      for (_l = 0, _len3 = functions.length; _l < _len3; _l++) {
+        f = functions[_l];
         f(node, rules, context);
       }
-      _results = [];
-      for (_n = 0, _len5 = scripts.length; _n < _len5; _n++) {
-        script = scripts[_n];
-        console.log("Engine: Executing scripts");
-        scriptBody = script.html();
-        scriptBody = scriptBody.replace(/&gt;/g, ">");
-        scriptBody = scriptBody.replace(/&amp;/g, "&");
-        scriptBody = scriptBody.replace(/&lt;/g, "<");
-        scriptBody = scriptBody.replace(/<!--\[CDATA\[/g, "");
-        scriptBody = scriptBody.replace(/]]>/g, "");
-        console.log("Script", scriptBody);
-        realScript = $('<script />').html(scriptBody);
-        _results.push($('body').append(realScript));
+      if (scripts) {
+        console.log("scripts before replace", scripts);
+        scripts = scripts.replace(/<!--\[CDATA\[/g, "");
+        scripts = scripts.replace(/]]>/g, "");
+        console.log("Scripts after replace", scripts);
+        return $('body').append(scripts);
       }
-      return _results;
     };
 
     Engine.prototype._recoverData = function(jqnode, context) {

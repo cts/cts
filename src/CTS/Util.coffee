@@ -30,6 +30,28 @@ class Util
     str = str.replace(/'/g,"\\'") # ' -> \'
     str = str.replace(/"/g,"'") # " -> \'
     node.attr("data-"+CTS.Options.AttrForSavedData,str)
+
+  # Stripts the <script> tags out of a string containing HTML.
+  # jQuery can't be used to do this because it will execute the script.
+  #
+  # Args:
+  #  htmlString: A string containing HTML
+  #
+  # Returns:
+  #  [htmlWithoutScripts, htmlOnlyScripts]
+  #  An array whose first element is the HTML minus script tags, and the second
+  #  element is the HTML of just the script elements.
+  @stripScriptTags: (htmlString) ->
+    noscripts = document.createElement('div')
+    noscripts.innerHTML = htmlString
+    justscripts = document.createElement('div') 
+
+    scripts = noscripts.getElementsByTagName('script')
+    for script in scripts
+      script.parentNode.removeChild(script)
+      justscripts.appendChild(script)
+
+    return [noscripts.innerHTML, justscripts.innerHTML]
   
   @getDataStash: (node, command) ->
     str = node.attr("data-"+CTS.Options.AttrForSavedData)
