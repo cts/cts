@@ -1,6 +1,9 @@
 cts-javascript
 ===============
 
+This is the Javascript implementation of [Cascading Tree Sheets
+(CTS)](http://www.treesheets.org).
+
 Development Environment Setup
 =============================
 
