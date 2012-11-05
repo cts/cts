@@ -1,0 +1,53 @@
+<html>
+<body>
+  <section id="usa" style="display:none"><div>
+
+    <!-- This is the visible section of the CTS template -->
+
+    <div class="themap"></div>
+
+    <!-- This is the data section, insivible but present in the DOM -->
+
+    <div class="usadata" style="display:none;">
+      <ul class="properties">
+        <li class="width"></li>
+        <li class="height"></li>
+      </ul>
+      <table class="states" style="display:none;">
+        <tr><td></td><td></td><td></td></tr>
+      </table>
+    </div>
+
+    <!-- This is a script that will execute upon DOM insert -->
+
+  <script>
+    var RenderChoropleth = function(widget) {
+      console.log("------ WIDGET Render JavaScript -------");
+      var dataElem = widget.find(".usadata");
+      var mapElem = widget.find(".themap").first()[0];
+      var data = CTS.engine.recoverData(dataElem);
+      console.log("WIDGET: Recovered Data", data);
+
+      var map = $K.map(mapElem[0], parseInt(data.properties.width), parseInt(data.properties.height));
+      map.loadMap('map-usa.svg', function() {
+        map.addLayer('countries', {
+          styles: {
+            fill: '#ee9900'
+          },
+          title: function(d) {
+            return d.countryName;
+          }
+        });
+      });
+    };
+    
+    // First, get the data
+    var widget = CTS.Util.getLastInserted();
+    if (widget) {
+      RenderChoropleth(widget);
+    }
+  </script>
+
+  </div></section>
+</body>
+</html>

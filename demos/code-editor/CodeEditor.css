@@ -1,0 +1,26 @@
+.codeEditor {
+  template: http://localhost:8000/demos/code-editor/CodeEditor.html#CodeEditor;
+  with: @data-name;
+  value: content;
+  value-type: html;
+}
+
+.cts-demo .template {
+  value: template;
+  value-type: html;
+}
+
+.cts-demo .data {
+  value: data;
+  value(data-format): format;
+  value(data-formatsAllowed): formatsAllowed;
+}
+
+.cts-demo .rendered {
+  value: rendered;
+}
+
+.cts-demo .demoBody {
+  value: demoBlock;
+  value-type: html;
+}
