@@ -63,8 +63,26 @@ class Bootstrap
     console.log("Bootstrap: Rendering CTS")
     CTS.engine.render()
 
-
+  @Go: () ->
+    CTS.bootstrap = new CTS.Bootstrap()
 
 # 5..4..3..2..
-CTS.bootstrap = new CTS.Bootstrap()
-# Houston, we have liftoff!
+# Only autoload if not suppressed
+CTS.autoload = true
+
+$.each($('script'), (idx, elem) ->
+  e = $(elem)
+  s = e.attr('src')
+  suffix = 'cts.js'
+  if s? and s.indexOf('cts.js') != -1
+    # This is the CTS include script. Parse out options string.
+    console.log("Getting param from", s)
+    param = CTS.Util.getUrlParameter('autoload', s)
+    if param == 'false'
+      console.log("CTS Suppressing Autoloat")
+      CTS.autoload = false
+)
+
+if CTS.autoload
+  console.log("CTS Autoload")
+  CTS.Bootstrap.Go()

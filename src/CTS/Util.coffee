@@ -47,7 +47,9 @@ class Util
     justscripts = document.createElement('div') 
 
     scripts = noscripts.getElementsByTagName('script')
-    for script in scripts
+    while scripts.length > 0
+      # scripts will automatically get shrunk
+      script = scripts[0]
       script.parentNode.removeChild(script)
       justscripts.appendChild(script)
 
@@ -88,18 +90,31 @@ class Util
     firstCallback = (text, status, xhr) ->
       cb = xhr._requestedCallback
       if xhr._idPart
-        textNode = $(text)
-        hitNode = null
-        $.each(textNode, (idx, elem) =>
-          n = $(elem)
-          if n.is(xhr._idPart)
-            hitNode = n
-          else
-            res = n.find(xhr._idPart).html()
-            if res != null
-              hitNode = res
-        )
-      cb(text, status, xhr)
+        eid = xhr._idPart.substring(1)
+        console.log("ID fragment requested for same-origin template")
+        dom = HTMLtoDOM(text)
+        e = dom.getElementById(eid)
+        if eid
+          el = dom.createElement("div")
+          el.appendChild(e)
+          cb(el.innerHTML, status, xhr)
+        else
+          cb("", status, xhr)
+#        console.log(dom)
+#        textNode = $(text)
+#        hitNode = null
+#        $.each(textNode, (idx, elem) =>
+#          n = $(elem)
+#          if n.is(xhr._idPart)
+#            hitNode = n
+#          else
+#            res = n.find(xhr._idPart).html()
+#            if res != null
+#              hitNode = res
+#        )
+#      else
+#        console.log("No ID fragment requested; returning the whole thing")
+#      cb(text, status, xhr)
 
     $.ajax({
       url: urlParts[0],
@@ -133,3 +148,15 @@ class Util
           xhr[key] = xhrParams[key]
       data: params
     })
+
+  @getUrlParameter: (param, url) ->
+    p = param.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]")
+    regexS = "[\\?&]" + p + "=([^&#]*)"
+    regex = new RegExp(regexS);
+    if typeof url == 'undefined'
+      url = window.location.search
+    results = regex.exec(url)
+    if results == null
+      return ""
+    else
+      return decodeURIComponent(results[1].replace(/\+/g, " "))

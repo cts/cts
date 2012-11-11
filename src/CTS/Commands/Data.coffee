@@ -31,10 +31,10 @@ class Data extends CTS.Commands.Command
     "data"
 
   applyTo: (node, context, args, engine) ->
-    console.log("----------------------------------- Data Rebase (BEGIN) --------")
+    # console.log("----------------------------------- Data Rebase (BEGIN) --------")
     # TODO: Decide if we want to offer an option to blow away context
     engine._recoverData(node, context)
-    console.log("----------------------------------- Data Rebase (END) --------")
+    # console.log("----------------------------------- Data Rebase (END) --------")
     [true, true]
 
   recoverData: (node, context, args, engine) ->

@@ -63,7 +63,10 @@ class Template extends CTS.Commands.Command
     scriptsToReturn = null
     if templateScript.length > 0
       scriptsToReturn = templateScript
-    
+
+    console.log("Scripts to return", scriptsToReturn, templateNoScript)
+
+    # Can't just use node.html here because of the head element 
     node.html(templateElem)
 
     if scriptsToReturn

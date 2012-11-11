@@ -85,7 +85,7 @@ class Repeat extends CTS.Commands.Command
         context.setZeroIndex(zeroIndex)
         newNode = $(templateHtml)
         context.push(elem)
-        console.log("console head (render repeat)", context.head(), newNode)
+        # console.log("console head (render repeat)", context.head(), newNode)
         node.append(newNode)
         engine._render(newNode, context)
         context.pop()
@@ -99,7 +99,7 @@ class Repeat extends CTS.Commands.Command
   recoverData: (node, context, args, engine) ->
     defaultTarget = args["."]
     defaultArg = @._resolveArgument(defaultTarget["."], node)
-    console.log("Recover kp", defaultArg)
+    # console.log("Recover kp", defaultArg)
     step = 1
     if "step" in defaultTarget
       step = parseInt(defaultTarget["step"])
