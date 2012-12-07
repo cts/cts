@@ -1,0 +1,13 @@
+#!/bin/sh
+
+CALCDEPS_PATH=/Users/eob/bin/closure/closure/bin
+JAR_PATH=/Users/eob/bin/closure
+CLOSURE_PATH=/Users/eob/bin/closure
+$CALCDEPS_PATH/calcdeps.py --path $CLOSURE_PATH \
+                           --path src-closure \
+                           --compiler_jar $JAR_PATH/compiler.jar \
+                           --input release-closure/cts.js \
+                           --compiler_flags "" \
+                           --output_mode compiled \
+                           > release-closure/cts-min.js
+
