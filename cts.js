@@ -490,8 +490,8 @@
     ingestRules: function(rules) {
     },
 
-    loadRemoteString: function(url, params, successFn, errorFn) {
-      $.ajax({url: url,
+    loadRemoteString: function(params, successFn, errorFn) {
+      $.ajax({url: params['url'],
               dataType: 'text',
               success: success,
               error: error,
@@ -555,7 +555,7 @@
             // Queue load
             this._ctsToLoad[e.attr('src')] = true;
             hasRemote = true;
-            this.loadRemoteString(e.attr('src'), {'url':e.attr('src')}, _fsmCtsLoadSuccess, _fsmCtsLoadFail);
+            this.loadRemoteString({'url':e.attr('src')}, _fsmCtsLoadSuccess, _fsmCtsLoadFail);
           }
         }
       );
@@ -566,11 +566,21 @@
 
     _fsmQueueTrees: function() {
       console.log("FSM Queue Trees");
-      // Finds all required trees and loads them
       this.fsmTransition("LoadingTrees");
+      this._treesToLoad = {};
+      var hasRemote = false;
+      _.each(this.forrest.trees, function(value, key, list) {
+        console.log("TREE");
+        // Todo
+      }, this);
+      if (! hasRemote) {
+        this.fsmTransition("Rendering");
+      }
     },
 
     _fsmRender: function() {
+      console.log("FSM Render");
+      this.render();
       this.fsmTransition("Rendered");
     },
 
@@ -585,10 +595,15 @@
       this._fsmCtsLoaded(url);
     },
 
-    _fsmTreeLoadSuccess: function() {
+    _fsmTreeLoadSuccess: function(data, textStatus, xhr) {
+      //TODO
+      var url = xhr['url'];
+      this._fsmCtsLoaded(url);
     },
 
-    _fsmTreeLoadFail: function() {
+    _fsmTreeLoadFail: function(xhr, textStatus, errorThrown) {
+      var url = xhr['url'];
+      this._fsmCtsLoaded(url);
     },
 
     _fsmCtsLoaded: function(filename) {
