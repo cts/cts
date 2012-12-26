@@ -35,8 +35,9 @@ class Templates
     @preloadCount -= 1
     console.log("Templates: Preload Callback", @preloadCount)
     if @preloadCount == 0 and @preloadCallback != null
+      console.log("Done preloading")
       @preloadCallback()
-    @preloadCallback = null
+      @preloadCallback = null
 
   needsLoad: (rules) ->
     if rules != null and @templateCommand.signature() of rules

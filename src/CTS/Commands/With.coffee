@@ -37,12 +37,12 @@ class With extends CTS.Commands.Command
     defaultTarget = args["."]
     defaultVariant = @._resolveArgument(defaultTarget["."], node)
     success = context.pushKeypath(defaultVariant)
-    if success
-      console.log("With (render, success):", node.clone(), defaultVariant, " = ", JSON.stringify(context.head()))
-    else
-      console.log("With (render, fail):", node.clone(), defaultVariant)
+    #if success
+    #  console.log("With (render, success):", node.clone(), defaultVariant, " = ", JSON.stringify(context.head()))
+    #else
+    #  console.log("With (render, fail):", node.clone(), defaultVariant)
     pop = (node, rules, context) ->
-      console.log("With (render, end)", node.clone())
+      # console.log("With (render, end)", node.clone())
       context.pop()
     if success
       [true, true, null, [pop]]
@@ -55,11 +55,11 @@ class With extends CTS.Commands.Command
   recoverData: (node, context, args, engine) ->
     defaultTarget = args["."]
     defaultVariant = @._resolveArgument(defaultTarget["."], node)
-    console.log("With (recover):", node.clone(), defaultVariant)
+    # console.log("With (recover):", node.clone(), defaultVariant)
     context.set(defaultVariant, {})
     context.pushKeypath(defaultVariant)
     pop = (node, rules, context) ->
-      console.log("With (recover, end)", node.clone())
+      # console.log("With (recover, end)", node.clone())
       context.pop()
     [true, true, null, [pop]]
 

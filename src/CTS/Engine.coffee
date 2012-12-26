@@ -51,7 +51,7 @@ class Engine
     @._render(node, context)
 
   recoverData: (node) ->
-    console.log("RECOVER", node)
+    # console.log("RECOVER", node)
     node = node || $('html')
     context = new CTS.Context({})
     $.each node, (i,e) =>
@@ -99,9 +99,6 @@ class Engine
       f(node, rules, context)
     if scripts
       console.log("scripts before replace", scripts)
-      #scripts = scripts.replace(/&gt;/g, ">")
-      #scripts = scripts.replace(/&amp;/g, "&")
-      #scripts = scripts.replace(/&lt;/g, "<")
       # For some reason the CDATA wrapper that jQuery's parser adds to script
       # tags has to be removed.
       scripts = scripts.replace(/<!--\[CDATA\[/g, "")
@@ -117,17 +114,17 @@ class Engine
       node = $(node)
       rules = @rules.rulesForNode(node)
       if @templates.needsLoad(rules)
-        console.log("Engine: Recover data (needs load)", node.clone(), rules)
+        # console.log("Engine: Recover data (needs load)", node.clone(), rules)
         @templates.load(rules, () =>
           @._recoverDataWithRules(node, rules, context)
         )
       else
-        console.log("Engine: Recover data", node.clone(), rules)
+        # console.log("Engine: Recover data", node.clone(), rules)
         @._recoverDataWithRules(node, rules, context)
 
 
   _recoverDataWithRules: (node, rules, context) ->
-    console.log("Engine: Recover data with rules", node.clone(), rules)
+    # console.log("Engine: Recover data with rules", node.clone(), rules)
     recurse = true
     functions = []
     if rules != null

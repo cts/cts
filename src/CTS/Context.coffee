@@ -52,7 +52,7 @@ class Context
       return false
 
   pop: (data) ->
-    console.log("Context.pop()")
+    # console.log("Context.pop()")
     @stack.pop()
 
   # aliasedKeypath must be of the form `Foo.Bar.Baz` -- none of the special prefixes
@@ -94,7 +94,7 @@ class Context
       return @._resolveParsedKeypath(kp, tryAliases)
 
   set: (keypath, value) ->
-    console.log("Context.push(", keypath, ", ", value, ")")
+    # console.log("Context.push(", keypath, ", ", value, ")")
     if keypath == "."
       @stack[@stack.length - 1] = value
     else 
