@@ -63,8 +63,6 @@ class Bootstrap
     console.log("Bootstrap: Rendering CTS")
     CTS.engine.render()
 
-
-
 # 5..4..3..2..
-CTS.bootstrap = new CTS.Bootstrap()
+CTS.bootstrap = new Bootstrap()
 # Houston, we have liftoff!
