@@ -487,7 +487,20 @@
     render: function() {
     },
 
-    ingestRules: function() {
+    ingestRules: function(rules) {
+    },
+
+    loadRemoteString: function(url, params, successFn, errorFn) {
+      $.ajax({url: url,
+              dataType: 'text',
+              success: success,
+              error: error,
+              beforeSend: function(xhr, settings) {
+                _.each(params, function(value, key, list) {
+                  xhr[key] = value;
+                }, this);
+              }
+      });
     },
 
     /** 
@@ -523,9 +536,6 @@
       this.fsmTransition('QueueingCTS');
     },
 
-    _fsmListener: function(evt, state) {
-    },
-
     /**
      * Finds all CTS links and queues their load.
      */
@@ -540,12 +550,12 @@
           var e = CTS.$(elem);
           if (! e.attr('src')) {
             // Load the contents
-            BlockParser.parseBlocks(e.html());
+            this.ingestRules(e.html());
           } else {
             // Queue load
             this._ctsToLoad[e.attr('src')] = true;
             hasRemote = true;
-            this.loadRemote(e.attr('src'), _fsmCtsLoadSuccess, _fsmCtsLoadFail);
+            this.loadRemoteString(e.attr('src'), {'url':e.attr('src')}, _fsmCtsLoadSuccess, _fsmCtsLoadFail);
           }
         }
       );
@@ -564,10 +574,15 @@
       this.fsmTransition("Rendered");
     },
 
-    _fsmCtsLoadSuccess: function() {
+    _fsmCtsLoadSuccess: function(data, textStatus, xhr) {
+      this.ingestRules(data);
+      var url = xhr['url'];
+      this._fsmCtsLoaded(url);
     },
 
-    _fsmCtsLoadFail: function() {
+    _fsmCtsLoadFail: function(xhr, textStatus, errorThrown) {
+      var url = xhr['url'];
+      this._fsmCtsLoaded(url);
     },
 
     _fsmTreeLoadSuccess: function() {
@@ -576,15 +591,17 @@
     _fsmTreeLoadFail: function() {
     },
 
-    _fsmTreeLoaded: function(filename) {
+    _fsmCtsLoaded: function(filename) {
+      delete this._ctsToLoad[filename];
+      var done = (this._ctsToLoad.length == 0);
       if (done) {
-        _fsmTransition("Rendering");
+        _fsmTransition("QueueingTrees");
       }
     },
 
-    _fsmCtsLoaded: function(filename) {
+    _fsmTreeLoaded: function(filename) {
       if (done) {
-        _fsmTransition("QueueingTrees");
+        _fsmTransition("Rendering");
       }
     }
 
