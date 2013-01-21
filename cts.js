@@ -381,6 +381,7 @@
     },
 
     _onFailedConditional: function() {
+      this.node.hide();
       this.fsmTransition("Finished");
     },
 
@@ -391,7 +392,7 @@
     _performConditional: function() {
       var rules = _.filter(this.rules, function(rule) {
         return ((rule.name == "ifexist") &&
-            (r.head().matches(this)));
+            (rule.head().matches(this)));
       }, this);
 
       if (rules.length == 0) {
@@ -401,7 +402,7 @@
         return _.all(rules, function(rule) {
           var otherNodes = rule.tail().nodes(this.tree.forrest);
           if ((rule.name == "ifexist") &&
-              (typeofOtherNodes != undefined) &&
+              (typeof otherNodes != undefined) &&
               (otherNodes.length > 0)) {
             return true;
           } else {
@@ -819,11 +820,8 @@
       var previousClose = 0;
 
       function peelChunk() {
-        console.log("open bracket", openBracket);
         var selector = CTS.$.trim(r.substr(previousClose, openBracket - previousClose - 1));
         var block = CTS.$.trim(r.substr(openBracket + 1, closeBracket - openBracket - 1));
-        console.log("FOUND SELECTOR", selector);
-        console.log("FOUND BLOCK", block);
         previousClose = closeBracket + 1;
         self.incorporate(relations, selector, block);
       }
@@ -832,7 +830,6 @@
         if (r[i] == '{') {
           bracketDepth++;
           if (bracketDepth == 1) {
-            console.log("setting open bracket to ", i);
             console.log(r[i]);
             openBracket = i;
           }
