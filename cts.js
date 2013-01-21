@@ -389,7 +389,26 @@
     },
 
     _performConditional: function() {
-      return true;
+      var rules = _.filter(this.rules, function(rule) {
+        return ((rule.name == "ifexist") &&
+            (r.head().matches(this)));
+      }, this);
+
+      if (rules.length == 0) {
+        // No conditionality restrictions
+        return true;
+      } else {
+        return _.all(rules, function(rule) {
+          var otherNodes = rule.tail().nodes(this.tree.forrest);
+          if ((rule.name == "ifexist") &&
+              (typeofOtherNodes != undefined) &&
+              (otherNodes.length > 0)) {
+            return true;
+          } else {
+            return false;
+          }
+        }, this);
+      }
     },
 
     _performValue: function() {
@@ -468,7 +487,8 @@
 
     valueOutgoing: function(opts) {
       return this.node.html();
-    }
+    },
+
 
   });
 
@@ -697,12 +717,12 @@
     this.selection1 = selection1;
     this.selection2 = selection2;
     this.name = name;
-    this.opts = opts;
+    this.opts = opts || {};
   };
 
   _.extend(Rule.prototype, {
     addOption: function(key, value) {
-      opts[key] = value;
+      this.opts[key] = value;
     },
 
     head: function() {
@@ -799,9 +819,12 @@
       var previousClose = 0;
 
       function peelChunk() {
-        var selector = CTS.$.trim(r.substr(previousClose, openBracket));
+        console.log("open bracket", openBracket);
+        var selector = CTS.$.trim(r.substr(previousClose, openBracket - previousClose - 1));
         var block = CTS.$.trim(r.substr(openBracket + 1, closeBracket - openBracket - 1));
-        previousClose = closeBracket;
+        console.log("FOUND SELECTOR", selector);
+        console.log("FOUND BLOCK", block);
+        previousClose = closeBracket + 1;
         self.incorporate(relations, selector, block);
       }
 
@@ -809,6 +832,8 @@
         if (r[i] == '{') {
           bracketDepth++;
           if (bracketDepth == 1) {
+            console.log("setting open bracket to ", i);
+            console.log(r[i]);
             openBracket = i;
           }
         } else if (r[i] == '}') {
