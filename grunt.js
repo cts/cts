@@ -3,7 +3,6 @@
  *
  * To be used with GruntJS <http://gruntjs.com/>
  */
-
 module.exports = function(grunt) {
   // Project configuration.
   grunt.initConfig({
