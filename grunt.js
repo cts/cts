@@ -27,14 +27,14 @@ module.exports = function(grunt) {
           "<banner>",
           "src/cts.js"
         ],
-        dest : "lib/cts.js"
+        dest : "release/cts.js"
       }
     },
     lint: {
       all: ['grunt.js', 'src/**/*.js']
     },
     min: {
-      "lib/cts.min.js": ["<banner>", "lib/cts.js"]
+      "release/cts.min.js": ["<banner>", "release/cts.js"]
     },
     qunit: {
       files: [
