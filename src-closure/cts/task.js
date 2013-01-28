@@ -1,16 +1,15 @@
-goog.require('goog.structs.Map');
-
-goog.provide('cts.trees.Forrest');
+goog.provide('cts.Task'); 
 
 /**
- * A Forrest contains a set of trees.
+ * A CTS Rendering Task.
+ *
+ * Contains dependencies and might be deferred.
  *
  * @constructor
  */
-cts.trees.Forrest = function() {
+cts.Task = function() {
 
-  // Load a default map;
-  this.trees_ = new goog.structs.Map();
+  this.node_ = null;
 
 };
 

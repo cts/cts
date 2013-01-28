@@ -1,5 +1,6 @@
-goog.require('cts.rules.Rule');
-goog.require('cts.rules.Value');
+goog.require('cts.relations.Relation');
+
+goog.provide('cts.relations.Value');
 
 /**
  * Value rule: equates the children of two selections.
