@@ -334,11 +334,13 @@
         this.fsmTransition("FailedConditional");
       } else {
         if (this._performValue()) {
-          console.log("process children");
+          // We did a value map, so move to Processed state.
+          // TODO(eob): what if we want to interpret the value as cts-laden html?
+          this.fsmTransition("ProcessedIncoming");
+        } else if (this._performRepeat()) {
           this.fsmTransition("ProcessIncomingChildren");
         } else {
-          console.log("skip children");
-          this.fsmTransition("ProcessedIncoming");
+          this.fsmTransition("ProcessIncomingChildren");
         }
       }
     },
@@ -401,8 +403,7 @@
       } else {
         return _.all(rules, function(rule) {
           var otherNodes = rule.tail().nodes(this.tree.forrest);
-          if ((rule.name == "ifexist") &&
-              (typeof otherNodes != undefined) &&
+          if ((typeof otherNodes != undefined) &&
               (otherNodes.length > 0)) {
             return true;
           } else {
@@ -429,9 +430,38 @@
       if (rule) {
         console.log("Found valur rule");
         this.valueIncoming(rule.tail().nodes(this.tree.forrest));
+        return true;
+      } else {
+        return false;
+      }
+    },
+
+    _performRepeat: function() {
+      var rules = _.filter(this.rules, function(rule) {
+        return ((rule.name == "repeat") && (rule.head().matches(this)));
+      }, this);
+
+      if (rules.length > 0) {
+        // TODO(eob): Figure out what to do if > 1 rule
+        var rule = rules[rules.length - 1];
+        /*
+         * Here is where things get tricky. "repeat" is really a bit of a functor
+         * over the relations: it redraws down-tree relations such that each respective
+         * item matches up.
+         */
+
+        // Get the source selection.
+        var sourceSelection = rule.tail().nodes(this.tree.forrest);
+
+        if ((typeof sourceSelection.length != "undefined") && (sourceSelection.length > 0)) {
+        } else {
+        }
+
+        return true;
+      } else {
+        return false;
       }
 
-      return true;
     }
 
   };
