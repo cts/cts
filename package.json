@@ -1,0 +1,20 @@
+{
+  "name": "cts",
+  "description": "Declarative structural remapping for the web.",
+  "version": "0.5",
+  "author": {
+    "name":"Ted Benson",
+    "email":"eob@csail.mit.edu>"
+  },
+  "keywords": ["treesheets", "cts", "cats", "structure", "cascading treesheets", "tree"],
+  "directories": {"release": "./release/"},
+  "licenses": [{
+    "type":"MIT",
+    "url":"http://opensource.org/licenses/mit-license.php"
+  }],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/cts/cts-js"
+  },
+  "engines": { "node": ">= 0.8.14" }
+}
