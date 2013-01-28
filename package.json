@@ -1,6 +1,7 @@
 {
   "name": "cts",
   "description": "Declarative structural remapping for the web.",
+  "homepage": "http://www.treesheets.org",
   "version": "0.5",
   "author": {
     "name":"Ted Benson",
