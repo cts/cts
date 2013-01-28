@@ -1,0 +1,33 @@
+<html>
+<head>
+<script src="../vendors/jquery.min.js"></script>
+<script src="../vendors/underscore.js"></script>
+<script src="../cts.js"></script>
+
+<script type="text/cts">
+#target .name {
+  value: #source .name;
+}
+
+#target .important {
+  ifexist: #source .important;
+}
+</script>
+</head>
+<body>
+
+<div id="target">
+<h2>Target</h2>
+Name: <span class="name"></span>
+<div class="important">
+  Important message: <span />
+</div>
+</div>
+
+<div id="source">
+<h1>Source</h1>
+Name: <div class="name">Ted</div>
+</div>
+
+</body>
+</html>

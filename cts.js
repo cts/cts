@@ -44,7 +44,6 @@
   //
   // ==========================================================================
 
-
   // Regular expression used to split event strings.
   var eventSplitter = /\s+/;
 
@@ -240,6 +239,7 @@
         var name = this._fsmArcs[from][to];
         this.trigger('FsmLeft:' + from);
         this._fsmCurrent = to;
+        console.log("Transitioning to", to);
         this.trigger('FsmEdge:' + name);
         this.trigger('FsmEntered:' + to);
       } else {
@@ -277,22 +277,249 @@
   // by certain relations (in both directions). The differences between
   // different types of trees (JSON, HTML, etc) are concealed at this level.
 
+  var Node = CTS.Node = {
+
+    initializeStateMachine: function() {
+      this.fsmInitialize(
+        'Ready', [
+        { 'from':'Ready',
+            'to':'BeginRender',
+          'name':'BeginRender'},
+        { 'from':'BeginRender',
+            'to':'ProcessIncoming',
+          'name':'ProcessIncoming'},
+        { 'from':'ProcessIncoming',
+            'to':'ProcessIncomingChildren',
+          'name':'ProcessIncomingChildren'},
+        { 'from':'ProcessIncomingChildren',
+            'to':'ProcessedIncoming',
+          'name':'ProcessedIncoming'},
+        { 'from':'ProcessIncoming',
+            'to':'FailedConditional',
+          'name':'FailedConditional'},
+        { 'from':'FailedConditional',
+            'to':'Finished',
+          'name':'Finished_Invisible'},
+        { 'from':'ProcessedIncoming',
+            'to':'Finished',
+          'name':'Finished_NoTemplate'},
+        { 'from':'ProcessIncomming',
+            'to':'ProcessedIncoming',
+          'name':'SkipRecursion'}
+      ]);
+
+      this.on('FsmEdge:BeginRender', this._onBeginRender, this);
+      this.on('FsmEdge:ProcessIncoming', this._onProcessIncoming, this);
+      this.on('FsmEntered:ProcessIncomingChildren', this._onProcessIncomingChildren, this);
+      this.on('FsmEdge:ProcessedIncoming', this._onProcessedIncoming, this);
+      this.on('FsmEdge:FailedConditional', this._onFailedConditional, this);
+      this.on('FsmEntered:Finished', this._onFinished, this);
+    },
+
+    render: function() {
+      console.log(this, "render");
+      this.fsmTransition("BeginRender");
+    },
+
+    _onBeginRender: function() {
+      this.node.css("border", "1px solid red");
+      console.log(this, "onBeginRender");
+      this.fsmTransition("ProcessIncoming");
+    },
+
+    _onProcessIncoming: function() {
+      console.log(this, "onProcessIncoming");
+      if (! this._performConditional()) {
+        console.log("Fail conditional");
+        this.fsmTransition("FailedConditional");
+      } else {
+        if (this._performValue()) {
+          // We did a value map, so move to Processed state.
+          // TODO(eob): what if we want to interpret the value as cts-laden html?
+          this.fsmTransition("ProcessedIncoming");
+        } else if (this._performRepeat()) {
+          this.fsmTransition("ProcessIncomingChildren");
+        } else {
+          this.fsmTransition("ProcessIncomingChildren");
+        }
+      }
+    },
+
+    _onProcessIncomingChildren: function() {
+      console.log(this, "onProcessChildren");
+      this.node.css("border", "1px solid yellow");
+
+      this.children = this._createChildren();
+      console.log("Children", this.children);
+
+      // Now we've created any children we're interested in.
+      // Decide how to proceed.
+      this.outstandingChildren = this.children.length;
+      if (this.outstandingChildren == 0) {
+        this.fsmTransition("ProcessedIncoming");
+      } else {
+        // Listen to finish events
+        _.each(this.children, function(child) {
+          child.on("FsmEntered:Finished", this._onChildFinished, this);
+        }, this);
+        // Execute children.
+        // TODO(eob): Explore parallelization options.
+        _.each(this.children, function(child) {
+          console.log("RENDERING CHILD");
+          child.render();
+        }, this);
+      }
+    },
+
+    _onChildFinished: function() {
+      this.outstandingChildren = this.outstandingChildren - 1;
+      if (this.outstandingChildren == 0) {
+        this.fsmTransition("ProcessedIncoming");
+      }
+    },
+
+    _onProcessedIncoming: function() {
+      this.fsmTransition("Finished");
+    },
+
+    _onFailedConditional: function() {
+      this.node.hide();
+      this.fsmTransition("Finished");
+    },
+
+    _onFinished: function() {
+      this.node.css("border", "1px solid green");
+    },
+
+    _performConditional: function() {
+      var rules = _.filter(this.rules, function(rule) {
+        return ((rule.name == "ifexist") &&
+            (rule.head().matches(this)));
+      }, this);
+
+      if (rules.length == 0) {
+        // No conditionality restrictions
+        return true;
+      } else {
+        return _.all(rules, function(rule) {
+          var otherNodes = rule.tail().nodes(this.tree.forrest);
+          if ((typeof otherNodes != undefined) &&
+              (otherNodes.length > 0)) {
+            return true;
+          } else {
+            return false;
+          }
+        }, this);
+      }
+    },
+
+    _performValue: function() {
+      console.log("Perform value on", this, this.node.html(), this.rules);
+      // If there is an incoming value node, handle it.
+      // Just take the last one.
+      var rule = null;
+      _.each(this.rules, function(r) {
+        console.log("RULE", r);
+        if (r.name == "value") {
+          if (r.head().matches(this)) {
+            rule = r;
+          }
+        }
+      }, this);
+
+      if (rule) {
+        console.log("Found valur rule");
+        this.valueIncoming(rule.tail().nodes(this.tree.forrest));
+        return true;
+      } else {
+        return false;
+      }
+    },
+
+    _performRepeat: function() {
+      var rules = _.filter(this.rules, function(rule) {
+        return ((rule.name == "repeat") && (rule.head().matches(this)));
+      }, this);
+
+      if (rules.length > 0) {
+        // TODO(eob): Figure out what to do if > 1 rule
+        var rule = rules[rules.length - 1];
+        /*
+         * Here is where things get tricky. "repeat" is really a bit of a functor
+         * over the relations: it redraws down-tree relations such that each respective
+         * item matches up.
+         */
+
+        // Get the source selection.
+        var sourceSelection = rule.tail().nodes(this.tree.forrest);
+
+        if ((typeof sourceSelection.length != "undefined") && (sourceSelection.length > 0)) {
+        } else {
+        }
+
+        return true;
+      } else {
+        return false;
+      }
+
+    }
+
+  };
+
   // ### Constructor
-  var DomNode = CTS.DomNode = function(node, opts) {
+  var DomNode = CTS.DomNode = function(node, tree, rules, opts, args) {
     var defaults;
+    this.node = node;
+    this.tree = tree;
+    this.rules = rules || [];
     this.opts = opts || {};
+    this.initialize.apply(this, args);
   };
 
   // ### Instance Methods
-  _.extend(DomNode.prototype, {
+  _.extend(DomNode.prototype, Events, StateMachine, Node, {
 
-    valueIncoming: function(otherNode, opts) {
-      this._node.html(otherNode.valueOutgoing(this, opts));
+    initialize: function(args) {
+      this.initializeStateMachine();
     },
 
-    valueOutgoing: function(otherNode, opts) {
-      return this._node.html();
-    }
+    _createChildren: function() {
+      var fringe = this.node.children().toArray();
+      var children = [];
+      
+      while (fringe.length > 0) {
+        var first = CTS.$(fringe.shift());
+        var child = new DomNode(first, this.tree);
+        var relevantRules = this.tree.forrest.rulesForNode(this.tree, child);
+        console.log("Found child", child.node, child.node.html(), "with rules", relevantRules);
+
+        if (relevantRules.length > 0) {
+          child.rules = relevantRules;
+          children[children.length] = child;
+        } else {
+          fringe = _.union(fringe, first.children().toArray());
+        }
+      }
+
+      console.log("Create Children Returned: ", children);
+      return children;
+    },
+
+    valueIncoming: function(otherNodes, opts) {
+      console.log("Value Incoming with otherNodes", otherNodes);
+      if (otherNodes.length == 0) {
+        console.log("Other nodes empty!");
+        this.node.html("");
+      } else {
+        console.log("Other nodes non empty!");
+        this.node.html(otherNodes[otherNodes.length - 1].valueOutgoing(opts));
+      }
+    },
+
+    valueOutgoing: function(opts) {
+      return this.node.html();
+    },
+
 
   });
 
@@ -301,14 +528,6 @@
   //
   // A Rule is a named edge (with a dictionary of options) that relates
   // a all selected nodes in one tree to all selected nodes in another tree.
-
-  // ### Constructor
-  var Rule = CTS.Rule = function(name, headSelector, tailSelector, opts) {
-    this.root = node || CTS.$('body');
-    this.headSelector = headSelector;
-    this.tailSelector = tailSelector;
-    this.opts = opts;
-  };
 
   // Forrest
   // ==========================================================================
@@ -345,118 +564,321 @@
     },
 
     addRules: function(someRules) {
-      for (var i = 0; i < rules.length; i++) {
+      for (var i = 0; i < someRules.length; i++) {
         // Faster than .push()
         this.rules[this.rules.length] = someRules[i];
       }
+    },
+
+    nodesForSelection: function(selection) {
+      console.log("trees", this.trees, "selection name", selection.treeName);
+      // TODO(eob): The commented out line doesn't work.. but
+      // I don't know why. That makes me worried.
+      //if (_.contains(this.trees, selection.treeName)) {
+      if (typeof this.trees[selection.treeName] != "undefined") {
+        return this.trees[selection.treeName].nodesForSelection(selection);
+      } else {
+        console.log("Nodes for selection bailing");
+        return [];
+      }
+    },
+
+    getPrimaryTree: function() {
+      return this.trees['body'];
+    },
+
+    ingestRules: function(someRuleString) {
+      var ruleSet = RelationParser.parse(someRuleString);
+      this.addRules(ruleSet);
     },
 
     /* Adds the DOM as a local tree called `body` and the `window` variable as
      * a tree called window.
      */ 
     addDefaultTrees: function() {
-      this.addTree('body', new CTS.DomTree());
-      this.addTree('window', new CTS.JsonTree(window));
+      this.addTree('body', new CTS.DomTree(this));
+      this.addTree('window', new CTS.JsonTree(this, window));
+    },
+
+    rulesForNode: function(tree, node) {
+      var ret = [];
+      _.each(this.rules, function(rule) {
+        console.log("Rule", rule, "for node", node);
+        if ((rule.selection1.matches(node)) || 
+            (rule.selection2.matches(node))) {
+          ret[ret.length] = rule;
+        } else {
+          console.log("Failed match", rule.selection1.selector);
+          console.log("Failed match", rule.selection2.selector);
+        }
+      }, this);
+      console.log("Rules for node: ", ret);
+      return ret;
     }
     
   });
-
-  // Selector
-  // ==========================================================================
-  //
-  // ==========================================================================
-
-  // Constructor
-  // -----------
-  var DomSelector = CTS.DomSelector = function(stringRep, defaultTree, opts, args) {
-    this.stringRep = stringRep;
-    this.treeAlias = null;
-    this.selector = null;
-    this.initialize.apply(this, args);
-  };
-
-  _.extend(DomSelector.prototype, {
-    initialize: function() {
-      var trimmed = CTS.$.trim(self.stringRep);
-      if (trimmed[0] == "@") {
-        var pair = trimmed.split('|');
-        if (pair.length == 1) {
-          throw new Error("Cound not parse: " + self.stringRep);
-        } else {
-          this.treeAlias = CTS.$.trim(pair.shift().substring(1));
-          this.selector = CTS.$.trim(_.join(pair, ""));
-        }
-      } else {
-      }
-
-      r = r.replace(/\/\*(\r|\n|.)*\*\//g,"");
-
-    }
-  });
-
 
   // DOM Tree
   // ==========================================================================
   //
   // ==========================================================================
+  var Tree = CTS.Tree = {
+    name: "",
+    
+    render: function(opts) {
+      console.log("render root", this.root);
+      this.root.render(opts);
+    }
+
+  };
 
   // Constructor
   // -----------
-  var DomTree = CTS.DomTree = function(node, attributes) {
-    this.root = node || CTS.$('body');
+  var DomTree = CTS.DomTree = function(forrest, node, attributes) {
+    this.root = node || new CTS.DomNode(CTS.$('body'), this);
+    this.forrest = forrest;
+    this.name = "body";
+    if ((typeof attributes != 'undefined') && ('name' in attributes)) {
+      this.name = attributes.name;
+    }
   };
 
   // Instance Methods
   // ----------------
-  _.extend(DomTree.prototype, {
-
+  _.extend(DomTree.prototype, Tree, {
+    nodesForSelection: function(selection) {
+      var jqnodes = this.root.node.find(selection.selector).toArray();
+      var nodes = _.map(jqnodes, function(n) {
+        return new DomNode(CTS.$(n), this);
+      }, this);
+      console.log("Tree", this, "nodes for selection", selection, nodes);
+      return nodes;
+    }
   });
 
-
-  var JsonTree = CTS.JsonTree = function(json, attributes) {
+  var JsonTree = CTS.JsonTree = function(forrest, json, attributes) {
+    this.forrest = forrest;
     this.root = json || window;
   };
 
   // Instance Methods
   // ----------------
-  _.extend(JsonTree.prototype, {
+  _.extend(JsonTree.prototype, Tree, {
 
   });
 
+  var Selection = CTS.Selection = {
+    toString: function() {
+      return "<Selection {tree:" + this.treeName +
+             ", type:" + this.treeType +
+             ", selector:" + this.selector +
+             ", variant:" + this.variant + "}>";
+    },
 
+    // Returns tuple of [treeName, treeType, stringSpec]
+    PreParse: function(selectionString) {
+      var treeName = "body";
+      var treeType = "html";
+      var selector = null;
 
+      var trimmed = CTS.$.trim(selectionString);
+      if (trimmed[0] == "@") {
+        var pair = trimmed.split('|');
+        if (pair.length == 1) {
+          throw new Error("Cound not parse: " + self.stringSpec);
+        } else {
+          treeName = CTS.$.trim(pair.shift().substring(1));
+          // TODO(eob): set tree type
+          selector = CTS.$.trim(_.join(pair, ""));
+        }
+      } else {
+        selector = selectionString;
+      }
+      return [treeName, treeType, selector];
+    },
 
+    // Factory for new selections
+    Create: function(selectionString) {
+      var parts = this.PreParse(selectionString);
+      var selection = null;
 
-  // ArcParser
+      if (parts[1] == "html") {
+        selection = new DomSelection(parts[2]);
+      } 
+
+      console.log("s", selection);
+      if (selection != null) {
+        selection.treeName = parts[0];
+        selection.treeType = parts[1];
+        selection.originalString = selectionString;
+      }
+
+      return selection;
+    }
+
+  };
+
+  var DomSelection = CTS.DomSelection = function(selector) {
+    this.treeName = null;
+    this.treeType = null;
+    this.originalString = null;
+    this._nodes = null;
+    this.selector = selector;
+  };
+
+  _.extend(DomSelection.prototype, Selection, {
+    matches: function(node) {
+      console.log("this treename", this.treeName, "node", node.tree.name);
+      console.log("node is <", this.selector, ">", node.node.is(this.selector));
+      return (
+        (this.treeName == node.tree.name) &&
+        (node.node.is(this.selector)));
+    },
+
+    nodes: function(forrest) {
+      if (this._nodes == null) {
+        // First time; compute.
+        this._nodes = forrest.nodesForSelection(this);
+      }
+      return this._nodes;
+    }
+  });
+
+  var Rule = CTS.Rule = function(selection1, selection2, name, opts) {
+    this.selection1 = selection1;
+    this.selection2 = selection2;
+    this.name = name;
+    this.opts = opts || {};
+  };
+
+  _.extend(Rule.prototype, {
+    addOption: function(key, value) {
+      this.opts[key] = value;
+    },
+
+    head: function() {
+      return this.selection1;
+    },
+
+    tail: function() {
+      return this.selection2;
+    },
+
+  });
+
+  // RelationParser
   // ==========================================================================
   var RelationParser = CTS.RelationParser = {
-    incorporate: function(rules, selector, block) {
+    incorporate: function(ruleMap, selector, block) {
+      console.log("hi");
+      var rules = block.split(";");
+      _.each(rules, function(ruleString) {
+        var parts = ruleString.split(":");
+        if (parts.length == 2) {
+          var target = "";
+          var name = "";
+          var variant = "";
+          var key = CTS.$.trim(parts[0]);
+          var value = CTS.$.trim(parts[1]);
+          var section = 0;
+          for (var i = 0; i < key.length; i++) {
+            if ((key[i] == "-") && (section == 0)) {
+              section = 1;
+            } else if (key[i] == "(") {
+              section = 2;
+            } else if ((key[i] == ")") && (section == 2)) {
+              break;
+            } else {
+              // append string
+              if (section == 0) {
+                name += key[i];
+              } else if (section == 1) {
+                variant += key[i];
+              } else if (section == 2) {
+                target += key[i];
+              }
+            }
+          }
+  
+          console.log("selector", selector, "key", key, "value", value);
+  
+          // Now add or accomodate the rule
+          var selection1 = Selection.Create(selector);
+  
+          if (target.length > 0) {
+            selection1.variant = target;
+          }
+          var selection1String = selection1.toString();
+  
+          console.log("selection1", selection1, selection1String);
+  
+          if (! _.contains(ruleMap, selection1String)) {
+            // Ensure we know about this selector
+            console.log("Creating slot for selection 1", selection1);
+            ruleMap[selection1String] = {};
+          }
+          if (! _.contains(ruleMap[selection1String], name)) {
+            console.log("Creating new rule for selection 1 :: name", selection1, name);
+            ruleMap[selection1String][name] = new Rule(selection1, null, name, {});
+          }
+  
+          if (variant.length == 0) {
+            // We're setting selection 2
+            var selection2 = Selection.Create(value);
+            console.log("selection2", selection2, value);
+            ruleMap[selection1String][name].selection2 = selection2;
+          } else {
+            // We're setting an option
+            ruleMap[selection1String][name].addOption(variant, value);
+          }
+  
+          console.log("Final after adding rule", ruleMap[selection1String][name]);
+        } // if (parts.length == 2)
+      }, this);
     },
 
-    parse: function(r, ruleset) {
+    parse: function(ctsString) {
       var self = this;
-      var ret = ruleset || {};
+      var relations = {};
 
       // Remove comments
-      r = r.replace(/\/\*(\r|\n|.)*\*\//g,"");
+      r = ctsString.replace(/\/\*(\r|\n|.)*\*\//g,"");
 
-      chunks = r.split('}');
-      chunks.pop(); // Get rid of the last one.
-      _.each(chunks, function(chunk) {
-        pair = chunk.split('{');
-        selector = CTS.$.trim(pair[0]);
-        if (selector  != "") {
-          block = CTS.$.trim(pair[1]);
-          block = self.parseBlock(block);
-          self.incorporate(ret, selector, block);
+      var bracketDepth = 0;
+      var openBracket = -1;
+      var closeBracket = 0;
+      var previousClose = 0;
+
+      function peelChunk() {
+        var selector = CTS.$.trim(r.substr(previousClose, openBracket - previousClose - 1));
+        var block = CTS.$.trim(r.substr(openBracket + 1, closeBracket - openBracket - 1));
+        previousClose = closeBracket + 1;
+        self.incorporate(relations, selector, block);
+      }
+
+      for (var i = 0; i < r.length; i++) {
+        if (r[i] == '{') {
+          bracketDepth++;
+          if (bracketDepth == 1) {
+            console.log(r[i]);
+            openBracket = i;
+          }
+        } else if (r[i] == '}') {
+          bracketDepth--;
+          if (bracketDepth == 0) {
+            closeBracket = i;
+            peelChunk();
+          }
         }
-      }, this);
+      }
 
+      var ret = [];
+      _.each(_.values(relations), function(valueHash) {
+        ret = _.union(ret, _.values(valueHash));
+      });
+      console.log(ret);
       return ret;
-    },
-
-    parseBlock: function(b) {
-    },
+    }
 
   };
 
@@ -484,10 +906,19 @@
       this.forrest = new CTS.Forrest();
     },
 
+    /**
+     * Rendering picks a primary tree. For each node in the tree, we:
+     *  1: Process any *incoming* relations for its subtree.
+     *  2: Process any *outgoing* tempalte operations
+     *  3: 
+     */
     render: function() {
+      var pt = this.forrest.getPrimaryTree();
+      pt.render();
     },
 
     ingestRules: function(rules) {
+      this.forrest.ingestRules(rules);
     },
 
     loadRemoteString: function(params, successFn, errorFn) {
@@ -545,8 +976,8 @@
       this.fsmTransition("LoadingCTS");
       this._ctsToLoad = {};
       var hasRemote = false;
-      CTS.$.each(CTS.$('script[type="text/cts"]'),
-        function(idx, elem) {
+      _.each(CTS.$('script[type="text/cts"]'),
+        function(elem) {
           var e = CTS.$(elem);
           if (! e.attr('src')) {
             // Load the contents
@@ -557,7 +988,7 @@
             hasRemote = true;
             this.loadRemoteString({'url':e.attr('src')}, _fsmCtsLoadSuccess, _fsmCtsLoadFail);
           }
-        }
+        }, this
       );
       if (! hasRemote) {
         this.fsmTransition("QueueingTrees");
@@ -597,7 +1028,7 @@
 
     _fsmTreeLoadSuccess: function(data, textStatus, xhr) {
       //TODO
-      var url = xhr['url'];
+     var url = xhr['url'];
       this._fsmCtsLoaded(url);
     },
 
