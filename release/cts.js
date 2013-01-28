@@ -5,9 +5,9 @@
  * @author Ted Benson <eob@csail.mit.edu>>
  * @copyright Ted Benson 2013
  * @license MIT <http://opensource.org/licenses/mit-license.php>
- * @link 
+ * @link http://www.treesheets.org
  * @module cts
- * @version 0.5
+ * @version 0.5.0
  */
 
 // Cascading Tree Sheets
