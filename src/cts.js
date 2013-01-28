@@ -90,7 +90,9 @@
     // all events fired.
     on: function(name, callback, context) {
       if (!(eventsApi(this, 'on', name, [callback, context]) && callback)) return this;
-      this._events || (this._events = {});
+      if (_.isUndefined(this._events) || _.isNull(this._events)) {
+        this._events = {};
+      }
       var list = this._events[name] || (this._events[name] = []);
       list.push({callback: callback, context: context, ctx: context || this});
       return this;
@@ -125,7 +127,8 @@
       names = name ? [name] : _.keys(this._events);
       for (i = 0, l = names.length; i < l; i++) {
         name = names[i];
-        if (list = this._events[name]) {
+        list = this._events[name];
+        if (list) {
           events = [];
           if (callback || context) {
             for (j = 0, k = list.length; j < k; j++) {
@@ -211,10 +214,10 @@
       this._fsmCurrent = initialState;
       this._fsmArcs = {};
       _.each(arcs, function(arc) {
-        if (! _.contains(this._fsmArcs, arc['from'])) {
-          this._fsmArcs[arc['from']] = {};
+        if (! _.contains(this._fsmArcs, arc.from)) {
+          this._fsmArcs[arc.from] = {};
         }
-        this._fsmArcs[arc['from']][arc['to']] = arc['name'];
+        this._fsmArcs[arc.from][arc.to] = arc.name;
       }, this);
     },
 
@@ -246,7 +249,7 @@
         throw new Error(
             "Can not make transition " + this._fsmCurrent + " -> " + newState);
       }
-    },
+    }
   };
 
   // Model Section
@@ -355,7 +358,7 @@
       // Now we've created any children we're interested in.
       // Decide how to proceed.
       this.outstandingChildren = this.children.length;
-      if (this.outstandingChildren == 0) {
+      if (this.outstandingChildren === 0) {
         this.fsmTransition("ProcessedIncoming");
       } else {
         // Listen to finish events
@@ -373,7 +376,7 @@
 
     _onChildFinished: function() {
       this.outstandingChildren = this.outstandingChildren - 1;
-      if (this.outstandingChildren == 0) {
+      if (this.outstandingChildren === 0) {
         this.fsmTransition("ProcessedIncoming");
       }
     },
@@ -397,14 +400,13 @@
             (rule.head().matches(this)));
       }, this);
 
-      if (rules.length == 0) {
+      if (rules.length === 0) {
         // No conditionality restrictions
         return true;
       } else {
         return _.all(rules, function(rule) {
           var otherNodes = rule.tail().nodes(this.tree.forrest);
-          if ((typeof otherNodes != undefined) &&
-              (otherNodes.length > 0)) {
+          if ((! _.isUndefined(otherNodes)) && (otherNodes.length > 0)) {
             return true;
           } else {
             return false;
@@ -507,7 +509,7 @@
 
     valueIncoming: function(otherNodes, opts) {
       console.log("Value Incoming with otherNodes", otherNodes);
-      if (otherNodes.length == 0) {
+      if (otherNodes.length === 0) {
         console.log("Other nodes empty!");
         this.node.html("");
       } else {
@@ -518,8 +520,7 @@
 
     valueOutgoing: function(opts) {
       return this.node.html();
-    },
-
+    }
 
   });
 
@@ -584,7 +585,7 @@
     },
 
     getPrimaryTree: function() {
-      return this.trees['body'];
+      return this.trees.body;
     },
 
     ingestRules: function(someRuleString) {
@@ -707,7 +708,7 @@
       } 
 
       console.log("s", selection);
-      if (selection != null) {
+      if (selection !== null) {
         selection.treeName = parts[0];
         selection.treeType = parts[1];
         selection.originalString = selectionString;
@@ -736,7 +737,7 @@
     },
 
     nodes: function(forrest) {
-      if (this._nodes == null) {
+      if (this._nodes === null) {
         // First time; compute.
         this._nodes = forrest.nodesForSelection(this);
       }
@@ -762,7 +763,7 @@
 
     tail: function() {
       return this.selection2;
-    },
+    }
 
   });
 
@@ -782,7 +783,7 @@
           var value = CTS.$.trim(parts[1]);
           var section = 0;
           for (var i = 0; i < key.length; i++) {
-            if ((key[i] == "-") && (section == 0)) {
+            if ((key[i] == "-") && (section === 0)) {
               section = 1;
             } else if (key[i] == "(") {
               section = 2;
@@ -790,7 +791,7 @@
               break;
             } else {
               // append string
-              if (section == 0) {
+              if (section === 0) {
                 name += key[i];
               } else if (section == 1) {
                 variant += key[i];
@@ -822,7 +823,7 @@
             ruleMap[selection1String][name] = new Rule(selection1, null, name, {});
           }
   
-          if (variant.length == 0) {
+          if (variant.length === 0) {
             // We're setting selection 2
             var selection2 = Selection.Create(value);
             console.log("selection2", selection2, value);
@@ -865,7 +866,7 @@
           }
         } else if (r[i] == '}') {
           bracketDepth--;
-          if (bracketDepth == 0) {
+          if (bracketDepth === 0) {
             closeBracket = i;
             peelChunk();
           }
@@ -922,7 +923,7 @@
     },
 
     loadRemoteString: function(params, successFn, errorFn) {
-      $.ajax({url: params['url'],
+      $.ajax({url: params.url,
               dataType: 'text',
               success: success,
               error: error,
@@ -1017,29 +1018,25 @@
 
     _fsmCtsLoadSuccess: function(data, textStatus, xhr) {
       this.ingestRules(data);
-      var url = xhr['url'];
-      this._fsmCtsLoaded(url);
+      this._fsmCtsLoaded(xhr.url);
     },
 
     _fsmCtsLoadFail: function(xhr, textStatus, errorThrown) {
-      var url = xhr['url'];
-      this._fsmCtsLoaded(url);
+      this._fsmCtsLoaded(xhr.url);
     },
 
     _fsmTreeLoadSuccess: function(data, textStatus, xhr) {
       //TODO
-     var url = xhr['url'];
-      this._fsmCtsLoaded(url);
+      this._fsmCtsLoaded(xhr.url);
     },
 
     _fsmTreeLoadFail: function(xhr, textStatus, errorThrown) {
-      var url = xhr['url'];
-      this._fsmCtsLoaded(url);
+      this._fsmCtsLoaded(xhr.url);
     },
 
     _fsmCtsLoaded: function(filename) {
       delete this._ctsToLoad[filename];
-      var done = (this._ctsToLoad.length == 0);
+      var done = (this._ctsToLoad.length === 0);
       if (done) {
         _fsmTransition("QueueingTrees");
       }
