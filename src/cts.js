@@ -29,6 +29,14 @@
   var _ = root._;
   if (!_ && (typeof require !== 'undefined')) _ = require('underscore');
 
+  // StateMachine
+  // ==========================================================================
+  //
+  //     var object = {};
+  //     _.extend(object, CTS.StateMachine);
+  //
+  // ==========================================================================
+
   // Events
   // ==========================================================================
   //
@@ -194,14 +202,6 @@
   // Aliases for backwards compatibility.
   Events.bind   = Events.on;
   Events.unbind = Events.off;
-
-  // StateMachine
-  // ==========================================================================
-  //
-  //     var object = {};
-  //     _.extend(object, CTS.StateMachine);
-  //
-  // ==========================================================================
 
   var StateMachine = CTS.StateMachine = {
     /*
@@ -525,7 +525,7 @@
       this.parentNode.registerChild(c, {'after': this});
     },
 
-    registerChild = function(child, opts) {
+    registerChild: function(child, opts) {
       var didit = false;
       if ((! _.isUndefined(opts)) && (! _.isUndefined(opts.after))) {
         for (var i = this.children.length - 1; i >= 0; i--) {
@@ -604,20 +604,23 @@
     areIncoming: function(otherNodes, opts) {
       // What are we remapping onto
       var others = _.flatten(_.map(otherNodes, function(o) {
-          o.areOutgoing(opt) }, this));
+        o.areOutgoing(opt);
+      }, this));
 
       // Find the itemscoped children of this node.
       var these = _.filter(gets.node.getChildren(), function(n) {
-          n.node.is("[itemscope]")}, this);
+        n.node.is("[itemscope]");
+      }, this);
 
       // Align the cardinalities of the two
       var diff = Math.abs(these.length - others.length);
+      var i;
       if (these.length > others.length) {
-        for (var i = 0; i < diff; i++) {
+        for (i = 0; i < diff; i++) {
           these[these.length - 1].destroy();
         }
       } else if (these.length < others.length) {
-        for (var i = 0; i < diff; i++) {
+        for (i = 0; i < diff; i++) {
           these[these.length] = these[these.length - 1].clone();
         }
       }
@@ -629,7 +632,7 @@
      */
     areOutgoing: function(opts) {
       _.filter(this.node.getChildren(), function(n) {
-        n.node.is("[itemscope]")
+        n.node.is("[itemscope]");
       }, this);
     }
 

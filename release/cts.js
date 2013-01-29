@@ -10,9 +10,6 @@
  * @version 0.5.0
  */
 
-// Cascading Tree Sheets
-// (c) Edward Benson
-
 (function() {
   
   // Initial Setup
@@ -43,6 +40,14 @@
   // Require it if on server and not already present.
   var _ = root._;
   if (!_ && (typeof require !== 'undefined')) _ = require('underscore');
+
+  // StateMachine
+  // ==========================================================================
+  //
+  //     var object = {};
+  //     _.extend(object, CTS.StateMachine);
+  //
+  // ==========================================================================
 
   // Events
   // ==========================================================================
@@ -210,14 +215,6 @@
   Events.bind   = Events.on;
   Events.unbind = Events.off;
 
-  // StateMachine
-  // ==========================================================================
-  //
-  //     var object = {};
-  //     _.extend(object, CTS.StateMachine);
-  //
-  // ==========================================================================
-
   var StateMachine = CTS.StateMachine = {
     /*
      * [{from: _, to: _, name: _}]
@@ -336,6 +333,13 @@
       this.fsmTransition("BeginRender");
     },
 
+    getChildren: function() {
+      if (_.isUndefined(this.children) || _.isNull(this.children)) {
+        this._createChildren();
+      }
+      return this.children;
+    },
+
     _onBeginRender: function() {
       this.node.css("border", "1px solid red");
       console.log(this, "onBeginRender");
@@ -348,7 +352,7 @@
         console.log("Fail conditional");
         this.fsmTransition("FailedConditional");
       } else {
-        if (this._performValue()) {
+        if (this._performIs()) {
           // We did a value map, so move to Processed state.
           // TODO(eob): what if we want to interpret the value as cts-laden html?
           this.fsmTransition("ProcessedIncoming");
@@ -364,22 +368,20 @@
       console.log(this, "onProcessChildren");
       this.node.css("border", "1px solid yellow");
 
-      this.children = this._createChildren();
-      console.log("Children", this.children);
-
       // Now we've created any children we're interested in.
       // Decide how to proceed.
-      this.outstandingChildren = this.children.length;
+      var kids = this.getChildren();
+      this.outstandingChildren = kids.length;
       if (this.outstandingChildren === 0) {
         this.fsmTransition("ProcessedIncoming");
       } else {
         // Listen to finish events
-        _.each(this.children, function(child) {
+        _.each(kids, function(child) {
           child.on("FsmEntered:Finished", this._onChildFinished, this);
         }, this);
         // Execute children.
         // TODO(eob): Explore parallelization options.
-        _.each(this.children, function(child) {
+        _.each(kids, function(child) {
           console.log("RENDERING CHILD");
           child.render();
         }, this);
@@ -427,14 +429,13 @@
       }
     },
 
-    _performValue: function() {
-      console.log("Perform value on", this, this.node.html(), this.rules);
+    _performIs: function() {
+      console.log("Perform IS on", this, this.node.html(), this.rules);
       // If there is an incoming value node, handle it.
       // Just take the last one.
       var rule = null;
       _.each(this.rules, function(r) {
-        console.log("RULE", r);
-        if (r.name == "value") {
+        if (r.name == "is") {
           if (r.head().matches(this)) {
             rule = r;
           }
@@ -442,8 +443,28 @@
       }, this);
 
       if (rule) {
-        console.log("Found valur rule");
-        this.valueIncoming(rule.tail().nodes(this.tree.forrest));
+        console.log("Found IS rule");
+        this.isIncoming(rule.tail().nodes(this.tree.forrest));
+        return true;
+      } else {
+        return false;
+      }
+    },
+
+    _performAre: function() {
+      console.log("Perform ARE on", this, this.node.html(), this.rules);
+      var rule = null;
+      _.each(this.rules, function(r) {
+        if (r.name == "are") {
+          if (r.head().matches(this)) {
+            rule = r;
+          }
+        }
+      }, this);
+
+      if (rule) {
+        console.log("Found ARE rule");
+        this.areIncoming(rule.tail().nodes(this.tree.forrest));
         return true;
       } else {
         return false;
@@ -485,8 +506,10 @@
     var defaults;
     this.node = node;
     this.tree = tree;
+    this.children = null; 
     this.rules = rules || [];
     this.opts = opts || {};
+    this.parentNode = null;
     this.initialize.apply(this, args);
   };
 
@@ -496,6 +519,49 @@
     initialize: function(args) {
       this.initializeStateMachine();
     },
+
+    destroy: function(opts) {
+      this.node.remove();
+    },
+
+    clone: function(opts) {
+      var n = this.node.clone();
+      
+      // Insert after in the dom
+      this.node.after(n);
+
+      // TODO(eob): any use in saving args to apply when cloned?
+      var c = new DomNode(n, this.tree, this.rules, this.opts);
+
+      // Insert after in CTS hierarchy
+      this.parentNode.registerChild(c, {'after': this});
+    },
+
+    registerChild: function(child, opts) {
+      var didit = false;
+      if ((! _.isUndefined(opts)) && (! _.isUndefined(opts.after))) {
+        for (var i = this.children.length - 1; i >= 0; i--) {
+          if (this.children[i] == opts.after) {
+            // First bump forward everything
+            for (var j = this.children.length - 1; j > i; j--) {
+              this.children[j + 1] = this.children[j];
+            }
+
+            // Then set this at i+1
+            this.children[i+1] = child;
+            child.parentNode = this;
+            didit = true;
+          }
+        }
+        // do it after an element
+      } 
+      
+      if (! didit) {
+        // do it at end as failback, or if no relative position specified
+        this.children[this.children.length] = child;
+        child.parentNode = this;
+      }
+   },
 
     _createChildren: function() {
       var fringe = this.node.children().toArray();
@@ -509,29 +575,77 @@
 
         if (relevantRules.length > 0) {
           child.rules = relevantRules;
-          children[children.length] = child;
+          this.registerChild(child);
         } else {
           fringe = _.union(fringe, first.children().toArray());
         }
       }
-
       console.log("Create Children Returned: ", children);
       return children;
     },
 
-    valueIncoming: function(otherNodes, opts) {
-      console.log("Value Incoming with otherNodes", otherNodes);
+    /**
+     * Replaces the value of this node with the value of the
+     * other node provided.
+     */
+    isIncoming: function(otherNodes, opts) {
+      console.log("IS Incoming with otherNodes", otherNodes);
       if (otherNodes.length === 0) {
         console.log("Other nodes empty!");
         this.node.html("");
       } else {
         console.log("Other nodes non empty!");
-        this.node.html(otherNodes[otherNodes.length - 1].valueOutgoing(opts));
+        this.node.html(otherNodes[otherNodes.length - 1].isOutgoing(opts));
       }
     },
 
-    valueOutgoing: function(opts) {
+    /**
+     * Provides the value of this node.
+     */
+    isOutgoing: function(opts) {
       return this.node.html();
+    },
+
+    /**
+     * Performs several functions:
+     *  1. Duplicates the itemscope'd child of this node once
+     *     per other node.
+     *  2. Remaps any down-tree relations such that iterations
+     *     align.
+     */
+    areIncoming: function(otherNodes, opts) {
+      // What are we remapping onto
+      var others = _.flatten(_.map(otherNodes, function(o) {
+        o.areOutgoing(opt);
+      }, this));
+
+      // Find the itemscoped children of this node.
+      var these = _.filter(gets.node.getChildren(), function(n) {
+        n.node.is("[itemscope]");
+      }, this);
+
+      // Align the cardinalities of the two
+      var diff = Math.abs(these.length - others.length);
+      var i;
+      if (these.length > others.length) {
+        for (i = 0; i < diff; i++) {
+          these[these.length - 1].destroy();
+        }
+      } else if (these.length < others.length) {
+        for (i = 0; i < diff; i++) {
+          these[these.length] = these[these.length - 1].clone();
+        }
+      }
+
+    },
+
+    /**
+     * Provides the itemscope'd nodes.
+     */
+    areOutgoing: function(opts) {
+      _.filter(this.node.getChildren(), function(n) {
+        n.node.is("[itemscope]");
+      }, this);
     }
 
   });
