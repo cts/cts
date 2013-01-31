@@ -323,7 +323,7 @@
 
     getChildren: function() {
       if (_.isUndefined(this.children) || _.isNull(this.children)) {
-        this._createChildren();
+        this.children = this._createChildren();
       }
       return this.children;
     },

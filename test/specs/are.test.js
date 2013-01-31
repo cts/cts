@@ -16,8 +16,8 @@ test("ARE aligns cardinalities down", function () {
 	//deepEqual(A, B, "should be equal");
   //this.a.html("<ul data-cts='are: b;'><li itemscope>Foo</li><li itemscope>Bar</li><li itemscope>Baz</li></ul>");
   //this.b.html("<div itemscope>Foo</div>");
-  //var engine = new CTS.Engine();
-  //engine.render();
+  var engine = new CTS.Engine();
+  engine.render();
 });
 
 test("ARE aligns cardinalities up", function () {
