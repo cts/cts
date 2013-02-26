@@ -24,7 +24,22 @@ module.exports = function(grunt) {
       dist : {
         src : [
           "<banner>",
-          "src/cts.js"
+          "src/fragments/prefix._js",
+          "src/preamble.js",
+          "src/util/state-machine.js",
+          "src/util/events.js",
+          "src/model/node.js",
+          "src/model/node-dom.js",
+          "src/model/forrest.js",
+          "src/model/tree.js",
+          "src/model/tree-dom.js",
+          "src/model/tree-json.js",
+          "src/model/selection.js",
+          "src/model/selection-dom.js",
+          "src/model/rule.js",
+          "src/parser/relation-parser.js",
+          "src/engine.js",
+          "src/fragments/postfix._js"
         ],
         dest : "release/cts.js"
       }
@@ -54,5 +69,5 @@ module.exports = function(grunt) {
   });
 
   // Default task.
-  grunt.registerTask('default', 'lint qunit concat min');
+  grunt.registerTask('default', 'lint concat min');
 };
