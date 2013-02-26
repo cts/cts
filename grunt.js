@@ -38,7 +38,7 @@ module.exports = function(grunt) {
           "src/model/selection-dom.js",
           "src/model/rule.js",
           "src/parser/relation-parser.js",
-          "src/engine.js"
+          "src/engine.js",
           "src/fragments/postfix._js"
         ],
         dest : "release/cts.js"
@@ -69,5 +69,5 @@ module.exports = function(grunt) {
   });
 
   // Default task.
-  grunt.registerTask('default', 'lint qunit concat min');
+  grunt.registerTask('default', 'lint concat min');
 };

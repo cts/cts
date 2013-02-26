@@ -11,7 +11,7 @@ var DomNode = CTS.DomNode = function(node, tree, rules, opts, args) {
 };
 
 // ### Instance Methods
-_.extend(DomNode.prototype, Events, StateMachine, Node, {
+_.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
   initialize: function(args) {
     this.initializeStateMachine();

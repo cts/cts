@@ -7,7 +7,7 @@
 // by certain relations (in both directions). The differences between
 // different types of trees (JSON, HTML, etc) are concealed at this level.
 
-var Node = CTS.Node = {
+CTS.Node = {
 
   initializeStateMachine: function() {
     this.fsmInitialize(
