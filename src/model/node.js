@@ -46,8 +46,17 @@ CTS.Node = {
     this.on('FsmEntered:Finished', this._onFinished, this);
   },
 
-  render: function() {
+  render: function(opts) {
     console.log(this, "render");
+
+    if (_.has(opts, 'callback')) {
+      var scope = this;
+      if (_.has(opts, 'callbackScope')) {
+        scope = opts.callbackScope;
+      }
+      this.once('FsmEntered:Finished', opts.callback, scope);
+    }
+
     this.fsmTransition("BeginRender");
   },
 
@@ -56,6 +65,10 @@ CTS.Node = {
       this.children = this._createChildren();
     }
     return this.children;
+  },
+
+  getInlineRules: function() {
+    return null;
   },
 
   _onBeginRender: function() {
@@ -137,7 +150,7 @@ CTS.Node = {
       return true;
     } else {
       return _.all(rules, function(rule) {
-        var otherNodes = rule.tail().nodes(this.tree.forrest);
+        var otherNodes = rule.tail().toSelection(this.tree.forrest);
         if ((! _.isUndefined(otherNodes)) && (otherNodes.length > 0)) {
           return true;
         } else {
@@ -162,7 +175,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found IS rule");
-      this.isIncoming(rule.tail().nodes(this.tree.forrest));
+      this.isIncoming(rule.tail().toSelection(this.tree.forrest));
       return true;
     } else {
       return false;
@@ -182,7 +195,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found ARE rule");
-      this.areIncoming(rule.tail().nodes(this.tree.forrest));
+      this.areIncoming(rule.tail().toSelection(this.tree.forrest));
       return true;
     } else {
       return false;
@@ -204,7 +217,7 @@ CTS.Node = {
        */
 
       // Get the source selection.
-      var sourceSelection = rule.tail().nodes(this.tree.forrest);
+      var sourceSelection = rule.tail().toSelection(this.tree.forrest);
 
       if ((typeof sourceSelection.length != "undefined") && (sourceSelection.length > 0)) {
       } else {

@@ -21,6 +21,10 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     this.node.remove();
   },
 
+  debugName: function() {
+    return this.node[0].nodeName;
+  },
+
   clone: function(opts) {
     var n = this.node.clone();
     
@@ -36,16 +40,17 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
   registerChild: function(child, opts) {
     var didit = false;
+    var children = this.getChildren();
     if ((! _.isUndefined(opts)) && (! _.isUndefined(opts.after))) {
-      for (var i = this.children.length - 1; i >= 0; i--) {
-        if (this.children[i] == opts.after) {
+      for (var i = children.length - 1; i >= 0; i--) {
+        if (children[i] == opts.after) {
           // First bump forward everything
-          for (var j = this.children.length - 1; j > i; j--) {
-            this.children[j + 1] = this.children[j];
+          for (var j = children.length - 1; j > i; j--) {
+            children[j + 1] = this.children[j];
           }
 
           // Then set this at i+1
-          this.children[i+1] = child;
+          children[i+1] = child;
           child.parentNode = this;
           didit = true;
         }
@@ -55,10 +60,19 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     
     if (! didit) {
       // do it at end as failback, or if no relative position specified
-      this.children[this.children.length] = child;
+      children[children.length] = child;
       child.parentNode = this;
     }
  },
+
+  getInlineRules: function() {
+    var inline = this.node.attr('data-cts');
+    if ((inline !== null) && (typeof inline != 'undefined')) {
+      return inline;
+    } else {
+      return null;
+    }
+  },
 
   _createChildren: function() {
     var fringe = this.node.children().toArray();
@@ -67,8 +81,10 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     while (fringe.length > 0) {
       var first = CTS.$(fringe.shift());
       var child = new DomNode(first, this.tree);
-      var relevantRules = this.tree.forrest.rulesForNode(this.tree, child);
-      console.log("Found child", child.node, child.node.html(), "with rules", relevantRules);
+      var relevantRules = this.tree.forrest.relationsForNode(this.tree, child);
+      if ((child.node.html() == "a") || (child.node.html() == "b")) {
+        console.log("Found child", child.node.html(), "with rules", relevantRules);
+      }
 
       if (relevantRules.length > 0) {
         child.rules = relevantRules;

@@ -27,9 +27,10 @@ _.extend(Engine.prototype, Events, StateMachine, {
    *  2: Process any *outgoing* tempalte operations
    *  3: 
    */
-  render: function() {
+  render: function(opts) {
     var pt = this.forrest.getPrimaryTree();
-    pt.render();
+    var options = _.extend({}, opts);
+    pt.render(options);
   },
 
   ingestRules: function(rules) {

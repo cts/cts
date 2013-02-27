@@ -263,6 +263,231 @@ Events.bind   = Events.on;
 Events.unbind = Events.off;
 
 
+var Rule = CTS.Rule = function(selector1, selector2, name, opts) {
+  this.selector1 = selector1;
+  this.selector2 = selector2;
+  this.name = name;
+  this.opts = opts || {};
+};
+
+_.extend(Rule.prototype, {
+  addOption: function(key, value) {
+    this.opts[key] = value;
+  },
+
+  head: function() {
+    return this.selector1;
+  },
+
+  tail: function() {
+    return this.selector2;
+  }
+});
+
+var Selector = CTS.Selector = {
+  toString: function() {
+    return "<Selector {tree:" + this.treeName +
+           ", type:" + this.treeType +
+           ", selector:" + this.selector +
+           ", variant:" + this.variant + "}>";
+  },
+
+  // Returns tuple of [treeName, treeType, stringSpec]
+  PreParse: function(selectorString) {
+    var treeName = "body";
+    var treeType = "html";
+    var selector = null;
+
+    var trimmed = CTS.$.trim(selectorString);
+    if (trimmed[0] == "@") {
+      var pair = trimmed.split('|');
+      if (pair.length == 1) {
+        throw new Error("Cound not parse: " + self.stringSpec);
+      } else {
+        treeName = CTS.$.trim(pair.shift().substring(1));
+        // TODO(eob): set tree type
+        selector = CTS.$.trim(_.join(pair, ""));
+      }
+    } else {
+      selector = selectorString;
+    }
+    return [treeName, treeType, selector];
+  },
+
+  // Factory for new selectors
+  Create: function(selectorString) {
+    var parts = this.PreParse(selectorString);
+    var selector = null;
+
+    if (parts[1] == "html") {
+      selector = new DomSelector(parts[2]);
+    } 
+
+    console.log("s", selector);
+    if (selector !== null) {
+      selector.treeName = parts[0];
+      selector.treeType = parts[1];
+      selector.originalString = selectorString;
+    }
+
+    return selector;
+  }
+
+};
+
+
+var DomSelector = CTS.DomSelector = function(selector) {
+  this.treeName = null;
+  this.treeType = null;
+  this.originalString = null;
+  this._selection = null;
+  this.selector = selector;
+};
+
+_.extend(DomSelector.prototype, Selector, {
+  matches: function(node) {
+    console.log("this treename", this.treeName, "node", node.tree.name);
+    console.log("node is <", this.selector, ">", node.node.is(this.selector));
+    return (
+      (this.treeName == node.tree.name) &&
+      (node.node.is(this.selector)));
+  },
+
+  toSelection: function(forrest) {
+    if (this._selection === null) {
+      // First time; compute.
+      this._selection = forrest.selectionForSelector(this);
+    }
+    return this._selection;
+  }
+});
+
+// RuleParser
+// ==========================================================================
+var RuleParser = CTS.RuleParser = {
+  incorporate: function(ruleMap, selector, block) {
+    console.log("hi");
+    var rules = block.split(";");
+    _.each(rules, function(ruleString) {
+      var parts = ruleString.split(":");
+      if (parts.length == 2) {
+        var target = "";
+        var name = "";
+        var variant = "";
+        var key = CTS.$.trim(parts[0]);
+        var value = CTS.$.trim(parts[1]);
+        var section = 0;
+        for (var i = 0; i < key.length; i++) {
+          if ((key[i] == "-") && (section === 0)) {
+            section = 1;
+          } else if (key[i] == "(") {
+            section = 2;
+          } else if ((key[i] == ")") && (section == 2)) {
+            break;
+          } else {
+            // append string
+            if (section === 0) {
+              name += key[i];
+            } else if (section == 1) {
+              variant += key[i];
+            } else if (section == 2) {
+              target += key[i];
+            }
+          }
+        }
+
+        console.log("selector", selector, "key", key, "value", value);
+
+        // Now add or accomodate the rule
+        var selector1 = Selector.Create(selector);
+
+        if (target.length > 0) {
+          selector1.variant = target;
+        }
+        var selector1String = selector1.toString();
+
+        console.log("selector1", selector1, selector1String);
+
+        if (! _.contains(ruleMap, selector1String)) {
+          // Ensure we know about this selector
+          console.log("Creating slot for selector 1", selector1);
+          ruleMap[selector1String] = {};
+        }
+        if (! _.contains(ruleMap[selector1String], name)) {
+          console.log("Creating new rule for selector 1 :: name", selector1, name);
+          ruleMap[selector1String][name] = new Rule(selector1, null, name, {});
+        }
+
+        if (variant.length === 0) {
+          // We're setting selector 2
+          var selector2 = Selector.Create(value);
+          console.log("selector2", selector2, value);
+          ruleMap[selector1String][name].selector2 = selector2;
+        } else {
+          // We're setting an option
+          ruleMap[selector1String][name].addOption(variant, value);
+        }
+
+        console.log("Final after adding rule", ruleMap[selector1String][name]);
+      } // if (parts.length == 2)
+    }, this);
+  },
+
+  parse: function(ctsString) {
+    var self = this;
+    var relations = {};
+
+    // Remove comments
+    r = ctsString.replace(/\/\*(\r|\n|.)*\*\//g,"");
+
+    var bracketDepth = 0;
+    var openBracket = -1;
+    var closeBracket = 0;
+    var previousClose = 0;
+
+    function peelChunk() {
+      var selector = CTS.$.trim(r.substr(previousClose, openBracket - previousClose - 1));
+      var block = CTS.$.trim(r.substr(openBracket + 1, closeBracket - openBracket - 1));
+      previousClose = closeBracket + 1;
+      self.incorporate(relations, selector, block);
+    }
+
+    for (var i = 0; i < r.length; i++) {
+      if (r[i] == '{') {
+        bracketDepth++;
+        if (bracketDepth == 1) {
+          console.log(r[i]);
+          openBracket = i;
+        }
+      } else if (r[i] == '}') {
+        bracketDepth--;
+        if (bracketDepth === 0) {
+          closeBracket = i;
+          peelChunk();
+        }
+      }
+    }
+
+    var ret = [];
+    _.each(_.values(relations), function(valueHash) {
+      ret = _.union(ret, _.values(valueHash));
+    });
+    console.log(ret);
+    return ret;
+  },
+
+  parseInline: function(inlineCtsString) {
+    var relations = {};
+    this.incorporate(relations, "_", inlineCtsString);
+    var ret = [];
+    _.each(_.values(relations), function(valueHash) {
+      ret = _.union(ret, _.values(valueHash));
+    });
+    return ret;
+  }
+
+};
+
 // Node
 // --------------------------------------------------------------------------
 // 
@@ -311,8 +536,17 @@ CTS.Node = {
     this.on('FsmEntered:Finished', this._onFinished, this);
   },
 
-  render: function() {
+  render: function(opts) {
     console.log(this, "render");
+
+    if (_.has(opts, 'callback')) {
+      var scope = this;
+      if (_.has(opts, 'callbackScope')) {
+        scope = opts.callbackScope;
+      }
+      this.once('FsmEntered:Finished', opts.callback, scope);
+    }
+
     this.fsmTransition("BeginRender");
   },
 
@@ -321,6 +555,10 @@ CTS.Node = {
       this.children = this._createChildren();
     }
     return this.children;
+  },
+
+  getInlineRules: function() {
+    return null;
   },
 
   _onBeginRender: function() {
@@ -402,7 +640,7 @@ CTS.Node = {
       return true;
     } else {
       return _.all(rules, function(rule) {
-        var otherNodes = rule.tail().nodes(this.tree.forrest);
+        var otherNodes = rule.tail().toSelection(this.tree.forrest);
         if ((! _.isUndefined(otherNodes)) && (otherNodes.length > 0)) {
           return true;
         } else {
@@ -427,7 +665,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found IS rule");
-      this.isIncoming(rule.tail().nodes(this.tree.forrest));
+      this.isIncoming(rule.tail().toSelection(this.tree.forrest));
       return true;
     } else {
       return false;
@@ -447,7 +685,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found ARE rule");
-      this.areIncoming(rule.tail().nodes(this.tree.forrest));
+      this.areIncoming(rule.tail().toSelection(this.tree.forrest));
       return true;
     } else {
       return false;
@@ -469,7 +707,7 @@ CTS.Node = {
        */
 
       // Get the source selection.
-      var sourceSelection = rule.tail().nodes(this.tree.forrest);
+      var sourceSelection = rule.tail().toSelection(this.tree.forrest);
 
       if ((typeof sourceSelection.length != "undefined") && (sourceSelection.length > 0)) {
       } else {
@@ -507,6 +745,10 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     this.node.remove();
   },
 
+  debugName: function() {
+    return this.node[0].nodeName;
+  },
+
   clone: function(opts) {
     var n = this.node.clone();
     
@@ -522,16 +764,17 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
   registerChild: function(child, opts) {
     var didit = false;
+    var children = this.getChildren();
     if ((! _.isUndefined(opts)) && (! _.isUndefined(opts.after))) {
-      for (var i = this.children.length - 1; i >= 0; i--) {
-        if (this.children[i] == opts.after) {
+      for (var i = children.length - 1; i >= 0; i--) {
+        if (children[i] == opts.after) {
           // First bump forward everything
-          for (var j = this.children.length - 1; j > i; j--) {
-            this.children[j + 1] = this.children[j];
+          for (var j = children.length - 1; j > i; j--) {
+            children[j + 1] = this.children[j];
           }
 
           // Then set this at i+1
-          this.children[i+1] = child;
+          children[i+1] = child;
           child.parentNode = this;
           didit = true;
         }
@@ -541,10 +784,19 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     
     if (! didit) {
       // do it at end as failback, or if no relative position specified
-      this.children[this.children.length] = child;
+      children[children.length] = child;
       child.parentNode = this;
     }
  },
+
+  getInlineRules: function() {
+    var inline = this.node.attr('data-cts');
+    if ((inline !== null) && (typeof inline != 'undefined')) {
+      return inline;
+    } else {
+      return null;
+    }
+  },
 
   _createChildren: function() {
     var fringe = this.node.children().toArray();
@@ -553,8 +805,10 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     while (fringe.length > 0) {
       var first = CTS.$(fringe.shift());
       var child = new DomNode(first, this.tree);
-      var relevantRules = this.tree.forrest.rulesForNode(this.tree, child);
-      console.log("Found child", child.node, child.node.html(), "with rules", relevantRules);
+      var relevantRules = this.tree.forrest.relationsForNode(this.tree, child);
+      if ((child.node.html() == "a") || (child.node.html() == "b")) {
+        console.log("Found child", child.node.html(), "with rules", relevantRules);
+      }
 
       if (relevantRules.length > 0) {
         child.rules = relevantRules;
@@ -633,6 +887,94 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
 });
 
+/**
+ * A Relation is a connection between two tree nodes.
+ * Relations are the actual arcs between nodes.
+ * Rules are the language which specify relations.
+ */
+
+var Relation = CTS.Relation= function(node1, node2, name, opts) {
+  this.node1 = node1;
+  this.node2 = node2;
+  this.name = name;
+  this.opts = opts || {};
+};
+
+_.extend(Relation.prototype, {
+  addOption: function(key, value) {
+    this.opts[key] = value;
+  },
+
+  head: function() {
+    return this.node1;
+  },
+
+  tail: function() {
+    return this.node2;
+  }
+
+});
+
+/**
+ * A Relation is a connection between two tree nodes.
+ * Relations are the actual arcs between nodes.
+ * Rules are the language which specify relations.
+ */
+
+var Selection = CTS.Selection = function(nodes) {
+  this.nodes = nodes;
+  this.opts = opts || {};
+};
+
+// DOM Tree
+// ==========================================================================
+//
+// ==========================================================================
+var Tree = CTS.Tree = {
+  name: "",
+  
+  render: function(opts) {
+    console.log("render root", this.root);
+    this.root.render(opts);
+  }
+
+};
+
+// Constructor
+// -----------
+var DomTree = CTS.DomTree = function(forrest, node, attributes) {
+  this.root = node || new CTS.DomNode(CTS.$('body'), this);
+  this.forrest = forrest;
+  this.name = "body";
+  if ((typeof attributes != 'undefined') && ('name' in attributes)) {
+    this.name = attributes.name;
+  }
+};
+
+// Instance Methods
+// ----------------
+_.extend(DomTree.prototype, Tree, {
+  selectionForSelector: function(selector) {
+    var jqnodes = this.root.node.find(selector.selector).toArray();
+    var nodes = _.map(jqnodes, function(n) {
+      return new DomNode(CTS.$(n), this);
+    }, this);
+    console.log("Tree", this, "nodes for selection", selection, nodes);
+    return new CTS.Selection(nodes);
+  }
+});
+
+var JsonTree = CTS.JsonTree = function(forrest, json, attributes) {
+  this.forrest = forrest;
+  this.root = json || window;
+};
+
+// Instance Methods
+// ----------------
+_.extend(JsonTree.prototype, Tree, {
+
+});
+
 // Forrest
 // ==========================================================================
 //
@@ -674,16 +1016,16 @@ _.extend(Forrest.prototype, {
     }
   },
 
-  nodesForSelection: function(selection) {
-    console.log("trees", this.trees, "selection name", selection.treeName);
+  selectionForSelector: function(selector) {
+    console.log("trees", this.trees, "selector name", selector.treeName);
     // TODO(eob): The commented out line doesn't work.. but
     // I don't know why. That makes me worried.
-    //if (_.contains(this.trees, selection.treeName)) {
-    if (typeof this.trees[selection.treeName] != "undefined") {
-      return this.trees[selection.treeName].nodesForSelection(selection);
+    //if (_.contains(this.trees, selector.treeName)) {
+    if (typeof this.trees[selector.treeName] != "undefined") {
+      return this.trees[selector.treeName].selectionForSelector(selector);
     } else {
-      console.log("Nodes for selection bailing");
-      return [];
+      console.log("Nodes for selector bailing");
+      return new CTS.Selection([]);
     }
   },
 
@@ -692,7 +1034,7 @@ _.extend(Forrest.prototype, {
   },
 
   ingestRules: function(someRuleString) {
-    var ruleSet = RelationParser.parse(someRuleString);
+    var ruleSet = RuleParser.parse(someRuleString);
     this.addRules(ruleSet);
   },
 
@@ -708,285 +1050,46 @@ _.extend(Forrest.prototype, {
     var ret = [];
     _.each(this.rules, function(rule) {
       console.log("Rule", rule, "for node", node);
-      if ((rule.selection1.matches(node)) || 
-          (rule.selection2.matches(node))) {
+      if ((rule.selector1.matches(node)) || 
+          (rule.selector2.matches(node))) {
         ret[ret.length] = rule;
       } else {
-        console.log("Failed match", rule.selection1.selector);
-        console.log("Failed match", rule.selection2.selector);
+        console.log("Failed match", rule.selector1.selector);
+        console.log("Failed match", rule.selector2.selector);
       }
     }, this);
-    console.log("Rules for node: ", ret);
+
+    var inlineRules = node.getInlineRules();
+   
+    if (inlineRules !== null) {
+      var ruleSet = RuleParser.parseInline(inlineRules);
+      if (typeof ruleSet != "undefined") {
+        ret = _.union(ret, ruleSet);
+      }
+    }
     return ret;
-  }
-  
-});
-
-// DOM Tree
-// ==========================================================================
-//
-// ==========================================================================
-var Tree = CTS.Tree = {
-  name: "",
-  
-  render: function(opts) {
-    console.log("render root", this.root);
-    this.root.render(opts);
-  }
-
-};
-
-// Constructor
-// -----------
-var DomTree = CTS.DomTree = function(forrest, node, attributes) {
-  this.root = node || new CTS.DomNode(CTS.$('body'), this);
-  this.forrest = forrest;
-  this.name = "body";
-  if ((typeof attributes != 'undefined') && ('name' in attributes)) {
-    this.name = attributes.name;
-  }
-};
-
-// Instance Methods
-// ----------------
-_.extend(DomTree.prototype, Tree, {
-  nodesForSelection: function(selection) {
-    var jqnodes = this.root.node.find(selection.selector).toArray();
-    var nodes = _.map(jqnodes, function(n) {
-      return new DomNode(CTS.$(n), this);
-    }, this);
-    console.log("Tree", this, "nodes for selection", selection, nodes);
-    return nodes;
-  }
-});
-
-var JsonTree = CTS.JsonTree = function(forrest, json, attributes) {
-  this.forrest = forrest;
-  this.root = json || window;
-};
-
-// Instance Methods
-// ----------------
-_.extend(JsonTree.prototype, Tree, {
-
-});
-
-var Selection = CTS.Selection = {
-  toString: function() {
-    return "<Selection {tree:" + this.treeName +
-           ", type:" + this.treeType +
-           ", selector:" + this.selector +
-           ", variant:" + this.variant + "}>";
   },
 
-  // Returns tuple of [treeName, treeType, stringSpec]
-  PreParse: function(selectionString) {
-    var treeName = "body";
-    var treeType = "html";
-    var selector = null;
-
-    var trimmed = CTS.$.trim(selectionString);
-    if (trimmed[0] == "@") {
-      var pair = trimmed.split('|');
-      if (pair.length == 1) {
-        throw new Error("Cound not parse: " + self.stringSpec);
+  relationsForNode: function(tree, node) {
+    var rules = this.rulesForNode(tree, node);
+    var relations = _.map(rules, function(rule) {
+      var selection1 = null;
+      var selection2 = null;
+      var selector = null;
+      if (rule.selector1.matches(node)) {
+        selection1 = new CTS.Selection([node]);
+        selection2 = rule.selector2.toSelection(this);
       } else {
-        treeName = CTS.$.trim(pair.shift().substring(1));
-        // TODO(eob): set tree type
-        selector = CTS.$.trim(_.join(pair, ""));
+        selection2 = new CTS.Selection([node]);
+        selection1 = rule.selector1.toSelection(this);
       }
-    } else {
-      selector = selectionString;
-    }
-    return [treeName, treeType, selector];
-  },
-
-  // Factory for new selections
-  Create: function(selectionString) {
-    var parts = this.PreParse(selectionString);
-    var selection = null;
-
-    if (parts[1] == "html") {
-      selection = new DomSelection(parts[2]);
-    } 
-
-    console.log("s", selection);
-    if (selection !== null) {
-      selection.treeName = parts[0];
-      selection.treeType = parts[1];
-      selection.originalString = selectionString;
-    }
-
-    return selection;
-  }
-
-};
-
-
-
-var DomSelection = CTS.DomSelection = function(selector) {
-  this.treeName = null;
-  this.treeType = null;
-  this.originalString = null;
-  this._nodes = null;
-  this.selector = selector;
-};
-
-_.extend(DomSelection.prototype, Selection, {
-  matches: function(node) {
-    console.log("this treename", this.treeName, "node", node.tree.name);
-    console.log("node is <", this.selector, ">", node.node.is(this.selector));
-    return (
-      (this.treeName == node.tree.name) &&
-      (node.node.is(this.selector)));
-  },
-
-  nodes: function(forrest) {
-    if (this._nodes === null) {
-      // First time; compute.
-      this._nodes = forrest.nodesForSelection(this);
-    }
-    return this._nodes;
-  }
-});
-
-var Rule = CTS.Rule = function(selection1, selection2, name, opts) {
-  this.selection1 = selection1;
-  this.selection2 = selection2;
-  this.name = name;
-  this.opts = opts || {};
-};
-
-_.extend(Rule.prototype, {
-  addOption: function(key, value) {
-    this.opts[key] = value;
-  },
-
-  head: function() {
-    return this.selection1;
-  },
-
-  tail: function() {
-    return this.selection2;
-  }
-
-});
-
-// RelationParser
-// ==========================================================================
-var RelationParser = CTS.RelationParser = {
-  incorporate: function(ruleMap, selector, block) {
-    console.log("hi");
-    var rules = block.split(";");
-    _.each(rules, function(ruleString) {
-      var parts = ruleString.split(":");
-      if (parts.length == 2) {
-        var target = "";
-        var name = "";
-        var variant = "";
-        var key = CTS.$.trim(parts[0]);
-        var value = CTS.$.trim(parts[1]);
-        var section = 0;
-        for (var i = 0; i < key.length; i++) {
-          if ((key[i] == "-") && (section === 0)) {
-            section = 1;
-          } else if (key[i] == "(") {
-            section = 2;
-          } else if ((key[i] == ")") && (section == 2)) {
-            break;
-          } else {
-            // append string
-            if (section === 0) {
-              name += key[i];
-            } else if (section == 1) {
-              variant += key[i];
-            } else if (section == 2) {
-              target += key[i];
-            }
-          }
-        }
-
-        console.log("selector", selector, "key", key, "value", value);
-
-        // Now add or accomodate the rule
-        var selection1 = Selection.Create(selector);
-
-        if (target.length > 0) {
-          selection1.variant = target;
-        }
-        var selection1String = selection1.toString();
-
-        console.log("selection1", selection1, selection1String);
-
-        if (! _.contains(ruleMap, selection1String)) {
-          // Ensure we know about this selector
-          console.log("Creating slot for selection 1", selection1);
-          ruleMap[selection1String] = {};
-        }
-        if (! _.contains(ruleMap[selection1String], name)) {
-          console.log("Creating new rule for selection 1 :: name", selection1, name);
-          ruleMap[selection1String][name] = new Rule(selection1, null, name, {});
-        }
-
-        if (variant.length === 0) {
-          // We're setting selection 2
-          var selection2 = Selection.Create(value);
-          console.log("selection2", selection2, value);
-          ruleMap[selection1String][name].selection2 = selection2;
-        } else {
-          // We're setting an option
-          ruleMap[selection1String][name].addOption(variant, value);
-        }
-
-        console.log("Final after adding rule", ruleMap[selection1String][name]);
-      } // if (parts.length == 2)
+      var relation = new Relation(selection1, selection2, rule.opts);
+      return relation;
     }, this);
-  },
-
-  parse: function(ctsString) {
-    var self = this;
-    var relations = {};
-
-    // Remove comments
-    r = ctsString.replace(/\/\*(\r|\n|.)*\*\//g,"");
-
-    var bracketDepth = 0;
-    var openBracket = -1;
-    var closeBracket = 0;
-    var previousClose = 0;
-
-    function peelChunk() {
-      var selector = CTS.$.trim(r.substr(previousClose, openBracket - previousClose - 1));
-      var block = CTS.$.trim(r.substr(openBracket + 1, closeBracket - openBracket - 1));
-      previousClose = closeBracket + 1;
-      self.incorporate(relations, selector, block);
-    }
-
-    for (var i = 0; i < r.length; i++) {
-      if (r[i] == '{') {
-        bracketDepth++;
-        if (bracketDepth == 1) {
-          console.log(r[i]);
-          openBracket = i;
-        }
-      } else if (r[i] == '}') {
-        bracketDepth--;
-        if (bracketDepth === 0) {
-          closeBracket = i;
-          peelChunk();
-        }
-      }
-    }
-
-    var ret = [];
-    _.each(_.values(relations), function(valueHash) {
-      ret = _.union(ret, _.values(valueHash));
-    });
-    console.log(ret);
-    return ret;
+    return relations;
   }
 
-};
+});
 
 // Engine
 // ==========================================================================
@@ -1017,9 +1120,10 @@ _.extend(Engine.prototype, Events, StateMachine, {
    *  2: Process any *outgoing* tempalte operations
    *  3: 
    */
-  render: function() {
+  render: function(opts) {
     var pt = this.forrest.getPrimaryTree();
-    pt.render();
+    var options = _.extend({}, opts);
+    pt.render(options);
   },
 
   ingestRules: function(rules) {
@@ -1150,6 +1254,67 @@ _.extend(Engine.prototype, Events, StateMachine, {
     if (done) {
       _fsmTransition("Rendering");
     }
+  }
+});
+
+CTS.Debugging = {};
+
+var TreeViz = CTS.Debugging.TreeViz = function(forrest) {
+  this.forrest = forrest;
+  this.init();
+  this.finish();
+};
+
+_.extend(TreeViz.prototype, {
+
+  write: function(html) {
+    this.win.document.write(html);
+  },
+  
+  init:  function() {
+    this.win = window.open(
+        "",
+        "CTS Tree Visualization",
+        "width=1000,height=800,scrollbars=1,resizable=1"
+    );
+    this.win.document.open();
+    this.write("<html><head>");
+    this.write('<script src="http://d3js.org/d3.v3.min.js"></script>');
+    this.write('<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>');
+    this.write('<script src="http://people.csail.mit.edu/eob/files/cts/extras/tree.js"></script>');
+    this.write('<link rel="stylesheet" href="http://people.csail.mit.edu/eob/files/cts/extras/tree.css"></script>');
+    this.writeTree(this.forrest.getPrimaryTree());
+    this.write('</head><body><div id="chart"></div>');
+  },
+
+  finish: function() {
+    this.write("</body><html>");
+    this.win.document.close();
+  },
+  
+  writeTree: function(tree) {
+    this.write("<script>");
+    this.write("window.treeData = ");
+    this.writeNode(tree.root); 
+    this.write(";");
+    this.write("</script>");
+  },
+
+  writeNode: function(node) {
+    this.write("{");
+    this.write('name:"' + node.debugName() + '"');
+    var kids = node.getChildren();
+    if ((typeof kids != "undefined") && (kids.length > 0)) {
+      this.write(', children: [');
+      for (var i = 0; i < kids.length; i++) {
+        this.writeNode(kids[i]);
+        if (i < kids.length - 1) {
+          this.write(",");
+        }
+      }
+      this.write(']');
+    }
+    this.write("}");
   }
 });
 

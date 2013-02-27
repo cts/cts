@@ -1,6 +1,6 @@
-var Rule = CTS.Rule = function(selection1, selection2, name, opts) {
-  this.selection1 = selection1;
-  this.selection2 = selection2;
+var Rule = CTS.Rule = function(selector1, selector2, name, opts) {
+  this.selector1 = selector1;
+  this.selector2 = selector2;
   this.name = name;
   this.opts = opts || {};
 };
@@ -11,11 +11,10 @@ _.extend(Rule.prototype, {
   },
 
   head: function() {
-    return this.selection1;
+    return this.selector1;
   },
 
   tail: function() {
-    return this.selection2;
+    return this.selector2;
   }
-
 });

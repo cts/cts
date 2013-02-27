@@ -12,12 +12,12 @@ var DomTree = CTS.DomTree = function(forrest, node, attributes) {
 // Instance Methods
 // ----------------
 _.extend(DomTree.prototype, Tree, {
-  nodesForSelection: function(selection) {
-    var jqnodes = this.root.node.find(selection.selector).toArray();
+  selectionForSelector: function(selector) {
+    var jqnodes = this.root.node.find(selector.selector).toArray();
     var nodes = _.map(jqnodes, function(n) {
       return new DomNode(CTS.$(n), this);
     }, this);
     console.log("Tree", this, "nodes for selection", selection, nodes);
-    return nodes;
+    return new CTS.Selection(nodes);
   }
 });
