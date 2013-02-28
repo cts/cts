@@ -4,7 +4,10 @@
  * Rules are the language which specify relations.
  */
 
-var Selection = CTS.Selection = function(nodes) {
+var Selection = CTS.Selection = function(nodes, opts) {
   this.nodes = nodes;
-  this.opts = opts || {};
+  this.opts = {};
+  if (typeof opts != 'undefined') {
+    this.opts = _.extend(this.opts, opts);
+  }
 };

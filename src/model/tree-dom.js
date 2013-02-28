@@ -17,7 +17,7 @@ _.extend(DomTree.prototype, Tree, {
     var nodes = _.map(jqnodes, function(n) {
       return new DomNode(CTS.$(n), this);
     }, this);
-    console.log("Tree", this, "nodes for selection", selection, nodes);
+    console.log("Tree", this, "nodes for selection", selector, nodes);
     return new CTS.Selection(nodes);
   }
 });

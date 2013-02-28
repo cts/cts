@@ -342,31 +342,46 @@ var DomSelector = CTS.DomSelector = function(selector) {
   this.originalString = null;
   this._selection = null;
   this.selector = selector;
+  this.inline = false;
+  this.inlineNode = null;
 };
 
 _.extend(DomSelector.prototype, Selector, {
   matches: function(node) {
-    console.log("this treename", this.treeName, "node", node.tree.name);
-    console.log("node is <", this.selector, ">", node.node.is(this.selector));
-    return (
-      (this.treeName == node.tree.name) &&
-      (node.node.is(this.selector)));
+    console.log("DomSelector::Matches ", node, this.inlineNode, node == this.inlineNode, this.originalString);
+    if (this.inline) {
+      console.log("DomSelector::matches inline!", this.inlineNode, node);
+      return (this.inlineNode == node);
+    } else {
+      var res = ((this.treeName == node.tree.name) && (node.node.is(this.selector)));
+    console.log("DomSelector::matches tree", this.treeName, " / ", node.tree.name, " selector ", this.selector, " / ", node.node.is(this.selector), "res", res);
+    return res;
+    }
   },
 
   toSelection: function(forrest) {
-    if (this._selection === null) {
-      // First time; compute.
-      this._selection = forrest.selectionForSelector(this);
+    console.log("DomSelector::toSelection", this.originalString);
+    if (this.inline === true) {
+      if (this.inlineNode === null) {
+        return new CTS.Selection();
+      } else {
+        return new CTS.Selection([this.inlineNode]);
+      }
+    } else {
+      if (this._selection === null) {
+        // First time; compute.
+        this._selection = forrest.selectionForSelector(this);
+      }
+      return this._selection;
     }
-    return this._selection;
   }
 });
 
 // RuleParser
 // ==========================================================================
 var RuleParser = CTS.RuleParser = {
-  incorporate: function(ruleMap, selector, block) {
-    console.log("hi");
+  incorporate: function(ruleMap, selector, block, inlineNode) {
+    console.log("RuleParser::incorporate start");
     var rules = block.split(";");
     _.each(rules, function(ruleString) {
       var parts = ruleString.split(":");
@@ -396,39 +411,43 @@ var RuleParser = CTS.RuleParser = {
           }
         }
 
-        console.log("selector", selector, "key", key, "value", value);
+        console.log("RuleParser::incorporate selector", selector, "key", key, "value", value);
 
         // Now add or accomodate the rule
         var selector1 = Selector.Create(selector);
+        if (typeof inlineNode != 'undefined') {
+          selector1.inline = true;
+          selector1.inlineNode = inlineNode;
+        }
 
         if (target.length > 0) {
           selector1.variant = target;
         }
         var selector1String = selector1.toString();
 
-        console.log("selector1", selector1, selector1String);
+        console.log("RuleParser::incorporate selector1", selector1, selector1String);
 
         if (! _.contains(ruleMap, selector1String)) {
           // Ensure we know about this selector
-          console.log("Creating slot for selector 1", selector1);
+          console.log("RuleParser::incorporate Creating slot for selector 1", selector1);
           ruleMap[selector1String] = {};
         }
         if (! _.contains(ruleMap[selector1String], name)) {
-          console.log("Creating new rule for selector 1 :: name", selector1, name);
+          console.log("RuleParser::incorporate Creating new rule for selector 1 :: name", selector1, name);
           ruleMap[selector1String][name] = new Rule(selector1, null, name, {});
         }
 
         if (variant.length === 0) {
           // We're setting selector 2
           var selector2 = Selector.Create(value);
-          console.log("selector2", selector2, value);
+          console.log("RuleParser::incorporate selector2", selector2, value);
           ruleMap[selector1String][name].selector2 = selector2;
         } else {
           // We're setting an option
           ruleMap[selector1String][name].addOption(variant, value);
         }
 
-        console.log("Final after adding rule", ruleMap[selector1String][name]);
+        console.log("RuleParser::incorporate Final after adding rule", ruleMap[selector1String][name]);
       } // if (parts.length == 2)
     }, this);
   },
@@ -456,7 +475,7 @@ var RuleParser = CTS.RuleParser = {
       if (r[i] == '{') {
         bracketDepth++;
         if (bracketDepth == 1) {
-          console.log(r[i]);
+          console.log("RuleParser::Parse", r[i]);
           openBracket = i;
         }
       } else if (r[i] == '}') {
@@ -472,17 +491,19 @@ var RuleParser = CTS.RuleParser = {
     _.each(_.values(relations), function(valueHash) {
       ret = _.union(ret, _.values(valueHash));
     });
-    console.log(ret);
+    console.log("RuleParser::parse", ret);
     return ret;
   },
 
-  parseInline: function(inlineCtsString) {
+  parseInline: function(node, inlineCtsString) {
     var relations = {};
-    this.incorporate(relations, "_", inlineCtsString);
+    this.incorporate(relations, "_inline_", inlineCtsString, node);
     var ret = [];
     _.each(_.values(relations), function(valueHash) {
       ret = _.union(ret, _.values(valueHash));
     });
+
+    console.log("RuleParser::parseInline returning", ret);
     return ret;
   }
 
@@ -539,12 +560,14 @@ CTS.Node = {
   render: function(opts) {
     console.log(this, "render");
 
-    if (_.has(opts, 'callback')) {
-      var scope = this;
-      if (_.has(opts, 'callbackScope')) {
-        scope = opts.callbackScope;
+    if (! _.isUndefined(opts)) {
+      if (_.has(opts, 'callback')) {
+        var scope = this;
+        if (_.has(opts, 'callbackScope')) {
+          scope = opts.callbackScope;
+        }
+        this.once('FsmEntered:Finished', opts.callback, scope);
       }
-      this.once('FsmEntered:Finished', opts.callback, scope);
     }
 
     this.fsmTransition("BeginRender");
@@ -552,9 +575,13 @@ CTS.Node = {
 
   getChildren: function() {
     if (_.isUndefined(this.children) || _.isNull(this.children)) {
-      this.children = this._createChildren();
+      this._createChildren();
     }
     return this.children;
+  },
+
+  treeSize: function() {
+    return 1 + this.getChildren().length;
   },
 
   getInlineRules: function() {
@@ -764,17 +791,16 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
   registerChild: function(child, opts) {
     var didit = false;
-    var children = this.getChildren();
     if ((! _.isUndefined(opts)) && (! _.isUndefined(opts.after))) {
-      for (var i = children.length - 1; i >= 0; i--) {
-        if (children[i] == opts.after) {
+      for (var i = this.children.length - 1; i >= 0; i--) {
+        if (this.children[i] == opts.after) {
           // First bump forward everything
           for (var j = children.length - 1; j > i; j--) {
-            children[j + 1] = this.children[j];
+            this.children[j + 1] = this.children[j];
           }
 
           // Then set this at i+1
-          children[i+1] = child;
+          this.children[i+1] = child;
           child.parentNode = this;
           didit = true;
         }
@@ -784,7 +810,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     
     if (! didit) {
       // do it at end as failback, or if no relative position specified
-      children[children.length] = child;
+      this.children[this.children.length] = child;
       child.parentNode = this;
     }
  },
@@ -799,10 +825,20 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
   },
 
   _createChildren: function() {
+    this.children = [];
+    console.log("DomNode::createChildren", this);
+    
+//  var e = new Error('dummy');
+//  var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
+//      .replace(/^\s+at\s+/gm, '')
+//      .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
+//      .split('\n');
+//  console.log(stack);
+
     var fringe = this.node.children().toArray();
-    var children = [];
     
     while (fringe.length > 0) {
+      console.log("Fringe length: ", fringe.length);
       var first = CTS.$(fringe.shift());
       var child = new DomNode(first, this.tree);
       var relevantRules = this.tree.forrest.relationsForNode(this.tree, child);
@@ -815,10 +851,10 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
         this.registerChild(child);
       } else {
         fringe = _.union(fringe, first.children().toArray());
+        console.log("New fringe length: ", fringe.length);
       }
     }
-    console.log("Create Children Returned: ", children);
-    return children;
+    console.log("Create Children Returned: ", this.children);
   },
 
   /**
@@ -921,9 +957,12 @@ _.extend(Relation.prototype, {
  * Rules are the language which specify relations.
  */
 
-var Selection = CTS.Selection = function(nodes) {
+var Selection = CTS.Selection = function(nodes, opts) {
   this.nodes = nodes;
-  this.opts = opts || {};
+  this.opts = {};
+  if (typeof opts != 'undefined') {
+    this.opts = _.extend(this.opts, opts);
+  }
 };
 
 // DOM Tree
@@ -959,7 +998,7 @@ _.extend(DomTree.prototype, Tree, {
     var nodes = _.map(jqnodes, function(n) {
       return new DomNode(CTS.$(n), this);
     }, this);
-    console.log("Tree", this, "nodes for selection", selection, nodes);
+    console.log("Tree", this, "nodes for selection", selector, nodes);
     return new CTS.Selection(nodes);
   }
 });
@@ -1017,11 +1056,12 @@ _.extend(Forrest.prototype, {
   },
 
   selectionForSelector: function(selector) {
-    console.log("trees", this.trees, "selector name", selector.treeName);
+    console.log("Forrest::selectionForSelector trees", this.trees, "selector name", selector.treeName);
     // TODO(eob): The commented out line doesn't work.. but
     // I don't know why. That makes me worried.
     //if (_.contains(this.trees, selector.treeName)) {
     if (typeof this.trees[selector.treeName] != "undefined") {
+      console.log("Forrest::SelectionForSelector --> Tree " + selector.treeName + " ::SelectionforSelector");
       return this.trees[selector.treeName].selectionForSelector(selector);
     } else {
       console.log("Nodes for selector bailing");
@@ -1047,9 +1087,10 @@ _.extend(Forrest.prototype, {
   },
 
   rulesForNode: function(tree, node) {
+    console.log("Forrest:::rulesForNode");
     var ret = [];
     _.each(this.rules, function(rule) {
-      console.log("Rule", rule, "for node", node);
+      console.log("Forrest::rulesForNode Rule", rule, "for node", node);
       if ((rule.selector1.matches(node)) || 
           (rule.selector2.matches(node))) {
         ret[ret.length] = rule;
@@ -1062,7 +1103,7 @@ _.extend(Forrest.prototype, {
     var inlineRules = node.getInlineRules();
    
     if (inlineRules !== null) {
-      var ruleSet = RuleParser.parseInline(inlineRules);
+      var ruleSet = RuleParser.parseInline(node, inlineRules);
       if (typeof ruleSet != "undefined") {
         ret = _.union(ret, ruleSet);
       }
@@ -1071,6 +1112,7 @@ _.extend(Forrest.prototype, {
   },
 
   relationsForNode: function(tree, node) {
+    console.log("Forrest::RelationsForNode");
     var rules = this.rulesForNode(tree, node);
     var relations = _.map(rules, function(rule) {
       var selection1 = null;

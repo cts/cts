@@ -49,12 +49,14 @@ CTS.Node = {
   render: function(opts) {
     console.log(this, "render");
 
-    if (_.has(opts, 'callback')) {
-      var scope = this;
-      if (_.has(opts, 'callbackScope')) {
-        scope = opts.callbackScope;
+    if (! _.isUndefined(opts)) {
+      if (_.has(opts, 'callback')) {
+        var scope = this;
+        if (_.has(opts, 'callbackScope')) {
+          scope = opts.callbackScope;
+        }
+        this.once('FsmEntered:Finished', opts.callback, scope);
       }
-      this.once('FsmEntered:Finished', opts.callback, scope);
     }
 
     this.fsmTransition("BeginRender");
@@ -62,9 +64,13 @@ CTS.Node = {
 
   getChildren: function() {
     if (_.isUndefined(this.children) || _.isNull(this.children)) {
-      this.children = this._createChildren();
+      this._createChildren();
     }
     return this.children;
+  },
+
+  treeSize: function() {
+    return 1 + this.getChildren().length;
   },
 
   getInlineRules: function() {

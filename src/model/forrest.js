@@ -40,11 +40,12 @@ _.extend(Forrest.prototype, {
   },
 
   selectionForSelector: function(selector) {
-    console.log("trees", this.trees, "selector name", selector.treeName);
+    console.log("Forrest::selectionForSelector trees", this.trees, "selector name", selector.treeName);
     // TODO(eob): The commented out line doesn't work.. but
     // I don't know why. That makes me worried.
     //if (_.contains(this.trees, selector.treeName)) {
     if (typeof this.trees[selector.treeName] != "undefined") {
+      console.log("Forrest::SelectionForSelector --> Tree " + selector.treeName + " ::SelectionforSelector");
       return this.trees[selector.treeName].selectionForSelector(selector);
     } else {
       console.log("Nodes for selector bailing");
@@ -70,9 +71,10 @@ _.extend(Forrest.prototype, {
   },
 
   rulesForNode: function(tree, node) {
+    console.log("Forrest:::rulesForNode");
     var ret = [];
     _.each(this.rules, function(rule) {
-      console.log("Rule", rule, "for node", node);
+      console.log("Forrest::rulesForNode Rule", rule, "for node", node);
       if ((rule.selector1.matches(node)) || 
           (rule.selector2.matches(node))) {
         ret[ret.length] = rule;
@@ -85,7 +87,7 @@ _.extend(Forrest.prototype, {
     var inlineRules = node.getInlineRules();
    
     if (inlineRules !== null) {
-      var ruleSet = RuleParser.parseInline(inlineRules);
+      var ruleSet = RuleParser.parseInline(node, inlineRules);
       if (typeof ruleSet != "undefined") {
         ret = _.union(ret, ruleSet);
       }
@@ -94,6 +96,7 @@ _.extend(Forrest.prototype, {
   },
 
   relationsForNode: function(tree, node) {
+    console.log("Forrest::RelationsForNode");
     var rules = this.rulesForNode(tree, node);
     var relations = _.map(rules, function(rule) {
       var selection1 = null;

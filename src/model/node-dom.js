@@ -40,17 +40,16 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
   registerChild: function(child, opts) {
     var didit = false;
-    var children = this.getChildren();
     if ((! _.isUndefined(opts)) && (! _.isUndefined(opts.after))) {
-      for (var i = children.length - 1; i >= 0; i--) {
-        if (children[i] == opts.after) {
+      for (var i = this.children.length - 1; i >= 0; i--) {
+        if (this.children[i] == opts.after) {
           // First bump forward everything
           for (var j = children.length - 1; j > i; j--) {
-            children[j + 1] = this.children[j];
+            this.children[j + 1] = this.children[j];
           }
 
           // Then set this at i+1
-          children[i+1] = child;
+          this.children[i+1] = child;
           child.parentNode = this;
           didit = true;
         }
@@ -60,7 +59,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     
     if (! didit) {
       // do it at end as failback, or if no relative position specified
-      children[children.length] = child;
+      this.children[this.children.length] = child;
       child.parentNode = this;
     }
  },
@@ -75,10 +74,20 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
   },
 
   _createChildren: function() {
+    this.children = [];
+    console.log("DomNode::createChildren", this);
+    
+//  var e = new Error('dummy');
+//  var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
+//      .replace(/^\s+at\s+/gm, '')
+//      .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
+//      .split('\n');
+//  console.log(stack);
+
     var fringe = this.node.children().toArray();
-    var children = [];
     
     while (fringe.length > 0) {
+      console.log("Fringe length: ", fringe.length);
       var first = CTS.$(fringe.shift());
       var child = new DomNode(first, this.tree);
       var relevantRules = this.tree.forrest.relationsForNode(this.tree, child);
@@ -91,10 +100,10 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
         this.registerChild(child);
       } else {
         fringe = _.union(fringe, first.children().toArray());
+        console.log("New fringe length: ", fringe.length);
       }
     }
-    console.log("Create Children Returned: ", children);
-    return children;
+    console.log("Create Children Returned: ", this.children);
   },
 
   /**

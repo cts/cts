@@ -1,8 +1,8 @@
 // RuleParser
 // ==========================================================================
 var RuleParser = CTS.RuleParser = {
-  incorporate: function(ruleMap, selector, block) {
-    console.log("hi");
+  incorporate: function(ruleMap, selector, block, inlineNode) {
+    console.log("RuleParser::incorporate start");
     var rules = block.split(";");
     _.each(rules, function(ruleString) {
       var parts = ruleString.split(":");
@@ -32,39 +32,43 @@ var RuleParser = CTS.RuleParser = {
           }
         }
 
-        console.log("selector", selector, "key", key, "value", value);
+        console.log("RuleParser::incorporate selector", selector, "key", key, "value", value);
 
         // Now add or accomodate the rule
         var selector1 = Selector.Create(selector);
+        if (typeof inlineNode != 'undefined') {
+          selector1.inline = true;
+          selector1.inlineNode = inlineNode;
+        }
 
         if (target.length > 0) {
           selector1.variant = target;
         }
         var selector1String = selector1.toString();
 
-        console.log("selector1", selector1, selector1String);
+        console.log("RuleParser::incorporate selector1", selector1, selector1String);
 
         if (! _.contains(ruleMap, selector1String)) {
           // Ensure we know about this selector
-          console.log("Creating slot for selector 1", selector1);
+          console.log("RuleParser::incorporate Creating slot for selector 1", selector1);
           ruleMap[selector1String] = {};
         }
         if (! _.contains(ruleMap[selector1String], name)) {
-          console.log("Creating new rule for selector 1 :: name", selector1, name);
+          console.log("RuleParser::incorporate Creating new rule for selector 1 :: name", selector1, name);
           ruleMap[selector1String][name] = new Rule(selector1, null, name, {});
         }
 
         if (variant.length === 0) {
           // We're setting selector 2
           var selector2 = Selector.Create(value);
-          console.log("selector2", selector2, value);
+          console.log("RuleParser::incorporate selector2", selector2, value);
           ruleMap[selector1String][name].selector2 = selector2;
         } else {
           // We're setting an option
           ruleMap[selector1String][name].addOption(variant, value);
         }
 
-        console.log("Final after adding rule", ruleMap[selector1String][name]);
+        console.log("RuleParser::incorporate Final after adding rule", ruleMap[selector1String][name]);
       } // if (parts.length == 2)
     }, this);
   },
@@ -92,7 +96,7 @@ var RuleParser = CTS.RuleParser = {
       if (r[i] == '{') {
         bracketDepth++;
         if (bracketDepth == 1) {
-          console.log(r[i]);
+          console.log("RuleParser::Parse", r[i]);
           openBracket = i;
         }
       } else if (r[i] == '}') {
@@ -108,17 +112,19 @@ var RuleParser = CTS.RuleParser = {
     _.each(_.values(relations), function(valueHash) {
       ret = _.union(ret, _.values(valueHash));
     });
-    console.log(ret);
+    console.log("RuleParser::parse", ret);
     return ret;
   },
 
-  parseInline: function(inlineCtsString) {
+  parseInline: function(node, inlineCtsString) {
     var relations = {};
-    this.incorporate(relations, "_", inlineCtsString);
+    this.incorporate(relations, "_inline_", inlineCtsString, node);
     var ret = [];
     _.each(_.values(relations), function(valueHash) {
       ret = _.union(ret, _.values(valueHash));
     });
+
+    console.log("RuleParser::parseInline returning", ret);
     return ret;
   }
 
