@@ -11,3 +11,9 @@ var Selection = CTS.Selection = function(nodes, opts) {
     this.opts = _.extend(this.opts, opts);
   }
 };
+
+_.extend(Selection.prototype, {
+  matches: function(node) {
+    return _.contains(this.nodes, node);
+  }
+});

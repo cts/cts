@@ -1,10 +1,10 @@
 // ### Constructor
-var DomNode = CTS.DomNode = function(node, tree, rules, opts, args) {
+var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
   var defaults;
   this.node = node;
   this.tree = tree;
   this.children = null; 
-  this.rules = rules || [];
+  this.relations = relations || [];
   this.opts = opts || {};
   this.parentNode = null;
   this.initialize.apply(this, args);
@@ -32,7 +32,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     this.node.after(n);
 
     // TODO(eob): any use in saving args to apply when cloned?
-    var c = new DomNode(n, this.tree, this.rules, this.opts);
+    var c = new DomNode(n, this.tree, this.relations, this.opts);
 
     // Insert after in CTS hierarchy
     this.parentNode.registerChild(c, {'after': this});
@@ -90,13 +90,13 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
       console.log("Fringe length: ", fringe.length);
       var first = CTS.$(fringe.shift());
       var child = new DomNode(first, this.tree);
-      var relevantRules = this.tree.forrest.relationsForNode(this.tree, child);
+      var relevantRelations = this.tree.forrest.relationsForNode(child);
       if ((child.node.html() == "a") || (child.node.html() == "b")) {
-        console.log("Found child", child.node.html(), "with rules", relevantRules);
+        console.log("Found child", child.node.html(), "with relations", relevantRelations);
       }
 
-      if (relevantRules.length > 0) {
-        child.rules = relevantRules;
+      if (relevantRelations.length > 0) {
+        child.relations = relevantRelations;
         this.registerChild(child);
       } else {
         fringe = _.union(fringe, first.children().toArray());
@@ -125,6 +125,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
    * Provides the value of this node.
    */
   isOutgoing: function(opts) {
+    console.log("is outgoing");
     return this.node.html();
   },
 

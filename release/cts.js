@@ -86,7 +86,7 @@ var StateMachine = CTS.StateMachine = {
       var name = this._fsmArcs[from][to];
       this.trigger('FsmLeft:' + from);
       this._fsmCurrent = to;
-      console.log("Transitioning to", to);
+      console.log(this, "Transitioning to", to);
       this.trigger('FsmEdge:' + name);
       this.trigger('FsmEntered:' + to);
     } else {
@@ -552,7 +552,7 @@ CTS.Node = {
     this.on('FsmEdge:BeginRender', this._onBeginRender, this);
     this.on('FsmEdge:ProcessIncoming', this._onProcessIncoming, this);
     this.on('FsmEntered:ProcessIncomingChildren', this._onProcessIncomingChildren, this);
-    this.on('FsmEdge:ProcessedIncoming', this._onProcessedIncoming, this);
+    this.on('FsmEntered:ProcessedIncoming', this._onProcessedIncoming, this);
     this.on('FsmEdge:FailedConditional', this._onFailedConditional, this);
     this.on('FsmEntered:Finished', this._onFinished, this);
   },
@@ -584,6 +584,15 @@ CTS.Node = {
     return 1 + this.getChildren().length;
   },
 
+  subtreeRelations: function() {
+    var relations = this.tree.forrest.relationsForNode(this);
+    var myChildren = this.getChildren();
+    for (var i = 0; i < myChildren.length; i++) {
+      relations = _.union(relations, myChildren[i].subtreeRelations());
+    }
+    return relations;
+  },
+
   getInlineRules: function() {
     return null;
   },
@@ -601,6 +610,7 @@ CTS.Node = {
       this.fsmTransition("FailedConditional");
     } else {
       if (this._performIs()) {
+        console.log("Performed is");
         // We did a value map, so move to Processed state.
         // TODO(eob): what if we want to interpret the value as cts-laden html?
         this.fsmTransition("ProcessedIncoming");
@@ -644,6 +654,7 @@ CTS.Node = {
   },
 
   _onProcessedIncoming: function() {
+    console.log("Trans to finish");
     this.fsmTransition("Finished");
   },
 
@@ -657,17 +668,17 @@ CTS.Node = {
   },
 
   _performConditional: function() {
-    var rules = _.filter(this.rules, function(rule) {
+    var relations = _.filter(this.relations, function(rule) {
       return ((rule.name == "ifexist") &&
           (rule.head().matches(this)));
     }, this);
 
-    if (rules.length === 0) {
+    if (relations.length === 0) {
       // No conditionality restrictions
       return true;
     } else {
-      return _.all(rules, function(rule) {
-        var otherNodes = rule.tail().toSelection(this.tree.forrest);
+      return _.all(relations, function(rule) {
+        var otherNodes = rule.tail().nodes;
         if ((! _.isUndefined(otherNodes)) && (otherNodes.length > 0)) {
           return true;
         } else {
@@ -678,13 +689,17 @@ CTS.Node = {
   },
 
   _performIs: function() {
-    console.log("Perform IS on", this, this.node.html(), this.rules);
+    console.log("Perform IS on", this, this.node.html(), this.relations);
     // If there is an incoming value node, handle it.
     // Just take the last one.
     var rule = null;
-    _.each(this.rules, function(r) {
+    _.each(this.relations, function(r) {
+      console.log(r);
       if (r.name == "is") {
+        console.log("is is!");
         if (r.head().matches(this)) {
+          console.log("matches this!");
+          console.log("Perofm is");
           rule = r;
         }
       }
@@ -692,7 +707,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found IS rule");
-      this.isIncoming(rule.tail().toSelection(this.tree.forrest));
+      this.isIncoming(rule.tail().nodes);
       return true;
     } else {
       return false;
@@ -700,9 +715,9 @@ CTS.Node = {
   },
 
   _performAre: function() {
-    console.log("Perform ARE on", this, this.node.html(), this.rules);
+    console.log("Perform ARE on", this, this.node.html(), this.relations);
     var rule = null;
-    _.each(this.rules, function(r) {
+    _.each(this.relations, function(r) {
       if (r.name == "are") {
         if (r.head().matches(this)) {
           rule = r;
@@ -712,7 +727,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found ARE rule");
-      this.areIncoming(rule.tail().toSelection(this.tree.forrest));
+      this.areIncoming(rule.tail().nodes);
       return true;
     } else {
       return false;
@@ -720,13 +735,13 @@ CTS.Node = {
   },
 
   _performRepeat: function() {
-    var rules = _.filter(this.rules, function(rule) {
+    var relations = _.filter(this.relations, function(rule) {
       return ((rule.name == "repeat") && (rule.head().matches(this)));
     }, this);
 
-    if (rules.length > 0) {
+    if (relations.length > 0) {
       // TODO(eob): Figure out what to do if > 1 rule
-      var rule = rules[rules.length - 1];
+      var rule = relations[relations.length - 1];
       /*
        * Here is where things get tricky. "repeat" is really a bit of a functor
        * over the relations: it redraws down-tree relations such that each respective
@@ -734,7 +749,7 @@ CTS.Node = {
        */
 
       // Get the source selection.
-      var sourceSelection = rule.tail().toSelection(this.tree.forrest);
+      var sourceSelection = rule.tail().nodes;
 
       if ((typeof sourceSelection.length != "undefined") && (sourceSelection.length > 0)) {
       } else {
@@ -750,12 +765,12 @@ CTS.Node = {
 };
 
 // ### Constructor
-var DomNode = CTS.DomNode = function(node, tree, rules, opts, args) {
+var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
   var defaults;
   this.node = node;
   this.tree = tree;
   this.children = null; 
-  this.rules = rules || [];
+  this.relations = relations || [];
   this.opts = opts || {};
   this.parentNode = null;
   this.initialize.apply(this, args);
@@ -783,7 +798,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     this.node.after(n);
 
     // TODO(eob): any use in saving args to apply when cloned?
-    var c = new DomNode(n, this.tree, this.rules, this.opts);
+    var c = new DomNode(n, this.tree, this.relations, this.opts);
 
     // Insert after in CTS hierarchy
     this.parentNode.registerChild(c, {'after': this});
@@ -841,13 +856,13 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
       console.log("Fringe length: ", fringe.length);
       var first = CTS.$(fringe.shift());
       var child = new DomNode(first, this.tree);
-      var relevantRules = this.tree.forrest.relationsForNode(this.tree, child);
+      var relevantRelations = this.tree.forrest.relationsForNode(child);
       if ((child.node.html() == "a") || (child.node.html() == "b")) {
-        console.log("Found child", child.node.html(), "with rules", relevantRules);
+        console.log("Found child", child.node.html(), "with relations", relevantRelations);
       }
 
-      if (relevantRules.length > 0) {
-        child.rules = relevantRules;
+      if (relevantRelations.length > 0) {
+        child.relations = relevantRelations;
         this.registerChild(child);
       } else {
         fringe = _.union(fringe, first.children().toArray());
@@ -876,6 +891,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
    * Provides the value of this node.
    */
   isOutgoing: function(opts) {
+    console.log("is outgoing");
     return this.node.html();
   },
 
@@ -929,9 +945,9 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
  * Rules are the language which specify relations.
  */
 
-var Relation = CTS.Relation= function(node1, node2, name, opts) {
-  this.node1 = node1;
-  this.node2 = node2;
+var Relation = CTS.Relation= function(selection1, selection2, name, opts) {
+  this.selection1 = selection1;
+  this.selection2 = selection2;
   this.name = name;
   this.opts = opts || {};
 };
@@ -942,11 +958,11 @@ _.extend(Relation.prototype, {
   },
 
   head: function() {
-    return this.node1;
+    return this.selection1;
   },
 
   tail: function() {
-    return this.node2;
+    return this.selection2;
   }
 
 });
@@ -964,6 +980,12 @@ var Selection = CTS.Selection = function(nodes, opts) {
     this.opts = _.extend(this.opts, opts);
   }
 };
+
+_.extend(Selection.prototype, {
+  matches: function(node) {
+    return _.contains(this.nodes, node);
+  }
+});
 
 // DOM Tree
 // ==========================================================================
@@ -1086,7 +1108,7 @@ _.extend(Forrest.prototype, {
     this.addTree('window', new CTS.JsonTree(this, window));
   },
 
-  rulesForNode: function(tree, node) {
+  rulesForNode: function(node) {
     console.log("Forrest:::rulesForNode");
     var ret = [];
     _.each(this.rules, function(rule) {
@@ -1111,9 +1133,9 @@ _.extend(Forrest.prototype, {
     return ret;
   },
 
-  relationsForNode: function(tree, node) {
+  relationsForNode: function(node) {
     console.log("Forrest::RelationsForNode");
-    var rules = this.rulesForNode(tree, node);
+    var rules = this.rulesForNode(node);
     var relations = _.map(rules, function(rule) {
       var selection1 = null;
       var selection2 = null;
@@ -1125,7 +1147,7 @@ _.extend(Forrest.prototype, {
         selection2 = new CTS.Selection([node]);
         selection1 = rule.selector1.toSelection(this);
       }
-      var relation = new Relation(selection1, selection2, rule.opts);
+      var relation = new Relation(selection1, selection2, rule.name, rule.opts);
       return relation;
     }, this);
     return relations;

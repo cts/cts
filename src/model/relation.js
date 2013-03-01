@@ -4,9 +4,9 @@
  * Rules are the language which specify relations.
  */
 
-var Relation = CTS.Relation= function(node1, node2, name, opts) {
-  this.node1 = node1;
-  this.node2 = node2;
+var Relation = CTS.Relation= function(selection1, selection2, name, opts) {
+  this.selection1 = selection1;
+  this.selection2 = selection2;
   this.name = name;
   this.opts = opts || {};
 };
@@ -17,11 +17,11 @@ _.extend(Relation.prototype, {
   },
 
   head: function() {
-    return this.node1;
+    return this.selection1;
   },
 
   tail: function() {
-    return this.node2;
+    return this.selection2;
   }
 
 });

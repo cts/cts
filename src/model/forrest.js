@@ -70,7 +70,7 @@ _.extend(Forrest.prototype, {
     this.addTree('window', new CTS.JsonTree(this, window));
   },
 
-  rulesForNode: function(tree, node) {
+  rulesForNode: function(node) {
     console.log("Forrest:::rulesForNode");
     var ret = [];
     _.each(this.rules, function(rule) {
@@ -95,9 +95,9 @@ _.extend(Forrest.prototype, {
     return ret;
   },
 
-  relationsForNode: function(tree, node) {
+  relationsForNode: function(node) {
     console.log("Forrest::RelationsForNode");
-    var rules = this.rulesForNode(tree, node);
+    var rules = this.rulesForNode(node);
     var relations = _.map(rules, function(rule) {
       var selection1 = null;
       var selection2 = null;
@@ -109,7 +109,7 @@ _.extend(Forrest.prototype, {
         selection2 = new CTS.Selection([node]);
         selection1 = rule.selector1.toSelection(this);
       }
-      var relation = new Relation(selection1, selection2, rule.opts);
+      var relation = new Relation(selection1, selection2, rule.name, rule.opts);
       return relation;
     }, this);
     return relations;

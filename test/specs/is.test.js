@@ -22,6 +22,7 @@ asyncTest("IS innerHTML -> innerHTML on same page", function () {
     callback: function() {
       equal(this.a.html(), this.b.html(), "should be equal");
       equal(this.a.html(), 'b', "should be 'b'");
+      equal(this.b.html(), 'b', "should be 'b'");
       start();
     },
     callbackScope: this

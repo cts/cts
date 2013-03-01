@@ -46,6 +46,18 @@ asyncTest("Properly sized content DOM is constructed", function () {
   });
 });
 
-asyncTest("Loading another HTML tree works", function () {
-
+asyncTest("Relation is created", function () {
+	//deepEqual(A, B, "should be equal");
+  this.a.attr('data-cts', 'is: #b;');
+  this.a.html('a');
+  this.b.html('b');
+  var engine = new CTS.Engine();
+  engine.render({
+    callback: function() {
+      var relations = engine.forrest.getPrimaryTree().root.subtreeRelations();
+      equal(relations.length, 1, "should be one relation in tree");
+      start();
+    },
+    callbackScope: this
+  });
 });
