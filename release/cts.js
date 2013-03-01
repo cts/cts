@@ -1346,6 +1346,8 @@ _.extend(TreeViz.prototype, {
     this.write("{");
     this.write('name:"' + node.debugName() + '"');
     var kids = node.getChildren();
+    console.log(kids);
+    console.log("Kids size for node", node, kids.length);
     if ((typeof kids != "undefined") && (kids.length > 0)) {
       this.write(', children: [');
       for (var i = 0; i < kids.length; i++) {
