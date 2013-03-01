@@ -106,6 +106,10 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     console.log("Create Children Returned: ", this.children);
   },
 
+  failedConditional: function() {
+    this.node.hide();
+  },
+
   /**
    * Replaces the value of this node with the value of the
    * other node provided.

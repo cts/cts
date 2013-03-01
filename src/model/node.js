@@ -148,7 +148,7 @@ CTS.Node = {
   },
 
   _onFailedConditional: function() {
-    this.node.hide();
+    this.failedConditional();
     this.fsmTransition("Finished");
   },
 
@@ -158,8 +158,9 @@ CTS.Node = {
 
   _performConditional: function() {
     var relations = _.filter(this.relations, function(rule) {
-      return ((rule.name == "ifexist") &&
-          (rule.head().matches(this)));
+      return (
+        ((rule.name == "ifexist") || (rule.name == "ifnexist")) &&
+         (rule.head().matches(this)));
     }, this);
 
     if (relations.length === 0) {
@@ -168,11 +169,9 @@ CTS.Node = {
     } else {
       return _.all(relations, function(rule) {
         var otherNodes = rule.tail().nodes;
-        if ((! _.isUndefined(otherNodes)) && (otherNodes.length > 0)) {
-          return true;
-        } else {
-          return false;
-        }
+        var exist = ((! _.isUndefined(otherNodes)) && (otherNodes.length > 0));
+        return ((exist  && (rule.name == "ifexist")) ||
+                ((!exist) && (rule.name == "ifnexist")));
       }, this);
     }
   },
