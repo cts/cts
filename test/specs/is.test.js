@@ -11,7 +11,7 @@ module("is", {
 	}
 });
 
-asyncTest("IS innerHTML -> innerHTML on same page", function () {
+asyncTest("IS text -> text on same page", function () {
   ok(1 == 1, "Passed"); 
 	//deepEqual(A, B, "should be equal");
   this.a.attr('data-cts', 'is: #b;');
@@ -23,6 +23,23 @@ asyncTest("IS innerHTML -> innerHTML on same page", function () {
       equal(this.a.html(), this.b.html(), "should be equal");
       equal(this.a.html(), 'b', "should be 'b'");
       equal(this.b.html(), 'b', "should be 'b'");
+      start();
+    },
+    callbackScope: this
+  });
+});
+
+asyncTest("IS HTML -> HTML on same page", function () {
+  ok(1 == 1, "Passed"); 
+	//deepEqual(A, B, "should be equal");
+  this.a.attr('data-cts', 'is: #b;');
+  this.a.html('a');
+  this.b.html('<div><b>FOO</b></div>');
+  var engine = new CTS.Engine();
+  engine.render({
+    callback: function() {
+      equal(this.b.html(), '<div><b>FOO</b></div>', "should be HTML");
+      equal(this.a.html(), this.b.html(), "should be equal");
       start();
     },
     callbackScope: this
