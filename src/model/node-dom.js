@@ -1,10 +1,10 @@
 // ### Constructor
-var DomNode = CTS.DomNode = function(node, tree, rules, opts, args) {
+var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
   var defaults;
   this.node = node;
   this.tree = tree;
   this.children = null; 
-  this.rules = rules || [];
+  this.relations = relations || [];
   this.opts = opts || {};
   this.parentNode = null;
   this.initialize.apply(this, args);
@@ -21,6 +21,10 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     this.node.remove();
   },
 
+  debugName: function() {
+    return this.node[0].nodeName;
+  },
+
   clone: function(opts) {
     var n = this.node.clone();
     
@@ -28,7 +32,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     this.node.after(n);
 
     // TODO(eob): any use in saving args to apply when cloned?
-    var c = new DomNode(n, this.tree, this.rules, this.opts);
+    var c = new DomNode(n, this.tree, this.relations, this.opts);
 
     // Insert after in CTS hierarchy
     this.parentNode.registerChild(c, {'after': this});
@@ -40,7 +44,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
       for (var i = this.children.length - 1; i >= 0; i--) {
         if (this.children[i] == opts.after) {
           // First bump forward everything
-          for (var j = this.children.length - 1; j > i; j--) {
+          for (var j = children.length - 1; j > i; j--) {
             this.children[j + 1] = this.children[j];
           }
 
@@ -60,25 +64,46 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     }
  },
 
+  getInlineRules: function() {
+    var inline = this.node.attr('data-cts');
+    if ((inline !== null) && (typeof inline != 'undefined')) {
+      return inline;
+    } else {
+      return null;
+    }
+  },
+
   _createChildren: function() {
+    this.children = [];
+    console.log("DomNode::createChildren", this);
+    
+//  var e = new Error('dummy');
+//  var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
+//      .replace(/^\s+at\s+/gm, '')
+//      .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
+//      .split('\n');
+//  console.log(stack);
+
     var fringe = this.node.children().toArray();
-    var children = [];
     
     while (fringe.length > 0) {
+      console.log("Fringe length: ", fringe.length);
       var first = CTS.$(fringe.shift());
       var child = new DomNode(first, this.tree);
-      var relevantRules = this.tree.forrest.rulesForNode(this.tree, child);
-      console.log("Found child", child.node, child.node.html(), "with rules", relevantRules);
+      var relevantRelations = this.tree.forrest.relationsForNode(child);
+      if ((child.node.html() == "a") || (child.node.html() == "b")) {
+        console.log("Found child", child.node.html(), "with relations", relevantRelations);
+      }
 
-      if (relevantRules.length > 0) {
-        child.rules = relevantRules;
+      if (relevantRelations.length > 0) {
+        child.relations = relevantRelations;
         this.registerChild(child);
       } else {
         fringe = _.union(fringe, first.children().toArray());
+        console.log("New fringe length: ", fringe.length);
       }
     }
-    console.log("Create Children Returned: ", children);
-    return children;
+    console.log("Create Children Returned: ", this.children);
   },
 
   /**
@@ -100,6 +125,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
    * Provides the value of this node.
    */
   isOutgoing: function(opts) {
+    console.log("is outgoing");
     return this.node.html();
   },
 

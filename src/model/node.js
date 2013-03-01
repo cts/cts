@@ -41,21 +41,49 @@ CTS.Node = {
     this.on('FsmEdge:BeginRender', this._onBeginRender, this);
     this.on('FsmEdge:ProcessIncoming', this._onProcessIncoming, this);
     this.on('FsmEntered:ProcessIncomingChildren', this._onProcessIncomingChildren, this);
-    this.on('FsmEdge:ProcessedIncoming', this._onProcessedIncoming, this);
+    this.on('FsmEntered:ProcessedIncoming', this._onProcessedIncoming, this);
     this.on('FsmEdge:FailedConditional', this._onFailedConditional, this);
     this.on('FsmEntered:Finished', this._onFinished, this);
   },
 
-  render: function() {
+  render: function(opts) {
     console.log(this, "render");
+
+    if (! _.isUndefined(opts)) {
+      if (_.has(opts, 'callback')) {
+        var scope = this;
+        if (_.has(opts, 'callbackScope')) {
+          scope = opts.callbackScope;
+        }
+        this.once('FsmEntered:Finished', opts.callback, scope);
+      }
+    }
+
     this.fsmTransition("BeginRender");
   },
 
   getChildren: function() {
     if (_.isUndefined(this.children) || _.isNull(this.children)) {
-      this.children = this._createChildren();
+      this._createChildren();
     }
     return this.children;
+  },
+
+  treeSize: function() {
+    return 1 + this.getChildren().length;
+  },
+
+  subtreeRelations: function() {
+    var relations = this.tree.forrest.relationsForNode(this);
+    var myChildren = this.getChildren();
+    for (var i = 0; i < myChildren.length; i++) {
+      relations = _.union(relations, myChildren[i].subtreeRelations());
+    }
+    return relations;
+  },
+
+  getInlineRules: function() {
+    return null;
   },
 
   _onBeginRender: function() {
@@ -71,6 +99,7 @@ CTS.Node = {
       this.fsmTransition("FailedConditional");
     } else {
       if (this._performIs()) {
+        console.log("Performed is");
         // We did a value map, so move to Processed state.
         // TODO(eob): what if we want to interpret the value as cts-laden html?
         this.fsmTransition("ProcessedIncoming");
@@ -114,6 +143,7 @@ CTS.Node = {
   },
 
   _onProcessedIncoming: function() {
+    console.log("Trans to finish");
     this.fsmTransition("Finished");
   },
 
@@ -127,17 +157,17 @@ CTS.Node = {
   },
 
   _performConditional: function() {
-    var rules = _.filter(this.rules, function(rule) {
+    var relations = _.filter(this.relations, function(rule) {
       return ((rule.name == "ifexist") &&
           (rule.head().matches(this)));
     }, this);
 
-    if (rules.length === 0) {
+    if (relations.length === 0) {
       // No conditionality restrictions
       return true;
     } else {
-      return _.all(rules, function(rule) {
-        var otherNodes = rule.tail().nodes(this.tree.forrest);
+      return _.all(relations, function(rule) {
+        var otherNodes = rule.tail().nodes;
         if ((! _.isUndefined(otherNodes)) && (otherNodes.length > 0)) {
           return true;
         } else {
@@ -148,13 +178,17 @@ CTS.Node = {
   },
 
   _performIs: function() {
-    console.log("Perform IS on", this, this.node.html(), this.rules);
+    console.log("Perform IS on", this, this.node.html(), this.relations);
     // If there is an incoming value node, handle it.
     // Just take the last one.
     var rule = null;
-    _.each(this.rules, function(r) {
+    _.each(this.relations, function(r) {
+      console.log(r);
       if (r.name == "is") {
+        console.log("is is!");
         if (r.head().matches(this)) {
+          console.log("matches this!");
+          console.log("Perofm is");
           rule = r;
         }
       }
@@ -162,7 +196,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found IS rule");
-      this.isIncoming(rule.tail().nodes(this.tree.forrest));
+      this.isIncoming(rule.tail().nodes);
       return true;
     } else {
       return false;
@@ -170,9 +204,9 @@ CTS.Node = {
   },
 
   _performAre: function() {
-    console.log("Perform ARE on", this, this.node.html(), this.rules);
+    console.log("Perform ARE on", this, this.node.html(), this.relations);
     var rule = null;
-    _.each(this.rules, function(r) {
+    _.each(this.relations, function(r) {
       if (r.name == "are") {
         if (r.head().matches(this)) {
           rule = r;
@@ -182,7 +216,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found ARE rule");
-      this.areIncoming(rule.tail().nodes(this.tree.forrest));
+      this.areIncoming(rule.tail().nodes);
       return true;
     } else {
       return false;
@@ -190,13 +224,13 @@ CTS.Node = {
   },
 
   _performRepeat: function() {
-    var rules = _.filter(this.rules, function(rule) {
+    var relations = _.filter(this.relations, function(rule) {
       return ((rule.name == "repeat") && (rule.head().matches(this)));
     }, this);
 
-    if (rules.length > 0) {
+    if (relations.length > 0) {
       // TODO(eob): Figure out what to do if > 1 rule
-      var rule = rules[rules.length - 1];
+      var rule = relations[relations.length - 1];
       /*
        * Here is where things get tricky. "repeat" is really a bit of a functor
        * over the relations: it redraws down-tree relations such that each respective
@@ -204,7 +238,7 @@ CTS.Node = {
        */
 
       // Get the source selection.
-      var sourceSelection = rule.tail().nodes(this.tree.forrest);
+      var sourceSelection = rule.tail().nodes;
 
       if ((typeof sourceSelection.length != "undefined") && (sourceSelection.length > 0)) {
       } else {

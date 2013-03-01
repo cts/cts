@@ -43,7 +43,7 @@ var StateMachine = CTS.StateMachine = {
       var name = this._fsmArcs[from][to];
       this.trigger('FsmLeft:' + from);
       this._fsmCurrent = to;
-      console.log("Transitioning to", to);
+      console.log(this, "Transitioning to", to);
       this.trigger('FsmEdge:' + name);
       this.trigger('FsmEntered:' + to);
     } else {
