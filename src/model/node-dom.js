@@ -141,29 +141,50 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
    *     align.
    */
   areIncoming: function(otherNodes, opts) {
+    console.log("DomNode::areIncoming");
     // What are we remapping onto
     var others = _.flatten(_.map(otherNodes, function(o) {
-      o.areOutgoing(opt);
+      o.areOutgoing(opts);
     }, this));
 
+    var kids = this.getChildren();
+
+    //var buckets = [];
+    //var kid = this.node.children();
+    //options = _.extend({
+    //  prefix: 0,
+    //  suffix: 0,
+    //  step: 1
+    //}, opts);
+
+    //for (var i = 0; i < kid.length; i++) {
+    //  if ((i >= options.prefix) && 
+    //      (i < kid.length - options.suffix)) {
+    //    // Create a new bucket at the start of a step
+    //    if (((i - options.prefix) % options.prefix) == 0) {
+    //      buckets[buckets.length] = [];
+    //    }
+    //    buckets[buckets.length - 1].append(kid[i]);
+    //  }
+    //}
+
     // Find the itemscoped children of this node.
-    var these = _.filter(gets.node.getChildren(), function(n) {
-      n.node.is("[itemscope]");
-    }, this);
+    // var these = _.filter(this.node.children(), function(n) {
+    //  return true;
+    // }, this);
 
     // Align the cardinalities of the two
-    var diff = Math.abs(these.length - others.length);
+    var diff = Math.abs(kids.length - others.length);
     var i;
-    if (these.length > others.length) {
+    if (kids.length > others.length) {
       for (i = 0; i < diff; i++) {
         these[these.length - 1].destroy();
       }
-    } else if (these.length < others.length) {
+    } else if (kids.length < others.length) {
       for (i = 0; i < diff; i++) {
         these[these.length] = these[these.length - 1].clone();
       }
     }
-
   },
 
   /**
