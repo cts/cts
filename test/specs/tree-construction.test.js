@@ -36,9 +36,11 @@ asyncTest("Properly sized content DOM is constructed", function () {
   this.a.html('a');
   this.b.html('b');
   var engine = new CTS.Engine();
+  console.log("DOOING IT");
   engine.render({
     callback: function() {
       var treeSize = engine.forrest.getPrimaryTree().root.treeSize();
+      console.log("THE TREE", engine.forrest.getPrimaryTree().root);
       equal(treeSize, 2, "should be equal");
       start();
     },
@@ -46,18 +48,28 @@ asyncTest("Properly sized content DOM is constructed", function () {
   });
 });
 
-asyncTest("Relation is created", function () {
-	//deepEqual(A, B, "should be equal");
+asyncTest("A rule is turned into a relation", function () {
   this.a.attr('data-cts', 'is: #b;');
   this.a.html('a');
   this.b.html('b');
   var engine = new CTS.Engine();
   engine.render({
     callback: function() {
-      var relations = engine.forrest.getPrimaryTree().root.subtreeRelations();
-      equal(relations.length, 1, "should be one relation in tree");
+      var root = engine.forrest.getPrimaryTree().root;
+      var kidsOfRoot = root.getChildren();
+      equal(kidsOfRoot.length, 1, "should be one");
+      var A = kidsOfRoot[0];
+      equal(A.relations.length, 1, "should be one");
+      var r = A.relations[0];
+      equal(r.name, "is", "The relation should be IS");
+      var s1 = r.selection1;
+      equal(s1.nodes.length, 1, "Should be one");
+      equal(s1.nodes[0], A, "Should be equal");
+      var s2 = r.selection2;
+      equal(s2.nodes.length, 1, "should be one");
       start();
     },
     callbackScope: this
   });
 });
+

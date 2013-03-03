@@ -7,17 +7,24 @@ var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
   // A Node contains multiple DOM Nodes
   if (typeof node == 'object') {
     if (! _.isUndefined(node.jquery)) {
+      CTS.Debugging.DumpStack();
+      console.log("SIBLINGS A", node);
       this.siblings = [node];
     } else if (node instanceof Array) {
+      console.log("SIBLINGS B", node);
       this.siblings = node;
     } else if (node instanceof Element) {
+      console.log("SIBLINGS C", node);
       this.siblings = [$(node)];
     } else {
+      console.log("SIBLINGS D", node);
       this.siblings = [];
     }
   } else if (typeof node == 'string') {
+    console.log("SIBLINGS E", node);
     this.siblings = _.map($(node), function(n) { return $(n); });
   } else {
+    console.log("SIBLINGS F", node);
     this.siblings = [];
   }
 
@@ -86,10 +93,11 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
  },
 
   getInlineRules: function() {
-    if (this.isSiblingGroup) {
+    if (this.isSiblingGroup === true) {
       return null;
     } else {
       var inline = this.siblings[0].attr('data-cts');
+      console.log("SIBS", this.siblings[0], this.siblings[0].html(), this.siblings);
       if ((inline !== null) && (typeof inline != 'undefined')) {
         return inline;
       } else {
@@ -100,27 +108,29 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
   _createChildren: function() {
     console.log("DomNode::createChildren", this);
-    if (this.isSiblingGroup) {
-      this.children = this.siblingGroup;
+    this.children = []; 
+    if (this.isSiblingGroup === true) {
+      _.each(this.siblingGroup, function(node) {
+        this.registerChild(node);
+      }, this);
     } else {
-      this.children = []; 
-      var fringe = _.union(
-        _.map(this.siblings, function(node) {
-          return node.children().toArray();
-        })
-      );
-      
-      while (fringe.length > 0) {
-        console.log("Fringe length: ", fringe.length);
-        var first = CTS.$(fringe.shift());
-        var child = new DomNode(first, this.tree);
-        var relevantRelations = this.tree.forrest.relationsForNode(child);
-        if (relevantRelations.length > 0) {
-          child.relations = relevantRelations;
-          this.registerChild(child);
-        } else {
-          fringe = _.union(fringe, first.children().toArray());
-          console.log("New fringe length: ", fringe.length);
+      if (this.siblings.length > 1) {
+        CTS.Debugging.Fatal("Siblings > 1", this);
+      } else {
+        var fringe = this.siblings[0].children().toArray();
+        while (fringe.length > 0) {
+          //console.log("Fringe length: ", fringe.length);
+          var first = CTS.$(fringe.shift());
+          console.log("FIRRST");
+          var child = new DomNode(first, this.tree);
+          var relevantRelations = this.tree.forrest.relationsForNode(child);
+          if (relevantRelations.length > 0) {
+            child.relations = relevantRelations;
+            this.registerChild(child);
+          } else {
+            fringe = _.union(fringe, first.children().toArray());
+            console.log("New fringe length: ", fringe.length);
+          }
         }
       }
     }

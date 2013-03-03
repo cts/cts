@@ -62,9 +62,50 @@ A.isIncoming(BB);
 equal(this.a.html(), "", "should be empty");
 });
 
+test("IS Outgoing", function () {
+var A = new CTS.DomNode([this.a, this.d]);
+var B = new CTS.DomNode([this.a]);
+var C = new CTS.DomNode([]);
+equal(A.isOutgoing(), "ad", "should be ad");
+equal(B.isOutgoing(), "a", "should be a");
+equal(C.isOutgoing(), "", "should be empty");
+});
 
+test("Tree Size", function () {
+var A = new CTS.DomNode([this.a]);
+var B = new CTS.DomNode([this.b]);
+equal(A.treeSize(), 1, "should be one");
+equal(B.treeSize(), 1, "should be one");
+A.registerChild(B);
+equal(A.treeSize(), 2, "should be two");
+equal(B.treeSize(), 1, "should be one");
+});
 
+test("failedConditional", function () {
+var A = new CTS.DomNode([this.a]);
+var B = new CTS.DomNode([this.b, this.c]);
+notEqual(this.a.css('display'), 'none', 'should be visible');
+notEqual(this.b.css('display'), 'none', 'should be visible');
+notEqual(this.c.css('display'), 'none', 'should be visible');
+A.failedConditional();
+B.failedConditional();
+equal(this.a.css('display'), 'none', 'should be invisible');
+equal(this.b.css('display'), 'none', 'should be invisible');
+equal(this.c.css('display'), 'none', 'should be invisible');
+});
 
+test("getInlineRules", function () {
 
+this.a.attr('data-cts', 'a: A;');
+this.b.attr('data-cts', 'b: B;');
+this.c.attr('data-cts', 'c: C;');
 
+var A = new CTS.DomNode([this.a]);
+var B = new CTS.DomNode([this.b, this.c]);
+var D = new CTS.DomNode([this.d]);
+
+equal(A.getInlineRules(), "a: A;", "should return inline rules");
+equal(B.getInlineRules(), null, "no inline rules for sibling group");
+equal(D.getInlineRules(), null, "no inline rules if not there");
+});
 
