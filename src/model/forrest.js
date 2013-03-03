@@ -112,6 +112,7 @@ _.extend(Forrest.prototype, {
       var relation = new Relation(selection1, selection2, rule.name, rule.opts);
       return relation;
     }, this);
+    console.log("Returning Relations", relations);
     return relations;
   }
 
