@@ -87,7 +87,6 @@ CTS.Node = {
   },
 
   _onBeginRender: function() {
-    this.node.css("border", "1px solid red");
     console.log(this, "onBeginRender");
     this.fsmTransition("ProcessIncoming");
   },
@@ -113,7 +112,6 @@ CTS.Node = {
 
   _onProcessIncomingChildren: function() {
     console.log(this, "onProcessChildren");
-    this.node.css("border", "1px solid yellow");
 
     // Now we've created any children we're interested in.
     // Decide how to proceed.
@@ -153,7 +151,6 @@ CTS.Node = {
   },
 
   _onFinished: function() {
-    this.node.css("border", "1px solid green");
   },
 
   _performConditional: function() {
@@ -177,7 +174,7 @@ CTS.Node = {
   },
 
   _performIs: function() {
-    console.log("Perform IS on", this, this.node.html(), this.relations);
+    //console.log("Perform IS on", this, this.node.html(), this.relations);
     // If there is an incoming value node, handle it.
     // Just take the last one.
     var rule = null;
@@ -187,7 +184,7 @@ CTS.Node = {
         console.log("is is!");
         if (r.head().matches(this)) {
           console.log("matches this!");
-          console.log("Perofm is");
+          console.log("Perform is");
           rule = r;
         }
       }
@@ -195,7 +192,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found IS rule");
-      this.isIncoming(rule.tail().nodes);
+      this.isIncoming(rule.tail());
       return true;
     } else {
       return false;
@@ -203,7 +200,7 @@ CTS.Node = {
   },
 
   _performAre: function() {
-    console.log("Perform ARE on", this, this.node.html(), this.relations);
+    //console.log("Perform ARE on", this, this.node.html(), this.relations);
     var rule = null;
     _.each(this.relations, function(r) {
       if (r.name == "are") {
@@ -215,7 +212,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found ARE rule");
-      this.areIncoming(rule.tail().nodes);
+      this.areIncoming(rule.tail());
       return true;
     } else {
       return false;
