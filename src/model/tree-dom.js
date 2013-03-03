@@ -1,7 +1,8 @@
 // Constructor
 // -----------
 var DomTree = CTS.DomTree = function(forrest, node, attributes) {
-  this.root = node || new CTS.DomNode(CTS.$('body'), this);
+  console.log("DomTree::constructor", forrest, node);
+  this.root = node || new CTS.DomNode('body', this);
   this.forrest = forrest;
   this.name = "body";
   if ((typeof attributes != 'undefined') && ('name' in attributes)) {
@@ -13,7 +14,8 @@ var DomTree = CTS.DomTree = function(forrest, node, attributes) {
 // ----------------
 _.extend(DomTree.prototype, Tree, {
   selectionForSelector: function(selector) {
-    var jqnodes = this.root.node.find(selector.selector).toArray();
+    // Assumption: root can't be a sibling group
+    var jqnodes = this.root.siblings[0].find(selector.selector).toArray();
     var nodes = _.map(jqnodes, function(n) {
       return new DomNode(CTS.$(n), this);
     }, this);

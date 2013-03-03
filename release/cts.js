@@ -598,7 +598,6 @@ CTS.Node = {
   },
 
   _onBeginRender: function() {
-    this.node.css("border", "1px solid red");
     console.log(this, "onBeginRender");
     this.fsmTransition("ProcessIncoming");
   },
@@ -624,7 +623,6 @@ CTS.Node = {
 
   _onProcessIncomingChildren: function() {
     console.log(this, "onProcessChildren");
-    this.node.css("border", "1px solid yellow");
 
     // Now we've created any children we're interested in.
     // Decide how to proceed.
@@ -664,7 +662,6 @@ CTS.Node = {
   },
 
   _onFinished: function() {
-    this.node.css("border", "1px solid green");
   },
 
   _performConditional: function() {
@@ -688,7 +685,7 @@ CTS.Node = {
   },
 
   _performIs: function() {
-    console.log("Perform IS on", this, this.node.html(), this.relations);
+    //console.log("Perform IS on", this, this.node.html(), this.relations);
     // If there is an incoming value node, handle it.
     // Just take the last one.
     var rule = null;
@@ -698,7 +695,7 @@ CTS.Node = {
         console.log("is is!");
         if (r.head().matches(this)) {
           console.log("matches this!");
-          console.log("Perofm is");
+          console.log("Perform is");
           rule = r;
         }
       }
@@ -706,7 +703,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found IS rule");
-      this.isIncoming(rule.tail().nodes);
+      this.isIncoming(rule.tail());
       return true;
     } else {
       return false;
@@ -714,7 +711,7 @@ CTS.Node = {
   },
 
   _performAre: function() {
-    console.log("Perform ARE on", this, this.node.html(), this.relations);
+    //console.log("Perform ARE on", this, this.node.html(), this.relations);
     var rule = null;
     _.each(this.relations, function(r) {
       if (r.name == "are") {
@@ -727,7 +724,7 @@ CTS.Node = {
 
     if (rule) {
       console.log("Found ARE rule");
-      this.areIncoming(rule.tail().nodes);
+      this.areIncoming(rule.tail());
       return true;
     } else {
       return false;
@@ -739,7 +736,37 @@ CTS.Node = {
 // ### Constructor
 var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
   var defaults;
-  this.node = node;
+
+  this.isSiblingGroup = false;
+
+  // A Node contains multiple DOM Nodes
+  if (typeof node == 'object') {
+    if (! _.isUndefined(node.jquery)) {
+      CTS.Debugging.DumpStack();
+      console.log("SIBLINGS A", node);
+      this.siblings = [node];
+    } else if (node instanceof Array) {
+      console.log("SIBLINGS B", node);
+      this.siblings = node;
+    } else if (node instanceof Element) {
+      console.log("SIBLINGS C", node);
+      this.siblings = [$(node)];
+    } else {
+      console.log("SIBLINGS D", node);
+      this.siblings = [];
+    }
+  } else if (typeof node == 'string') {
+    console.log("SIBLINGS E", node);
+    this.siblings = _.map($(node), function(n) { return $(n); });
+  } else {
+    console.log("SIBLINGS F", node);
+    this.siblings = [];
+  }
+
+  if (this.siblings.length > 1) {
+    this.isSiblingGroup = true;
+  }
+
   this.tree = tree;
   this.children = null; 
   this.relations = relations || [];
@@ -756,24 +783,22 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
   },
 
   destroy: function(opts) {
-    this.node.remove();
+    _.each(this.siblings, function(s) {s.remove();});
   },
 
   debugName: function() {
-    return this.node[0].nodeName;
+    return _.map(this.siblings, function(node) {
+      return node[0].nodeName; }
+    ).join(', ');
   },
 
   clone: function(opts) {
-    var n = this.node.clone();
-    
-    // Insert after in the dom
-    this.node.after(n);
-
+    var n = _.map(this.siblings, function(s) {s.clone();});
     // TODO(eob): any use in saving args to apply when cloned?
     var c = new DomNode(n, this.tree, this.relations, this.opts);
-
     // Insert after in CTS hierarchy
     this.parentNode.registerChild(c, {'after': this});
+    return c;
   },
 
   registerChild: function(child, opts) {
@@ -803,72 +828,77 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
  },
 
   getInlineRules: function() {
-    var inline = this.node.attr('data-cts');
-    if ((inline !== null) && (typeof inline != 'undefined')) {
-      return inline;
-    } else {
+    if (this.isSiblingGroup === true) {
       return null;
+    } else {
+      var inline = this.siblings[0].attr('data-cts');
+      console.log("SIBS", this.siblings[0], this.siblings[0].html(), this.siblings);
+      if ((inline !== null) && (typeof inline != 'undefined')) {
+        return inline;
+      } else {
+        return null;
+      }
     }
   },
 
   _createChildren: function() {
-    this.children = [];
     console.log("DomNode::createChildren", this);
-    
-//  var e = new Error('dummy');
-//  var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
-//      .replace(/^\s+at\s+/gm, '')
-//      .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
-//      .split('\n');
-//  console.log(stack);
-
-    var fringe = this.node.children().toArray();
-    
-    while (fringe.length > 0) {
-      console.log("Fringe length: ", fringe.length);
-      var first = CTS.$(fringe.shift());
-      var child = new DomNode(first, this.tree);
-      var relevantRelations = this.tree.forrest.relationsForNode(child);
-      if ((child.node.html() == "a") || (child.node.html() == "b")) {
-        console.log("Found child", child.node.html(), "with relations", relevantRelations);
-      }
-
-      if (relevantRelations.length > 0) {
-        child.relations = relevantRelations;
-        this.registerChild(child);
+    this.children = []; 
+    if (this.isSiblingGroup === true) {
+      _.each(this.siblingGroup, function(node) {
+        this.registerChild(node);
+      }, this);
+    } else {
+      if (this.siblings.length > 1) {
+        CTS.Debugging.Fatal("Siblings > 1", this);
       } else {
-        fringe = _.union(fringe, first.children().toArray());
-        console.log("New fringe length: ", fringe.length);
+        var fringe = this.siblings[0].children().toArray();
+        while (fringe.length > 0) {
+          //console.log("Fringe length: ", fringe.length);
+          var first = CTS.$(fringe.shift());
+          console.log("FIRRST");
+          var child = new DomNode(first, this.tree);
+          var relevantRelations = this.tree.forrest.relationsForNode(child);
+          if (relevantRelations.length > 0) {
+            child.relations = relevantRelations;
+            this.registerChild(child);
+          } else {
+            fringe = _.union(fringe, first.children().toArray());
+            console.log("New fringe length: ", fringe.length);
+          }
+        }
       }
     }
     console.log("Create Children Returned: ", this.children);
   },
 
   failedConditional: function() {
-    this.node.hide();
+    _.each(this.siblings, function(n) { n.hide(); });
   },
 
   /**
    * Replaces the value of this node with the value of the
    * other node provided.
    */
-  isIncoming: function(otherNodes, opts) {
-    console.log("IS Incoming with otherNodes", otherNodes);
-    if (otherNodes.length === 0) {
-      console.log("Other nodes empty!");
-      this.node.html("");
+  isIncoming: function(otherNodeSelection, opts) {
+    console.log("IS Incoming with otherNodes", otherNodeSelection);
+    if (otherNodeSelection.nodes.length === 0) {
+      _.each(this.siblings, function(s) { s.html(""); });
     } else {
-      console.log("Other nodes non empty!");
-      this.node.html(otherNodes[otherNodes.length - 1].isOutgoing(opts));
+      var html = _.map(otherNodeSelection.nodes, function(node) {
+        return node.isOutgoing(opts);
+      }).join("");
+      _.each(this.siblings, function(s) { s.html(html); });
     }
   },
 
   /**
-   * Provides the value of this node.
+   * Provides the vilue of this node.
    */
   isOutgoing: function(opts) {
-    console.log("is outgoing");
-    return this.node.html();
+    return _.map(this.siblings, function(node) {
+      return node.html();
+    }).join("");
   },
 
   /**
@@ -885,33 +915,58 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
       o.areOutgoing(opts);
     }, this));
 
+    var kids = this.getChildren();
+
+    //var buckets = [];
+    //var kid = this.node.children();
+    //options = _.extend({
+    //  prefix: 0,
+    //  suffix: 0,
+    //  step: 1
+    //}, opts);
+
+    //for (var i = 0; i < kid.length; i++) {
+    //  if ((i >= options.prefix) && 
+    //      (i < kid.length - options.suffix)) {
+    //    // Create a new bucket at the start of a step
+    //    if (((i - options.prefix) % options.prefix) == 0) {
+    //      buckets[buckets.length] = [];
+    //    }
+    //    buckets[buckets.length - 1].append(kid[i]);
+    //  }
+    //}
+
     // Find the itemscoped children of this node.
-    var these = _.filter(this.node.getChildren(), function(n) {
-      n.node.is("[itemscope]");
-    }, this);
+    // var these = _.filter(this.node.children(), function(n) {
+    //  return true;
+    // }, this);
 
     // Align the cardinalities of the two
-    var diff = Math.abs(these.length - others.length);
+    var diff = Math.abs(kids.length - others.length);
     var i;
-    if (these.length > others.length) {
+    if (kids.length > others.length) {
       for (i = 0; i < diff; i++) {
         these[these.length - 1].destroy();
       }
-    } else if (these.length < others.length) {
+    } else if (kids.length < others.length) {
       for (i = 0; i < diff; i++) {
         these[these.length] = these[these.length - 1].clone();
       }
     }
-
   },
 
   /**
    * Provides the itemscope'd nodes.
    */
   areOutgoing: function(opts) {
-    _.filter(this.node.getChildren(), function(n) {
-      n.node.is("[itemscope]");
-    }, this);
+    _.filter(
+      _.union(
+        _.map(this.siblings, function(node) {
+          return node.getChildren();
+        })
+      ), function(n) {
+        n.node.is("[itemscope]");
+      }, this);
   }
 
 });
@@ -981,7 +1036,8 @@ var Tree = CTS.Tree = {
 // Constructor
 // -----------
 var DomTree = CTS.DomTree = function(forrest, node, attributes) {
-  this.root = node || new CTS.DomNode(CTS.$('body'), this);
+  console.log("DomTree::constructor", forrest, node);
+  this.root = node || new CTS.DomNode('body', this);
   this.forrest = forrest;
   this.name = "body";
   if ((typeof attributes != 'undefined') && ('name' in attributes)) {
@@ -993,7 +1049,8 @@ var DomTree = CTS.DomTree = function(forrest, node, attributes) {
 // ----------------
 _.extend(DomTree.prototype, Tree, {
   selectionForSelector: function(selector) {
-    var jqnodes = this.root.node.find(selector.selector).toArray();
+    // Assumption: root can't be a sibling group
+    var jqnodes = this.root.siblings[0].find(selector.selector).toArray();
     var nodes = _.map(jqnodes, function(n) {
       return new DomNode(CTS.$(n), this);
     }, this);
@@ -1127,6 +1184,7 @@ _.extend(Forrest.prototype, {
       var relation = new Relation(selection1, selection2, rule.name, rule.opts);
       return relation;
     }, this);
+    console.log("Returning Relations", relations);
     return relations;
   }
 
@@ -1298,7 +1356,25 @@ _.extend(Engine.prototype, Events, StateMachine, {
   }
 });
 
-CTS.Debugging = {};
+CTS.Debugging = {
+  DumpStack: function() {
+    var e = new Error('dummy');
+    var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
+        .replace(/^\s+at\s+/gm, '')
+        .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
+        .split('\n');
+    console.log(stack);
+  }
+};
+
+CTS.Debugging.Log = {
+  Fatal: function(msg, obj) {
+    alert(msg);
+    console.log("FATAL", msg, obj);
+  }
+};
+
+
 
 var TreeViz = CTS.Debugging.TreeViz = function(forrest) {
   this.forrest = forrest;

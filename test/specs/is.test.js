@@ -12,7 +12,6 @@ module("is", {
 });
 
 asyncTest("IS text -> text on same page", function () {
-  ok(1 == 1, "Passed"); 
 	//deepEqual(A, B, "should be equal");
   this.a.attr('data-cts', 'is: #b;');
   this.a.html('a');
@@ -23,6 +22,7 @@ asyncTest("IS text -> text on same page", function () {
       equal(this.a.html(), this.b.html(), "should be equal");
       equal(this.a.html(), 'b', "should be 'b'");
       equal(this.b.html(), 'b', "should be 'b'");
+      t = new CTS.Debugging.TreeViz(engine.forrest);
       start();
     },
     callbackScope: this
@@ -30,7 +30,6 @@ asyncTest("IS text -> text on same page", function () {
 });
 
 asyncTest("IS HTML -> HTML on same page", function () {
-  ok(1 == 1, "Passed"); 
 	//deepEqual(A, B, "should be equal");
   this.a.attr('data-cts', 'is: #b;');
   this.a.html('a');

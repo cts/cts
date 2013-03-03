@@ -1,7 +1,37 @@
 // ### Constructor
 var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
   var defaults;
-  this.node = node;
+
+  this.isSiblingGroup = false;
+
+  // A Node contains multiple DOM Nodes
+  if (typeof node == 'object') {
+    if (! _.isUndefined(node.jquery)) {
+      CTS.Debugging.DumpStack();
+      console.log("SIBLINGS A", node);
+      this.siblings = [node];
+    } else if (node instanceof Array) {
+      console.log("SIBLINGS B", node);
+      this.siblings = node;
+    } else if (node instanceof Element) {
+      console.log("SIBLINGS C", node);
+      this.siblings = [$(node)];
+    } else {
+      console.log("SIBLINGS D", node);
+      this.siblings = [];
+    }
+  } else if (typeof node == 'string') {
+    console.log("SIBLINGS E", node);
+    this.siblings = _.map($(node), function(n) { return $(n); });
+  } else {
+    console.log("SIBLINGS F", node);
+    this.siblings = [];
+  }
+
+  if (this.siblings.length > 1) {
+    this.isSiblingGroup = true;
+  }
+
   this.tree = tree;
   this.children = null; 
   this.relations = relations || [];
@@ -18,24 +48,22 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
   },
 
   destroy: function(opts) {
-    this.node.remove();
+    _.each(this.siblings, function(s) {s.remove();});
   },
 
   debugName: function() {
-    return this.node[0].nodeName;
+    return _.map(this.siblings, function(node) {
+      return node[0].nodeName; }
+    ).join(', ');
   },
 
   clone: function(opts) {
-    var n = this.node.clone();
-    
-    // Insert after in the dom
-    this.node.after(n);
-
+    var n = _.map(this.siblings, function(s) {s.clone();});
     // TODO(eob): any use in saving args to apply when cloned?
     var c = new DomNode(n, this.tree, this.relations, this.opts);
-
     // Insert after in CTS hierarchy
     this.parentNode.registerChild(c, {'after': this});
+    return c;
   },
 
   registerChild: function(child, opts) {
@@ -65,72 +93,77 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
  },
 
   getInlineRules: function() {
-    var inline = this.node.attr('data-cts');
-    if ((inline !== null) && (typeof inline != 'undefined')) {
-      return inline;
-    } else {
+    if (this.isSiblingGroup === true) {
       return null;
+    } else {
+      var inline = this.siblings[0].attr('data-cts');
+      console.log("SIBS", this.siblings[0], this.siblings[0].html(), this.siblings);
+      if ((inline !== null) && (typeof inline != 'undefined')) {
+        return inline;
+      } else {
+        return null;
+      }
     }
   },
 
   _createChildren: function() {
-    this.children = [];
     console.log("DomNode::createChildren", this);
-    
-//  var e = new Error('dummy');
-//  var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
-//      .replace(/^\s+at\s+/gm, '')
-//      .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
-//      .split('\n');
-//  console.log(stack);
-
-    var fringe = this.node.children().toArray();
-    
-    while (fringe.length > 0) {
-      console.log("Fringe length: ", fringe.length);
-      var first = CTS.$(fringe.shift());
-      var child = new DomNode(first, this.tree);
-      var relevantRelations = this.tree.forrest.relationsForNode(child);
-      if ((child.node.html() == "a") || (child.node.html() == "b")) {
-        console.log("Found child", child.node.html(), "with relations", relevantRelations);
-      }
-
-      if (relevantRelations.length > 0) {
-        child.relations = relevantRelations;
-        this.registerChild(child);
+    this.children = []; 
+    if (this.isSiblingGroup === true) {
+      _.each(this.siblingGroup, function(node) {
+        this.registerChild(node);
+      }, this);
+    } else {
+      if (this.siblings.length > 1) {
+        CTS.Debugging.Fatal("Siblings > 1", this);
       } else {
-        fringe = _.union(fringe, first.children().toArray());
-        console.log("New fringe length: ", fringe.length);
+        var fringe = this.siblings[0].children().toArray();
+        while (fringe.length > 0) {
+          //console.log("Fringe length: ", fringe.length);
+          var first = CTS.$(fringe.shift());
+          console.log("FIRRST");
+          var child = new DomNode(first, this.tree);
+          var relevantRelations = this.tree.forrest.relationsForNode(child);
+          if (relevantRelations.length > 0) {
+            child.relations = relevantRelations;
+            this.registerChild(child);
+          } else {
+            fringe = _.union(fringe, first.children().toArray());
+            console.log("New fringe length: ", fringe.length);
+          }
+        }
       }
     }
     console.log("Create Children Returned: ", this.children);
   },
 
   failedConditional: function() {
-    this.node.hide();
+    _.each(this.siblings, function(n) { n.hide(); });
   },
 
   /**
    * Replaces the value of this node with the value of the
    * other node provided.
    */
-  isIncoming: function(otherNodes, opts) {
-    console.log("IS Incoming with otherNodes", otherNodes);
-    if (otherNodes.length === 0) {
-      console.log("Other nodes empty!");
-      this.node.html("");
+  isIncoming: function(otherNodeSelection, opts) {
+    console.log("IS Incoming with otherNodes", otherNodeSelection);
+    if (otherNodeSelection.nodes.length === 0) {
+      _.each(this.siblings, function(s) { s.html(""); });
     } else {
-      console.log("Other nodes non empty!");
-      this.node.html(otherNodes[otherNodes.length - 1].isOutgoing(opts));
+      var html = _.map(otherNodeSelection.nodes, function(node) {
+        return node.isOutgoing(opts);
+      }).join("");
+      _.each(this.siblings, function(s) { s.html(html); });
     }
   },
 
   /**
-   * Provides the value of this node.
+   * Provides the vilue of this node.
    */
   isOutgoing: function(opts) {
-    console.log("is outgoing");
-    return this.node.html();
+    return _.map(this.siblings, function(node) {
+      return node.html();
+    }).join("");
   },
 
   /**
@@ -191,9 +224,14 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
    * Provides the itemscope'd nodes.
    */
   areOutgoing: function(opts) {
-    _.filter(this.node.getChildren(), function(n) {
-      n.node.is("[itemscope]");
-    }, this);
+    _.filter(
+      _.union(
+        _.map(this.siblings, function(node) {
+          return node.getChildren();
+        })
+      ), function(n) {
+        n.node.is("[itemscope]");
+      }, this);
   }
 
 });
