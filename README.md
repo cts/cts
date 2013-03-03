@@ -19,4 +19,4 @@ the project root.
  Setup
 =============
 
-I use [qUnit](http://qunitjs.com/), a jUnit-like testing framework for Javascript. 
+I use [qUnit](http://qunitjs.com/), a jUnit-like testing framework for Javascript.
