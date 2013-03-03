@@ -46,6 +46,7 @@ module.exports = function(grunt) {
           "src/parser/relation-parser.js",
           "src/engine.js",
           "src/debugging/debugging.js",
+          "src/debugging/log.js",
           "src/debugging/tree-viz.js",
           "src/fragments/postfix._js"
         ],

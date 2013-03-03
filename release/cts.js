@@ -769,17 +769,24 @@ var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
   // A Node contains multiple DOM Nodes
   if (typeof node == 'object') {
     if (! _.isUndefined(node.jquery)) {
+      CTS.Debugging.DumpStack();
+      console.log("SIBLINGS A", node);
       this.siblings = [node];
     } else if (node instanceof Array) {
+      console.log("SIBLINGS B", node);
       this.siblings = node;
     } else if (node instanceof Element) {
+      console.log("SIBLINGS C", node);
       this.siblings = [$(node)];
     } else {
+      console.log("SIBLINGS D", node);
       this.siblings = [];
     }
   } else if (typeof node == 'string') {
+    console.log("SIBLINGS E", node);
     this.siblings = _.map($(node), function(n) { return $(n); });
   } else {
+    console.log("SIBLINGS F", node);
     this.siblings = [];
   }
 
@@ -848,10 +855,11 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
  },
 
   getInlineRules: function() {
-    if (this.isSiblingGroup) {
+    if (this.isSiblingGroup === true) {
       return null;
     } else {
       var inline = this.siblings[0].attr('data-cts');
+      console.log("SIBS", this.siblings[0], this.siblings[0].html(), this.siblings);
       if ((inline !== null) && (typeof inline != 'undefined')) {
         return inline;
       } else {
@@ -862,34 +870,29 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
   _createChildren: function() {
     console.log("DomNode::createChildren", this);
-    if (this.isSiblingGroup) {
-      this.children = this.siblingGroup;
+    this.children = []; 
+    if (this.isSiblingGroup === true) {
+      _.each(this.siblingGroup, function(node) {
+        this.registerChild(node);
+      }, this);
     } else {
-      this.children = []; 
-  //  var e = new Error('dummy');
-  //  var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
-  //      .replace(/^\s+at\s+/gm, '')
-  //      .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
-  //      .split('\n');
-  //  console.log(stack);
-  
-      var fringe = _.union(
-        _.map(this.siblings, function(node) {
-          return node.children().toArray();
-        })
-      );
-      
-      while (fringe.length > 0) {
-        console.log("Fringe length: ", fringe.length);
-        var first = CTS.$(fringe.shift());
-        var child = new DomNode(first, this.tree);
-        var relevantRelations = this.tree.forrest.relationsForNode(child);
-        if (relevantRelations.length > 0) {
-          child.relations = relevantRelations;
-          this.registerChild(child);
-        } else {
-          fringe = _.union(fringe, first.children().toArray());
-          console.log("New fringe length: ", fringe.length);
+      if (this.siblings.length > 1) {
+        CTS.Debugging.Fatal("Siblings > 1", this);
+      } else {
+        var fringe = this.siblings[0].children().toArray();
+        while (fringe.length > 0) {
+          //console.log("Fringe length: ", fringe.length);
+          var first = CTS.$(fringe.shift());
+          console.log("FIRRST");
+          var child = new DomNode(first, this.tree);
+          var relevantRelations = this.tree.forrest.relationsForNode(child);
+          if (relevantRelations.length > 0) {
+            child.relations = relevantRelations;
+            this.registerChild(child);
+          } else {
+            fringe = _.union(fringe, first.children().toArray());
+            console.log("New fringe length: ", fringe.length);
+          }
         }
       }
     }
@@ -1039,7 +1042,8 @@ var Tree = CTS.Tree = {
 // Constructor
 // -----------
 var DomTree = CTS.DomTree = function(forrest, node, attributes) {
-  this.root = node || new CTS.DomNode(CTS.$('body'), this);
+  console.log("DomTree::constructor", forrest, node);
+  this.root = node || new CTS.DomNode('body', this);
   this.forrest = forrest;
   this.name = "body";
   if ((typeof attributes != 'undefined') && ('name' in attributes)) {
@@ -1051,7 +1055,8 @@ var DomTree = CTS.DomTree = function(forrest, node, attributes) {
 // ----------------
 _.extend(DomTree.prototype, Tree, {
   selectionForSelector: function(selector) {
-    var jqnodes = this.root.node.find(selector.selector).toArray();
+    // Assumption: root can't be a sibling group
+    var jqnodes = this.root.siblings[0].find(selector.selector).toArray();
     var nodes = _.map(jqnodes, function(n) {
       return new DomNode(CTS.$(n), this);
     }, this);
@@ -1185,6 +1190,7 @@ _.extend(Forrest.prototype, {
       var relation = new Relation(selection1, selection2, rule.name, rule.opts);
       return relation;
     }, this);
+    console.log("Returning Relations", relations);
     return relations;
   }
 
@@ -1356,7 +1362,25 @@ _.extend(Engine.prototype, Events, StateMachine, {
   }
 });
 
-CTS.Debugging = {};
+CTS.Debugging = {
+  DumpStack: function() {
+    var e = new Error('dummy');
+    var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
+        .replace(/^\s+at\s+/gm, '')
+        .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
+        .split('\n');
+    console.log(stack);
+  }
+};
+
+CTS.Debugging.Log = {
+  Fatal: function(msg, obj) {
+    alert(msg);
+    console.log("FATAL", msg, obj);
+  }
+};
+
+
 
 var TreeViz = CTS.Debugging.TreeViz = function(forrest) {
   this.forrest = forrest;
