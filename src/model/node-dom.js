@@ -147,7 +147,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
   getRelations: function() {
     if (this.relations === null) {
       if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-        this.relations = tree.forrest.relationsForNode(this);
+        this.relations = this.tree.forrest.relationsForNode(this);
       } else {
         this.relations = [];
       }
