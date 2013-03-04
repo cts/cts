@@ -743,23 +743,23 @@ var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
   if (typeof node == 'object') {
     if (! _.isUndefined(node.jquery)) {
       CTS.Debugging.DumpStack();
-      console.log("SIBLINGS A", node);
+      //console.log("SIBLINGS A", node);
       this.siblings = [node];
     } else if (node instanceof Array) {
-      console.log("SIBLINGS B", node);
+      //console.log("SIBLINGS B", node);
       this.siblings = node;
     } else if (node instanceof Element) {
-      console.log("SIBLINGS C", node);
+      //console.log("SIBLINGS C", node);
       this.siblings = [$(node)];
     } else {
-      console.log("SIBLINGS D", node);
+      //console.log("SIBLINGS D", node);
       this.siblings = [];
     }
   } else if (typeof node == 'string') {
-    console.log("SIBLINGS E", node);
+    //console.log("SIBLINGS E", node);
     this.siblings = _.map($(node), function(n) { return $(n); });
   } else {
-    console.log("SIBLINGS F", node);
+    //console.log("SIBLINGS F", node);
     this.siblings = [];
   }
 
@@ -910,9 +910,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
         // Now we figure out if there is an ARE relation, which
         // requires us to add all enumerables below us as a child.
-        var areRelations = [];
-        
-        _.filter(this.getRelations(), function(relation) {
+        var areRelations = _.filter(this.getRelations(), function(relation) {
           return (relation.name == "are");
         }, this);
 
@@ -921,7 +919,6 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
               "We don't know what to do with >1 ARE for a node yet.",
               this);
         } else if (areRelations.length > 0) {
-
           /*
            * Part 1:
            *  Add kids in the prefix
@@ -933,21 +930,26 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
           }
           this._findChildIn(fringe);
 
+          // TODO(eob):
+          // need to handle prefix/suffix/step for BOTH sides
+          // of the relation.
+
           /*
            * Part 2:
            *  Add the enumerables
            */
           var lastOne = 0;
-          for (i = areRelations[0].opts.prefix;
-               i < (domKids.length - areRelations[0].opts.suffix);
-               i += areRelations[0].step) {
+          i = areRelations[0].opts.prefix;
+          var terminal = (domKids.length - areRelations[0].opts.suffix);
+          for (i; i < terminal; i += areRelations[0].opts.step) {
             var newNodes = [];
             for (var j = 0; j < areRelations[0].opts.step; j++) {
-              newNodes.push(domKids[i+j]);
+              newNodes.push(CTS.$(domKids[i+j]));
               lastOne = i+j;
             }
+            console.log("New", newNodes);
             var newNode = new CTS.DomNode(newNodes);
-            this.registerChild(child);
+            this.registerChild(newNode);
           }
 
           /*
@@ -1047,7 +1049,8 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     var i;
     if (thisSet.length > otherSet.length) {
       for (i = 0; i < diff; i++) {
-        thisSet[thisSet.length - 1].destroy();
+        var excess = thisSet.pop();
+        excess.destroy();
       }
     } else if (thisSet.length < otherSet.length) {
       for (i = 0; i < diff; i++) {

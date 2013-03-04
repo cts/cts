@@ -73,18 +73,16 @@ asyncTest("A rule is turned into a relation", function () {
   });
 });
 
-asyncTest("ARE results in a depth-two tree", function () {
+test("ARE results in a depth-two tree", function () {
   this.a.attr('data-cts', 'are: #b;');
-  this.a.html('<li itemscope>Foo</li><li itemscope>Bar</li><li itemscope>Baz</li></ul>');
+  this.a.html('<li>Foo</li><li>Bar</li><li>Baz</li>');
   this.b.html("<div>Foo</div>");
-  var engine = new CTS.Engine();
-  engine.render({
-    callback: function() {
-      var kids = this.a.children();
-      equal(kids.length, 1, "Should only be one li");
-      start();
-    },
-    callbackScope: this
-  });
+  var A = new CTS.DomNode(this.a);
+  var r = new CTS.Relation(null, null, 'are');
+  A.relations = [r];
+  console.log(A.relations);
+  console.log(A.getRelations());
+  var kids = A.getChildren();
+  equal(kids.length, 3, "should be 3");
 });
 
