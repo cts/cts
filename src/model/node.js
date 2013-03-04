@@ -201,19 +201,19 @@ CTS.Node = {
 
   _performAre: function() {
     //console.log("Perform ARE on", this, this.node.html(), this.relations);
-    var rule = null;
+    var relation = null;
     _.each(this.relations, function(r) {
       if (r.name == "are") {
         console.log("FOUND AN ARE");
         if (r.head().matches(this)) {
-          rule = r;
+          relation = r;
         }
       }
     }, this);
 
-    if (rule) {
+    if (relation) {
       console.log("Found ARE rule");
-      this.areIncoming(rule.tail());
+      this.areIncoming(relation.tail(), relation);
       return true;
     } else {
       return false;

@@ -73,3 +73,18 @@ asyncTest("A rule is turned into a relation", function () {
   });
 });
 
+asyncTest("ARE results in a depth-two tree", function () {
+  this.a.attr('data-cts', 'are: #b;');
+  this.a.html('<li itemscope>Foo</li><li itemscope>Bar</li><li itemscope>Baz</li></ul>');
+  this.b.html("<div>Foo</div>");
+  var engine = new CTS.Engine();
+  engine.render({
+    callback: function() {
+      var kids = this.a.children();
+      equal(kids.length, 1, "Should only be one li");
+      start();
+    },
+    callbackScope: this
+  });
+});
+

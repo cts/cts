@@ -34,7 +34,10 @@ var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
 
   this.tree = tree;
   this.children = null; 
-  this.relations = relations || [];
+  this.relations = null;
+  if (typeof relations != 'undefined') {
+    this.relations = relations;
+  }
   this.opts = opts || {};
   this.parentNode = null;
   this.initialize.apply(this, args);
@@ -48,7 +51,14 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
   },
 
   destroy: function(opts) {
-    _.each(this.siblings, function(s) {s.remove();});
+    // 1. Remove from parent in the shadow DOM
+    // TODO: handle case of trying to unregister root.
+    this.parentNode.unregisterChild(this);
+
+    // 2. Remove nodes form DOM tree
+    _.each(this.siblings, function(s) {
+      s.remove();
+    });
   },
 
   debugName: function() {
@@ -66,13 +76,23 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     return c;
   },
 
+  unregisterChild: function(child, opts) {
+    this.children = _.without(this.children, child);
+  },
+
   registerChild: function(child, opts) {
+    if (this.children === null) {
+      // Danger: potential endless circular recursion
+      // if this function and createChildren don't coordinate
+      // properly.
+      this._createChildren();
+    }
     var didit = false;
     if ((! _.isUndefined(opts)) && (! _.isUndefined(opts.after))) {
       for (var i = this.children.length - 1; i >= 0; i--) {
         if (this.children[i] == opts.after) {
           // First bump forward everything
-          for (var j = children.length - 1; j > i; j--) {
+          for (var j = this.children.length - 1; j > i; j--) {
             this.children[j + 1] = this.children[j];
           }
 
@@ -106,31 +126,108 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     }
   },
 
+  _findChildIn: function(fringe) {
+    // Start exploring the subtree, adding the first.
+    while (fringe.length > 0) {
+      var first = CTS.$(fringe.shift());
+      var child = new DomNode(first, this.tree);
+      var relevantRelations = child.getRelations();
+      if (relevantRelations.length > 0) {
+        child.relations = relevantRelations;
+        this.registerChild(child);
+      } else {
+        fringe = _.union(fringe, first.children().toArray());
+      }
+    }
+  },
+
+  /*
+   * Lazily caches.
+   */
+  getRelations: function() {
+    if (this.relations === null) {
+      if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
+        this.relations = tree.forrest.relationsForNode(this);
+      } else {
+        this.relations = [];
+      }
+    }
+    return this.relations;
+  },
+
   _createChildren: function() {
     console.log("DomNode::createChildren", this);
     this.children = []; 
+
     if (this.isSiblingGroup === true) {
+      // If this is a sibling group, the children are the siblings.
       _.each(this.siblingGroup, function(node) {
         this.registerChild(node);
       }, this);
     } else {
       if (this.siblings.length > 1) {
+        // If this isn't s sibling group, there should only be one node
+        // represented by this node.
         CTS.Debugging.Fatal("Siblings > 1", this);
       } else {
-        var fringe = this.siblings[0].children().toArray();
-        while (fringe.length > 0) {
-          //console.log("Fringe length: ", fringe.length);
-          var first = CTS.$(fringe.shift());
-          console.log("FIRRST");
-          var child = new DomNode(first, this.tree);
-          var relevantRelations = this.tree.forrest.relationsForNode(child);
-          if (relevantRelations.length > 0) {
-            child.relations = relevantRelations;
-            this.registerChild(child);
-          } else {
-            fringe = _.union(fringe, first.children().toArray());
-            console.log("New fringe length: ", fringe.length);
+        // We start off with all child DOM nodes 
+        var domKids = this.siblings[0].children().toArray();
+
+        // Now we figure out if there is an ARE relation, which
+        // requires us to add all enumerables below us as a child.
+        var areRelations = [];
+        
+        _.filter(this.getRelations(), function(relation) {
+          return (relation.name == "are");
+        }, this);
+
+        if (areRelations.length > 1) {
+          CTS.Debugging.Log.Fatal(
+              "We don't know what to do with >1 ARE for a node yet.",
+              this);
+        } else if (areRelations.length > 0) {
+
+          /*
+           * Part 1:
+           *  Add kids in the prefix
+           */
+          var fringe = [];
+          var i = 0;
+          for (i = 0; i < areRelations[0].opts.prefix; i++) {
+            fringe.push(domKids[i]);
           }
+          this._findChildIn(fringe);
+
+          /*
+           * Part 2:
+           *  Add the enumerables
+           */
+          var lastOne = 0;
+          for (i = areRelations[0].opts.prefix;
+               i < (domKids.length - areRelations[0].opts.suffix);
+               i += areRelations[0].step) {
+            var newNodes = [];
+            for (var j = 0; j < areRelations[0].opts.step; j++) {
+              newNodes.push(domKids[i+j]);
+              lastOne = i+j;
+            }
+            var newNode = new CTS.DomNode(newNodes);
+            this.registerChild(child);
+          }
+
+          /*
+           * Part 3:
+           *  Add nodes in the suffix
+           */
+          lastOne += 1;
+          fringe = [];
+          for (i = lastOne; i < domKids.length; i++) {
+            fringe.push(domKids[i]);
+          }
+          this._findChildIn(fringe);
+        } else {
+          /* The easy case: just look for CTS-related nodes in the subtree */
+          this._findChildIn(this.siblings[0].children().toArray());
         }
       }
     }
@@ -167,21 +264,64 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
   },
 
   /**
+   * Gets the enumerables for an ARE relation.
+   */
+  areEnumerables: function(relation) {
+    if (relation.name == "are") {
+      var kids = this.getChildren();
+      return _.filter(kids, function(elem, idx) {
+        return (
+          (idx >= relation.opts.prefix) &&
+          (idx < (kids.length - relation.opts.suffix))
+        );
+      }, this);
+    } else {
+      CTS.Debugging.Log.Fatal("non ARE relation passed to areEnumerables", relation);
+    }
+  },
+
+  /**
    * Performs several functions:
    *  1. Duplicates the itemscope'd child of this node once
    *     per other node.
    *  2. Remaps any down-tree relations such that iterations
    *     align.
    */
-  areIncoming: function(otherNodes, opts) {
+  areIncoming: function(otherSelection, relation, opts) {
     console.log("DomNode::areIncoming");
-    // What are we remapping onto
-    var others = _.flatten(_.map(otherNodes, function(o) {
-      o.areOutgoing(opts);
-    }, this));
 
-    var kids = this.getChildren();
+    // We want to align that with the children of this node.
+    var thisSet = this.areEnumerables(relation);
 
+    // Bail out now if there's nothing here to repeat.
+    if (thisSet.length === 0) {
+      return;
+    }
+    
+    // The otherNodes here are the PARENTS of the enumeration that we'd like to
+    // perform. So first we get all of nodes from the other group which
+    // constitute the enumeration itself.
+    var otherSet = _.flatten(
+        _.map(otherSelection.nodes, function(node) {
+          return node.areOutgoing(relation, opts);
+        })
+    );
+
+   // Align the cardinalities of the two
+    var diff = Math.abs(thisSet.length - otherSet.length);
+    var i;
+    if (thisSet.length > otherSet.length) {
+      for (i = 0; i < diff; i++) {
+        thisSet[thisSet.length - 1].destroy();
+      }
+    } else if (thisSet.length < otherSet.length) {
+      for (i = 0; i < diff; i++) {
+        thisSet[thisSet.length] = thisSet[thisSet.length - 1].clone();
+      }
+    }
+
+    // Note: all this prefix, sufix stuff should be handled
+    // by the getChildren call.
     //var buckets = [];
     //var kid = this.node.children();
     //options = _.extend({
@@ -206,32 +346,23 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     //  return true;
     // }, this);
 
-    // Align the cardinalities of the two
-    var diff = Math.abs(kids.length - others.length);
-    var i;
-    if (kids.length > others.length) {
-      for (i = 0; i < diff; i++) {
-        these[these.length - 1].destroy();
-      }
-    } else if (kids.length < others.length) {
-      for (i = 0; i < diff; i++) {
-        these[these.length] = these[these.length - 1].clone();
-      }
-    }
   },
 
   /**
    * Provides the itemscope'd nodes.
    */
-  areOutgoing: function(opts) {
-    _.filter(
-      _.union(
-        _.map(this.siblings, function(node) {
-          return node.getChildren();
-        })
-      ), function(n) {
-        n.node.is("[itemscope]");
-      }, this);
+  areOutgoing: function(relation, opts) {
+    var kids = this.areEnumerables(relation);
+    if (kids === null) {
+      return [];
+    } else {
+      return kids;
+    }
+    //_.flatten(
+    //  _.map(this.siblings, function(node) {
+    //    return node.getChildren();
+    //  },
+    //this);
   }
 
 });
