@@ -44,7 +44,10 @@ test("ARE Outgoing", function () {
   var C = new CTS.DomNode(this.c);
 
   A.registerChild(C);
-  var r = new CTS.Relation(null, null, 'are');
+
+  var As = new CTS.Selection([A]);
+  var Bs = new CTS.Selection([B]);
+  var r = new CTS.Relation(As, Bs, 'are');
   
   equal(A.areOutgoing(r).length, 1, "should be 1");
   equal(B.areOutgoing(r).length, 0, "should be 0");
@@ -56,8 +59,9 @@ test("ARE Incoming, 1 <- 1", function () {
   var C = new CTS.DomNode(this.c);
   var D = new CTS.DomNode(this.d);
   B.registerChild(D);
+  var As = new CTS.Selection([A]);
   var Bs = new CTS.Selection([B]);
-  var r = new CTS.Relation(null, null, 'are');
+  var r = new CTS.Relation(As, Bs, 'are');
 
   equal(A.getChildren().length, 0, "should be 0");
   A.registerChild(C);
@@ -71,8 +75,9 @@ test("ARE Incoming, 0 <- 2", function () {
   var B = new CTS.DomNode(this.b);
   var C = new CTS.DomNode(this.c);
   var D = new CTS.DomNode(this.d);
+  var As = new CTS.Selection([A]);
   var Bs = new CTS.Selection([B]);
-  var r = new CTS.Relation(null, null, 'are');
+  var r = new CTS.Relation(As, Bs, 'are');
   B.registerChild(C);
   B.registerChild(D);
   equal(A.getChildren().length, 0, "should be 0");
@@ -87,8 +92,9 @@ test("ARE Incoming, 1 <- 2", function () {
   var C = new CTS.DomNode(this.c);
   var D = new CTS.DomNode(this.d);
   var E = new CTS.DomNode(this.e);
+  var As = new CTS.Selection([A]);
   var Bs = new CTS.Selection([B]);
-  var r = new CTS.Relation(null, null, 'are');
+  var r = new CTS.Relation(As, Bs, 'are');
   A.registerChild(E);
   equal(A.getChildren().length, 1, "should be 1");
   B.registerChild(C);
@@ -102,9 +108,9 @@ test("ARE Incoming, 1 <- 0", function () {
   var A = new CTS.DomNode(this.a);
   var B = new CTS.DomNode(this.b);
   var C = new CTS.DomNode(this.c);
-  var r = new CTS.Relation(null, null, 'are');
-
+  var As = new CTS.Selection([A]);
   var Bs = new CTS.Selection([]);
+  var r = new CTS.Relation(As, Bs, 'are');
 
   equal(A.getChildren().length, 0, "should be 0");
   A.registerChild(C);

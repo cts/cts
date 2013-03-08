@@ -13,7 +13,7 @@ var Selection = CTS.Selection = function(nodes, opts) {
 };
 
 _.extend(Selection.prototype, {
-  matches: function(node) {
+  contains: function(node) {
     return _.contains(this.nodes, node);
   }
 });

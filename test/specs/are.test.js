@@ -25,6 +25,14 @@ asyncTest("ARE aligns cardinalities down", function () {
       var bodyKids = body.getChildren();
       equal(bodyKids.length, 1, "only one child of body");
       var A = bodyKids[0];
+      equal(A.relations.length, 1, "A has one relation");
+      var r = A.relations[0];
+      equal(r.name, "are", "that relation is ARE");
+      equal(r.selection1.nodes[0], A, "R selection 1 is A");
+      equal(r.selection2.nodes.length, 1, "R.S2 is len 1");
+      var other = r.selection2.nodes[0];
+      equal(other.getRelations().length, 1, "other has one relation");
+      equal(r.selection2.nodes[0].getChildren().length, 1, "R.S2 has 1 child");
       var aKids = A.getChildren();
       equal(aKids.length, 1, "Should only be one li in a");
       equal(A.siblings[0].html(), "<li>Foo</li>", "only one item");

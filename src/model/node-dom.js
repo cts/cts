@@ -33,13 +33,10 @@ var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
   }
 
   this.tree = tree;
-  this.children = null; 
-  this.relations = null;
   if (typeof relations != 'undefined') {
     this.relations = relations;
   }
   this.opts = opts || {};
-  this.parentNode = null;
   this.initialize.apply(this, args);
 };
 
@@ -139,20 +136,6 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
         fringe = _.union(fringe, first.children().toArray());
       }
     }
-  },
-
-  /*
-   * Lazily caches.
-   */
-  getRelations: function() {
-    if (this.relations === null) {
-      if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-        this.relations = this.tree.forrest.relationsForNode(this);
-      } else {
-        this.relations = [];
-      }
-    }
-    return this.relations;
   },
 
   _createChildren: function() {
@@ -269,15 +252,22 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
    * Gets the enumerables for an ARE relation.
    */
   areEnumerables: function(relation) {
+    console.log("areEnumerables", relation);
     if (relation.name == "are") {
+      var opts = relation.optsFor(this);
+      console.log("opts", opts);
       var kids = this.getChildren();
-      return _.filter(kids, function(elem, idx) {
+      console.log("kids", kids);
+      var passed = _.filter(kids, function(elem, idx) {
         return (
-          (idx >= relation.opts.prefix) &&
-          (idx < (kids.length - relation.opts.suffix))
+          (idx >= opts.prefix) &&
+          (idx < (kids.length - opts.suffix))
         );
       }, this);
+      console.log("passed", passed);
+      return passed;
     } else {
+      console.log("REELN", relation);
       CTS.Debugging.Log.Fatal("non ARE relation passed to areEnumerables", relation);
     }
   },
@@ -297,12 +287,14 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
     // Bail out now if there's nothing here to repeat.
     if (thisSet.length === 0) {
+      console.log("Bailing out of areIncoming");
       return;
     }
     
     // The otherNodes here are the PARENTS of the enumeration that we'd like to
     // perform. So first we get all of nodes from the other group which
     // constitute the enumeration itself.
+    console.log("otherSelection", otherSelection.nodes);
     var otherSet = _.flatten(
         _.map(otherSelection.nodes, function(node) {
           return node.areOutgoing(relation, opts);
@@ -316,6 +308,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
       for (i = 0; i < diff; i++) {
         var excess = thisSet.pop();
         excess.destroy();
+        console.log(thisSet);
       }
     } else if (thisSet.length < otherSet.length) {
       for (i = 0; i < diff; i++) {
@@ -356,6 +349,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
    */
   areOutgoing: function(relation, opts) {
     var kids = this.areEnumerables(relation);
+    console.log("areOutgoing", kids);
     if (kids === null) {
       return [];
     } else {

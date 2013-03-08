@@ -9,6 +9,13 @@
 
 CTS.Node = {
 
+  relations: [],
+  searchedForRelations: false,
+
+  children: null,
+
+  parentNode: null,
+
   initializeStateMachine: function() {
     this.fsmInitialize(
       'Ready', [
@@ -67,6 +74,22 @@ CTS.Node = {
       this._createChildren();
     }
     return this.children;
+  },
+
+  registerRelation: function(relation) {
+    if (! _.contains(this.relations, relation)) {
+      this.relations.push(relation);
+    }
+  },
+
+  getRelations: function() {
+    if (! this.searchedForRelations) {
+      if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
+        this.tree.forrest.registerRelationsForNode(this);
+      }
+      this.searchedForRelations = true;
+    }
+    return this.relations;
   },
 
   treeSize: function() {
@@ -205,7 +228,7 @@ CTS.Node = {
     _.each(this.relations, function(r) {
       if (r.name == "are") {
         console.log("FOUND AN ARE");
-        if (r.head().matches(this)) {
+        if (r.head().contains(this)) {
           relation = r;
         }
       }

@@ -95,24 +95,33 @@ _.extend(Forrest.prototype, {
     return ret;
   },
 
-  relationsForNode: function(node) {
+  registerRelationsForNode: function(node) {
     console.log("Forrest::RelationsForNode");
     var rules = this.rulesForNode(node);
+    console.log("Rules for", node.siblings[0].html(), rules);
     var relations = _.map(rules, function(rule) {
       var selection1 = null;
       var selection2 = null;
       var selector = null;
+      var other = null;
       if (rule.selector1.matches(node)) {
         selection1 = new CTS.Selection([node]);
         selection2 = rule.selector2.toSelection(this);
+        other = selection2;
       } else {
         selection2 = new CTS.Selection([node]);
         selection1 = rule.selector1.toSelection(this);
+        other = selection1;
       }
-      var relation = new Relation(selection1, selection2, rule.name, rule.opts);
-      return relation;
+      var relation = new Relation(selection1, selection2, rule.name, rule.opts, rule.opts1, rule.opts2);
+      node.registerRelation(relation);
+      // Make sure that we wire up the relations,
+      // since some might come in from inline.
+      _.each(other.nodes, function(n) {
+        n.registerRelation(relation);
+      }, this);
     }, this);
-    console.log("Returning Relations", relations);
+    console.log("Returning Relations for", node.siblings[0].html(), relations);
     return relations;
   }
 

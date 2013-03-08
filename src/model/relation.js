@@ -12,14 +12,17 @@ var RelationOpts = CTS.RelationOpts = {
   step: 1
 };
 
-var Relation = CTS.Relation= function(selection1, selection2, name, opts) {
+var Relation = CTS.Relation= function(selection1, selection2, name, opts, opts1, opts2) {
   this.selection1 = selection1;
   this.selection2 = selection2;
   this.name = name;
-  this.opts = _.extend(RelationOpts, opts);
+  this.opts = opts;
+  this.opts1 = _.extend(RelationOpts, opts1);
+  this.opts2 = _.extend(RelationOpts, opts2);
 };
 
 _.extend(Relation.prototype, {
+
   addOption: function(key, value) {
     this.opts[key] = value;
   },
@@ -30,6 +33,15 @@ _.extend(Relation.prototype, {
 
   tail: function() {
     return this.selection2;
+  },
+
+  optsFor: function(node) {
+    if (this.selection1.contains(node)) {
+      return this.opts1;
+    } else if (this.selection2.contains(node)) {
+      return this.opts2;
+    }
+    return {};
   }
 
 });
