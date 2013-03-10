@@ -9,13 +9,6 @@
 
 CTS.Node = {
 
-  relations: [],
-  searchedForRelations: false,
-
-  children: null,
-
-  parentNode: null,
-
   initializeStateMachine: function() {
     this.fsmInitialize(
       'Ready', [
@@ -180,7 +173,7 @@ CTS.Node = {
     var relations = _.filter(this.relations, function(rule) {
       return (
         ((rule.name == "ifexist") || (rule.name == "ifnexist")) &&
-         (rule.head().matches(this)));
+         (rule.head().contains(this)));
     }, this);
 
     if (relations.length === 0) {
@@ -205,8 +198,8 @@ CTS.Node = {
       console.log(r);
       if (r.name == "is") {
         console.log("is is!");
-        if (r.head().matches(this)) {
-          console.log("matches this!");
+        if (r.head().contains(this)) {
+          console.log("contains this!");
           console.log("Perform is");
           rule = r;
         }

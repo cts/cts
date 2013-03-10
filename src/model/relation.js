@@ -42,6 +42,16 @@ _.extend(Relation.prototype, {
       return this.opts2;
     }
     return {};
+  },
+
+  clone: function() {
+    return new CTS.Relation(
+        this.selection1.clone(),
+        this.selection2.clone(),
+        this.name,
+        this.opts,
+        this.opts1,
+        this.opts2);
   }
 
 });

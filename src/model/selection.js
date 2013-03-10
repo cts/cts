@@ -15,5 +15,11 @@ var Selection = CTS.Selection = function(nodes, opts) {
 _.extend(Selection.prototype, {
   contains: function(node) {
     return _.contains(this.nodes, node);
+  },
+
+  clone: function() {
+    // not a deep clone of the selection. we don't want duplicate nodes
+    // running around.
+    return new CTS.Selection(_.union([], this.nodes), this.opts);
   }
 });

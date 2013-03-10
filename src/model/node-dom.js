@@ -1,8 +1,12 @@
 // ### Constructor
 var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
   var defaults;
-
+  this.children = null;
+  this.parentNode = null;
+  this.relations = [];
+  this.searchedForRelations = false;
   this.isSiblingGroup = false;
+  this.isEnumerable = false;
 
   // A Node contains multiple DOM Nodes
   if (typeof node == 'object') {
@@ -65,11 +69,20 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
   },
 
   clone: function(opts) {
-    var n = _.map(this.siblings, function(s) {s.clone();});
+    console.log("SIBSIB", this.siblings);
+    var n = _.map(this.siblings, function(s) {return s.clone();});
     // TODO(eob): any use in saving args to apply when cloned?
-    var c = new DomNode(n, this.tree, this.relations, this.opts);
-    // Insert after in CTS hierarchy
-    this.parentNode.registerChild(c, {'after': this});
+    var c = new DomNode(n, this.tree, [], this.opts);
+    var relations = _.map(this.relations, function(relation) {
+      var r = relation.clone();
+      if (r.selection1.nodes.contains(this)) {
+        r.selection1.nodes = _.without(r.selection1.nodes, this).push(c);
+      } else if (r.selection2.nodes.contains(this)) {
+        r.selection2.nodes = _.without(r.selection2.nodes, this).push(c);
+      }
+      return r;
+    }, this);
+    this.parentNode.registerChild(c, {after: this, andInsert: true});
     return c;
   },
 
@@ -78,6 +91,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
   },
 
   registerChild: function(child, opts) {
+    console.log("registerChild", this, child);
     if (this.children === null) {
       // Danger: potential endless circular recursion
       // if this function and createChildren don't coordinate
@@ -85,6 +99,9 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
       this._createChildren();
     }
     var didit = false;
+
+    //TODO(eob): Handle case where there are no children.
+
     if ((! _.isUndefined(opts)) && (! _.isUndefined(opts.after))) {
       for (var i = this.children.length - 1; i >= 0; i--) {
         if (this.children[i] == opts.after) {
@@ -96,6 +113,9 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
           // Then set this at i+1
           this.children[i+1] = child;
           child.parentNode = this;
+          if ((typeof opts != 'undefined') && (typeof opts.andInsert != 'undefined') && (opts.andInsert === true)) {
+            this.children[i].siblings[this.children[i].siblings.length - 1].after(child.siblings);
+          }
           didit = true;
         }
       }
@@ -104,10 +124,16 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     
     if (! didit) {
       // do it at end as failback, or if no relative position specified
+      console.log("FFFF", this.children);
+      var lastChild = this.children[this.children.length - 1];
+      console.log("Last Child", lastChild, this);
       this.children[this.children.length] = child;
+      if ((typeof opts != 'undefined') && (typeof opts.andInsert != 'undefined') && (opts.andInsert === true)) {
+        lastChild.siblings[lastChild.siblings.length - 1].after(child.siblings);
+      }
       child.parentNode = this;
     }
- },
+  },
 
   getInlineRules: function() {
     if (this.isSiblingGroup === true) {
@@ -130,6 +156,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
       var child = new DomNode(first, this.tree);
       var relevantRelations = child.getRelations();
       if (relevantRelations.length > 0) {
+        console.log("RELATIONS OH MY", first, child, relevantRelations);
         child.relations = relevantRelations;
         this.registerChild(child);
       } else {
@@ -173,30 +200,27 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
            */
           var fringe = [];
           var i = 0;
-          for (i = 0; i < areRelations[0].opts.prefix; i++) {
+          var opts = areRelations[0].optsFor(this);
+          for (i = 0; i < opts.prefix; i++) {
             fringe.push(domKids[i]);
           }
           this._findChildIn(fringe);
-
-          // TODO(eob):
-          // need to handle prefix/suffix/step for BOTH sides
-          // of the relation.
 
           /*
            * Part 2:
            *  Add the enumerables
            */
           var lastOne = 0;
-          i = areRelations[0].opts.prefix;
-          var terminal = (domKids.length - areRelations[0].opts.suffix);
-          for (i; i < terminal; i += areRelations[0].opts.step) {
+          var terminal = (domKids.length - opts.suffix);
+          for (i = opts.prefix; i < terminal; i += opts.step) {
             var newNodes = [];
-            for (var j = 0; j < areRelations[0].opts.step; j++) {
+            for (var j = 0; j < opts.step; j++) {
               newNodes.push(CTS.$(domKids[i+j]));
               lastOne = i+j;
             }
             console.log("New", newNodes);
-            var newNode = new CTS.DomNode(newNodes);
+            var newNode = new CTS.DomNode(newNodes, this.tree);
+            newNode.isEnumerable = true;
             this.registerChild(newNode);
           }
 
@@ -249,30 +273,6 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
   },
 
   /**
-   * Gets the enumerables for an ARE relation.
-   */
-  areEnumerables: function(relation) {
-    console.log("areEnumerables", relation);
-    if (relation.name == "are") {
-      var opts = relation.optsFor(this);
-      console.log("opts", opts);
-      var kids = this.getChildren();
-      console.log("kids", kids);
-      var passed = _.filter(kids, function(elem, idx) {
-        return (
-          (idx >= opts.prefix) &&
-          (idx < (kids.length - opts.suffix))
-        );
-      }, this);
-      console.log("passed", passed);
-      return passed;
-    } else {
-      console.log("REELN", relation);
-      CTS.Debugging.Log.Fatal("non ARE relation passed to areEnumerables", relation);
-    }
-  },
-
-  /**
    * Performs several functions:
    *  1. Duplicates the itemscope'd child of this node once
    *     per other node.
@@ -283,7 +283,9 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     console.log("DomNode::areIncoming");
 
     // We want to align that with the children of this node.
-    var thisSet = this.areEnumerables(relation);
+    var thisSet = _.filter(this.getChildren(), function(child) { 
+      return child.isEnumerable;
+    });
 
     // Bail out now if there's nothing here to repeat.
     if (thisSet.length === 0) {
@@ -311,8 +313,10 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
         console.log(thisSet);
       }
     } else if (thisSet.length < otherSet.length) {
+      var toClone = thisSet[thisSet.length - 1];
       for (i = 0; i < diff; i++) {
-        thisSet[thisSet.length] = thisSet[thisSet.length - 1].clone();
+        console.log("going to clone");
+        thisSet[thisSet.length] = toClone.clone();
       }
     }
 
@@ -348,18 +352,12 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
    * Provides the itemscope'd nodes.
    */
   areOutgoing: function(relation, opts) {
-    var kids = this.areEnumerables(relation);
-    console.log("areOutgoing", kids);
-    if (kids === null) {
-      return [];
-    } else {
-      return kids;
-    }
-    //_.flatten(
-    //  _.map(this.siblings, function(node) {
-    //    return node.getChildren();
-    //  },
-    //this);
+    console.log("areOutgoing");
+    var ret = _.filter(this.getChildren(), function(child) {
+      return child.isEnumerable;
+    });
+    console.log("areOutgoing", ret);
+    return ret;
   }
 
 });
