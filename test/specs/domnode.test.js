@@ -212,4 +212,14 @@ equal(B.getInlineRules(), null, "no inline rules for sibling group");
 equal(D.getInlineRules(), null, "no inline rules if not there");
 });
 
+test("basic cloning: no order", function() {
+  ok(1==1);
+});
 
+test("basic cloning: after", function() {
+  ok(1==1);
+});
+
+test("basic destroying", function() {
+  ok(1==1);
+});
