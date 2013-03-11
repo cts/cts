@@ -43,8 +43,8 @@ asyncTest("ARE aligns cardinalities down", function () {
 
 asyncTest("ARE aligns cardinalities up", function () {
   this.a.attr('data-cts', 'are: #b;');
-  this.a.html('<li>Foo</li>');
-  this.b.html("<div>Foo</div><div>Foo</div><div>Foo</div>");
+  this.a.html('<li data-cts="is: .foo;">Foo</li>');
+  this.b.html("<div class='foo'>Foo</div><div class='foo'>Foo</div><div class='foo'>Foo</div>");
 
   var engine = new CTS.Engine();
   engine.render({
@@ -66,6 +66,15 @@ asyncTest("ARE aligns cardinalities up", function () {
       var aKids = A.getChildren();
       equal(aKids.length, 3, "Should only be three li's in a");
       equal(A.siblings[0].html(), "<li>Foo</li><li>Foo</li><li>Foo</li>", "three LI html");
+      // Now let's test the relations in each bit.
+      equal(aKids[0].relations.length, 1, "First child of A has one relation");
+      equal(aKids[1].relations.length, 1, "Second child of A has one relation");
+      equal(aKids[2].relations.length, 1, "Third child of A has one relation");
+      equal(aKids[0].relations[0].name, 'is', "that realtion is IS");
+      var bKids = B.getChildren();
+      equal(bKids.length, 3, "Should be three b kids");
+      // TODO(eob): Note, the below line will change when this all finally works.
+      equal(bKids[0].relations.length, 3, "Should have three relations");
       start();
     },
     callbackScope: this

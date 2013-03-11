@@ -849,14 +849,25 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     var c = new DomNode(n, this.tree, [], this.opts);
     var relations = _.map(this.relations, function(relation) {
       var r = relation.clone();
-      if (r.selection1.nodes.contains(this)) {
-        r.selection1.nodes = _.without(r.selection1.nodes, this).push(c);
-      } else if (r.selection2.nodes.contains(this)) {
-        r.selection2.nodes = _.without(r.selection2.nodes, this).push(c);
+      if (r.selection1.contains(this)) {
+        r.selection1.nodes = _.without(r.selection1.nodes, this);
+        r.selection1.nodes.push(c);
+        _.each(r.selection2.nodes, function(node) {
+          node.registerRelation(r);
+        });
+      } else if (r.selection2.contains(this)) {
+        r.selection2.nodes = _.without(r.selection2.nodes, this);
+        r.selection2.nodes.push(c);
+        _.each(r.selection1.nodes, function(node) {
+          node.registerRelation(r);
+        });
       }
       return r;
     }, this);
-    this.parentNode.registerChild(c, {after: this, andInsert: true});
+    c.relations = relations;
+    if ((typeof this.parentNode != 'undefined') && (this.parentNode !== null)) {
+      this.parentNode.registerChild(c, {after: this, andInsert: true});
+    }
     return c;
   },
 
@@ -1154,7 +1165,7 @@ var Relation = CTS.Relation= function(selection1, selection2, name, opts, opts1,
   this.selection1 = selection1;
   this.selection2 = selection2;
   this.name = name;
-  this.opts = opts;
+  this.opts = _.extend({}, opts);
   this.opts1 = _.extend(RelationOpts, opts1);
   this.opts2 = _.extend(RelationOpts, opts2);
 };
