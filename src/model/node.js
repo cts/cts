@@ -69,6 +69,22 @@ CTS.Node = {
     return this.children;
   },
 
+  registerRelation: function(relation) {
+    if (! _.contains(this.relations, relation)) {
+      this.relations.push(relation);
+    }
+  },
+
+  getRelations: function() {
+    if (! this.searchedForRelations) {
+      if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
+        this.tree.forrest.registerRelationsForNode(this);
+      }
+      this.searchedForRelations = true;
+    }
+    return this.relations;
+  },
+
   treeSize: function() {
     return 1 + this.getChildren().length;
   },
@@ -102,7 +118,7 @@ CTS.Node = {
         // We did a value map, so move to Processed state.
         // TODO(eob): what if we want to interpret the value as cts-laden html?
         this.fsmTransition("ProcessedIncoming");
-      } else if (this._performRepeat()) {
+      } else if (this._performAre()) {
         this.fsmTransition("ProcessIncomingChildren");
       } else {
         this.fsmTransition("ProcessIncomingChildren");
@@ -157,7 +173,7 @@ CTS.Node = {
     var relations = _.filter(this.relations, function(rule) {
       return (
         ((rule.name == "ifexist") || (rule.name == "ifnexist")) &&
-         (rule.head().matches(this)));
+         (rule.head().contains(this)));
     }, this);
 
     if (relations.length === 0) {
@@ -182,8 +198,8 @@ CTS.Node = {
       console.log(r);
       if (r.name == "is") {
         console.log("is is!");
-        if (r.head().matches(this)) {
-          console.log("matches this!");
+        if (r.head().contains(this)) {
+          console.log("contains this!");
           console.log("Perform is");
           rule = r;
         }
@@ -201,50 +217,23 @@ CTS.Node = {
 
   _performAre: function() {
     //console.log("Perform ARE on", this, this.node.html(), this.relations);
-    var rule = null;
+    var relation = null;
     _.each(this.relations, function(r) {
       if (r.name == "are") {
-        if (r.head().matches(this)) {
-          rule = r;
+        console.log("FOUND AN ARE");
+        if (r.head().contains(this)) {
+          relation = r;
         }
       }
     }, this);
 
-    if (rule) {
+    if (relation) {
       console.log("Found ARE rule");
-      this.areIncoming(rule.tail());
+      this.areIncoming(relation.tail(), relation);
       return true;
     } else {
       return false;
     }
-  },
-
-  _performRepeat: function() {
-    var relations = _.filter(this.relations, function(rule) {
-      return ((rule.name == "repeat") && (rule.head().matches(this)));
-    }, this);
-
-    if (relations.length > 0) {
-      // TODO(eob): Figure out what to do if > 1 rule
-      var rule = relations[relations.length - 1];
-      /*
-       * Here is where things get tricky. "repeat" is really a bit of a functor
-       * over the relations: it redraws down-tree relations such that each respective
-       * item matches up.
-       */
-
-      // Get the source selection.
-      var sourceSelection = rule.tail().nodes;
-
-      if ((typeof sourceSelection.length != "undefined") && (sourceSelection.length > 0)) {
-      } else {
-      }
-
-      return true;
-    } else {
-      return false;
-    }
-
   }
 
 };

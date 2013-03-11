@@ -4,6 +4,7 @@ module("DomNode", {
     this.b = $("<div id='b'>b</div>").appendTo($("body"));
     this.c = $("<div id='c'>c</div>").appendTo($("body"));
     this.d = $("<div id='d'>d</div>").appendTo($("body"));
+    this.e = $("<div id='e'>e</div>").appendTo($("body"));
 	},
 	teardown : function () {
     this.a.remove();
@@ -14,7 +15,109 @@ module("DomNode", {
     this.c = null;
     this.d.remove();
     this.d = null;
+    this.e.remove();
+    this.e = null;
 	}
+});
+
+test("Register, Unregister, and Destroy", function () {
+  var A = new CTS.DomNode(this.a);
+  var B = new CTS.DomNode(this.b);
+  var C = new CTS.DomNode(this.c);
+  equal(A.getChildren().length, 0, "should be 0");
+  A.registerChild(C);
+  equal(A.getChildren().length, 1, "should be 1");
+  A.unregisterChild(C);
+  equal(A.getChildren().length, 0, "should be 0");
+  A.registerChild(B);
+  A.registerChild(C);
+  equal(A.getChildren().length, 2, "should be 2");
+  B.destroy();
+  equal(A.getChildren().length, 1, "should be 1");
+  C.destroy();
+  equal(A.getChildren().length, 0, "should be 0");
+});
+
+test("ARE Outgoing", function () {
+  var A = new CTS.DomNode(this.a);
+  var B = new CTS.DomNode(this.b);
+  var C = new CTS.DomNode(this.c);
+
+  A.registerChild(C);
+
+  var As = new CTS.Selection([A]);
+  var Bs = new CTS.Selection([B]);
+  var r = new CTS.Relation(As, Bs, 'are');
+  
+  equal(A.areOutgoing(r).length, 1, "should be 1");
+  equal(B.areOutgoing(r).length, 0, "should be 0");
+});
+
+test("ARE Incoming, 1 <- 1", function () {
+  var A = new CTS.DomNode(this.a);
+  var B = new CTS.DomNode(this.b);
+  var C = new CTS.DomNode(this.c);
+  var D = new CTS.DomNode(this.d);
+  B.registerChild(D);
+  var As = new CTS.Selection([A]);
+  var Bs = new CTS.Selection([B]);
+  var r = new CTS.Relation(As, Bs, 'are');
+
+  equal(A.getChildren().length, 0, "should be 0");
+  A.registerChild(C);
+  equal(A.getChildren().length, 1, "should be 1");
+  A.areIncoming(Bs, r);
+  equal(A.getChildren().length, 1, "should be 1");
+});
+
+test("ARE Incoming, 0 <- 2", function () {
+  var A = new CTS.DomNode(this.a);
+  var B = new CTS.DomNode(this.b);
+  var C = new CTS.DomNode(this.c);
+  var D = new CTS.DomNode(this.d);
+  var As = new CTS.Selection([A]);
+  var Bs = new CTS.Selection([B]);
+  var r = new CTS.Relation(As, Bs, 'are');
+  B.registerChild(C);
+  B.registerChild(D);
+  equal(A.getChildren().length, 0, "should be 0");
+  equal(B.getChildren().length, 2, "should be 2");
+  A.areIncoming(Bs, r);
+  equal(A.getChildren().length, 0, "should be 0");
+});
+
+test("ARE Incoming, 1 <- 2", function () {
+  var A = new CTS.DomNode(this.a);
+  var B = new CTS.DomNode(this.b);
+  var C = new CTS.DomNode(this.c);
+  var D = new CTS.DomNode(this.d);
+  var E = new CTS.DomNode(this.e);
+  var As = new CTS.Selection([A]);
+  var Bs = new CTS.Selection([B]);
+  var r = new CTS.Relation(As, Bs, 'are');
+  A.registerChild(E);
+  equal(A.getChildren().length, 1, "should be 1");
+  B.registerChild(C);
+  B.registerChild(D);
+  equal(B.getChildren().length, 2, "should be 2");
+  A.areIncoming(Bs, r);
+  equal(A.getChildren().length, 2, "should be 2");
+});
+
+test("ARE Incoming, 1 <- 0", function () {
+  var A = new CTS.DomNode(this.a);
+  var B = new CTS.DomNode(this.b);
+  var C = new CTS.DomNode(this.c);
+  var As = new CTS.Selection([A]);
+  var Bs = new CTS.Selection([]);
+  var r = new CTS.Relation(As, Bs, 'are');
+
+  equal(A.getChildren().length, 0, "should be 0");
+  A.registerChild(C);
+  equal(A.getChildren().length, 1, "should be 1");
+  A.areIncoming(Bs, r);
+  equal(A.getChildren().length, 0, "should be 0");
+  console.log(A.getChildren());
 });
 
 test("IS Incoming, 1 <- 1", function () {
@@ -108,4 +211,5 @@ equal(A.getInlineRules(), "a: A;", "should return inline rules");
 equal(B.getInlineRules(), null, "no inline rules for sibling group");
 equal(D.getInlineRules(), null, "no inline rules if not there");
 });
+
 

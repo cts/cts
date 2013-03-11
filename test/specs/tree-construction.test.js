@@ -14,22 +14,14 @@ module("tree-construction", {
 	}
 });
 
-asyncTest("Two trees present by default", function() {
-  this.a.attr('data-cts', 'is: #b;');
-  this.a.html('a');
-  this.b.html('b');
+test("Two trees present by default", function() {
   var engine = new CTS.Engine();
-  engine.render({
-    callback: function() {
-      var treeSize = _.keys(engine.forrest.trees).length;
-      equal(treeSize, 2, "should be equal");
-      ok(typeof engine.forrest.trees.body != 'undefined', 'One tree is body');
-      ok(typeof engine.forrest.trees.window != 'undefined', 'One tree is window');
-      start();
-    },
-    callbackScope: this
-  });
+  var treeSize = _.keys(engine.forrest.trees).length;
+  equal(treeSize, 2, "should be equal");
+  ok(typeof engine.forrest.trees.body != 'undefined', 'One tree is body');
+  ok(typeof engine.forrest.trees.window != 'undefined', 'One tree is window');
 });
+
 
 asyncTest("Properly sized content DOM is constructed", function () {
   this.a.attr('data-cts', 'is: #b;');
@@ -41,7 +33,7 @@ asyncTest("Properly sized content DOM is constructed", function () {
     callback: function() {
       var treeSize = engine.forrest.getPrimaryTree().root.treeSize();
       console.log("THE TREE", engine.forrest.getPrimaryTree().root);
-      equal(treeSize, 2, "should be equal");
+      equal(treeSize, 2, "Only two nodes should be in primary tree.");
       start();
     },
     callbackScope: this
@@ -71,5 +63,21 @@ asyncTest("A rule is turned into a relation", function () {
     },
     callbackScope: this
   });
+});
+
+test("ARE results in a depth-two tree", function () {
+  this.a.attr('data-cts', 'are: #b;');
+  this.a.html('<li>Foo</li><li>Bar</li><li>Baz</li>');
+  this.b.html("<div>Foo</div>");
+  var A = new CTS.DomNode(this.a);
+  var B = new CTS.DomNode(this.b);
+  var Aa = new CTS.Selection([A]);
+  var Bb = new CTS.Selection([B]);
+  var r = new CTS.Relation(Aa, Bb, 'are');
+  A.relations = [r];
+  console.log(A.relations);
+  console.log(A.getRelations());
+  var kids = A.getChildren();
+  equal(kids.length, 3, "should be 3");
 });
 
