@@ -43,6 +43,7 @@ test("ARE Outgoing", function () {
   var B = new CTS.DomNode(this.b);
   var C = new CTS.DomNode(this.c);
 
+  C.isEnumerable = true;
   A.registerChild(C);
 
   var As = new CTS.Selection([A]);
@@ -95,9 +96,12 @@ test("ARE Incoming, 1 <- 2", function () {
   var As = new CTS.Selection([A]);
   var Bs = new CTS.Selection([B]);
   var r = new CTS.Relation(As, Bs, 'are');
+  E.isEnumerable = true;
   A.registerChild(E);
   equal(A.getChildren().length, 1, "should be 1");
+  C.isEnumerable = true;
   B.registerChild(C);
+  D.isEnumerable = true;
   B.registerChild(D);
   equal(B.getChildren().length, 2, "should be 2");
   A.areIncoming(Bs, r);
@@ -113,6 +117,7 @@ test("ARE Incoming, 1 <- 0", function () {
   var r = new CTS.Relation(As, Bs, 'are');
 
   equal(A.getChildren().length, 0, "should be 0");
+  C.isEnumerable = true;
   A.registerChild(C);
   equal(A.getChildren().length, 1, "should be 1");
   A.areIncoming(Bs, r);
@@ -212,8 +217,55 @@ equal(B.getInlineRules(), null, "no inline rules for sibling group");
 equal(D.getInlineRules(), null, "no inline rules if not there");
 });
 
-test("basic cloning: no order", function() {
-  ok(1==1);
+test("basic clone", function() {
+  var A = new CTS.DomNode(this.a);
+  var B = new CTS.DomNode(this.b);
+  var r = new CTS.Relation(new CTS.Selection([A]), new CTS.Selection([B]), "are");
+  A.relations = [r];
+  B.relations = [r];
+  equal(A.relations.length, 1, "A has one relation");
+  equal(B.relations.length, 1, "B has one relation");
+  var C = A.clone();
+  equal(C.relations.length, 1, "C has one relation");
+  var r2 = C.relations[0];
+  equal(r2.selection1.nodes.length, 1, "Copied relation has one source");
+  equal(r2.selection1.nodes[0], C, "Copied relation is tied to copy");
+  equal(r2.selection2.nodes.length, 1, "Copied relation has one target");
+  equal(r2.selection2.nodes[0], B, "Copied relation is tied to old target");
+  equal(r2.name, r.name, "Copied relation has same name");
+  equal(B.relations.length, 2, "B now has two relations");
+});
+
+asyncTest("basic cloning: in an are command", function() {
+  this.a.attr('data-cts', 'are: #b;');
+  this.a.html('<li>Foo</li>');
+  this.b.html("<div>Foo</div><div>Foo</div><div>Foo</div>");
+
+  var engine = new CTS.Engine();
+  engine.render({
+    callback: function() {
+      var tree = engine.forrest.trees['body'];
+      var body = tree.root;
+      console.log('body', body);
+      var bodyKids = body.getChildren();
+      equal(bodyKids.length, 1, "only one child of body");
+      var A = bodyKids[0];
+      equal(A.relations.length, 1, "A has one relation");
+      var r = A.relations[0];
+      equal(r.name, "are", "that relation is ARE");
+      equal(r.selection1.nodes[0], A, "R selection 1 is A");
+      equal(r.selection2.nodes.length, 1, "R.S2 is len 1");
+      var other = r.selection2.nodes[0];
+      equal(other.getRelations().length, 1, "other has one relation");
+      equal(r.selection2.nodes[0].getChildren().length, 3, "R.S2 has 3 children");
+      var aKids = A.getChildren();
+      equal(aKids.length, 3, "Should only be three li's in a");
+      equal(A.siblings[0].html(), "<li>Foo</li><li>Foo</li><li>Foo</li>", "three LI html");
+      start();
+    },
+    callbackScope: this
+  });
+
 });
 
 test("basic cloning: after", function() {
