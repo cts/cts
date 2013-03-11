@@ -16,7 +16,7 @@ var Relation = CTS.Relation= function(selection1, selection2, name, opts, opts1,
   this.selection1 = selection1;
   this.selection2 = selection2;
   this.name = name;
-  this.opts = opts;
+  this.opts = _.extend({}, opts);
   this.opts1 = _.extend(RelationOpts, opts1);
   this.opts2 = _.extend(RelationOpts, opts2);
 };
