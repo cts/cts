@@ -9,6 +9,8 @@
 
 CTS.Node = {
 
+  '_kind': 'undefined',
+
   initializeStateMachine: function() {
     this.fsmInitialize(
       'Ready', [
@@ -83,6 +85,14 @@ CTS.Node = {
       this.searchedForRelations = true;
     }
     return this.relations;
+  },
+
+  getSubtreeRelations: function() {
+    return _.union(this.getRelations(), _.flatten(
+      _.map(this.getChildren(), function(kid) {
+        return kid.getSubtreeRelations();
+      }))
+    );
   },
 
   treeSize: function() {
@@ -216,7 +226,6 @@ CTS.Node = {
   },
 
   _performAre: function() {
-    //console.log("Perform ARE on", this, this.node.html(), this.relations);
     var relation = null;
     _.each(this.relations, function(r) {
       if (r.name == "are") {
@@ -228,8 +237,30 @@ CTS.Node = {
     }, this);
 
     if (relation) {
-      console.log("Found ARE rule");
-      this.areIncoming(relation.tail(), relation);
+      // This aligns the cardinalities of the downstream trees.
+      var other = relation.tail();
+      var otherKids = other.getChildren();
+      this.areIncoming(other, relation);
+
+      // Now we want to split up the relations between aligned children
+
+      // First, collect all relations whose selections involve all and exactly the children
+      // of both sides.
+      var relations = [];
+      var kids = this.getChildren();
+      if (kids.length > 0) {
+        var candidateRelations = kids[0].getSubtreeRelations();
+        relations = _.filter(candidateRelations, function(r) {
+          return (r.tail().matchesArray(otherKids, true, true) && 
+              r.head().matchesArray(kids, true));
+        });
+      }
+
+      // Relations is not the set of all relations that match
+      // the CTS children of the two ARE nodes.
+
+      // For each i, spawn a new relation, 
+
       return true;
     } else {
       return false;

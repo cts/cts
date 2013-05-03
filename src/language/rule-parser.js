@@ -1,5 +1,44 @@
 // RuleParser
 // ==========================================================================
+
+/**
+ *  To do:
+ *
+ *  SHEET := CONTEXT RULES | RULES ;
+ *  CONTEXT := PROPERTY-BLOCK ;
+ *  RULES := RULE RULES | RULE
+ *  RULE := DECORATED-SELECTOR DECORATED-RELATION DECORATED-SELECTOR ;
+ *  DECORATED-RELATION := RELATION | RELATION PROPERTY-BLOCK ;
+ *  RELATION := is, are, recast, if-exist, if-exist ;
+ *  PROPERTY-BLOCK := { KEY-VALUE-STATEMENTS }
+ *  KEY-VALUE-STATEMENTS := KEY-VALUE | KEY-VALUE KEY-VALUE-STATEMENTS ;
+ *  KEY-VALUE := string : string ; | string : "quoted-string" ;
+ *  DECORATED-SELECTOR := SELECTOR | SELECTOR PROPERTY-BLOCK ;
+ *  SELECTOR := string ;
+ */
+
+//CTS.LanguageSpec = {};
+//
+//CTS.LanguageSpec.Transitions = {
+//  'SHEET': [['RULES']],
+//  'RULES': [['RULE', 'RULES'], ['RULE']],
+//  'RULE': [['DECORATED-SELECTOR', 'DECORATED-RELATION', 'DECORATED-SELECTOR']],
+//  'DECORATED-RELATION': [['RELATION'], ['RELATION', 'PROPERTY-BLOCK']]
+//};
+//
+//var Parser = CTS.Parser = {
+//  isNonTerminal: function(string) {
+//    return (typeof CTS.LanguageSpec.Transitions != 'undefined');
+//  },
+//
+//  parse: function(string, state, accumulator, index, stack, pointer) {
+//    if (CTS.Parser.isNonTerminal(state)) {
+//    } else {
+//      // We're building up a 
+//    }
+//  }
+//}
+
 var RuleParser = CTS.RuleParser = {
   incorporate: function(ruleMap, selector, block, inlineNode) {
     console.log("RuleParser::incorporate start");

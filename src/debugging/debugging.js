@@ -6,5 +6,9 @@ CTS.Debugging = {
         .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
         .split('\n');
     console.log(stack);
+  },
+
+  Error: function(message, extras) {
+    console.log(message, extras);
   }
 };

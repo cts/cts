@@ -6,6 +6,23 @@ var Selector = CTS.Selector = {
            ", variant:" + this.variant + "}>";
   },
 
+  matches: function(node) {
+    if (_.isUndefined(node._kind)) {
+      CTS.Debugging.Error("Node has no kind", [node]); 
+      return false;
+    } else if (node._kind != this._kind) {
+      CTS.Debugging.Error("Node has wrong kind", [node]);
+      return false;
+    } else {
+      if (this.inline) {
+        return (this.inlineNode == node);
+      } else {
+        var res = ((this.treeName == node.tree.name) && (node.node.is(this.selector)));
+        return res;
+      }
+    }
+  },
+
   // Returns tuple of [treeName, treeType, stringSpec]
   PreParse: function(selectorString) {
     var treeName = "body";

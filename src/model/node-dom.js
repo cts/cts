@@ -1,6 +1,7 @@
 // ### Constructor
-var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
+var DomNode = CTS.DomNode = function(node, tree, opts, args) {
   var defaults;
+  this._kind = 'dom'
   this.children = null;
   this.parentNode = null;
   this.relations = [];
@@ -37,8 +38,8 @@ var DomNode = CTS.DomNode = function(node, tree, relations, opts, args) {
   }
 
   this.tree = tree;
-  if (typeof relations != 'undefined') {
-    this.relations = relations;
+  if (typeof opts.relations != 'undefined') {
+    this.relations = opts.relations;
   }
   this.opts = opts || {};
   this.initialize.apply(this, args);
@@ -284,11 +285,10 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
   },
 
   /**
-   * Performs several functions:
    *  1. Duplicates the itemscope'd child of this node once
    *     per other node.
-   *  2. Remaps any down-tree relations such that iterations
-   *     align.
+   *
+   *  Does NOT remap down-tree relations. That's performed by superclass.
    */
   areIncoming: function(otherSelection, relation, opts) {
     console.log("DomNode::areIncoming");

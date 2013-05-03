@@ -65,6 +65,10 @@ asyncTest("A rule is turned into a relation", function () {
   });
 });
 
+asyncTest("getSubtreeRelations", function() {
+  ok(false, "getSubtreeRelations");
+});
+
 test("ARE results in a depth-two tree", function () {
   this.a.attr('data-cts', 'are: #b;');
   this.a.html('<li>Foo</li><li>Bar</li><li>Baz</li>');
