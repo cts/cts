@@ -26,13 +26,17 @@ module.exports = function(grunt) {
           "<banner>",
           "src/fragments/prefix._js",
           "src/preamble.js",
+          "src/debugging/log.js",
           "src/util/state-machine.js",
           "src/util/events.js",
+          "src/util/utilities.js",
           "src/language/rule.js",
           "src/language/selector.js",
           "src/language/selector-dom.js",
           "src/language/selector-json.js",
           "src/language/rule-parser.js",
+          "grammar/parsers/cts-2.js",
+          "src/fragments/postparser._js",
           "src/model/node.js",
           "src/model/node-dom.js",
           "src/model/node-json.js",
@@ -46,10 +50,11 @@ module.exports = function(grunt) {
           "src/model/selection-dom.js",
           "src/model/rule.js",
           "src/parser/relation-parser.js",
+          "src/bootstrapper.js",
           "src/engine.js",
           "src/debugging/debugging.js",
-          "src/debugging/log.js",
           "src/debugging/tree-viz.js",
+          "src/autoloader.js",
           "src/fragments/postfix._js"
         ],
         dest : "release/cts.js"
@@ -76,9 +81,24 @@ module.exports = function(grunt) {
       options: {
         browser: true
       }
+    },
+    jison: {
+      js: {
+        outputType: "js",
+        inputType: 'json',
+        files: {
+          'grammar/parsers/cts-2.js': 'grammar/cts-grammar-2.json'
+        }
+      }
     }
   });
 
-  // Default task.
-  grunt.registerTask('default', 'lint concat min');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-qunit');
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-contrib-concat');
+
+  require('./tasks/jison-task.js')(grunt);
+
+  grunt.registerTask('default', ['jshint', 'jison', 'concat']);
 };

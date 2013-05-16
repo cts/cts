@@ -8,7 +8,4 @@ CTS.Debugging = {
     console.log(stack);
   },
 
-  Error: function(message, extras) {
-    console.log(message, extras);
-  }
 };

@@ -238,11 +238,48 @@ CTS.Node = {
 
     if (relation) {
       // This aligns the cardinalities of the downstream trees.
-      var other = relation.tail();
-      var otherKids = other.getChildren();
-      this.areIncoming(other, relation);
 
-      // Now we want to split up the relations between aligned children
+      // Initialize some vars from this
+      var thisSet = _.filter(this.getChildren(), function(child) { 
+        return child.isEnumerable;
+      });
+      var thisCardinality = thisSet.length;
+      if (thisCardinality.length == 0) {
+        // Bail out: there's nothing to do.
+        return;
+      }
+
+      // Initialize some vars from other
+      var otherSelection = relation.tail();
+      var otherSet = _.flatten(
+        _.map(otherSelection.nodes, function(node) {
+          return node.areOutgoing(relation, opts);
+        })
+      );
+      var otherCardinality = otherSet.length;
+      var otherKids = _.union(
+          _.map(otherSelection.nodes, function(o) {
+            o.getChildren()
+      }));
+
+      // 1. ALIGN CARDINALITY
+      var diff = Math.abs(thisCardinality - otherCardinality);
+      var i;
+      if (thisCardinality > otherCardinality) {
+        for (i = 0; i < diff; i++) {
+          var excess = thisSet.pop();
+          excess.destroy();
+          console.log(thisSet);
+        }
+      } else if (thisCardinality < otherCardinality) {
+        var toClone = thisSet[thisSet.length - 1];
+        for (i = 0; i < diff; i++) {
+          console.log("going to clone");
+          thisSet[thisSet.length] = toClone.clone();
+        }
+      }
+
+      // 2. SPLIT UP RELATIONS BETWEEN ALIGNED CHILDREN
 
       // First, collect all relations whose selections involve all and exactly the children
       // of both sides.
@@ -252,7 +289,7 @@ CTS.Node = {
         var candidateRelations = kids[0].getSubtreeRelations();
         relations = _.filter(candidateRelations, function(r) {
           return (r.tail().matchesArray(otherKids, true, true) && 
-              r.head().matchesArray(kids, true));
+            r.head().matchesArray(kids, true));
         });
       }
 

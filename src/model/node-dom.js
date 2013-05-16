@@ -36,12 +36,12 @@ var DomNode = CTS.DomNode = function(node, tree, opts, args) {
   if (this.siblings.length > 1) {
     this.isSiblingGroup = true;
   }
+  this.opts = opts || {};
 
   this.tree = tree;
-  if (typeof opts.relations != 'undefined') {
-    this.relations = opts.relations;
+  if (typeof this.opts.relations != 'undefined') {
+    this.relations = this.opts.relations;
   }
-  this.opts = opts || {};
   this.initialize.apply(this, args);
 };
 
@@ -284,53 +284,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     }).join("");
   },
 
-  /**
-   *  1. Duplicates the itemscope'd child of this node once
-   *     per other node.
-   *
-   *  Does NOT remap down-tree relations. That's performed by superclass.
-   */
   areIncoming: function(otherSelection, relation, opts) {
-    console.log("DomNode::areIncoming");
-
-    // We want to align that with the children of this node.
-    var thisSet = _.filter(this.getChildren(), function(child) { 
-      return child.isEnumerable;
-    });
-
-    // Bail out now if there's nothing here to repeat.
-    if (thisSet.length === 0) {
-      console.log("Bailing out of areIncoming");
-      return;
-    }
-    
-    // The otherNodes here are the PARENTS of the enumeration that we'd like to
-    // perform. So first we get all of nodes from the other group which
-    // constitute the enumeration itself.
-    console.log("otherSelection", otherSelection.nodes);
-    var otherSet = _.flatten(
-        _.map(otherSelection.nodes, function(node) {
-          return node.areOutgoing(relation, opts);
-        })
-    );
-
-   // Align the cardinalities of the two
-    var diff = Math.abs(thisSet.length - otherSet.length);
-    var i;
-    if (thisSet.length > otherSet.length) {
-      for (i = 0; i < diff; i++) {
-        var excess = thisSet.pop();
-        excess.destroy();
-        console.log(thisSet);
-      }
-    } else if (thisSet.length < otherSet.length) {
-      var toClone = thisSet[thisSet.length - 1];
-      for (i = 0; i < diff; i++) {
-        console.log("going to clone");
-        thisSet[thisSet.length] = toClone.clone();
-      }
-    }
-
     // Note: all this prefix, sufix stuff should be handled
     // by the getChildren call.
     //var buckets = [];
@@ -351,12 +305,10 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     //    buckets[buckets.length - 1].append(kid[i]);
     //  }
     //}
-
     // Find the itemscoped children of this node.
     // var these = _.filter(this.node.children(), function(n) {
     //  return true;
     // }, this);
-
   },
 
   /**

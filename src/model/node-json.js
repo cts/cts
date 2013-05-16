@@ -2,8 +2,8 @@
 var JsonNode = CTS.JsonNode = function(obj, tree, opts, args) {
   var defaults;
   this._kind = 'json';
-  this.dataType = dataType; // {set, object, property, string, boolean, number}
-  this.value = ptr;
+  this.dataType = null; // {set, object, property, string, boolean, number}
+  this.value = null;
   this.tree = tree;
   this.opts = opts || {};
   this.initialize.apply(this, obj, args);
@@ -17,10 +17,10 @@ _.extend(CTS.JsonNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     this.children = [];
 
     // Recursively create all children
-    if (_isNull(obj)) {
+    if (_.isNull(obj)) {
       this.dataType = 'null';
       this.value = null;
-    } else if (isUndefined(obj)) {
+    } else if (_.isUndefined(obj)) {
       this.dataType = 'null';
       this.value = null;
     } else if (_.isArray(obj)) {

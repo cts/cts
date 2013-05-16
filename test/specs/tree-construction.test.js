@@ -67,6 +67,7 @@ asyncTest("A rule is turned into a relation", function () {
 
 asyncTest("getSubtreeRelations", function() {
   ok(false, "getSubtreeRelations");
+  start();
 });
 
 test("ARE results in a depth-two tree", function () {

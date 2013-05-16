@@ -104,7 +104,7 @@ test("ARE Incoming, 1 <- 2", function () {
   D.isEnumerable = true;
   B.registerChild(D);
   equal(B.getChildren().length, 2, "should be 2");
-  A.areIncoming(Bs, r);
+  A._performAre(Bs, r);
   equal(A.getChildren().length, 2, "should be 2");
 });
 

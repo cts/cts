@@ -22,7 +22,7 @@ asyncTest("IS text -> text on same page", function () {
       equal(this.a.html(), this.b.html(), "should be equal");
       equal(this.a.html(), 'b', "should be 'b'");
       equal(this.b.html(), 'b', "should be 'b'");
-      t = new CTS.Debugging.TreeViz(engine.forrest);
+      //t = new CTS.Debugging.TreeViz(engine.forrest);
       start();
     },
     callbackScope: this
