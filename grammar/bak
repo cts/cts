@@ -1,0 +1,49 @@
+{
+  "comment": "CTS Grammar version 2.0",
+  "author": "Ted Benson <eob@csail.mit.edu>",
+
+  "lex": {
+    "macros": {
+      "digit": "[0-9]",
+      "esc": "\\\\",
+      "is": "\\s+is\\s+",
+      "are": "\\s+are\\s+",
+      "graft": "\\s+graft\\s+",
+      "ifexist": "\\s+if\\-exist\\s+",
+      "ifnexist": "\\s+if\\-nexist\\s+",
+      "eos": "\\s*;\\s*"
+    },
+    "rules": [
+      ["(?:{esc}[\"bfnrt/{esc}]|{esc}u[a-fA-F0-9]{4}|[^;{is}{are}{graft}{ifexist}{ifnexist}\\{\\}])+", "return 'UNQUOTEDSTRING';"],
+      ["[A-Za-z]+[A-Za-z0-9_-]*\\s*:\\s*", "yytext = yytext.substr(0, yytext.indexOf(':')); return 'KEY';"],
+      ["\"(?:{esc}[\"bfnrt/{esc}]|{esc}u[a-fA-F0-9]{4}|[^\"{esc}])*\"", "yytext = yytext.substr(1,yyleng-2); return 'QUOTEDSTRING';"],
+      ["\\s*\\{\\s*", "return '{'"],
+      ["\\s*\\}\\s*", "return '}'"],
+      ["{is}", "return 'IS'"],
+      ["{are}", "return 'ARE'"],
+      ["{graft}", "return 'GRAFT'"],
+      ["{ifexist}", "return 'IFEXIST'"],
+      ["{ifnexist}", "return 'IFNEXIST'"],
+      ["{eos}", "return ';'"]
+    ]
+  },
+
+  "tokens": "KEY UNQUOTEDSTRING QUOTEDSTRING { } ; IS ARE GRAFT IFEXIST IFNEXIST",
+  "start": "CTSText",
+
+  "bnf": {
+    "CTSText": [ "" ],
+    "Rules": [ "Rules Rule", "Rule" ],
+    "Rule": [ "DecoratedSelectorA DecoratedRelation DecoratedSelectorB ;" ],
+    "DecoratedSelectorA": [ "DecoratedSelector" ],
+    "DecoratedSelectorB": [ "DecoratedSelector" ],
+    "DecoratedRelation": [ "Relation", "Relation PropertyBlock" ],
+    "Relation": [ "IS", "ARE", "GRAFT", "IFEXIST", "IFNEXIST" ],
+    "PropertyBlock": [ "{ KeyValueStatements }" ],
+    "KeyValueStatements": ["KeyValueStatements KeyValue", "KeyValue"],
+    "KeyValue": [ "KEY AnyString ;" ],
+    "DecoratedSelector": ["Selector", "Selector PropertyBlock"],
+    "Selector": ["AnyString"],
+    "AnyString": [ "KEY", "UNQUOTEDSTRING", "QUOTEDSTRING" ]
+  }
+}
