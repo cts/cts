@@ -1,0 +1,12 @@
+{
+  "name": "OptionalName",
+  "kind": "inline|linked",
+  "url": "URL",
+  "relations": [
+     [
+       ["TreeName", "SelectorName", {"selector1-prop":"selector1-val"}]
+       ["Relation",  {"prop":"selector1-val"}]
+       ["TreeName", "SelectorName", {"selector2-prop":"selector1-val"}]
+     ]
+  ]
+}
