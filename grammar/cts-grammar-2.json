@@ -4,51 +4,41 @@
 
   "lex": {
     "macros": {
-      "digit": "[0-9]",
       "esc": "\\\\",
+      "hex": "u[a-fA-F0-9]{4}",
+      "keyString": "[^;:\"\\{\\}]",
+      "safeQuoted": "[^\"{esc}]",
       "is": "\\s+is\\s+",
       "are": "\\s+are\\s+",
       "graft": "\\s+graft\\s+",
       "ifexist": "\\s+if\\-exist\\s+",
-      "ifnexist": "\\s+if\\-nexist\\s+",
-      "eos": "\\s*;\\s*",
-      "colon": "\\s*:\\s*",
-      "hex": "u[a-fA-F0-9]{4}",
-      "safeUnquoted": "[^;{is}{are}{graft}{ifexist}{ifnexist}\\{\\}]",
-      "safeKey": "[A-Za-z]+[A-Za-z0-9_-]*",
-      "safeQuoted": "[^\"{esc}]"
+      "ifnexist": "\\s+if\\-nexist\\s+"
     },
     "rules": [
-      ["(?:{esc}[\"bfnrt/{esc}]|{esc}{hex}|{safeUnquoted})+", "return 'UNQUOTEDSTRING';"],
-      ["{safeKey}{colon}", "yytext = yytext.substr(0, yytext.indexOf(':')); return 'KEY';"],
+      ["\\s+", "/* skip whitespace */"],
       ["\"(?:{esc}[\"bfnrt/{esc}]|{esc}{hex}|{safeQuoted})*\"", "yytext = yytext.substr(1,yyleng-2); return 'QUOTEDSTRING';"],
-      ["\\s*\\{\\s*", "return '{'"],
-      ["\\s*\\}\\s*", "return '}'"],
-      ["{is}", "return 'IS'"],
-      ["{are}", "return 'ARE'"],
-      ["{graft}", "return 'GRAFT'"],
-      ["{ifexist}", "return 'IFEXIST'"],
-      ["{ifnexist}", "return 'IFNEXIST'"],
-      ["{eos}", "return ';'"]
+      ["(?:{esc}[\"bfnrt/{esc}]|{esc}{hex}|{keyString})+", "return 'KEYSTRING';"],
+      ["({is}|{are}|{graft}|{ifexist}|{ifnexist})", "return 'RELATIONSTRING';"],
+      [":", "return ':';"],
+      [";", "return ';';"],
+      ["\\{", "return '{';"],
+      ["\\}", "return '}';"]
     ]
   },
 
-  "tokens": "KEY UNQUOTEDSTRING QUOTEDSTRING { } ; IS ARE GRAFT IFEXIST IFNEXIST",
-  "start": "CTSText",
+  "tokens": "KEYSTRING QUOTEDSTRING : ; { }",
+  "start": "treesheet",
 
   "bnf": {
-    "CTSText": [ "AnyString" ],
-    "Rules": [ "Rules Rule", "Rule" ],
-    "Rule": [ "DecoratedSelectorA DecoratedRelation DecoratedSelectorB ;" ],
-    "DecoratedSelectorA": [ "DecoratedSelector" ],
-    "DecoratedSelectorB": [ "DecoratedSelector" ],
-    "DecoratedRelation": [ "Relation", "Relation PropertyBlock" ],
-    "Relation": [ "IS", "ARE", "GRAFT", "IFEXIST", "IFNEXIST" ],
-    "PropertyBlock": [ "{ KeyValueStatements }" ],
-    "KeyValueStatements": ["KeyValueStatements KeyValue", "KeyValue"],
-    "KeyValue": [ "KEY AnyString ;" ],
-    "DecoratedSelector": ["Selector", "Selector PropertyBlock"],
-    "Selector": ["AnyString"],
-    "AnyString": [ "KEY", "UNQUOTEDSTRING", "QUOTEDSTRING" ]
+    "treesheet": [ "Relation" ],
+    "Statements": [ "Statement", "Statement Statements" ],
+    "Statement": [ "Selector Relation Selector ;"],
+    "Selector": [ "SELECTORSTRING", "SELECTORSTRING KeyValueBlock" ],
+    "Relation": [ "RELATIONSTRING", "RELATIONSTRING KeyValueBlock" ],
+    "KeyValueBlock": [ "{ KeyValues }" ],
+    "KeyValues": [ "KeyValue", "KeyValues KeyValue" ],
+    "KeyValue": [ "Key : Value ;" ],
+    "Key": ["KEYSTRING"],
+    "Value": ["QUOTEDSTRING", "KEYSTRING"]
   }
 }

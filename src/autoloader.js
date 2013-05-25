@@ -5,7 +5,7 @@ CTS.shouldAutoload = function() {
   // Search through <script> elements to find the CTS element.
   _.each(CTS.$('script'), function(elem) {
     var url = $(elem).attr('src');
-    if ((!_.isUndefined(url)) && (url != null) && (elem.indexOf('cts.js') != 1)) {
+    if ((!_.isUndefined(url)) && (url != null) && (url.indexOf('cts.js') != 1)) {
       foundCtsElement = true;
       var param = CTS.Utilities.getUrlParameter('autoload', url);
       if (param == 'false') {

@@ -74,9 +74,9 @@
 var parser = (function(){
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"CTSText":3,"AnyString":4,"Rules":5,"Rule":6,"DecoratedSelectorA":7,"DecoratedRelation":8,"DecoratedSelectorB":9,";":10,"DecoratedSelector":11,"Relation":12,"PropertyBlock":13,"IS":14,"ARE":15,"GRAFT":16,"IFEXIST":17,"IFNEXIST":18,"{":19,"KeyValueStatements":20,"}":21,"KeyValue":22,"KEY":23,"Selector":24,"UNQUOTEDSTRING":25,"QUOTEDSTRING":26,"$accept":0,"$end":1},
-terminals_: {2:"error",10:";",14:"IS",15:"ARE",16:"GRAFT",17:"IFEXIST",18:"IFNEXIST",19:"{",21:"}",23:"KEY",25:"UNQUOTEDSTRING",26:"QUOTEDSTRING"},
-productions_: [0,[3,1],[5,2],[5,1],[6,4],[7,1],[9,1],[8,1],[8,2],[12,1],[12,1],[12,1],[12,1],[12,1],[13,3],[20,2],[20,1],[22,3],[11,1],[11,2],[24,1],[4,1],[4,1],[4,1]],
+symbols_: {"error":2,"treesheet":3,"Block":4,"{":5,"Keyvalues":6,"}":7,"KeyValues":8,"KeyValue":9,"Key":10,":":11,"Value":12,";":13,"QUOTEDS":14,"KEYS":15,"UNQUOTEDS":16,"$accept":0,"$end":1},
+terminals_: {2:"error",5:"{",6:"Keyvalues",7:"}",11:":",13:";",14:"QUOTEDS",15:"KEYS",16:"UNQUOTEDS"},
+productions_: [0,[3,1],[4,3],[8,1],[8,2],[9,4],[10,1],[10,1],[12,1],[12,1]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -84,8 +84,8 @@ var $0 = $$.length - 1;
 switch (yystate) {
 }
 },
-table: [{3:1,4:2,23:[1,3],25:[1,4],26:[1,5]},{1:[3]},{1:[2,1]},{1:[2,21]},{1:[2,22]},{1:[2,23]}],
-defaultActions: {2:[2,1],3:[2,21],4:[2,22],5:[2,23]},
+table: [{3:1,4:2,5:[1,3]},{1:[3]},{1:[2,1]},{6:[1,4]},{7:[1,5]},{1:[2,2]}],
+defaultActions: {2:[2,1],5:[2,2]},
 parseError: function parseError(str, hash) {
     if (hash.recoverable) {
         this.trace(str);
@@ -545,35 +545,31 @@ stateStackSize:function stateStackSize() {
     },
 options: {},
 performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
-
 var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
-case 0:return 25;
+case 0:/* skip whitespace */
 break;
-case 1:yy_.yytext = yy_.yytext.substr(0, yy_.yytext.indexOf(':')); return 23;
+case 1:return 11
 break;
-case 2:yy_.yytext = yy_.yytext.substr(1,yy_.yyleng-2); return 26;
+case 2:return 13
 break;
-case 3:return 19
+case 3:this.begin('block'); return 5;}
+"
 break;
-case 4:return 21
+case 4: this.begin('blockval'); return 11;
 break;
-case 5:return 14
+case 5:return 15
 break;
-case 6:return 15
+case 6:return 14
 break;
 case 7:return 16
 break;
-case 8:return 17
-break;
-case 9:return 18
-break;
-case 10:return 10
+case 8: this.begin('block');  return 13;
 break;
 }
 },
-rules: [/^(?:(?:(\\)["bfnrt/(\\)]|(\\)(u[a-fA-F0-9]{4})|([^;(\s+is\s+)(\s+are\s+)(\s+graft\s+)(\s+if\-exist\s+)(\s+if\-nexist\s+)\{\}]))+)/,/^(?:([A-Za-z]+[A-Za-z0-9_-]*)(\s*:\s*))/,/^(?:"(?:(\\)["bfnrt/(\\)]|(\\)(u[a-fA-F0-9]{4})|([^"(\\)]))*")/,/^(?:\s*\{\s*)/,/^(?:\s*\}\s*)/,/^(?:(\s+is\s+))/,/^(?:(\s+are\s+))/,/^(?:(\s+graft\s+))/,/^(?:(\s+if\-exist\s+))/,/^(?:(\s+if\-nexist\s+))/,/^(?:(\s*;\s*))/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?::)/,/^(?:;)/,/^(?:\{)/,/^(?::)/,/^(?:([^\s;:\"\\{\\}]+))/,/^(?:("[^\"]*"))/,/^(?:([^\";\\{\\}]+))/,/^(?:;)/],
+conditions: {"blockval":{"rules":[0,1,2,3,6,7,8],"inclusive":true},"block":{"rules":[0,1,2,3,4,5],"inclusive":true},"INITIAL":{"rules":[0,1,2,3],"inclusive":true}}
 };
 return lexer;
 })();

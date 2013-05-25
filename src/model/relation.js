@@ -12,7 +12,7 @@ var RelationOpts = CTS.RelationOpts = {
   step: 1
 };
 
-var Relation = CTS.Relation= function(selection1, selection2, name, opts, opts1, opts2) {
+var Relation = CTS.Relation = function(selection1, selection2, name, opts, opts1, opts2) {
   this.selection1 = selection1;
   this.selection2 = selection2;
   this.name = name;

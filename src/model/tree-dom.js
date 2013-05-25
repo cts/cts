@@ -13,13 +13,12 @@ var DomTree = CTS.DomTree = function(forrest, node, attributes) {
 // Instance Methods
 // ----------------
 _.extend(DomTree.prototype, Tree, {
-  selectionForSelector: function(selector) {
+  nodesForSelectionSpec: function(spec) {
     // Assumption: root can't be a sibling group
-    var jqnodes = this.root.siblings[0].find(selector.selector).toArray();
+    var jqnodes = this.root.siblings[0].find(spec.selectorString).toArray();
     var nodes = _.map(jqnodes, function(n) {
       return new DomNode(CTS.$(n), this);
     }, this);
-    console.log("Tree", this, "nodes for selection", selector, nodes);
-    return new CTS.Selection(nodes);
+    return nodes;
   }
 });

@@ -39,17 +39,11 @@ _.extend(Forrest.prototype, {
     }
   },
 
-  selectionForSelector: function(selector) {
-    console.log("Forrest::selectionForSelector trees", this.trees, "selector name", selector.treeName);
-    // TODO(eob): The commented out line doesn't work.. but
-    // I don't know why. That makes me worried.
-    //if (_.contains(this.trees, selector.treeName)) {
-    if (typeof this.trees[selector.treeName] != "undefined") {
-      console.log("Forrest::SelectionForSelector --> Tree " + selector.treeName + " ::SelectionforSelector");
-      return this.trees[selector.treeName].selectionForSelector(selector);
+  nodesForSelectionSpec: function(spec) {
+    if (typeof this.trees[spec.treeName] != "undefined") {
+      return this.trees[spec.treeName].nodesForSelectionSpec(spec);
     } else {
-      console.log("Nodes for selector bailing");
-      return new CTS.Selection([]);
+      return [];
     }
   },
 

@@ -1,7 +1,7 @@
 // ### Constructor
 var DomNode = CTS.DomNode = function(node, tree, opts, args) {
   var defaults;
-  this._kind = 'dom'
+  this._kind = 'dom';
   this.children = null;
   this.parentNode = null;
   this.relations = [];

@@ -29,6 +29,27 @@ CTS.$ = root.jQuery;
 var _ = root._;
 if (!_ && (typeof require !== 'undefined')) _ = require('underscore');
 
+CTS.Log = {
+
+  Fatal: function(msg, args) {
+    alert(msg);
+    console.log("FATAL", msg, obj);
+  },
+
+  Error: function(message, args) {
+    console.log(message, args);
+  },
+
+  Warn: function(message, args) {
+  },
+
+  Debug: function(message, args) {
+  }
+
+};
+
+
+
 // StateMachine
 // ==========================================================================
 //
@@ -250,6 +271,69 @@ var Events = CTS.Events = {
 Events.bind   = Events.on;
 Events.unbind = Events.off;
 
+
+var Utilities = CTS.Utilities = {
+  getUrlParameter: function(param, url) {
+    if (typeof url == 'undefined') {
+      url = window.location.search;
+    }
+
+    var p = param.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+    var regexS = "[\\?&]" + p + "=([^&#]*)";
+    var regex = new RegExp(regexS);
+
+    var results = regex.exec(url)
+    if (results == null) {
+      return null;
+    } else {
+      return decodeURIComponent(results[1].replace(/\+/g, " "));
+    }
+  },
+
+  /**
+   * Returns array of objects with keys:
+   *  type: (link or inline)
+   *  content: the cts content for inline
+   *  url: the url for links
+   *  args: any other args
+   *
+   * TODO(eob): Provide a root element as optional argument
+   * to support ingestion of cts rules from transcluded content.
+   */ 
+  getTreesheetLinks: function() {
+    var ret = [];
+    _.each(CTS.$('style[type="text/cts"]'), function(elem) {
+      var block = {
+        type: 'inline',
+        content: $(elem).html()
+      };
+      ret.append(block);
+    }, this);
+    _.each(CTS.$('link[rel="treesheet"]'), function(elem) {
+      var block = {
+        type: 'link',
+        url: $(elem).attr('href')
+      };
+      ret.append(block);
+    }, this);
+    return ret;
+  },
+
+  loadRemoteString: function(params, successFn, errorFn) {
+    $.ajax({url: params.url,
+            dataType: 'text',
+            success: success,
+            error: error,
+            beforeSend: function(xhr, settings) {
+              _.each(params, function(value, key, list) {
+                xhr[key] = value;
+              }, this);
+            }
+    });
+  }
+
+};
+ 
 
 var RuleConstants = CTS.RuleConstants = {
   opts1Prefix: "<-",
@@ -673,9 +757,9 @@ var RuleParser = CTS.RuleParser = {
 var parser = (function(){
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"CTSText":3,"AnyString":4,"Rules":5,"Rule":6,"DecoratedSelectorA":7,"DecoratedRelation":8,"DecoratedSelectorB":9,";":10,"DecoratedSelector":11,"Relation":12,"PropertyBlock":13,"IS":14,"ARE":15,"GRAFT":16,"IFEXIST":17,"IFNEXIST":18,"{":19,"KeyValueStatements":20,"}":21,"KeyValue":22,"KEY":23,"Selector":24,"UNQUOTEDSTRING":25,"QUOTEDSTRING":26,"$accept":0,"$end":1},
-terminals_: {2:"error",10:";",14:"IS",15:"ARE",16:"GRAFT",17:"IFEXIST",18:"IFNEXIST",19:"{",21:"}",23:"KEY",25:"UNQUOTEDSTRING",26:"QUOTEDSTRING"},
-productions_: [0,[3,1],[5,2],[5,1],[6,4],[7,1],[9,1],[8,1],[8,2],[12,1],[12,1],[12,1],[12,1],[12,1],[13,3],[20,2],[20,1],[22,3],[11,1],[11,2],[24,1],[4,1],[4,1],[4,1]],
+symbols_: {"error":2,"treesheet":3,"Block":4,"{":5,"Keyvalues":6,"}":7,"KeyValues":8,"KeyValue":9,"Key":10,":":11,"Value":12,";":13,"QUOTEDS":14,"KEYS":15,"UNQUOTEDS":16,"$accept":0,"$end":1},
+terminals_: {2:"error",5:"{",6:"Keyvalues",7:"}",11:":",13:";",14:"QUOTEDS",15:"KEYS",16:"UNQUOTEDS"},
+productions_: [0,[3,1],[4,3],[8,1],[8,2],[9,4],[10,1],[10,1],[12,1],[12,1]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -683,8 +767,8 @@ var $0 = $$.length - 1;
 switch (yystate) {
 }
 },
-table: [{3:1,4:2,23:[1,3],25:[1,4],26:[1,5]},{1:[3]},{1:[2,1]},{1:[2,21]},{1:[2,22]},{1:[2,23]}],
-defaultActions: {2:[2,1],3:[2,21],4:[2,22],5:[2,23]},
+table: [{3:1,4:2,5:[1,3]},{1:[3]},{1:[2,1]},{6:[1,4]},{7:[1,5]},{1:[2,2]}],
+defaultActions: {2:[2,1],5:[2,2]},
 parseError: function parseError(str, hash) {
     if (hash.recoverable) {
         this.trace(str);
@@ -1144,35 +1228,31 @@ stateStackSize:function stateStackSize() {
     },
 options: {},
 performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
-
 var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
-case 0:return 25;
+case 0:/* skip whitespace */
 break;
-case 1:yy_.yytext = yy_.yytext.substr(0, yy_.yytext.indexOf(':')); return 23;
+case 1:return 11
 break;
-case 2:yy_.yytext = yy_.yytext.substr(1,yy_.yyleng-2); return 26;
+case 2:return 13
 break;
-case 3:return 19
+case 3:this.begin('block'); return 5;}
+"
 break;
-case 4:return 21
+case 4: this.begin('blockval'); return 11;
 break;
-case 5:return 14
+case 5:return 15
 break;
-case 6:return 15
+case 6:return 14
 break;
 case 7:return 16
 break;
-case 8:return 17
-break;
-case 9:return 18
-break;
-case 10:return 10
+case 8: this.begin('block');  return 13;
 break;
 }
 },
-rules: [/^(?:(?:(\\)["bfnrt/(\\)]|(\\)(u[a-fA-F0-9]{4})|([^;(\s+is\s+)(\s+are\s+)(\s+graft\s+)(\s+if\-exist\s+)(\s+if\-nexist\s+)\{\}]))+)/,/^(?:([A-Za-z]+[A-Za-z0-9_-]*)(\s*:\s*))/,/^(?:"(?:(\\)["bfnrt/(\\)]|(\\)(u[a-fA-F0-9]{4})|([^"(\\)]))*")/,/^(?:\s*\{\s*)/,/^(?:\s*\}\s*)/,/^(?:(\s+is\s+))/,/^(?:(\s+are\s+))/,/^(?:(\s+graft\s+))/,/^(?:(\s+if\-exist\s+))/,/^(?:(\s+if\-nexist\s+))/,/^(?:(\s*;\s*))/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?::)/,/^(?:;)/,/^(?:\{)/,/^(?::)/,/^(?:([^\s;:\"\\{\\}]+))/,/^(?:("[^\"]*"))/,/^(?:([^\";\\{\\}]+))/,/^(?:;)/],
+conditions: {"blockval":{"rules":[0,1,2,3,6,7,8],"inclusive":true},"block":{"rules":[0,1,2,3,4,5],"inclusive":true},"INITIAL":{"rules":[0,1,2,3],"inclusive":true}}
 };
 return lexer;
 })();
@@ -1496,7 +1576,7 @@ CTS.Node = {
 // ### Constructor
 var DomNode = CTS.DomNode = function(node, tree, opts, args) {
   var defaults;
-  this._kind = 'dom'
+  this._kind = 'dom';
   this.children = null;
   this.parentNode = null;
   this.relations = [];
@@ -2245,63 +2325,31 @@ _.extend(Forrest.prototype, {
 
 });
 
-// Engine
-// ==========================================================================
-
-// Constructor
-// -----------
-var Engine = CTS.Engine = function(opts, args) {
-  var defaults;
-  this.opts = opts || {};
-
-  // The main tree.
-  this.forrest = null;
-
-  this.initialize.apply(this, args);
-};
-
-// Instance Methods
-// ----------------
-_.extend(Engine.prototype, Events, StateMachine, {
-
-  initialize: function() {
-    this.forrest = new CTS.Forrest();
-  },
-
-  /**
-   * Rendering picks a primary tree. For each node in the tree, we:
-   *  1: Process any *incoming* relations for its subtree.
-   *  2: Process any *outgoing* tempalte operations
-   *  3: 
-   */
-  render: function(opts) {
-    var pt = this.forrest.getPrimaryTree();
-    var options = _.extend({}, opts);
-    pt.render(options);
-  },
-
-  ingestRules: function(rules) {
-    this.forrest.ingestRules(rules);
-  },
-
-  loadRemoteString: function(params, successFn, errorFn) {
-    $.ajax({url: params.url,
-            dataType: 'text',
-            success: success,
-            error: error,
-            beforeSend: function(xhr, settings) {
-              _.each(params, function(value, key, list) {
-                xhr[key] = value;
-              }, this);
-            }
-    });
-  },
+/*
+ * Bootstrapper
+ * ==========================================================================
+ * 
+ * Intended to be mixed into the Engine.
+ * 
+ * As such, it assumes it is part of the Engine with access to StateMachine
+ * and Events.
+ * 
+ * Methods for mix-in:
+ *  * boot
+ *
+ * "Private" Methods:
+ *  All begin with '_bootstrap'
+ */
+var Bootstrapper = CTS.Bootstrapper = {
 
   /** 
    * Walks CTS through a full page bootup.
+   *
+   * Dependencies:
+   *  Must be mixed into Engine with StateMachine and Events
    */
   boot: function() {
-    console.log("Boot");
+    CTS.Log.Debug("Bootstrap: Booting up");
     // Boot sequence
     this.fsmInitialize(
       'Start', [
@@ -2324,47 +2372,49 @@ _.extend(Engine.prototype, Events, StateMachine, {
           'to':'Rendered',
         'name':'Rendered' }
       ]);
-    this.on('FsmEdge:Begin', this._fsmQueueCts, this);
-    this.on('FsmEdge:LoadedCTS', this._fsmQueueTrees, this);
-    this.on('FsmEdge:LoadedTrees', this._fsmRender, this);
+
+    this.on('FsmEdge:Begin', this._bootstrap_queue_cts, this);
+    this.on('FsmEdge:LoadedCTS', this._bootstrap_queue_trees, this);
+    this.on('FsmEdge:LoadedTrees', this._bootstrap_render, this);
+
+    // VROOOOOMMMM!
     this.fsmTransition('QueueingCTS');
   },
 
   /**
    * Finds all CTS links and queues their load.
    */
-  _fsmQueueCts: function() {
+  _bootstrap_queue_cts: function() {
     // Finds all CTS links and queues their load.
-    console.log("FSM Queue CTS");
+    CTS.Log.Debug("Bootstrap: Loading CTS");
     this.fsmTransition("LoadingCTS");
-    this._ctsToLoad = {};
+    this._bootstrap_cts_to_load = {};
     var hasRemote = false;
-    _.each(CTS.$('script[type="text/cts"]'),
-      function(elem) {
-        var e = CTS.$(elem);
-        if (! e.attr('src')) {
-          // Load the contents
-          this.ingestRules(e.html());
-        } else {
-          // Queue load
-          this._ctsToLoad[e.attr('src')] = true;
-          hasRemote = true;
-          this.loadRemoteString({'url':e.attr('src')}, _fsmCtsLoadSuccess, _fsmCtsLoadFail);
-        }
-      }, this
-    );
+
+    var blocks = CTS.Utilities.getTreesheetLinks();
+    _.each(blocks, function(block) {
+      if (block.type == 'inline') {
+        this.ingestRules(block.content);
+      } else if (block.type == 'link') {
+        // Queue Load
+        this._bootstrap_cts_to_load[block.url] = true;
+        hasRemote = true;
+        CTS.Utilities.loadRemoteString(block,
+          this._bootstrap_cts_load_success, this._bootstrap_cts_load_fail);
+      }
+    }, this);
+    
     if (! hasRemote) {
-      this.fsmTransition("QueueingTrees");
+      this.fsmTransition("QueueingTrees"); // Edge name: LoadedCTS
     } 
   },
 
-  _fsmQueueTrees: function() {
-    console.log("FSM Queue Trees");
+  _bootstrap_queue_trees: function() {
+    CTS.Log.Debug("Bootstrap: Loading Trees");
     this.fsmTransition("LoadingTrees");
-    this._treesToLoad = {};
+    this._bootstrap_trees_to_load = {};
     var hasRemote = false;
     _.each(this.forrest.trees, function(value, key, list) {
-      console.log("TREE");
       // Todo
     }, this);
     if (! hasRemote) {
@@ -2372,43 +2422,90 @@ _.extend(Engine.prototype, Events, StateMachine, {
     }
   },
 
-  _fsmRender: function() {
-    console.log("FSM Render");
+  _bootstrap_render: function() {
+    CTS.Log.Debug("Bootstrap: Rendering");
     this.render();
     this.fsmTransition("Rendered");
   },
 
-  _fsmCtsLoadSuccess: function(data, textStatus, xhr) {
+  _bootstrap_cts_load_success: function(data, textStatus, xhr) {
+    CTS.Log.Debug("Bootstrap: Loaded treesheet", xhr.url);
     this.ingestRules(data);
-    this._fsmCtsLoaded(xhr.url);
+    this._bootstrap_cts_loaded(xhr.url);
   },
 
-  _fsmCtsLoadFail: function(xhr, textStatus, errorThrown) {
-    this._fsmCtsLoaded(xhr.url);
+  _bootstrap_cts_load_fail: function(xhr, textStatus, errorThrown) {
+    CTS.Log.Error("Bootstrap: CTS Load Failed", xhr.url);
+    this._bootstrap_cts_loaded(xhr.url);
   },
 
-  _fsmTreeLoadSuccess: function(data, textStatus, xhr) {
+  _bootstrap_tree_load_success: function(data, textStatus, xhr) {
+    CTS.Log.Debug("Bootstrap: Loaded tree", xhr.url);
     //TODO
-    this._fsmCtsLoaded(xhr.url);
+    this._bootstrap_tree_loaded(xhr.url);
   },
 
-  _fsmTreeLoadFail: function(xhr, textStatus, errorThrown) {
-    this._fsmCtsLoaded(xhr.url);
+  _bootstrap_tree_load_fail: function(xhr, textStatus, errorThrown) {
+    CTS.Log.Error("Bootstrap: Tree Load Failed", xhr.url);
+    this._bootstrap_tree_loaded(xhr.url);
   },
 
-  _fsmCtsLoaded: function(filename) {
-    delete this._ctsToLoad[filename];
-    var done = (this._ctsToLoad.length === 0);
+  _bootstrap_cts_loaded: function(filename) {
+    delete this._bootstrap_cts_to_load[filename];
+    var done = (this._bootstrap_cts_to_load.length === 0);
     if (done) {
-      _fsmTransition("QueueingTrees");
+      _fsmTransition("QueueingTrees"); // Edge: LoadedCTS
     }
   },
 
-  _fsmTreeLoaded: function(filename) {
+  _bootstrap_tree_loaded: function(filename) {
+    delete this._bootstrap_trees_to_load[filename];
+    var done = (this._bootstrap_trees_to_load.length === 0);
     if (done) {
       _fsmTransition("Rendering");
     }
   }
+};
+
+// Engine
+// ==========================================================================
+
+// Constructor
+// -----------
+var Engine = CTS.Engine = function(opts, args) {
+  var defaults;
+  this.opts = opts || {};
+
+  // The main tree.
+  this.forrest = null;
+
+  this.initialize.apply(this, args);
+};
+
+// Instance Methods
+// ----------------
+_.extend(Engine.prototype, Events, StateMachine, Bootstrapper, {
+
+  initialize: function() {
+    this.forrest = new CTS.Forrest();
+  },
+
+  /**
+   * Rendering picks a primary tree. For each node in the tree, we:
+   *  1: Process any *incoming* relations for its subtree.
+   *  2: Process any *outgoing* tempalte operations
+   *  3: 
+   */
+  render: function(opts) {
+    var pt = this.forrest.getPrimaryTree();
+    var options = _.extend({}, opts);
+    pt.render(options);
+  },
+
+  ingestRules: function(rules) {
+    this.forrest.ingestRules(rules);
+  },
+
 });
 
 CTS.Debugging = {
@@ -2421,19 +2518,7 @@ CTS.Debugging = {
     console.log(stack);
   },
 
-  Error: function(message, extras) {
-    console.log(message, extras);
-  }
 };
-
-CTS.Debugging.Log = {
-  Fatal: function(msg, obj) {
-    alert(msg);
-    console.log("FATAL", msg, obj);
-  }
-};
-
-
 
 var TreeViz = CTS.Debugging.TreeViz = function(forrest) {
   this.forrest = forrest;
@@ -2495,5 +2580,29 @@ _.extend(TreeViz.prototype, {
     this.write("}");
   }
 });
+
+CTS.shouldAutoload = function() {
+  var foundCtsElement = false;
+  var autoload = true;
+
+  // Search through <script> elements to find the CTS element.
+  _.each(CTS.$('script'), function(elem) {
+    var url = $(elem).attr('src');
+    if ((!_.isUndefined(url)) && (url != null) && (url.indexOf('cts.js') != 1)) {
+      foundCtsElement = true;
+      var param = CTS.Utilities.getUrlParameter('autoload', url);
+      if (param == 'false') {
+        autoload = false;
+      }
+    }
+  }, this);
+
+  return (foundCtsElement && autoload);
+};
+
+if (CTS.shouldAutoload()) {
+  CTS.engine = new CTS.Engine();
+  CTS.engine.boot();
+}
 
 }).call(this);

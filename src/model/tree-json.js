@@ -11,15 +11,9 @@ var JsonTree = CTS.JsonTree = function(forrest, root, attributes) {
 // ----------------
 _.extend(JsonTree.prototype, Tree, {
 
-  // Creates the keypath leading up to this selector
-  selectionForSelector: function(selector) {
-    var jqnodes = this.root.siblings[0].find(selector.selector).toArray();
-    var nodes = _.map(jqnodes, function(n) {
-      return new DomNode(CTS.$(n), this);
-    }, this);
-    console.log("Tree", this, "nodes for selection", selector, nodes);
-    return new CTS.Selection(nodes);
+  nodesForSelectionSpec: function(spec) {
+    alert("unimplemented!");
+    return [];
   }
-
 
 });

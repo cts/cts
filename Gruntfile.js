@@ -30,11 +30,10 @@ module.exports = function(grunt) {
           "src/util/state-machine.js",
           "src/util/events.js",
           "src/util/utilities.js",
-          "src/language/rule.js",
-          "src/language/selector.js",
-          "src/language/selector-dom.js",
-          "src/language/selector-json.js",
-          "src/language/rule-parser.js",
+          "src/language/selection-spec.js",
+          "src/language/relation-spec.js",
+          "src/language/tree-spec.js",
+          "src/language/forrest-spec.js",
           "grammar/parsers/cts-2.js",
           "src/fragments/postparser._js",
           "src/model/node.js",
@@ -85,9 +84,9 @@ module.exports = function(grunt) {
     jison: {
       js: {
         outputType: "js",
-        inputType: 'json',
+        inputType: 'jison',
         files: {
-          'grammar/parsers/cts-2.js': 'grammar/cts-grammar-2.json'
+          'grammar/parsers/cts-2.js': 'grammar/cts2.jison'
         }
       }
     }

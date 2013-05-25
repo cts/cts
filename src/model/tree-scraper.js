@@ -9,4 +9,10 @@ var ScraperTree = CTS.ScraperTree = function(forrest, attributes) {
 // ----------------
 _.extend(JsonTree.prototype, Tree, {
 
+  nodesForSelectionSpec: function(spec) {
+    alert("unimplemented!");
+    return [];
+  }
+
+
 });
