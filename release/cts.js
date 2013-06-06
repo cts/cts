@@ -335,51 +335,15 @@ var Utilities = CTS.Utilities = {
 };
  
 
-var RuleConstants = CTS.RuleConstants = {
-  opts1Prefix: "<-",
-  opts2Prefix: "->"
+var SelectionSpec = CTS.SelectionSpec = function(treeName, selectorString, props) {
+  this.treeName = treeName;
+  this.selectorString = selectorString;
+  this.props = props;
+  this.inline = false;
+  this.inlineObject = null;
 };
 
-var Rule = CTS.Rule = function(selector1, selector2, name, opts) {
-  this.selector1 = selector1;
-  this.selector2 = selector2;
-  this.name = name;
-  this.opts = {};
-  this.opts1 = {};
-  this.opts2 = {};
-  this.initialize(opts);
-};
-
-_.extend(Rule.prototype, {
-  initialize: function(opts) {
-    _.each(_.pairs(opts), function(pair) {
-      var key;
-      if (pair[0].indexOf(RelationConstants.opts1Prefix) === 0) {
-        key = pair[0].substring(RuleConstants.opts1Prefix.length).trim();
-        this.opts1[key] = pair[1];
-      } else if (pair[0].indexOf(RelationConstants.opts2Prefix) === 0) {
-        key = pair[0].substring(RuleConstants.opts2Prefix.length).trim();
-        this.opts2[key] = pair[1];
-      } else {
-        this.opts[pair[0]] = pair[1];
-      }
-    });
-  },
-
-  addOption: function(key, value) {
-    this.opts[key] = value;
-  },
-
-  head: function() {
-    return this.selector1;
-  },
-
-  tail: function() {
-    return this.selector2;
-  }
-});
-
-var Selector = CTS.Selector = {
+_.extend(SelectionSpec.prototype, {
   toString: function() {
     return "<Selector {tree:" + this.treeName +
            ", type:" + this.treeType +
@@ -444,242 +408,101 @@ var Selector = CTS.Selector = {
 
     return selector;
   }
+});
 
+
+var RelationSpec = CTS.RelationSpec = function(selector1, selector2, name, props1, props2) {
+  this.selector1 = selector1;
+  this.selector2 = selector2;
+  this.name = name;
+  this.opts1 = props1;
+  this.opts2 = props2;
 };
 
+_.extend(Rule.prototype, {
+  head: function() {
+    return this.selector1;
+  },
 
-var DomSelector = CTS.DomSelector = function(selector) {
-  this.treeName = null;
-  this.treeType = null;
-  this.originalString = null;
-  this._selection = null;
-  this.selector = selector;
-  this.inline = false;
-  this.inlineNode = null;
-  this._kind = "dom";
-};
-
-_.extend(DomSelector.prototype, Selector, {
-
-
-  toSelection: function(forrest) {
-    console.log("DomSelector::toSelection", this.originalString);
-    if (this.inline === true) {
-      if (this.inlineNode === null) {
-        return new CTS.Selection();
-      } else {
-        return new CTS.Selection([this.inlineNode]);
-      }
-    } else {
-      if (this._selection === null) {
-        // First time; compute.
-        this._selection = forrest.selectionForSelector(this);
-      }
-      return this._selection;
-    }
+  tail: function() {
+    return this.selector2;
   }
 });
 
-var JsonSelector = CTS.JsonSelector = function(selector) {
-  this.treeName = null;
-  this.treeType = null;
-  this.originalString = null;
-  this._selection = null;
-  this.selector = selector;
-  this.inline = false;
-  this.inlineNode = null;
-  this._kind = "json";
+var TreeSpec = CTS.TreeSpec = function(kind, name, url) {
+  this.kind = kind;
+  this.name = name;
+  this.url = url;
 };
 
-_.extend(DomSelector.prototype, Selector, {
-  toSelection: function(forrest) {
-    console.log("DomSelector::toSelection", this.originalString);
-    if (this.inline === true) {
-      if (this.inlineNode === null) {
-        return new CTS.Selection();
-      } else {
-        return new CTS.Selection([this.inlineNode]);
-      }
-    } else {
-      if (this._selection === null) {
-        // First time; compute.
-        this._selection = forrest.selectionForSelector(this);
-      }
-      return this._selection;
-    }
-  }
-});
 
-// RuleParser
-// ==========================================================================
 
-/**
- *  To do:
- *
- *  SHEET := CONTEXT RULES | RULES ;
- *  CONTEXT := PROPERTY-BLOCK ;
- *  RULES := RULE RULES | RULE
- *  RULE := DECORATED-SELECTOR DECORATED-RELATION DECORATED-SELECTOR ;
- *  DECORATED-RELATION := RELATION | RELATION PROPERTY-BLOCK ;
- *  RELATION := is, are, recast, if-exist, if-exist ;
- *  PROPERTY-BLOCK := { KEY-VALUE-STATEMENTS }
- *  KEY-VALUE-STATEMENTS := KEY-VALUE | KEY-VALUE KEY-VALUE-STATEMENTS ;
- *  KEY-VALUE := string : string ; | string : "quoted-string" ;
- *  DECORATED-SELECTOR := SELECTOR | SELECTOR PROPERTY-BLOCK ;
- *  SELECTOR := string ;
- */
+var ForrestSpec = CTS.ForrestSpec = function() {
+  var trees = [];
+  var rules = [];
+};
 
-//CTS.LanguageSpec = {};
-//
-//CTS.LanguageSpec.Transitions = {
-//  'SHEET': [['RULES']],
-//  'RULES': [['RULE', 'RULES'], ['RULE']],
-//  'RULE': [['DECORATED-SELECTOR', 'DECORATED-RELATION', 'DECORATED-SELECTOR']],
-//  'DECORATED-RELATION': [['RELATION'], ['RELATION', 'PROPERTY-BLOCK']]
-//};
-//
-//var Parser = CTS.Parser = {
-//  isNonTerminal: function(string) {
-//    return (typeof CTS.LanguageSpec.Transitions != 'undefined');
-//  },
-//
-//  parse: function(string, state, accumulator, index, stack, pointer) {
-//    if (CTS.Parser.isNonTerminal(state)) {
-//    } else {
-//      // We're building up a 
-//    }
-//  }
-//}
-
-var RuleParser = CTS.RuleParser = {
-  incorporate: function(ruleMap, selector, block, inlineNode) {
-    console.log("RuleParser::incorporate start");
-    var rules = block.split(";");
-    _.each(rules, function(ruleString) {
-      var parts = ruleString.split(":");
-      if (parts.length == 2) {
-        var target = "";
-        var name = "";
-        var variant = "";
-        var key = CTS.$.trim(parts[0]);
-        var value = CTS.$.trim(parts[1]);
-        var section = 0;
-        for (var i = 0; i < key.length; i++) {
-          if ((key[i] == "-") && (section === 0)) {
-            section = 1;
-          } else if (key[i] == "(") {
-            section = 2;
-          } else if ((key[i] == ")") && (section == 2)) {
-            break;
-          } else {
-            // append string
-            if (section === 0) {
-              name += key[i];
-            } else if (section == 1) {
-              variant += key[i];
-            } else if (section == 2) {
-              target += key[i];
+_.extend(TreeSheet.prototype, {
+  incorporateJson: function(json) {
+    if (typeof json.relations != 'undefined') {
+      for (var i = 0; i < json.relations.length; i++) {
+        if (json.relations[i].length == 3) {
+          var s1 = this._jsonToSelector(json.relations[i][0]);
+          var s2 = this._jsonToSelector(json.relations[i][2]);
+          var ruleName = null;
+          var ruleProps = {};
+          if (_.isArray(json.relations[i][1])) {
+            if (json.relations[i][1].length == 2) {
+              _.extend(ruleProps, json.relations[i][1][1]);
             }
+            if (json.relations[i][1].length > 0) {
+              ruleName = json.relations[i][1][0];
+            }
+          } else if (typeof json.relations[i][1] == 'string') {
+            ruleName = json.relations[i][1];
           }
-        }
 
-        console.log("RuleParser::incorporate selector", selector, "key", key, "value", value);
-
-        // Now add or accomodate the rule
-        var selector1 = Selector.Create(selector);
-        if (typeof inlineNode != 'undefined') {
-          selector1.inline = true;
-          selector1.inlineNode = inlineNode;
-        }
-
-        if (target.length > 0) {
-          selector1.variant = target;
-        }
-        var selector1String = selector1.toString();
-
-        console.log("RuleParser::incorporate selector1", selector1, selector1String);
-
-        if (! _.contains(ruleMap, selector1String)) {
-          // Ensure we know about this selector
-          console.log("RuleParser::incorporate Creating slot for selector 1", selector1);
-          ruleMap[selector1String] = {};
-        }
-        if (! _.contains(ruleMap[selector1String], name)) {
-          console.log("RuleParser::incorporate Creating new rule for selector 1 :: name", selector1, name);
-          ruleMap[selector1String][name] = new Rule(selector1, null, name, {});
-        }
-
-        if (variant.length === 0) {
-          // We're setting selector 2
-          var selector2 = Selector.Create(value);
-          console.log("RuleParser::incorporate selector2", selector2, value);
-          ruleMap[selector1String][name].selector2 = selector2;
-        } else {
-          // We're setting an option
-          ruleMap[selector1String][name].addOption(variant, value);
-        }
-
-        console.log("RuleParser::incorporate Final after adding rule", ruleMap[selector1String][name]);
-      } // if (parts.length == 2)
-    }, this);
-  },
-
-  parse: function(ctsString) {
-    var self = this;
-    var relations = {};
-
-    // Remove comments
-    r = ctsString.replace(/\/\*(\r|\n|.)*\*\//g,"");
-
-    var bracketDepth = 0;
-    var openBracket = -1;
-    var closeBracket = 0;
-    var previousClose = 0;
-
-    function peelChunk() {
-      var selector = CTS.$.trim(r.substr(previousClose, openBracket - previousClose - 1));
-      var block = CTS.$.trim(r.substr(openBracket + 1, closeBracket - openBracket - 1));
-      previousClose = closeBracket + 1;
-      self.incorporate(relations, selector, block);
-    }
-
-    for (var i = 0; i < r.length; i++) {
-      if (r[i] == '{') {
-        bracketDepth++;
-        if (bracketDepth == 1) {
-          console.log("RuleParser::Parse", r[i]);
-          openBracket = i;
-        }
-      } else if (r[i] == '}') {
-        bracketDepth--;
-        if (bracketDepth === 0) {
-          closeBracket = i;
-          peelChunk();
+          var rule = new CTS.RelationSpec(selector1, selector2, ruleName, ruleProps);
+          this.rules.push(rule);
         }
       }
     }
 
-    var ret = [];
-    _.each(_.values(relations), function(valueHash) {
-      ret = _.union(ret, _.values(valueHash));
-    });
-    console.log("RuleParser::parse", ret);
-    return ret;
+    if (typeof json.trees != 'undefined') {
+      for (var i = 0; i < json.trees.length; i++) {
+        if (json.trees[i].length == 3) {
+          this.trees.push(new CTS.TreeSpec(
+            json.trees[i][0],
+            json.trees[i][1],
+            json.trees[i][2]));
+        }
+      }
+    }
   },
 
-  parseInline: function(node, inlineCtsString) {
-    var relations = {};
-    this.incorporate(relations, "_inline_", inlineCtsString, node);
-    var ret = [];
-    _.each(_.values(relations), function(valueHash) {
-      ret = _.union(ret, _.values(valueHash));
-    });
+  _jsonToSelector: function(json) {
+    var treeName = null;
+    var selectorString = null;
+    var args = {};
 
-    console.log("RuleParser::parseInline returning", ret);
-    return ret;
+    if (_.isArray(json)) {
+      if (json.length == 1) {
+        selectorString = json[0];
+      } else if (json.length == 2) {
+        treeName = json[0];
+        selectorString = json[1];
+      } else if (json.length == 3) {
+        treeName = json[0];
+        selectorString = json[1];
+        args = json[2];
+      }
+    } else if (typeof json == 'string') {
+      selectorString = json;
+    }
+    return new CTS.SelectorSpec(treeName, selectorString, args);
   }
-
-};
+});
+ 
 
 /* parser generated by jison 0.4.4 */
 /*
@@ -2038,7 +1861,7 @@ var RelationOpts = CTS.RelationOpts = {
   step: 1
 };
 
-var Relation = CTS.Relation= function(selection1, selection2, name, opts, opts1, opts2) {
+var Relation = CTS.Relation = function(selection1, selection2, name, opts, opts1, opts2) {
   this.selection1 = selection1;
   this.selection2 = selection2;
   this.name = name;
@@ -2107,6 +1930,21 @@ _.extend(Selection.prototype, {
     return new CTS.Selection(_.union([], this.nodes), this.opts);
   },
 
+  fromSelectionSpec: function(selectionSpec, forrest) {
+    if (selectionSpec.inline === true) {
+      if (this.inlineNode === null) {
+        this.nodes = [];
+      } else {
+        this.nodes = [selectionSpec.inlineObject];
+      }
+    } else {
+      if (this._selection === null) {
+        this.nodes = forrest.nodesForSelectionSpec(selectionSpec);
+      }
+    }
+    this.spec = selectionSpec;
+  },
+
   matchesArray: function(arr, exactly, orArrayAncestor) {
     if (typeof backoffToAncestor == 'undefined') {
       backoffToAncestor = false;
@@ -2159,14 +1997,13 @@ var DomTree = CTS.DomTree = function(forrest, node, attributes) {
 // Instance Methods
 // ----------------
 _.extend(DomTree.prototype, Tree, {
-  selectionForSelector: function(selector) {
+  nodesForSelectionSpec: function(spec) {
     // Assumption: root can't be a sibling group
-    var jqnodes = this.root.siblings[0].find(selector.selector).toArray();
+    var jqnodes = this.root.siblings[0].find(spec.selectorString).toArray();
     var nodes = _.map(jqnodes, function(n) {
       return new DomNode(CTS.$(n), this);
     }, this);
-    console.log("Tree", this, "nodes for selection", selector, nodes);
-    return new CTS.Selection(nodes);
+    return nodes;
   }
 });
 
@@ -2183,16 +2020,10 @@ var JsonTree = CTS.JsonTree = function(forrest, root, attributes) {
 // ----------------
 _.extend(JsonTree.prototype, Tree, {
 
-  // Creates the keypath leading up to this selector
-  selectionForSelector: function(selector) {
-    var jqnodes = this.root.siblings[0].find(selector.selector).toArray();
-    var nodes = _.map(jqnodes, function(n) {
-      return new DomNode(CTS.$(n), this);
-    }, this);
-    console.log("Tree", this, "nodes for selection", selector, nodes);
-    return new CTS.Selection(nodes);
+  nodesForSelectionSpec: function(spec) {
+    alert("unimplemented!");
+    return [];
   }
-
 
 });
 
@@ -2237,17 +2068,11 @@ _.extend(Forrest.prototype, {
     }
   },
 
-  selectionForSelector: function(selector) {
-    console.log("Forrest::selectionForSelector trees", this.trees, "selector name", selector.treeName);
-    // TODO(eob): The commented out line doesn't work.. but
-    // I don't know why. That makes me worried.
-    //if (_.contains(this.trees, selector.treeName)) {
-    if (typeof this.trees[selector.treeName] != "undefined") {
-      console.log("Forrest::SelectionForSelector --> Tree " + selector.treeName + " ::SelectionforSelector");
-      return this.trees[selector.treeName].selectionForSelector(selector);
+  nodesForSelectionSpec: function(spec) {
+    if (typeof this.trees[spec.treeName] != "undefined") {
+      return this.trees[spec.treeName].nodesForSelectionSpec(spec);
     } else {
-      console.log("Nodes for selector bailing");
-      return new CTS.Selection([]);
+      return [];
     }
   },
 

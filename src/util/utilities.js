@@ -56,6 +56,9 @@ var Utilities = CTS.Utilities = {
               }, this);
             }
     });
+  },
+
+  fetchTree: function(spec, callback, context) {
   }
 
 };

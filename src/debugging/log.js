@@ -13,6 +13,14 @@ CTS.Log = {
   },
 
   Debug: function(message, args) {
+  },
+
+  Info: function(message, args) {
+    if (typeof args == 'undefined') {
+      args = [];
+    }
+    args.unshift(message);
+    console.log.call(this, args);
   }
 
 };
