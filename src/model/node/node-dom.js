@@ -1,17 +1,15 @@
 // ### Constructor
 var DomNode = CTS.DomNode = function(node, tree, opts, args) {
-  var defaults;
-  this._kind = 'dom';
-  this.children = null;
-  this.parentNode = null;
-  this.relations = [];
+
+  this.initializeNodeBase();
+
   this.searchedForRelations = false;
   this.isSiblingGroup = false;
   this.isEnumerable = false;
 
   // A Node contains multiple DOM Nodes
   if (typeof node == 'object') {
-    if (! _.isUndefined(node.jquery)) {
+    if (! CTS.Fn.isUndefined(node.jquery)) {
       CTS.Debugging.DumpStack();
       //console.log("SIBLINGS A", node);
       this.siblings = [node];
@@ -27,7 +25,7 @@ var DomNode = CTS.DomNode = function(node, tree, opts, args) {
     }
   } else if (typeof node == 'string') {
     //console.log("SIBLINGS E", node);
-    this.siblings = _.map($(node), function(n) { return $(n); });
+    this.siblings = CTS.Fn.map($(node), function(n) { return $(n); });
   } else {
     //console.log("SIBLINGS F", node);
     this.siblings = [];
@@ -46,46 +44,31 @@ var DomNode = CTS.DomNode = function(node, tree, opts, args) {
 };
 
 // ### Instance Methods
-_.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
-
-  initialize: function(args) {
-    this.initializeStateMachine();
-  },
-
-  destroy: function(opts) {
-    // 1. Remove from parent in the shadow DOM
-    // TODO: handle case of trying to unregister root.
-    this.parentNode.unregisterChild(this);
-
-    // 2. Remove nodes form DOM tree
-    _.each(this.siblings, function(s) {
-      s.remove();
-    });
-  },
+CTS.Fn.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
   debugName: function() {
-    return _.map(this.siblings, function(node) {
+    return CTS.Fn.map(this.siblings, function(node) {
       return node[0].nodeName; }
     ).join(', ');
   },
 
   clone: function(opts) {
     console.log("SIBSIB", this.siblings);
-    var n = _.map(this.siblings, function(s) {return s.clone();});
+    var n = CTS.Fn.map(this.siblings, function(s) {return s.clone();});
     // TODO(eob): any use in saving args to apply when cloned?
     var c = new DomNode(n, this.tree, [], this.opts);
-    var relations = _.map(this.relations, function(relation) {
+    var relations = CTS.Fn.map(this.relations, function(relation) {
       var r = relation.clone();
       if (r.selection1.contains(this)) {
-        r.selection1.nodes = _.without(r.selection1.nodes, this);
+        r.selection1.nodes = CTS.Fn.without(r.selection1.nodes, this);
         r.selection1.nodes.push(c);
-        _.each(r.selection2.nodes, function(node) {
+        CTS.Fn.each(r.selection2.nodes, function(node) {
           node.registerRelation(r);
         });
       } else if (r.selection2.contains(this)) {
-        r.selection2.nodes = _.without(r.selection2.nodes, this);
+        r.selection2.nodes = CTS.Fn.without(r.selection2.nodes, this);
         r.selection2.nodes.push(c);
-        _.each(r.selection1.nodes, function(node) {
+        CTS.Fn.each(r.selection1.nodes, function(node) {
           node.registerRelation(r);
         });
       }
@@ -96,10 +79,6 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
       this.parentNode.registerChild(c, {after: this, andInsert: true});
     }
     return c;
-  },
-
-  unregisterChild: function(child, opts) {
-    this.children = _.without(this.children, child);
   },
 
   registerChild: function(child, opts) {
@@ -114,7 +93,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
     //TODO(eob): Handle case where there are no children.
 
-    if ((! _.isUndefined(opts)) && (! _.isUndefined(opts.after))) {
+    if ((! CTS.Fn.isUndefined(opts)) && (! CTS.Fn.isUndefined(opts.after))) {
       for (var i = this.children.length - 1; i >= 0; i--) {
         if (this.children[i] == opts.after) {
           // First bump forward everything
@@ -172,7 +151,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
         child.relations = relevantRelations;
         this.registerChild(child);
       } else {
-        fringe = _.union(fringe, first.children().toArray());
+        fringe = CTS.Fn.union(fringe, first.children().toArray());
       }
     }
   },
@@ -183,7 +162,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
     if (this.isSiblingGroup === true) {
       // If this is a sibling group, the children are the siblings.
-      _.each(this.siblingGroup, function(node) {
+      CTS.Fn.each(this.siblingGroup, function(node) {
         this.registerChild(node);
       }, this);
     } else {
@@ -197,7 +176,7 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
         // Now we figure out if there is an ARE relation, which
         // requires us to add all enumerables below us as a child.
-        var areRelations = _.filter(this.getRelations(), function(relation) {
+        var areRelations = CTS.Fn.filter(this.getRelations(), function(relation) {
           return (relation.name == "are");
         }, this);
 
@@ -255,71 +234,45 @@ _.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     console.log("Create Children Returned: ", this.children);
   },
 
-  failedConditional: function() {
-    _.each(this.siblings, function(n) { n.hide(); });
-  },
+  /************************************************************************
+   **
+   ** Required by Node base class
+   **
+   ************************************************************************/
 
-  /**
-   * Replaces the value of this node with the value of the
-   * other node provided.
-   */
-  isIncoming: function(otherNodeSelection, opts) {
-    console.log("IS Incoming with otherNodes", otherNodeSelection);
-    if (otherNodeSelection.nodes.length === 0) {
-      _.each(this.siblings, function(s) { s.html(""); });
-    } else {
-      var html = _.map(otherNodeSelection.nodes, function(node) {
-        return node.isOutgoing(opts);
-      }).join("");
-      _.each(this.siblings, function(s) { s.html(html); });
-    }
-  },
+   /*
+    * Precondition: this.children.length == 0
+    *
+    * Realizes all children.
+    */
+   _subclass_realizeChildren: function() {
+     if (this.children.length != 0) {
+       CTS.Log.Fatal("Trying to realize children when already have some.");
+     }
 
-  /**
-   * Provides the vilue of this node.
-   */
-  isOutgoing: function(opts) {
-    return _.map(this.siblings, function(node) {
-      return node.html();
-    }).join("");
-  },
 
-  areIncoming: function(otherSelection, relation, opts) {
-    // Note: all this prefix, sufix stuff should be handled
-    // by the getChildren call.
-    //var buckets = [];
-    //var kid = this.node.children();
-    //options = _.extend({
-    //  prefix: 0,
-    //  suffix: 0,
-    //  step: 1
-    //}, opts);
+   },
 
-    //for (var i = 0; i < kid.length; i++) {
-    //  if ((i >= options.prefix) && 
-    //      (i < kid.length - options.suffix)) {
-    //    // Create a new bucket at the start of a step
-    //    if (((i - options.prefix) % options.prefix) == 0) {
-    //      buckets[buckets.length] = [];
-    //    }
-    //    buckets[buckets.length - 1].append(kid[i]);
-    //  }
-    //}
-    // Find the itemscoped children of this node.
-    // var these = _.filter(this.node.children(), function(n) {
-    //  return true;
-    // }, this);
-  },
+   /* 
+    * Inserts this DOM node after the child at the specified index.
+    */
+   _subclass_insertChild: function(child, afterIndex) {
+     var leftSibling = this.getChildren()[afterIndex];
+     leftSibling.jQueryNode.after(this.jQueryNode);
+   },
 
-  /**
-   * Provides the itemscope'd nodes.
-   */
-  areOutgoing: function(relation, opts) {
-    console.log("areOutgoing");
-    var ret = _.filter(this.getChildren(), function(child) {
-      return child.isEnumerable;
-    });
-    console.log("areOutgoing", ret);
-    return ret;
-  }
+   /* 
+    *  Removes this DOM node from the DOM tree it is in.
+    */
+   _subclass_destroy: function() {
+     this.jQueryNode.remove();
+   }
+
+  /************************************************************************
+   **
+   ** Required by Relation classes
+   **
+   ************************************************************************/
+
+
 });

@@ -28,14 +28,14 @@ var Utilities = CTS.Utilities = {
    */ 
   getTreesheetLinks: function() {
     var ret = [];
-    _.each(CTS.$('style[type="text/cts"]'), function(elem) {
+    CTS.Fn.each(CTS.$('style[type="text/cts"]'), function(elem) {
       var block = {
         type: 'inline',
         content: $(elem).html()
       };
       ret.append(block);
     }, this);
-    _.each(CTS.$('link[rel="treesheet"]'), function(elem) {
+    CTS.Fn.each(CTS.$('link[rel="treesheet"]'), function(elem) {
       var block = {
         type: 'link',
         url: $(elem).attr('href')
@@ -51,7 +51,8 @@ var Utilities = CTS.Utilities = {
             success: success,
             error: error,
             beforeSend: function(xhr, settings) {
-              _.each(params, function(value, key, list) {
+              CTS.Fn
+      .each(params, function(value, key, list) {
                 xhr[key] = value;
               }, this);
             }

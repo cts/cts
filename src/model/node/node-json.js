@@ -10,27 +10,27 @@ var JsonNode = CTS.JsonNode = function(obj, tree, opts, args) {
 };
  
 // ### Instance Methods
-_.extend(CTS.JsonNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
+CTS.Fn.extend(CTS.JsonNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
   initialize: function(obj, args) {
     this.initializeStateMachine();
     this.children = [];
 
     // Recursively create all children
-    if (_.isNull(obj)) {
+    if (CTS.Fn.isNull(obj)) {
       this.dataType = 'null';
       this.value = null;
-    } else if (_.isUndefined(obj)) {
+    } else if (CTS.Fn.isUndefined(obj)) {
       this.dataType = 'null';
       this.value = null;
-    } else if (_.isArray(obj)) {
+    } else if (CTS.Fn.isArray(obj)) {
       this.dataType = 'set';
-      _.each(obj, function(item) {
+      CTS.Fn.each(obj, function(item) {
         this.children.push(new JsonNode(item, this.tree, opts, args));
       }, this);
-    } else if (_.isObject(obj)) {
+    } else if (CTS.Fn.isObject(obj)) {
       this.dataType = 'object';
-      _.each(obj, function(val, key) {
+      CTS.Fn.each(obj, function(val, key) {
         var kid = new JsonNode(null, this.tree, opts, args);
         kid.dataType = 'property';
         kid.value = key;
@@ -60,12 +60,12 @@ _.extend(CTS.JsonNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
   toJSON: function() {
     if (this.dataType == 'set') {
-      return _.map(this.children, function(kid) {
+      return CTS.Fn.map(this.children, function(kid) {
         return kid.toJSON();
       });
     } else if (this.dataType == 'object') {
       var ret = {};
-      _.each(this.children, function(kid) {
+      CTS.Fn.each(this.children, function(kid) {
         ret[kid.value] = kid.toJSON();
       }, this);
       return ret;
@@ -95,7 +95,7 @@ _.extend(CTS.JsonNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
       this.value = otherNodeSelection.nodes[0].isOutgoing(opts);
       this.dataType = typeof this.value;
     } else {
-      this.value = _.map(otherNodeSelection.nodes, function(n) {
+      this.value = CTS.Fn.map(otherNodeSelection.nodes, function(n) {
         n.isOutgoing(opts)
       }, this).join("");
       this.dataType = typeof this.value;

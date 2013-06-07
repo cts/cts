@@ -22,7 +22,7 @@ var Forrest = CTS.Forrest = function(opts) {
 
 // Instance Methods
 // ----------------
-_.extend(Forrest.prototype, {
+CTS.Fn.extend(Forrest.prototype, {
 
   /*
    * Initialization Bits
@@ -152,7 +152,7 @@ _.extend(Forrest.prototype, {
    * -------------------------------------------------------- */
 
   containsTree: function(alias) {
-    _.has(this.trees, alias);
+    CTS.Fn.has(this.trees, alias);
   },
 
   getTree: function(alias) {
@@ -180,7 +180,7 @@ _.extend(Forrest.prototype, {
   //rulesForNode: function(node) {
   //  console.log("Forrest:::rulesForNode");
   //  var ret = [];
-  //  _.each(this.rules, function(rule) {
+  //  CTS.Fn.each(this.rules, function(rule) {
   //    console.log("Forrest::rulesForNode Rule", rule, "for node", node);
   //    if ((rule.selector1.matches(node)) || 
   //        (rule.selector2.matches(node))) {
@@ -196,7 +196,7 @@ _.extend(Forrest.prototype, {
   //  if (inlineRules !== null) {
   //    var ruleSet = RuleParser.parseInline(node, inlineRules);
   //    if (typeof ruleSet != "undefined") {
-  //      ret = _.union(ret, ruleSet);
+  //      ret = CTS.Fn.union(ret, ruleSet);
   //    }
   //  }
   //  return ret;
@@ -206,7 +206,7 @@ _.extend(Forrest.prototype, {
   //  console.log("Forrest::RelationsForNode");
   //  var rules = this.rulesForNode(node);
   //  console.log("Rules for", node.siblings[0].html(), rules);
-  //  var relations = _.map(rules, function(rule) {
+  //  var relations = CTS.Fn.map(rules, function(rule) {
   //    var selection1 = null;
   //    var selection2 = null;
   //    var selector = null;
@@ -224,7 +224,7 @@ _.extend(Forrest.prototype, {
   //    node.registerRelation(relation);
   //    // Make sure that we wire up the relations,
   //    // since some might come in from inline.
-  //    _.each(other.nodes, function(n) {
+  //    CTS.Fn.each(other.nodes, function(n) {
   //      n.registerRelation(relation);
   //    }, this);
   //  }, this);

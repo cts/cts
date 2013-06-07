@@ -7,7 +7,7 @@ var ScraperTree = CTS.ScraperTree = function(forrest, attributes) {
 
 // Instance Methods
 // ----------------
-_.extend(JsonTree.prototype, Tree, {
+CTS.Fn.extend(JsonTree.prototype, Tree, {
 
   nodesForSelectionSpec: function(spec) {
     alert("unimplemented!");

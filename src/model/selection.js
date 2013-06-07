@@ -8,19 +8,19 @@ var Selection = CTS.Selection = function(nodes, opts) {
   this.nodes = nodes;
   this.opts = {};
   if (typeof opts != 'undefined') {
-    this.opts = _.extend(this.opts, opts);
+    this.opts = CTS.Fn.extend(this.opts, opts);
   }
 };
 
-_.extend(Selection.prototype, {
+CTS.Fn.extend(Selection.prototype, {
   contains: function(node) {
-    return _.contains(this.nodes, node);
+    return CTS.Fn.contains(this.nodes, node);
   },
 
   clone: function() {
     // not a deep clone of the selection. we don't want duplicate nodes
     // running around.
-    return new CTS.Selection(_.union([], this.nodes), this.opts);
+    return new CTS.Selection(CTS.Fn.union([], this.nodes), this.opts);
   },
 
   fromSelectionSpec: function(selectionSpec, forrest) {
@@ -44,7 +44,7 @@ _.extend(Selection.prototype, {
     }
 
     for (var i = 0; i < this.nodes.length; i++) {
-      if (! _.contains(arr, this.nodes[i])) {
+      if (! CTS.Fn.contains(arr, this.nodes[i])) {
         if (backoffToAncestor) {
           // 
         } else {

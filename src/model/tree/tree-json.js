@@ -9,7 +9,7 @@ var JsonTree = CTS.JsonTree = function(forrest, root, spec) {
 
 // Instance Methods
 // ----------------
-_.extend(JsonTree.prototype, Tree, {
+CTS.Fn.extend(JsonTree.prototype, Tree, {
   nodesForSelectionSpec: function(spec) {
     CTS.Log.Fatal("JsonTree::nodesForSelectionSpec - Unimplemented!");
     return [];

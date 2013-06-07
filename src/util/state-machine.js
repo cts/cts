@@ -2,7 +2,7 @@
 // ==========================================================================
 //
 //     var object = {};
-//     _.extend(object, CTS.StateMachine);
+//     CTS.Fn.extend(object, CTS.StateMachine);
 //
 // ==========================================================================
 
@@ -14,8 +14,8 @@ var StateMachine = CTS.StateMachine = {
   fsmInitialize: function(initialState, arcs, opts) {
     this._fsmCurrent = initialState;
     this._fsmArcs = {};
-    _.each(arcs, function(arc) {
-      if (! _.contains(this._fsmArcs, arc.from)) {
+    CTS.Fn.each(arcs, function(arc) {
+      if (! CTS.Fn.contains(this._fsmArcs, arc.from)) {
         this._fsmArcs[arc.from] = {};
       }
       this._fsmArcs[arc.from][arc.to] = arc.name;

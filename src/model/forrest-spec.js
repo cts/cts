@@ -3,7 +3,7 @@ var ForrestSpec = CTS.ForrestSpec = function() {
   this.relationSpecs = [];
 };
 
-_.extend(TreeSheet.prototype, {
+CTS.Fn.extend(TreeSheet.prototype, {
   incorporateJson: function(json) {
     if (typeof json.relations != 'undefined') {
       for (var i = 0; i < json.relations.length; i++) {
@@ -12,9 +12,9 @@ _.extend(TreeSheet.prototype, {
           var s2 = this._jsonToSelector(json.relations[i][2]);
           var ruleName = null;
           var ruleProps = {};
-          if (_.isArray(json.relations[i][1])) {
+          if (CTS.Fn.isArray(json.relations[i][1])) {
             if (json.relations[i][1].length == 2) {
-              _.extend(ruleProps, json.relations[i][1][1]);
+              CTS.Fn.extend(ruleProps, json.relations[i][1][1]);
             }
             if (json.relations[i][1].length > 0) {
               ruleName = json.relations[i][1][0];
@@ -46,7 +46,7 @@ _.extend(TreeSheet.prototype, {
     var selectorString = null;
     var args = {};
 
-    if (_.isArray(json)) {
+    if (CTS.Fn.isArray(json)) {
       if (json.length == 1) {
         selectorString = json[0];
       } else if (json.length == 2) {

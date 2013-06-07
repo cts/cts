@@ -10,11 +10,11 @@ var DomTree = CTS.DomTree = function(forrest, node, spec) {
 
 // Instance Methods
 // ----------------
-_.extend(DomTree.prototype, Tree, {
+CTS.Fn.extend(DomTree.prototype, Tree, {
   nodesForSelectionSpec: function(spec) {
     // Assumption: root can't be a sibling group
     var jqnodes = this.root.siblings[0].find(spec.selectorString).toArray();
-    var nodes = _.map(jqnodes, function(n) {
+    var nodes = CTS.Fn.map(jqnodes, function(n) {
       return new DomNode(CTS.$(n), this);
     }, this);
     return nodes;

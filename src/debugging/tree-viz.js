@@ -4,7 +4,7 @@ var TreeViz = CTS.Debugging.TreeViz = function(forrest) {
   this.finish();
 };
 
-_.extend(TreeViz.prototype, {
+CTS.Fn.extend(TreeViz.prototype, {
 
   write: function(html) {
     this.win.document.write(html);

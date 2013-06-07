@@ -14,12 +14,12 @@ var Relation = CTS.Relation = function(node1, node2, spec) {
   this.node1 = node1;
   this.node2 = node2;
   this.name = name;
-  this.opts = _.extend({}, opts);
-  this.opts1 = _.extend(RelationOpts, opts1);
-  this.opts2 = _.extend(RelationOpts, opts2);
+  this.opts = CTS.Fn.extend({}, opts);
+  this.opts1 = CTS.Fn.extend(RelationOpts, opts1);
+  this.opts2 = CTS.Fn.extend(RelationOpts, opts2);
 };
 
-_.extend(Relation.prototype, RelationOps, {
+CTS.Fn.extend(Relation.prototype, RelationOps, {
   initialize: function() {
     this.node1.addRelation(this);
     this.node2.addRelation(this);

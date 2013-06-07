@@ -6,7 +6,7 @@ var RelationSpec = CTS.RelationSpec = function(selector1, selector2, name, props
   this.opts2 = props2;
 };
 
-_.extend(Rule.prototype, {
+CTS.Fn.extend(Rule.prototype, {
   head: function() {
     return this.selectionSpec1;
   },

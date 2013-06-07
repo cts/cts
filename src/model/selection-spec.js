@@ -6,7 +6,7 @@ var SelectionSpec = CTS.SelectionSpec = function(treeName, selectorString, props
   this.inlineObject = null;
 };
 
-_.extend(SelectionSpec.prototype, {
+CTS.Fn.extend(SelectionSpec.prototype, {
   toString: function() {
     return "<Selector {tree:" + this.treeName +
            ", type:" + this.treeType +
@@ -15,7 +15,7 @@ _.extend(SelectionSpec.prototype, {
   },
 
   matches: function(node) {
-    if (_.isUndefined(node._kind)) {
+    if (CTS.Fn.isUndefined(node._kind)) {
       CTS.Debugging.Error("Node has no kind", [node]); 
       return false;
     } else if (node._kind != this._kind) {
@@ -45,7 +45,7 @@ _.extend(SelectionSpec.prototype, {
       } else {
         treeName = CTS.$.trim(pair.shift().substring(1));
         // TODO(eob): set tree type
-        selector = CTS.$.trim(_.join(pair, ""));
+        selector = CTS.$.trim(pair);
       }
     } else {
       selector = selectorString;

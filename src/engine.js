@@ -15,7 +15,7 @@ var Engine = CTS.Engine = function(opts, args) {
 
 // Instance Methods
 // ----------------
-_.extend(Engine.prototype, Events, StateMachine, Bootstrapper, {
+CTS.Fn.extend(Engine.prototype, Events, StateMachine, Bootstrapper, {
 
   initialize: function() {
     this.forrest = new CTS.Forrest();
@@ -29,7 +29,7 @@ _.extend(Engine.prototype, Events, StateMachine, Bootstrapper, {
    */
   render: function(opts) {
     var pt = this.forrest.getPrimaryTree();
-    var options = _.extend({}, opts);
+    var options = CTS.Fn.extend({}, opts);
     pt.render(options);
   },
 

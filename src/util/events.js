@@ -4,7 +4,7 @@
 // This is taken completely from Backbone.Events
 //
 //     var object = {};
-//     _.extend(object, CTS.Events);
+//     CTS.Fn.extend(object, CTS.Events);
 //     object.on('expand', function(){ alert('expanded'); });
 //     object.trigger('expand');
 //
@@ -56,7 +56,7 @@ var Events = CTS.Events = {
   // all events fired.
   on: function(name, callback, context) {
     if (!(eventsApi(this, 'on', name, [callback, context]) && callback)) return this;
-    if (_.isUndefined(this._events) || _.isNull(this._events)) {
+    if (CTS.Fn.isUndefined(this._events) || CTS.Fn.isNull(this._events)) {
       this._events = {};
     }
     var list = this._events[name] || (this._events[name] = []);
@@ -69,7 +69,7 @@ var Events = CTS.Events = {
   once: function(name, callback, context) {
     if (!(eventsApi(this, 'once', name, [callback, context]) && callback)) return this;
     var self = this;
-    var once = _.once(function() {
+    var once = CTS.Fn.once(function() {
       self.off(name, once);
       callback.apply(this, arguments);
     });
@@ -90,7 +90,7 @@ var Events = CTS.Events = {
       return this;
     }
 
-    names = name ? [name] : _.keys(this._events);
+    names = name ? [name] : CTS.Fn.keys(this._events);
     for (i = 0, l = names.length; i < l; i++) {
       name = names[i];
       list = this._events[name];
@@ -135,7 +135,7 @@ var Events = CTS.Events = {
   listenTo: function(object, events, callback, context) {
     context = context || this;
     var listeners = this._listeners || (this._listeners = {});
-    var id = object._listenerId || (object._listenerId = _.uniqueId('l'));
+    var id = object._listenerId || (object._listenerId = CTS.Fn.uniqueId('l'));
     listeners[id] = object;
     object.on(events, callback || context, context);
     return this;

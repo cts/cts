@@ -65,7 +65,7 @@ var Bootstrapper = CTS.Bootstrapper = {
     var hasRemote = false;
 
     var blocks = CTS.Utilities.getTreesheetLinks();
-    _.each(blocks, function(block) {
+    CTS.Fn.each(blocks, function(block) {
       if (block.type == 'inline') {
         this.ingestRules(block.content);
       } else if (block.type == 'link') {
@@ -87,7 +87,7 @@ var Bootstrapper = CTS.Bootstrapper = {
     this.fsmTransition("LoadingTrees");
     this._bootstrap_trees_to_load = {};
     var hasRemote = false;
-    _.each(this.forrest.trees, function(value, key, list) {
+    CTS.Fn.each(this.forrest.trees, function(value, key, list) {
       // Todo
     }, this);
     if (! hasRemote) {
