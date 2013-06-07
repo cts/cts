@@ -13,10 +13,7 @@ var RelationOpts = CTS.RelationOpts = {
 var Relation = CTS.Relation = function(node1, node2, spec) {
   this.node1 = node1;
   this.node2 = node2;
-  this.name = name;
-  this.opts = CTS.Fn.extend({}, opts);
-  this.opts1 = CTS.Fn.extend(RelationOpts, opts1);
-  this.opts2 = CTS.Fn.extend(RelationOpts, opts2);
+  this.spec = spec;
 };
 
 CTS.Fn.extend(Relation.prototype, RelationOps, {
@@ -41,6 +38,16 @@ CTS.Fn.extend(Relation.prototype, RelationOps, {
     return (node == this.node1) ? this.node2 : this.node1;
   },
 
+  rebind: function(source, destination) {
+    if (source == this.node1) {
+      this.node1 = destination;
+    } else if (source == this.node2) {
+      this.node2 = destination;
+    } else {
+      CTS.Log.Error("Asked to rebind but no match.");
+    }
+  },
+
   optsFor: function(node) {
     if (this.node1 === node) {
       return this.spec.opts1;
@@ -51,12 +58,6 @@ CTS.Fn.extend(Relation.prototype, RelationOps, {
   },
 
   clone: function() {
-    return new CTS.Relation(
-        this.selection1.clone(),
-        this.selection2.clone(),
-        this.name,
-        this.opts,
-        this.opts1,
-        this.opts2);
+    return new CTS.Relation(this.node1, this.node2, this.spec);
   }
 });

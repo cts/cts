@@ -44,6 +44,23 @@ CTS.NodeStateMachine = {
       this.on('FsmEntered:Finished', this._onFinished, this);
    },
 
+  render: function(opts) {
+    console.log(this, "render");
+
+    if (! CTS.Fn.isUndefined(opts)) {
+      if (CTS.Fn.has(opts, 'callback')) {
+        var scope = this;
+        if (CTS.Fn.has(opts, 'callbackScope')) {
+          scope = opts.callbackScope;
+        }
+        this.once('FsmEntered:Finished', opts.callback, scope);
+      }
+    }
+
+    this.fsmTransition("BeginRender");
+  },
+
+
   _onBeginRender: function() {
     console.log(this, "onBeginRender");
     this.fsmTransition("ProcessIncoming");

@@ -11,36 +11,18 @@ CTS.NonExistantNode = {};
 
 CTS.Node = {
 
-  '_kind': 'undefined',
-
-  initializeNodeBase: function() {
+  initializeNodeBase: function(tree, opts) {
+    this.opts = opts;
+    this.tree = tree;
     this.kind = null;
     this.children = [];
     this.parentNode = null;
     this.relations = [];
+    this.addedMyInlineRelationsToForrest = false;
     this.initializeStateMachine();
   },
 
-  render: function(opts) {
-    console.log(this, "render");
-
-    if (! CTS.Fn.isUndefined(opts)) {
-      if (CTS.Fn.has(opts, 'callback')) {
-        var scope = this;
-        if (CTS.Fn.has(opts, 'callbackScope')) {
-          scope = opts.callbackScope;
-        }
-        this.once('FsmEntered:Finished', opts.callback, scope);
-      }
-    }
-
-    this.fsmTransition("BeginRender");
-  },
-
   getChildren: function() {
-    if (CTS.Fn.isUndefined(this.children) || CTS.Fn.isNull(this.children)) {
-      this._createChildren();
-    }
     return this.children;
   },
 
@@ -51,13 +33,30 @@ CTS.Node = {
   },
 
   getRelations: function() {
-    if (! this.searchedForRelations) {
-      if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-        this.tree.forrest.registerRelationsForNode(this);
-      }
-      this.searchedForRelations = true;
+    if (! this.addedMyInlineRelationsToForrest) {
+      this.registerInlineRelationSpecs();
     }
     return this.relations;
+  },
+
+  getInlineRelationSpecs: function() {
+    return _subclass_getInlineRelationSpecs();
+  },
+
+  registerInlineRelationSpecs: function() {
+    if (this.addedMyInlineRelationsToForrest) {
+      CTS.Log.Warn("Not registering inline relations: have already done so.");
+    } else {
+      if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
+        CTS.Fn.Each(this.getInlineRelationSpecs(), function(spec) {
+          this.tree.forrest.addRelationSpec(spec);
+          this.tree.forrest.realizeRelationSpec(spec);
+        }, this);
+        this.addedMyInlineRelationsToForrest = true;
+      } else {
+        CTS.Log.Warn("Could not add inline relations to null tree.forrest");
+      }
+    }
   },
 
   getSubtreeRelations: function() {
@@ -67,24 +66,7 @@ CTS.Node = {
       }))
     );
   },
-
-  treeSize: function() {
-    return 1 + this.getChildren().length;
-  },
-
-  subtreeRelations: function() {
-    var relations = this.tree.forrest.relationsForNode(this);
-    var myChildren = this.getChildren();
-    for (var i = 0; i < myChildren.length; i++) {
-      relations = CTS.Fn.union(relations, myChildren[i].subtreeRelations());
-    }
-    return relations;
-  },
-
-  getInlineRules: function() {
-    return null;
-  },
-
+  
   insertChild: function(node, afterIndex) {
     if (typeof afterIndex == 'undefined') {
       afterIndex = this.getChildren().length - 1;
@@ -122,6 +104,42 @@ CTS.Node = {
     this._subclass_destroy();
   },
 
+  realizeChildren: function() {
+    if (this.children.length != 0) {
+      CTS.Log.Fatal("Trying to realize children when already have some.");
+    }
+    this._subclass_realizeChildren();
+    CTS.Fn.each(this.children, function(child) {
+      child.realizeChildren();
+    });
+  },
+
+  clone: function() {
+    var c = this._subclass_beginClone();
+    var self = this;
+
+    // Clone all the relations of this ndoe, and all nodes downtree.
+    var copyRelationsRecursively = function(source, dest) {
+      CTS.Fn.each(source.relations, function(relation) {
+        var relationClone = relation.clone();
+        relationClone.rebind(source, dest);
+        dest.relations.push(relationClone);
+      });
+
+      // Now get the children.
+      CTS.Fn.each(CTS.Fn.zip(source.children, dest.children), function(grp) {
+        self.copyRelationsRecursively(grp[0], grp[1]);
+      });
+    };
+    copyRelationsRecursively(this, c);
+
+    // Note that we DON'T wire up any parent-child relationships
+    // because that would result in more than just cloning the node
+    // but also modifying other structures, such as the tree which
+    // contained the source.
+    return c;
+  },
+
   /************************************************************************
    **
    ** To be implemented by format-specific node subclasses
@@ -130,6 +148,8 @@ CTS.Node = {
 
   _subclass_realizeChildren: function() {},
   _subclass_insertChild: function(child, afterIndex) {},
-  _subclass_destroy: function() {}
+  _subclass_destroy: function() {},
+  _subclass_getInlineRelations: function() {}
+  _subclass_beginClone
 
 };
