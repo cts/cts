@@ -1,0 +1,132 @@
+
+  _performConditional: function() {
+    var relations = CTS.Fn.filter(this.relations, function(rule) {
+      return (
+        ((rule.name == "ifexist") || (rule.name == "ifnexist")) &&
+         (rule.head().contains(this)));
+    }, this);
+
+    if (relations.length === 0) {
+      // No conditionality restrictions
+      return true;
+    } else {
+      return CTS.Fn.all(relations, function(rule) {
+        var otherNodes = rule.tail().nodes;
+        var exist = ((! CTS.Fn.isUndefined(otherNodes)) && (otherNodes.length > 0));
+        return ((exist  && (rule.name == "ifexist")) ||
+                ((!exist) && (rule.name == "ifnexist")));
+      }, this);
+    }
+  },
+
+  _performIs: function() {
+    //console.log("Perform IS on", this, this.node.html(), this.relations);
+    // If there is an incoming value node, handle it.
+    // Just take the last one.
+    var rule = null;
+    CTS.Fn.each(this.relations, function(r) {
+      console.log(r);
+      if (r.name == "is") {
+        console.log("is is!");
+        if (r.head().contains(this)) {
+          console.log("contains this!");
+          console.log("Perform is");
+          rule = r;
+        }
+      }
+    }, this);
+
+    if (rule) {
+      console.log("Found IS rule");
+      this.isIncoming(rule.tail());
+      return true;
+    } else {
+      return false;
+    }
+  },
+
+
+  _performAre: function() {
+    var relation = null;
+    CTS.Fn.each(this.relations, function(r) {
+      if (r.name == "are") {
+        console.log("FOUND AN ARE");
+        if (r.head().contains(this)) {
+          relation = r;
+        }
+      }
+    }, this);
+
+    if (relation) {
+      // This aligns the cardinalities of the downstream trees.
+
+      // Initialize some vars from this
+      var thisSet = CTS.Fn.filter(this.getChildren(), function(child) { 
+        return child.isEnumerable;
+      });
+      var thisCardinality = thisSet.length;
+      if (thisCardinality.length == 0) {
+        // Bail out: there's nothing to do.
+        return;
+      }
+
+      // Initialize some vars from other
+      var otherSelection = relation.tail();
+      var otherSet = CTS.Fn.flatten(
+        CTS.Fn.map(otherSelection.nodes, function(node) {
+          return node.areOutgoing(relation, opts);
+        })
+      );
+      var otherCardinality = otherSet.length;
+      var otherKids = CTS.Fn.union(
+          CTS.Fn.map(otherSelection.nodes, function(o) {
+            o.getChildren()
+      }));
+
+      // 1. ALIGN CARDINALITY
+      var diff = Math.abs(thisCardinality - otherCardinality);
+      var i;
+      if (thisCardinality > otherCardinality) {
+        for (i = 0; i < diff; i++) {
+          var excess = thisSet.pop();
+          excess.destroy();
+          console.log(thisSet);
+        }
+      } else if (thisCardinality < otherCardinality) {
+        var toClone = thisSet[thisSet.length - 1];
+        for (i = 0; i < diff; i++) {
+          console.log("going to clone");
+          thisSet[thisSet.length] = toClone.clone();
+        }
+      }
+
+      // 2. SPLIT UP RELATIONS BETWEEN ALIGNED CHILDREN
+
+      // First, collect all relations whose selections involve all and exactly the children
+      // of both sides.
+      var relations = [];
+      var kids = this.getChildren();
+      if (kids.length > 0) {
+        var candidateRelations = kids[0].getSubtreeRelations();
+        relations = CTS.Fn.filter(candidateRelations, function(r) {
+          return (r.tail().matchesArray(otherKids, true, true) && 
+            r.head().matchesArray(kids, true));
+        });
+      }
+
+      // Relations is not the set of all relations that match
+      // the CTS children of the two ARE nodes.
+
+      // For each i, spawn a new relation, 
+
+      return true;
+    } else {
+      return false;
+    }
+  },
+
+  unregisterChild: function(child, opts) {
+    this.children = CTS.Fn.without(this.children, child);
+  },
+
+
