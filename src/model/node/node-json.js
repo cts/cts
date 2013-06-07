@@ -1,61 +1,34 @@
 // ### Constructor
-var JsonNode = CTS.JsonNode = function(obj, tree, opts, args) {
-  var defaults;
-  this._kind = 'json';
-  this.dataType = null; // {set, object, property, string, boolean, number}
+var JsonNode = CTS.JsonNode = function(node, tree, opts) {
+  opts = opts || {};
+  this.initializeNodeBase(tree, opts);
+  this.kind = "JSON";
   this.value = null;
-  this.tree = tree;
-  this.opts = opts || {};
-  this.initialize.apply(this, obj, args);
+  this.dataType = null;
+  if (opts.property) {
+    this.value = opts.property;
+    this.dataType = 'property'
+  } else {
+    this.value = node;
+    this.updateDataType();
+  }
 };
  
 // ### Instance Methods
 CTS.Fn.extend(CTS.JsonNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
-  initialize: function(obj, args) {
-    this.initializeStateMachine();
-    this.children = [];
-
-    // Recursively create all children
-    if (CTS.Fn.isNull(obj)) {
+  updateDataType: function() {
+    if (CTS.Fn.isNull(this.value)) {
       this.dataType = 'null';
-      this.value = null;
-    } else if (CTS.Fn.isUndefined(obj)) {
+    } else if (CTS.Fn.isUndefined(this.value)) {
       this.dataType = 'null';
-      this.value = null;
-    } else if (CTS.Fn.isArray(obj)) {
-      this.dataType = 'set';
-      CTS.Fn.each(obj, function(item) {
-        this.children.push(new JsonNode(item, this.tree, opts, args));
-      }, this);
-    } else if (CTS.Fn.isObject(obj)) {
+    } else if (CTS.Fn.isArray(this.value)) {
+      this.dataType = 'array';
+    } else if (CTS.Fn.isObject(this.value)) {
       this.dataType = 'object';
-      CTS.Fn.each(obj, function(val, key) {
-        var kid = new JsonNode(null, this.tree, opts, args);
-        kid.dataType = 'property';
-        kid.value = key;
-        kid.children = [new JsonNode(val, this.tree, opts, args)];
-        this.children.push(kid);
-      }, this);
     } else {
-      this.dataType = typeof obj;
-      this.value = obj;
+      this.dataType = typeof this.value;
     }
-  },
-
-  destroy: function(opts) {
-    // TODO: handle case of trying to unregister root.
-  },
-
-  debugName: function() {
-  },
-
-  clone: function(opts) {
-  },
-
-  getInlineRules: function() {
-    // A JSON Node can't have inline rules.
-    return null;
   },
 
   toJSON: function() {
@@ -83,26 +56,57 @@ CTS.Fn.extend(CTS.JsonNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     }
   },
 
-  failedConditional: function() {
+  debugName: function() {
+    return "<JsonNode " + this.dataType + " :: " + this.value + ">"
   },
 
-  isIncoming: function(otherNodeSelection, opts) {
-    if (otherNodeSelection.nodes.length === 0) {
-      this.dataType = 'undefined';
-      this.value = null;
-      this.children = [];
-    } else if (otherNodeSelection.nodes.length === 1) {
-      this.value = otherNodeSelection.nodes[0].isOutgoing(opts);
-      this.dataType = typeof this.value;
-    } else {
-      this.value = CTS.Fn.map(otherNodeSelection.nodes, function(n) {
-        n.isOutgoing(opts)
-      }, this).join("");
-      this.dataType = typeof this.value;
-    }
+  /************************************************************************
+   **
+   ** Required by Node base class
+   **
+   ************************************************************************/
+
+  /*
+   * Precondition: this.children.length == 0
+   *
+   * Realizes all children.
+   */
+  _subclass_realizeChildren: function() {
+    this.children = [];
   },
 
-  isOutgoing: function(opts) {
+  /* 
+   * Inserts this DOM node after the child at the specified index.
+   */
+  _subclass_insertChild: function(child, afterIndex) {
+    var leftSibling = this.getChildren()[afterIndex];
+  },
+
+  /* 
+   *  Removes this DOM node from the DOM tree it is in.
+   */
+  _subclass_destroy: function() {
+    this.jQueryNode.remove();
+  },
+
+  _subclass_getInlineRelationSpecs: function() {
+    return null;
+  },
+
+  _subclass_beginClone: function() {
+    var c = this.originalJson;
+    var d = new JsonNode(c, this.tree, this.opts);
+    d.realizeChildren();
+    return d;
+  },
+
+ /************************************************************************
+  **
+  ** Required by Relation classes
+  **
+  ************************************************************************/
+
+  getValue: function(opts) {
     if (this.dataType == 'set') {
       return JSON.stringify(this.toJSON());
     } else if (this.dataType == 'object') {
@@ -114,10 +118,18 @@ CTS.Fn.extend(CTS.JsonNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     }
   },
 
-  areIncoming: function(otherSelection, relation, opts) {
-  },
-
-  areOutgoing: function(relation, opts) {
+  setValue: function(value, opts) {
+    if (this.dataType == 'property') {
+      CTS.Log.Warn("Should not be setting the value of a property.");
+    }
+    this.value = value;
   }
+  
+  /************************************************************************
+   **
+   ** Utility Helpers
+   **
+   ************************************************************************/
+
 });
 

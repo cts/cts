@@ -18,6 +18,7 @@ CTS.Node = {
     this.children = [];
     this.parentNode = null;
     this.relations = [];
+    this.value = null;
     this.addedMyInlineRelationsToForrest = false;
     this.initializeStateMachine();
   },
@@ -142,14 +143,22 @@ CTS.Node = {
 
   /************************************************************************
    **
-   ** To be implemented by format-specific node subclasses
+   ** Methods to be overridden by subclasses
    **
    ************************************************************************/
+
+  getValue: function(opts) {
+    return this.value;
+  },
+
+  setValue: function(v, opts) {
+    this.value = v;
+  },
 
   _subclass_realizeChildren: function() {},
   _subclass_insertChild: function(child, afterIndex) {},
   _subclass_destroy: function() {},
-  _subclass_getInlineRelations: function() {}
-  _subclass_beginClone
+  _subclass_getInlineRelations: function() {},
+  _subclass_beginClone: function() {}
 
 };

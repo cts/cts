@@ -3,7 +3,7 @@ var DomNode = CTS.DomNode = function(node, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
   this.kind = "DOM";
-  this.jQueryNode = this.createJqueryNode(node);
+  this.value = this.createJqueryNode(node);
 };
 
 // ### Instance Methods
@@ -27,7 +27,7 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     * Realizes all children.
     */
    _subclass_realizeChildren: function() {
-     this.children = CTS.Fn.map(this.jQueryNode.children(), function(child) {
+     this.children = CTS.Fn.map(this.value.children(), function(child) {
        var node = new DomNode(child);
        return node;
      });
@@ -38,26 +38,26 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     */
    _subclass_insertChild: function(child, afterIndex) {
      var leftSibling = this.getChildren()[afterIndex];
-     leftSibling.jQueryNode.after(this.jQueryNode);
+     leftSibling.value.after(this.value);
    },
 
    /* 
     *  Removes this DOM node from the DOM tree it is in.
     */
    _subclass_destroy: function() {
-     this.jQueryNode.remove();
+     this.value.remove();
    },
 
    _subclass_getInlineRelationSpecs: function() {
-     if (this.jQueryNode !== null) {
-       var inline = this.jQueryNode.attr('data-cts');
+     if (this.value!== null) {
+       var inline = this.value.attr('data-cts');
        var specs = CTS.Parser.ParseInlineSpecs(inline, this);
        return specs;
      }
    },
 
    _subclass_beginClone: function() {
-     var c = this.jQueryNode.clone();
+     var c = this.value.clone();
      var d = new DomNode(c, this.tree, this.opts);
      d.realizeChildren();
      return d;
@@ -70,11 +70,11 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
    ************************************************************************/
 
   getValue: function(opts) {
-    return this.jQueryNode.html();
+    return this.value.html();
   },
 
   setValue: function(value, opts) {
-    this.jQueryNode.html(value);
+    this.value.html(value);
   },
 
   /************************************************************************
@@ -102,6 +102,6 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
     } else {
       return null;
     }
-  },
+  }
 
 });
