@@ -1,4 +1,6 @@
-var RelationSpec = CTS.RelationSpec = function(selector1, selector2, name, props1, props2) {
+CTS.Relation = {};
+
+CTS.Relation.RelationSpec = function(selector1, selector2, name, props1, props2) {
   this.selectionSpec1 = selector1;
   this.selectionSpec2 = selector2;
   this.name = name;
@@ -6,7 +8,7 @@ var RelationSpec = CTS.RelationSpec = function(selector1, selector2, name, props
   this.opts2 = props2;
 };
 
-CTS.Fn.extend(Rule.prototype, {
+CTS.Fn.extend(CTS.Relation.RelationSpec.prototype, {
   head: function() {
     return this.selectionSpec1;
   },

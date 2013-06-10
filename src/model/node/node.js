@@ -7,8 +7,6 @@
 // by certain relations (in both directions). The differences between
 // different types of trees (JSON, HTML, etc) are concealed at this level.
 
-CTS.NonExistantNode = {};
-
 CTS.Node = {
 
   initializeNodeBase: function(tree, opts) {
@@ -70,7 +68,7 @@ CTS.Node = {
   
   insertChild: function(node, afterIndex) {
     if (typeof afterIndex == 'undefined') {
-      afterIndex = this.getChildren().length - 1;
+      afterIndex = this.children.length - 1;
     }
 
     this.children[this.children.length] = null;

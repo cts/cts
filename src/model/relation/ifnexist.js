@@ -5,7 +5,16 @@
  * Intended as a Mix-In to Relation.
  */
 
-var CTS.Relations.IfNExist = {
+CTS.Relation.IfNexist = function(node1, node2, spec) {
+  if (typeof spec == 'undefined') {
+    spec = {};
+  }
+  this.node1 = node1;
+  this.node2 = node2;
+  this.spec = spec;
+};
+
+CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Relation, {
   execute: function(toward) {
     var other = this.opposite(toward);
     if (other == CTS.NonExistantNode) {
@@ -14,5 +23,4 @@ var CTS.Relations.IfNExist = {
       this.hide();
     }
   }
-};
-
+});

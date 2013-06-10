@@ -24,10 +24,194 @@ CTS.VERSION = '0.1.0';
 // For our purposes, jQuery owns the $ variable.
 CTS.$ = root.jQuery;
 
-// For our purposes, Underscore owns the _ variable.
-// Require it if on server and not already present.
-var _ = root._;
-if (!_ && (typeof require !== 'undefined')) _ = require('underscore');
+/*
+ * Helper functions. Many of these are taken from Underscore.js
+ */
+var Fn = CTS.Fn = {
+  breaker: {},
+
+  any: function(obj, iterator, context) {
+    iterator || (iterator = _.identity);
+    var result = false;
+    if (obj == null) return result;
+    if (Array.prototype.some && obj.some === Array.prototype.some) return obj.some(iterator, context);
+    CTS.Fn.each(obj, function(value, index, list) {
+      if (result || (result = iterator.call(context, value, index, list))) return CTS.Fn.breaker;
+    });
+    return !!result;
+  },
+
+  every: function(obj, iterator, context) {
+    iterator || (iterator = _.identity);
+    var result = true;
+    if (obj == null) return result;
+    if (Array.prototype.every && obj.every === Array.prototype.every) return obj.every(iterator, context);
+    CTS.Fn.each(obj, function(value, index, list) {
+      if (!(result = result && iterator.call(context, value, index, list))) return CTS.Fn.breaker;
+    });
+    return !!result;
+  },
+
+  each: function(obj, iterator, context) {
+    if (obj == null) return;
+    if (Array.prototype.forEach && obj.forEach === Array.prototype.forEach) {
+      obj.forEach(iterator, context);
+    } else if (obj.length === +obj.length) {
+      for (var i = 0, l = obj.length; i < l; i++) {
+        if (iterator.call(context, obj[i], i, obj) === CTS.Fn.breaker) return;
+      }
+    } else {
+      for (var key in obj) {
+        if (CTS.Fn.has(obj, key)) {
+          if (iterator.call(context, obj[key], key, obj) === CTS.Fn.breaker) return;
+        }
+      }
+    }
+  },
+
+  map: function(obj, iterator, context) {
+    var results = [];
+    if (obj == null) return results;
+    if (Array.prototype.map && obj.map === Array.prototype.map) return obj.map(iterator, context);
+    CTS.Fn.each(obj, function(value, index, list) {
+      results[results.length] = iterator.call(context, value, index, list);
+    });
+    return results;
+  },
+
+  extend: function(obj) {
+    CTS.Fn.each(Array.prototype.slice.call(arguments, 1), function(source) {
+      if (source) {
+        for (var prop in source) {
+          obj[prop] = source[prop];
+        }
+      }
+    });
+    return obj;
+  },
+
+  isObject: function(obj) {
+    return obj === Object(obj);
+  },
+
+  isUndefined: function(obj) {
+    return obj === void 0;
+  },
+
+  isNull: function(obj) {
+    return obj === null;
+  },
+
+  has: function(obj, key) {
+    return hasOwnProperty.call(obj, key);
+  },
+
+  contains: function(obj, target) {
+    if (obj == null) return false;
+    if (Array.prototype.indexOf && obj.indexOf === Array.prototype.indexOf) return obj.indexOf(target) != -1;
+    return CTS.Fn.any(obj, function(value) {
+      return value === target;
+    });
+  },
+
+  once: function(func) {
+    var ran = false, memo;
+    return function() {
+      if (ran) return memo;
+      ran = true;
+      memo = func.apply(this, arguments);
+      func = null;
+      return memo;
+    };
+  },
+
+  uniqueId: function(prefix) {
+    var id = ++CTS.Fn.idCounter + '';
+    return prefix ? prefix + id : id;
+  },
+
+  union: function() {
+    return CTS.Fn.uniq(concat.apply(Array.prototype, arguments));
+  },
+
+  unique: function(array, isSorted, iterator, context) {
+    if (CTS.Fn.isFunction(isSorted)) {
+      context = iterator;
+      iterator = isSorted;
+      isSorted = false;
+    }
+    var initial = iterator ? CTS.Fn.map(array, iterator, context) : array;
+    var results = [];
+    var seen = [];
+    CTS.Fn.each(initial, function(value, index) {
+      if (isSorted ? (!index || seen[seen.length - 1] !== value) : !CTS.Fn.contains(seen, value)) {
+        seen.push(value);
+        results.push(array[index]);
+      }
+    });
+    return results;
+  },
+  
+  without: function(array) {
+    return CTS.Fn.difference(array, slice.call(arguments, 1));
+  },
+
+  difference: function(array) {
+    var rest = concat.apply(ArrayProto, slice.call(arguments, 1));
+    return CTS.Fn.filter(array, function(value){ return !CTS.Fn.contains(rest, value); });
+  },
+
+  filter: function(obj, iterator, context) {
+    var results = [];
+    if (obj == null) return results;
+    if (Array.prototype.filter && obj.filter === Array.prototype.filter) return obj.filter(iterator, context);
+    CTS.Fn.each(obj, function(value, index, list) {
+      if (iterator.call(context, value, index, list)) results[results.length] = value;
+    });
+    return results;
+  },
+
+  flattenWithOutput: function(input, shallow, output) {
+    CTS.Fn.each(input, function(value) {
+      if (CTS.Fn.isArray(value)) {
+        shallow ? push.apply(output, value) : flattenWithOutput(value, shallow, output);
+      } else {
+        output.push(value);
+      }
+    });
+    return output;
+  },
+
+  flatten: function(array, shallow) {
+    return flattenWithOutput(array, shallow, []);
+  }
+};
+
+CTS.Fn.isArray = Array.isArray || function(obj) {
+  return toString.call(obj) == '[object Array]';
+};
+
+CTS.Fn.keys = Object.keys || function(obj) {
+  if (obj !== Object(obj)) throw new TypeError('Invalid object');
+  var keys = [];
+  for (var key in obj) if (CTS.Fn.has(obj, key)) keys[keys.length] = key;
+  return keys;
+};
+
+CTS.Fn.each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'], function(name) {
+  CTS.Fn['is' + name] = function(obj) {
+    return toString.call(obj) == '[object ' + name + ']';
+  };
+});
+
+if (typeof (/./) !== 'function') {
+  CTS.Fn.isFunction = function(obj) {
+    return typeof obj === 'function';
+  };
+}
+
+CTS.Fn.idCounter = 0;
+
 
 CTS.Log = {
 
@@ -44,17 +228,219 @@ CTS.Log = {
   },
 
   Debug: function(message, args) {
+  },
+
+  Info: function(message, args) {
+    if (typeof args == 'undefined') {
+      args = [];
+    }
+    args.unshift(message);
+    console.log.call(this, args);
   }
 
 };
 
 
 
+CTS.Debugging = {
+  DumpStack: function() {
+    var e = new Error('dummy');
+    var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
+        .replace(/^\s+at\s+/gm, '')
+        .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
+        .split('\n');
+    console.log(stack);
+  },
+
+  NodesToString: function(node) {
+    var ret = node.getValue();
+    if (node.children.length > 0) {
+      ret += "(";
+      CTS.Fn.map(node.children, function(child) {
+        return child.debugPrintTree();
+      }).join(" ");
+      ret += ")";
+    }
+    return ret;
+  },
+
+  // NODES := <null> | NODE | NODE NODES
+  // NODE := NODE_WO_KIDS | NODE_W_KIDS
+  // NODE_WO_KIDS := name
+  // NDOE_W_KIDS := name(NODES)
+  StringToNodes: function(str) {
+    var ret = [];
+    var name, parens, firstParen, secondParen;
+
+    var reset = function(idx) {
+      name = "";
+      parens = idx;
+      firstParen = -1;
+      secondParen = -1;
+    };
+
+    var pop = function() {
+      var n = new CTS.AbstractNode();
+      n.setValue(name);
+      if (firstParen != -1) {
+        // Handle innards.
+        var substr = str.substring(firstParen + 1, secondParen);
+        console.log(firstParen, secondParen, substr);
+        CTS.Fn.each(CTS.Debugging.StringToNodes(substr), function(c) {
+          console.log(c);
+          n.insertChild(c);
+        });
+      }
+      ret.push(n);
+    };
+
+    reset(0);
+
+    var i = 0;
+    while (i < str.length) {
+      var c = str[i++];
+      if (c == '(') {
+        if (firstParen == -1) {
+          firstParen = i - 1;
+        }
+        parens++;
+      } else if (c == ')') {
+        parens--;
+        if (parens == 0) {
+          secondParen = i - 1;
+          pop();
+          reset(0);
+        }
+      } else {
+        if (firstParen == -1) {
+          name += c;
+        }
+      }
+    }
+    if (name != "") {
+      var n = new CTS.AbstractNode();
+      n.setValue(name);
+      ret.push(n);
+    }
+    return ret;
+  },
+
+  StringsToRelations: function(root1, root2, strs) {
+    return CTS.Fn.map(strs.split(";"), function(str) {
+      var parts = str.split(" ");
+      var v1 = parts[0];
+      var p  = parts[1];
+      var v2 = parts[2];
+      var n1 = CTS.Debugging.NodeWithValue(root1, v1);
+      var n2 = CTS.Debugging.NodeWithValue(root2, v2);
+      var r = null;
+      if (p == "is") {
+        r = new CTS.Relation.Is(n1, n2);
+      } else if (p == "if-exist") {
+        r = new CTS.Relation.IfExist(n1, n2);
+      }
+      console.log(p);
+      return r;
+    });
+  },
+
+  NodeWithValue: function(root, value) {
+    if (root.getValue() == value) {
+      return root;
+    } else {
+      for (var i = 0; i < root.children.length; i++) {
+        var ret = CTS.Debugging.NodeWithValue(root.children[i], value);
+        if (ret != null) {
+          return ret;
+        }
+      }
+    }
+    return null;
+  },
+
+  QuickCombine: function(treeStr1, treeStr2, rules) {
+    var n1 = CTS.Debugging.StringToNodes(treeStr1)[0];
+    var n2 = CTS.Debugging.StringToNodes(treeStr2)[0];
+    var rs = CTS.Debugging.StringsToRelations(n1, n2, rules);
+    for (var i = 0; i < rs.length; i++) {
+      rs[i].execute(rs[i].node1);
+    }
+    return n1;
+  },
+
+  QuickTest: function(treeStr1, treeStr2, rules) {
+    var n = CTS.Debugging.QuickCombine(treeStr1, treeStr2, rules);
+    return CTS.Debugging.NodesToString(n);
+  }
+
+};
+
+var TreeViz = CTS.Debugging.TreeViz = function(forrest) {
+  this.forrest = forrest;
+  this.init();
+  this.finish();
+};
+
+CTS.Fn.extend(TreeViz.prototype, {
+
+  write: function(html) {
+    this.win.document.write(html);
+  },
+  
+  init:  function() {
+    this.win = window.open(
+        "",
+        "CTS Tree Visualization",
+        "width=1000,height=800,scrollbars=1,resizable=1"
+    );
+    this.win.document.open();
+    this.write("<html><head>");
+    this.write('<script src="http://d3js.org/d3.v3.min.js"></script>');
+    this.write('<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>');
+    this.write('<script src="http://people.csail.mit.edu/eob/files/cts/extras/tree.js"></script>');
+    this.write('<link rel="stylesheet" href="http://people.csail.mit.edu/eob/files/cts/extras/tree.css"></script>');
+    this.writeTree(this.forrest.getPrimaryTree());
+    this.write('</head><body><div id="chart"></div>');
+  },
+
+  finish: function() {
+    this.write("</body><html>");
+    this.win.document.close();
+  },
+  
+  writeTree: function(tree) {
+    this.write("<script>");
+    this.write("window.treeData = ");
+    this.writeNode(tree.root); 
+    this.write(";");
+    this.write("</script>");
+  },
+
+  writeNode: function(node) {
+    this.write("{");
+    this.write('name:"' + node.debugName() + '"');
+    var kids = node.getChildren();
+    console.log(kids);
+    console.log("Kids size for node", node, kids.length);
+    if ((typeof kids != "undefined") && (kids.length > 0)) {
+      this.write(', children: [');
+      for (var i = 0; i < kids.length; i++) {
+        this.writeNode(kids[i]);
+        if (i < kids.length - 1) {
+          this.write(",");
+        }
+      }
+      this.write(']');
+    }
+    this.write("}");
+  }
+});
+
 // StateMachine
 // ==========================================================================
 //
 //     var object = {};
-//     _.extend(object, CTS.StateMachine);
+//     CTS.Fn.extend(object, CTS.StateMachine);
 //
 // ==========================================================================
 
@@ -66,8 +452,8 @@ var StateMachine = CTS.StateMachine = {
   fsmInitialize: function(initialState, arcs, opts) {
     this._fsmCurrent = initialState;
     this._fsmArcs = {};
-    _.each(arcs, function(arc) {
-      if (! _.contains(this._fsmArcs, arc.from)) {
+    CTS.Fn.each(arcs, function(arc) {
+      if (! CTS.Fn.contains(this._fsmArcs, arc.from)) {
         this._fsmArcs[arc.from] = {};
       }
       this._fsmArcs[arc.from][arc.to] = arc.name;
@@ -111,7 +497,7 @@ var StateMachine = CTS.StateMachine = {
 // This is taken completely from Backbone.Events
 //
 //     var object = {};
-//     _.extend(object, CTS.Events);
+//     CTS.Fn.extend(object, CTS.Events);
 //     object.on('expand', function(){ alert('expanded'); });
 //     object.trigger('expand');
 //
@@ -163,7 +549,7 @@ var Events = CTS.Events = {
   // all events fired.
   on: function(name, callback, context) {
     if (!(eventsApi(this, 'on', name, [callback, context]) && callback)) return this;
-    if (_.isUndefined(this._events) || _.isNull(this._events)) {
+    if (CTS.Fn.isUndefined(this._events) || CTS.Fn.isNull(this._events)) {
       this._events = {};
     }
     var list = this._events[name] || (this._events[name] = []);
@@ -176,7 +562,7 @@ var Events = CTS.Events = {
   once: function(name, callback, context) {
     if (!(eventsApi(this, 'once', name, [callback, context]) && callback)) return this;
     var self = this;
-    var once = _.once(function() {
+    var once = CTS.Fn.once(function() {
       self.off(name, once);
       callback.apply(this, arguments);
     });
@@ -197,7 +583,7 @@ var Events = CTS.Events = {
       return this;
     }
 
-    names = name ? [name] : _.keys(this._events);
+    names = name ? [name] : CTS.Fn.keys(this._events);
     for (i = 0, l = names.length; i < l; i++) {
       name = names[i];
       list = this._events[name];
@@ -242,7 +628,7 @@ var Events = CTS.Events = {
   listenTo: function(object, events, callback, context) {
     context = context || this;
     var listeners = this._listeners || (this._listeners = {});
-    var id = object._listenerId || (object._listenerId = _.uniqueId('l'));
+    var id = object._listenerId || (object._listenerId = CTS.Fn.uniqueId('l'));
     listeners[id] = object;
     object.on(events, callback || context, context);
     return this;
@@ -302,14 +688,14 @@ var Utilities = CTS.Utilities = {
    */ 
   getTreesheetLinks: function() {
     var ret = [];
-    _.each(CTS.$('style[type="text/cts"]'), function(elem) {
+    CTS.Fn.each(CTS.$('style[type="text/cts"]'), function(elem) {
       var block = {
         type: 'inline',
         content: $(elem).html()
       };
       ret.append(block);
     }, this);
-    _.each(CTS.$('link[rel="treesheet"]'), function(elem) {
+    CTS.Fn.each(CTS.$('link[rel="treesheet"]'), function(elem) {
       var block = {
         type: 'link',
         url: $(elem).attr('href')
@@ -325,768 +711,19 @@ var Utilities = CTS.Utilities = {
             success: success,
             error: error,
             beforeSend: function(xhr, settings) {
-              _.each(params, function(value, key, list) {
+              CTS.Fn
+      .each(params, function(value, key, list) {
                 xhr[key] = value;
               }, this);
             }
     });
+  },
+
+  fetchTree: function(spec, callback, context) {
   }
 
 };
  
-
-var SelectionSpec = CTS.SelectionSpec = function(treeName, selectorString, props) {
-  this.treeName = treeName;
-  this.selectorString = selectorString;
-  this.props = props;
-  this.inline = false;
-  this.inlineObject = null;
-};
-
-_.extend(SelectionSpec.prototype, {
-  toString: function() {
-    return "<Selector {tree:" + this.treeName +
-           ", type:" + this.treeType +
-           ", selector:" + this.selector +
-           ", variant:" + this.variant + "}>";
-  },
-
-  matches: function(node) {
-    if (_.isUndefined(node._kind)) {
-      CTS.Debugging.Error("Node has no kind", [node]); 
-      return false;
-    } else if (node._kind != this._kind) {
-      CTS.Debugging.Error("Node has wrong kind", [node]);
-      return false;
-    } else {
-      if (this.inline) {
-        return (this.inlineNode == node);
-      } else {
-        var res = ((this.treeName == node.tree.name) && (node.node.is(this.selector)));
-        return res;
-      }
-    }
-  },
-
-  // Returns tuple of [treeName, treeType, stringSpec]
-  PreParse: function(selectorString) {
-    var treeName = "body";
-    var treeType = "html";
-    var selector = null;
-
-    var trimmed = CTS.$.trim(selectorString);
-    if (trimmed[0] == "@") {
-      var pair = trimmed.split('|');
-      if (pair.length == 1) {
-        throw new Error("Cound not parse: " + self.stringSpec);
-      } else {
-        treeName = CTS.$.trim(pair.shift().substring(1));
-        // TODO(eob): set tree type
-        selector = CTS.$.trim(_.join(pair, ""));
-      }
-    } else {
-      selector = selectorString;
-    }
-    return [treeName, treeType, selector];
-  },
-
-  // Factory for new selectors
-  Create: function(selectorString) {
-    var parts = this.PreParse(selectorString);
-    var selector = null;
-
-    if (parts[1] == "html") {
-      selector = new DomSelector(parts[2]);
-    } 
-
-    console.log("s", selector);
-    if (selector !== null) {
-      selector.treeName = parts[0];
-      selector.treeType = parts[1];
-      selector.originalString = selectorString;
-    }
-
-    return selector;
-  }
-});
-
-
-var RelationSpec = CTS.RelationSpec = function(selector1, selector2, name, props1, props2) {
-  this.selector1 = selector1;
-  this.selector2 = selector2;
-  this.name = name;
-  this.opts1 = props1;
-  this.opts2 = props2;
-};
-
-_.extend(Rule.prototype, {
-  head: function() {
-    return this.selector1;
-  },
-
-  tail: function() {
-    return this.selector2;
-  }
-});
-
-var TreeSpec = CTS.TreeSpec = function(kind, name, url) {
-  this.kind = kind;
-  this.name = name;
-  this.url = url;
-};
-
-
-
-var ForrestSpec = CTS.ForrestSpec = function() {
-  var trees = [];
-  var rules = [];
-};
-
-_.extend(TreeSheet.prototype, {
-  incorporateJson: function(json) {
-    if (typeof json.relations != 'undefined') {
-      for (var i = 0; i < json.relations.length; i++) {
-        if (json.relations[i].length == 3) {
-          var s1 = this._jsonToSelector(json.relations[i][0]);
-          var s2 = this._jsonToSelector(json.relations[i][2]);
-          var ruleName = null;
-          var ruleProps = {};
-          if (_.isArray(json.relations[i][1])) {
-            if (json.relations[i][1].length == 2) {
-              _.extend(ruleProps, json.relations[i][1][1]);
-            }
-            if (json.relations[i][1].length > 0) {
-              ruleName = json.relations[i][1][0];
-            }
-          } else if (typeof json.relations[i][1] == 'string') {
-            ruleName = json.relations[i][1];
-          }
-
-          var rule = new CTS.RelationSpec(selector1, selector2, ruleName, ruleProps);
-          this.rules.push(rule);
-        }
-      }
-    }
-
-    if (typeof json.trees != 'undefined') {
-      for (var i = 0; i < json.trees.length; i++) {
-        if (json.trees[i].length == 3) {
-          this.trees.push(new CTS.TreeSpec(
-            json.trees[i][0],
-            json.trees[i][1],
-            json.trees[i][2]));
-        }
-      }
-    }
-  },
-
-  _jsonToSelector: function(json) {
-    var treeName = null;
-    var selectorString = null;
-    var args = {};
-
-    if (_.isArray(json)) {
-      if (json.length == 1) {
-        selectorString = json[0];
-      } else if (json.length == 2) {
-        treeName = json[0];
-        selectorString = json[1];
-      } else if (json.length == 3) {
-        treeName = json[0];
-        selectorString = json[1];
-        args = json[2];
-      }
-    } else if (typeof json == 'string') {
-      selectorString = json;
-    }
-    return new CTS.SelectorSpec(treeName, selectorString, args);
-  }
-});
- 
-
-/* parser generated by jison 0.4.4 */
-/*
-  Returns a Parser object of the following structure:
-
-  Parser: {
-    yy: {}
-  }
-
-  Parser.prototype: {
-    yy: {},
-    trace: function(),
-    symbols_: {associative list: name ==> number},
-    terminals_: {associative list: number ==> name},
-    productions_: [...],
-    performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate, $$, _$),
-    table: [...],
-    defaultActions: {...},
-    parseError: function(str, hash),
-    parse: function(input),
-
-    lexer: {
-        EOF: 1,
-        parseError: function(str, hash),
-        setInput: function(input),
-        input: function(),
-        unput: function(str),
-        more: function(),
-        less: function(n),
-        pastInput: function(),
-        upcomingInput: function(),
-        showPosition: function(),
-        test_match: function(regex_match_array, rule_index),
-        next: function(),
-        lex: function(),
-        begin: function(condition),
-        popState: function(),
-        _currentRules: function(),
-        topState: function(),
-        pushState: function(condition),
-
-        options: {
-            ranges: boolean           (optional: true ==> token location info will include a .range[] member)
-            flex: boolean             (optional: true ==> flex-like lexing behaviour where the rules are tested exhaustively to find the longest match)
-            backtrack_lexer: boolean  (optional: true ==> lexer regexes are tested in order and for each matching regex the action code is invoked; the lexer terminates the scan when a token is returned by the action code)
-        },
-
-        performAction: function(yy, yy_, $avoiding_name_collisions, YY_START),
-        rules: [...],
-        conditions: {associative list: name ==> set},
-    }
-  }
-
-
-  token location info (@$, _$, etc.): {
-    first_line: n,
-    last_line: n,
-    first_column: n,
-    last_column: n,
-    range: [start_number, end_number]       (where the numbers are indexes into the input string, regular zero-based)
-  }
-
-
-  the parseError function receives a 'hash' object with these members for lexer and parser errors: {
-    text:        (matched text)
-    token:       (the produced terminal token, if any)
-    line:        (yylineno)
-  }
-  while parser (grammar) errors will also provide these members, i.e. parser errors deliver a superset of attributes: {
-    loc:         (yylloc)
-    expected:    (string describing the set of expected tokens)
-    recoverable: (boolean: TRUE when the parser has a error recovery rule available for this particular error)
-  }
-*/
-var parser = (function(){
-var parser = {trace: function trace() { },
-yy: {},
-symbols_: {"error":2,"treesheet":3,"Block":4,"{":5,"Keyvalues":6,"}":7,"KeyValues":8,"KeyValue":9,"Key":10,":":11,"Value":12,";":13,"QUOTEDS":14,"KEYS":15,"UNQUOTEDS":16,"$accept":0,"$end":1},
-terminals_: {2:"error",5:"{",6:"Keyvalues",7:"}",11:":",13:";",14:"QUOTEDS",15:"KEYS",16:"UNQUOTEDS"},
-productions_: [0,[3,1],[4,3],[8,1],[8,2],[9,4],[10,1],[10,1],[12,1],[12,1]],
-performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
-/* this == yyval */
-
-var $0 = $$.length - 1;
-switch (yystate) {
-}
-},
-table: [{3:1,4:2,5:[1,3]},{1:[3]},{1:[2,1]},{6:[1,4]},{7:[1,5]},{1:[2,2]}],
-defaultActions: {2:[2,1],5:[2,2]},
-parseError: function parseError(str, hash) {
-    if (hash.recoverable) {
-        this.trace(str);
-    } else {
-        throw new Error(str);
-    }
-},
-parse: function parse(input) {
-    var self = this, stack = [0], vstack = [null], lstack = [], table = this.table, yytext = '', yylineno = 0, yyleng = 0, recovering = 0, TERROR = 2, EOF = 1;
-    this.lexer.setInput(input);
-    this.lexer.yy = this.yy;
-    this.yy.lexer = this.lexer;
-    this.yy.parser = this;
-    if (typeof this.lexer.yylloc == 'undefined') {
-        this.lexer.yylloc = {};
-    }
-    var yyloc = this.lexer.yylloc;
-    lstack.push(yyloc);
-    var ranges = this.lexer.options && this.lexer.options.ranges;
-    if (typeof this.yy.parseError === 'function') {
-        this.parseError = this.yy.parseError;
-    } else {
-        this.parseError = Object.getPrototypeOf(this).parseError;
-    }
-    function popStack(n) {
-        stack.length = stack.length - 2 * n;
-        vstack.length = vstack.length - n;
-        lstack.length = lstack.length - n;
-    }
-    function lex() {
-        var token;
-        token = self.lexer.lex() || EOF;
-        if (typeof token !== 'number') {
-            token = self.symbols_[token] || token;
-        }
-        return token;
-    }
-    var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
-    while (true) {
-        state = stack[stack.length - 1];
-        if (this.defaultActions[state]) {
-            action = this.defaultActions[state];
-        } else {
-            if (symbol === null || typeof symbol == 'undefined') {
-                symbol = lex();
-            }
-            action = table[state] && table[state][symbol];
-        }
-                    if (typeof action === 'undefined' || !action.length || !action[0]) {
-                var errStr = '';
-                expected = [];
-                for (p in table[state]) {
-                    if (this.terminals_[p] && p > TERROR) {
-                        expected.push('\'' + this.terminals_[p] + '\'');
-                    }
-                }
-                if (this.lexer.showPosition) {
-                    errStr = 'Parse error on line ' + (yylineno + 1) + ':\n' + this.lexer.showPosition() + '\nExpecting ' + expected.join(', ') + ', got \'' + (this.terminals_[symbol] || symbol) + '\'';
-                } else {
-                    errStr = 'Parse error on line ' + (yylineno + 1) + ': Unexpected ' + (symbol == EOF ? 'end of input' : '\'' + (this.terminals_[symbol] || symbol) + '\'');
-                }
-                this.parseError(errStr, {
-                    text: this.lexer.match,
-                    token: this.terminals_[symbol] || symbol,
-                    line: this.lexer.yylineno,
-                    loc: yyloc,
-                    expected: expected
-                });
-            }
-        if (action[0] instanceof Array && action.length > 1) {
-            throw new Error('Parse Error: multiple actions possible at state: ' + state + ', token: ' + symbol);
-        }
-        switch (action[0]) {
-        case 1:
-            stack.push(symbol);
-            vstack.push(this.lexer.yytext);
-            lstack.push(this.lexer.yylloc);
-            stack.push(action[1]);
-            symbol = null;
-            if (!preErrorSymbol) {
-                yyleng = this.lexer.yyleng;
-                yytext = this.lexer.yytext;
-                yylineno = this.lexer.yylineno;
-                yyloc = this.lexer.yylloc;
-                if (recovering > 0) {
-                    recovering--;
-                }
-            } else {
-                symbol = preErrorSymbol;
-                preErrorSymbol = null;
-            }
-            break;
-        case 2:
-            len = this.productions_[action[1]][1];
-            yyval.$ = vstack[vstack.length - len];
-            yyval._$ = {
-                first_line: lstack[lstack.length - (len || 1)].first_line,
-                last_line: lstack[lstack.length - 1].last_line,
-                first_column: lstack[lstack.length - (len || 1)].first_column,
-                last_column: lstack[lstack.length - 1].last_column
-            };
-            if (ranges) {
-                yyval._$.range = [
-                    lstack[lstack.length - (len || 1)].range[0],
-                    lstack[lstack.length - 1].range[1]
-                ];
-            }
-            r = this.performAction.call(yyval, yytext, yyleng, yylineno, this.yy, action[1], vstack, lstack);
-            if (typeof r !== 'undefined') {
-                return r;
-            }
-            if (len) {
-                stack = stack.slice(0, -1 * len * 2);
-                vstack = vstack.slice(0, -1 * len);
-                lstack = lstack.slice(0, -1 * len);
-            }
-            stack.push(this.productions_[action[1]][0]);
-            vstack.push(yyval.$);
-            lstack.push(yyval._$);
-            newState = table[stack[stack.length - 2]][stack[stack.length - 1]];
-            stack.push(newState);
-            break;
-        case 3:
-            return true;
-        }
-    }
-    return true;
-}};
-undefined/* generated by jison-lex 0.2.0 */
-var lexer = (function(){
-var lexer = {
-
-EOF:1,
-
-parseError:function parseError(str, hash) {
-        if (this.yy.parser) {
-            this.yy.parser.parseError(str, hash);
-        } else {
-            throw new Error(str);
-        }
-    },
-
-// resets the lexer, sets new input
-setInput:function (input) {
-        this._input = input;
-        this._more = this._backtrack = this.done = false;
-        this.yylineno = this.yyleng = 0;
-        this.yytext = this.matched = this.match = '';
-        this.conditionStack = ['INITIAL'];
-        this.yylloc = {
-            first_line: 1,
-            first_column: 0,
-            last_line: 1,
-            last_column: 0
-        };
-        if (this.options.ranges) {
-            this.yylloc.range = [0,0];
-        }
-        this.offset = 0;
-        return this;
-    },
-
-// consumes and returns one char from the input
-input:function () {
-        var ch = this._input[0];
-        this.yytext += ch;
-        this.yyleng++;
-        this.offset++;
-        this.match += ch;
-        this.matched += ch;
-        var lines = ch.match(/(?:\r\n?|\n).*/g);
-        if (lines) {
-            this.yylineno++;
-            this.yylloc.last_line++;
-        } else {
-            this.yylloc.last_column++;
-        }
-        if (this.options.ranges) {
-            this.yylloc.range[1]++;
-        }
-
-        this._input = this._input.slice(1);
-        return ch;
-    },
-
-// unshifts one char (or a string) into the input
-unput:function (ch) {
-        var len = ch.length;
-        var lines = ch.split(/(?:\r\n?|\n)/g);
-
-        this._input = ch + this._input;
-        this.yytext = this.yytext.substr(0, this.yytext.length - len - 1);
-        //this.yyleng -= len;
-        this.offset -= len;
-        var oldLines = this.match.split(/(?:\r\n?|\n)/g);
-        this.match = this.match.substr(0, this.match.length - 1);
-        this.matched = this.matched.substr(0, this.matched.length - 1);
-
-        if (lines.length - 1) {
-            this.yylineno -= lines.length - 1;
-        }
-        var r = this.yylloc.range;
-
-        this.yylloc = {
-            first_line: this.yylloc.first_line,
-            last_line: this.yylineno + 1,
-            first_column: this.yylloc.first_column,
-            last_column: lines ?
-                (lines.length === oldLines.length ? this.yylloc.first_column : 0)
-                 + oldLines[oldLines.length - lines.length].length - lines[0].length :
-              this.yylloc.first_column - len
-        };
-
-        if (this.options.ranges) {
-            this.yylloc.range = [r[0], r[0] + this.yyleng - len];
-        }
-        this.yyleng = this.yytext.length;
-        return this;
-    },
-
-// When called from action, caches matched text and appends it on next action
-more:function () {
-        this._more = true;
-        return this;
-    },
-
-// When called from action, signals the lexer that this rule fails to match the input, so the next matching rule (regex) should be tested instead.
-reject:function () {
-        if (this.options.backtrack_lexer) {
-            this._backtrack = true;
-        } else {
-            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. You can only invoke reject() in the lexer when the lexer is of the backtracking persuasion (options.backtrack_lexer = true).\n' + this.showPosition(), {
-                text: "",
-                token: null,
-                line: this.yylineno
-            });
-
-        }
-        return this;
-    },
-
-// retain first n characters of the match
-less:function (n) {
-        this.unput(this.match.slice(n));
-    },
-
-// displays already matched input, i.e. for error messages
-pastInput:function () {
-        var past = this.matched.substr(0, this.matched.length - this.match.length);
-        return (past.length > 20 ? '...':'') + past.substr(-20).replace(/\n/g, "");
-    },
-
-// displays upcoming input, i.e. for error messages
-upcomingInput:function () {
-        var next = this.match;
-        if (next.length < 20) {
-            next += this._input.substr(0, 20-next.length);
-        }
-        return (next.substr(0,20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
-    },
-
-// displays the character position where the lexing error occurred, i.e. for error messages
-showPosition:function () {
-        var pre = this.pastInput();
-        var c = new Array(pre.length + 1).join("-");
-        return pre + this.upcomingInput() + "\n" + c + "^";
-    },
-
-// test the lexed token: return FALSE when not a match, otherwise return token
-test_match:function (match, indexed_rule) {
-        var token,
-            lines,
-            backup;
-
-        if (this.options.backtrack_lexer) {
-            // save context
-            backup = {
-                yylineno: this.yylineno,
-                yylloc: {
-                    first_line: this.yylloc.first_line,
-                    last_line: this.last_line,
-                    first_column: this.yylloc.first_column,
-                    last_column: this.yylloc.last_column
-                },
-                yytext: this.yytext,
-                match: this.match,
-                matches: this.matches,
-                matched: this.matched,
-                yyleng: this.yyleng,
-                offset: this.offset,
-                _more: this._more,
-                _input: this._input,
-                yy: this.yy,
-                conditionStack: this.conditionStack.slice(0),
-                done: this.done
-            };
-            if (this.options.ranges) {
-                backup.yylloc.range = this.yylloc.range.slice(0);
-            }
-        }
-
-        lines = match[0].match(/(?:\r\n?|\n).*/g);
-        if (lines) {
-            this.yylineno += lines.length;
-        }
-        this.yylloc = {
-            first_line: this.yylloc.last_line,
-            last_line: this.yylineno + 1,
-            first_column: this.yylloc.last_column,
-            last_column: lines ?
-                         lines[lines.length - 1].length - lines[lines.length - 1].match(/\r?\n?/)[0].length :
-                         this.yylloc.last_column + match[0].length
-        };
-        this.yytext += match[0];
-        this.match += match[0];
-        this.matches = match;
-        this.yyleng = this.yytext.length;
-        if (this.options.ranges) {
-            this.yylloc.range = [this.offset, this.offset += this.yyleng];
-        }
-        this._more = false;
-        this._backtrack = false;
-        this._input = this._input.slice(match[0].length);
-        this.matched += match[0];
-        token = this.performAction.call(this, this.yy, this, indexed_rule, this.conditionStack[this.conditionStack.length - 1]);
-        if (this.done && this._input) {
-            this.done = false;
-        }
-        if (token) {
-            if (this.options.backtrack_lexer) {
-                delete backup;
-            }
-            return token;
-        } else if (this._backtrack) {
-            // recover context
-            for (var k in backup) {
-                this[k] = backup[k];
-            }
-            return false; // rule action called reject() implying the next rule should be tested instead.
-        }
-        if (this.options.backtrack_lexer) {
-            delete backup;
-        }
-        return false;
-    },
-
-// return next match in input
-next:function () {
-        if (this.done) {
-            return this.EOF;
-        }
-        if (!this._input) {
-            this.done = true;
-        }
-
-        var token,
-            match,
-            tempMatch,
-            index;
-        if (!this._more) {
-            this.yytext = '';
-            this.match = '';
-        }
-        var rules = this._currentRules();
-        for (var i = 0; i < rules.length; i++) {
-            tempMatch = this._input.match(this.rules[rules[i]]);
-            if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
-                match = tempMatch;
-                index = i;
-                if (this.options.backtrack_lexer) {
-                    token = this.test_match(tempMatch, rules[i]);
-                    if (token !== false) {
-                        return token;
-                    } else if (this._backtrack) {
-                        match = false;
-                        continue; // rule action called reject() implying a rule MISmatch.
-                    } else {
-                        // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
-                        return false;
-                    }
-                } else if (!this.options.flex) {
-                    break;
-                }
-            }
-        }
-        if (match) {
-            token = this.test_match(match, rules[index]);
-            if (token !== false) {
-                return token;
-            }
-            // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
-            return false;
-        }
-        if (this._input === "") {
-            return this.EOF;
-        } else {
-            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. Unrecognized text.\n' + this.showPosition(), {
-                text: "",
-                token: null,
-                line: this.yylineno
-            });
-        }
-    },
-
-// return next match that has a token
-lex:function lex() {
-        var r = this.next();
-        if (r) {
-            return r;
-        } else {
-            return this.lex();
-        }
-    },
-
-// activates a new lexer condition state (pushes the new lexer condition state onto the condition stack)
-begin:function begin(condition) {
-        this.conditionStack.push(condition);
-    },
-
-// pop the previously active lexer condition state off the condition stack
-popState:function popState() {
-        var n = this.conditionStack.length - 1;
-        if (n > 0) {
-            return this.conditionStack.pop();
-        } else {
-            return this.conditionStack[0];
-        }
-    },
-
-// produce the lexer rule set which is active for the currently active lexer condition state
-_currentRules:function _currentRules() {
-        if (this.conditionStack.length && this.conditionStack[this.conditionStack.length - 1]) {
-            return this.conditions[this.conditionStack[this.conditionStack.length - 1]].rules;
-        } else {
-            return this.conditions["INITIAL"].rules;
-        }
-    },
-
-// return the currently active lexer condition state; when an index argument is provided it produces the N-th previous condition state, if available
-topState:function topState(n) {
-        n = this.conditionStack.length - 1 - Math.abs(n || 0);
-        if (n >= 0) {
-            return this.conditionStack[n];
-        } else {
-            return "INITIAL";
-        }
-    },
-
-// alias for begin(condition)
-pushState:function pushState(condition) {
-        this.begin(condition);
-    },
-
-// return the number of states currently on the stack
-stateStackSize:function stateStackSize() {
-        return this.conditionStack.length;
-    },
-options: {},
-performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
-var YYSTATE=YY_START;
-switch($avoiding_name_collisions) {
-case 0:/* skip whitespace */
-break;
-case 1:return 11
-break;
-case 2:return 13
-break;
-case 3:this.begin('block'); return 5;}
-"
-break;
-case 4: this.begin('blockval'); return 11;
-break;
-case 5:return 15
-break;
-case 6:return 14
-break;
-case 7:return 16
-break;
-case 8: this.begin('block');  return 13;
-break;
-}
-},
-rules: [/^(?:\s+)/,/^(?::)/,/^(?:;)/,/^(?:\{)/,/^(?::)/,/^(?:([^\s;:\"\\{\\}]+))/,/^(?:("[^\"]*"))/,/^(?:([^\";\\{\\}]+))/,/^(?:;)/],
-conditions: {"blockval":{"rules":[0,1,2,3,6,7,8],"inclusive":true},"block":{"rules":[0,1,2,3,4,5],"inclusive":true},"INITIAL":{"rules":[0,1,2,3],"inclusive":true}}
-};
-return lexer;
-})();
-parser.lexer = lexer;
-function Parser () {
-  this.yy = {};
-}
-Parser.prototype = parser;parser.Parser = Parser;
-return new Parser;
-})();
-var Parser = CTS.Parser = parser;
 
 // Node
 // --------------------------------------------------------------------------
@@ -1099,52 +736,211 @@ var Parser = CTS.Parser = parser;
 
 CTS.Node = {
 
-  '_kind': 'undefined',
+  initializeNodeBase: function(tree, opts) {
+    this.opts = opts;
+    this.tree = tree;
+    this.kind = null;
+    this.children = [];
+    this.parentNode = null;
+    this.relations = [];
+    this.value = null;
+    this.addedMyInlineRelationsToForrest = false;
+    this.initializeStateMachine();
+  },
+
+  getChildren: function() {
+    return this.children;
+  },
+
+  registerRelation: function(relation) {
+    if (! CTS.Fn.contains(this.relations, relation)) {
+      this.relations.push(relation);
+    }
+  },
+
+  getRelations: function() {
+    if (! this.addedMyInlineRelationsToForrest) {
+      this.registerInlineRelationSpecs();
+    }
+    return this.relations;
+  },
+
+  getInlineRelationSpecs: function() {
+    return _subclass_getInlineRelationSpecs();
+  },
+
+  registerInlineRelationSpecs: function() {
+    if (this.addedMyInlineRelationsToForrest) {
+      CTS.Log.Warn("Not registering inline relations: have already done so.");
+    } else {
+      if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
+        CTS.Fn.Each(this.getInlineRelationSpecs(), function(spec) {
+          this.tree.forrest.addRelationSpec(spec);
+          this.tree.forrest.realizeRelationSpec(spec);
+        }, this);
+        this.addedMyInlineRelationsToForrest = true;
+      } else {
+        CTS.Log.Warn("Could not add inline relations to null tree.forrest");
+      }
+    }
+  },
+
+  getSubtreeRelations: function() {
+    return CTS.Fn.union(this.getRelations(), CTS.Fn.flatten(
+      CTS.Fn.map(this.getChildren(), function(kid) {
+        return kid.getSubtreeRelations();
+      }))
+    );
+  },
+  
+  insertChild: function(node, afterIndex) {
+    if (typeof afterIndex == 'undefined') {
+      afterIndex = this.children.length - 1;
+    }
+
+    this.children[this.children.length] = null;
+    for (var i = this.children.length - 1; i > afterIndex; i--) {
+      if (i == (afterIndex + 1)) {
+        this.children[i] == node;
+      } else {
+        this.children[i] = this.children[i - 1];
+      }
+    }
+
+    node.parentNode = this;
+
+    //TODO(eob) Have this be an event
+    this._subclass_insertChild(node, afterIndex);
+  },
+
+  destroy: function() {
+    if (this.parentNode) {
+      var gotIt = false;
+      for (var i = 0; i < this.children.length; i++) {
+        if (this.children[i] == node) {
+          delete this.children[node];
+          gotIt = true;
+          break;
+        }
+      }
+    }
+    if (! gotIt) {
+      CTS.Log.Error("Destroying child whose parent doesn't know about it.");
+    }
+    this._subclass_destroy();
+  },
+
+  realizeChildren: function() {
+    if (this.children.length != 0) {
+      CTS.Log.Fatal("Trying to realize children when already have some.");
+    }
+    this._subclass_realizeChildren();
+    CTS.Fn.each(this.children, function(child) {
+      child.realizeChildren();
+    });
+  },
+
+  clone: function() {
+    var c = this._subclass_beginClone();
+    var self = this;
+
+    // Clone all the relations of this ndoe, and all nodes downtree.
+    var copyRelationsRecursively = function(source, dest) {
+      CTS.Fn.each(source.relations, function(relation) {
+        var relationClone = relation.clone();
+        relationClone.rebind(source, dest);
+        dest.relations.push(relationClone);
+      });
+
+      // Now get the children.
+      CTS.Fn.each(CTS.Fn.zip(source.children, dest.children), function(grp) {
+        self.copyRelationsRecursively(grp[0], grp[1]);
+      });
+    };
+    copyRelationsRecursively(this, c);
+
+    // Note that we DON'T wire up any parent-child relationships
+    // because that would result in more than just cloning the node
+    // but also modifying other structures, such as the tree which
+    // contained the source.
+    return c;
+  },
+
+  /************************************************************************
+   **
+   ** Methods to be overridden by subclasses
+   **
+   ************************************************************************/
+
+  getValue: function(opts) {
+    return this.value;
+  },
+
+  setValue: function(v, opts) {
+    this.value = v;
+  },
+
+  _subclass_realizeChildren: function() {},
+  _subclass_insertChild: function(child, afterIndex) {},
+  _subclass_destroy: function() {},
+  _subclass_getInlineRelations: function() {},
+  _subclass_beginClone: function() {}
+
+};
+
+/*
+ * State Machine for Node Rendering 
+ * ================================
+ *
+ * Intended as a Mix-In to Node.
+ */
+
+CTS.NodeStateMachine = {  
 
   initializeStateMachine: function() {
-    this.fsmInitialize(
-      'Ready', [
-      { 'from':'Ready',
-          'to':'BeginRender',
-        'name':'BeginRender'},
-      { 'from':'BeginRender',
-          'to':'ProcessIncoming',
-        'name':'ProcessIncoming'},
-      { 'from':'ProcessIncoming',
-          'to':'ProcessIncomingChildren',
-        'name':'ProcessIncomingChildren'},
-      { 'from':'ProcessIncomingChildren',
-          'to':'ProcessedIncoming',
-        'name':'ProcessedIncoming'},
-      { 'from':'ProcessIncoming',
-          'to':'FailedConditional',
-        'name':'FailedConditional'},
-      { 'from':'FailedConditional',
-          'to':'Finished',
-        'name':'Finished_Invisible'},
-      { 'from':'ProcessedIncoming',
-          'to':'Finished',
-        'name':'Finished_NoTemplate'},
-      { 'from':'ProcessIncomming',
-          'to':'ProcessedIncoming',
-        'name':'SkipRecursion'}
-    ]);
-
-    this.on('FsmEdge:BeginRender', this._onBeginRender, this);
-    this.on('FsmEdge:ProcessIncoming', this._onProcessIncoming, this);
-    this.on('FsmEntered:ProcessIncomingChildren', this._onProcessIncomingChildren, this);
-    this.on('FsmEntered:ProcessedIncoming', this._onProcessedIncoming, this);
-    this.on('FsmEdge:FailedConditional', this._onFailedConditional, this);
-    this.on('FsmEntered:Finished', this._onFinished, this);
-  },
+      this.fsmInitialize(
+        'Ready', [
+        { 'from':'Ready',
+            'to':'BeginRender',
+          'name':'BeginRender'},
+        { 'from':'BeginRender',
+            'to':'ProcessIncoming',
+          'name':'ProcessIncoming'},
+        { 'from':'ProcessIncoming',
+            'to':'ProcessIncomingChildren',
+          'name':'ProcessIncomingChildren'},
+        { 'from':'ProcessIncomingChildren',
+            'to':'ProcessedIncoming',
+          'name':'ProcessedIncoming'},
+        { 'from':'ProcessIncoming',
+            'to':'FailedConditional',
+          'name':'FailedConditional'},
+        { 'from':'FailedConditional',
+            'to':'Finished',
+          'name':'Finished_Invisible'},
+        { 'from':'ProcessedIncoming',
+            'to':'Finished',
+          'name':'Finished_NoTemplate'},
+        { 'from':'ProcessIncomming',
+            'to':'ProcessedIncoming',
+          'name':'SkipRecursion'}
+      ]);
+  
+      this.on('FsmEdge:BeginRender', this._onBeginRender, this);
+      this.on('FsmEdge:ProcessIncoming', this._onProcessIncoming, this);
+      this.on('FsmEntered:ProcessIncomingChildren', this._onProcessIncomingChildren, this);
+      this.on('FsmEntered:ProcessedIncoming', this._onProcessedIncoming, this);
+      this.on('FsmEdge:FailedConditional', this._onFailedConditional, this);
+      this.on('FsmEntered:Finished', this._onFinished, this);
+   },
 
   render: function(opts) {
     console.log(this, "render");
 
-    if (! _.isUndefined(opts)) {
-      if (_.has(opts, 'callback')) {
+    if (! CTS.Fn.isUndefined(opts)) {
+      if (CTS.Fn.has(opts, 'callback')) {
         var scope = this;
-        if (_.has(opts, 'callbackScope')) {
+        if (CTS.Fn.has(opts, 'callbackScope')) {
           scope = opts.callbackScope;
         }
         this.once('FsmEntered:Finished', opts.callback, scope);
@@ -1154,53 +950,6 @@ CTS.Node = {
     this.fsmTransition("BeginRender");
   },
 
-  getChildren: function() {
-    if (_.isUndefined(this.children) || _.isNull(this.children)) {
-      this._createChildren();
-    }
-    return this.children;
-  },
-
-  registerRelation: function(relation) {
-    if (! _.contains(this.relations, relation)) {
-      this.relations.push(relation);
-    }
-  },
-
-  getRelations: function() {
-    if (! this.searchedForRelations) {
-      if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-        this.tree.forrest.registerRelationsForNode(this);
-      }
-      this.searchedForRelations = true;
-    }
-    return this.relations;
-  },
-
-  getSubtreeRelations: function() {
-    return _.union(this.getRelations(), _.flatten(
-      _.map(this.getChildren(), function(kid) {
-        return kid.getSubtreeRelations();
-      }))
-    );
-  },
-
-  treeSize: function() {
-    return 1 + this.getChildren().length;
-  },
-
-  subtreeRelations: function() {
-    var relations = this.tree.forrest.relationsForNode(this);
-    var myChildren = this.getChildren();
-    for (var i = 0; i < myChildren.length; i++) {
-      relations = _.union(relations, myChildren[i].subtreeRelations());
-    }
-    return relations;
-  },
-
-  getInlineRules: function() {
-    return null;
-  },
 
   _onBeginRender: function() {
     console.log(this, "onBeginRender");
@@ -1237,12 +986,12 @@ CTS.Node = {
       this.fsmTransition("ProcessedIncoming");
     } else {
       // Listen to finish events
-      _.each(kids, function(child) {
+      CTS.Fn.each(kids, function(child) {
         child.on("FsmEntered:Finished", this._onChildFinished, this);
       }, this);
       // Execute children.
       // TODO(eob): Explore parallelization options.
-      _.each(kids, function(child) {
+      CTS.Fn.each(kids, function(child) {
         console.log("RENDERING CHILD");
         child.render();
       }, this);
@@ -1267,610 +1016,62 @@ CTS.Node = {
   },
 
   _onFinished: function() {
-  },
-
-  _performConditional: function() {
-    var relations = _.filter(this.relations, function(rule) {
-      return (
-        ((rule.name == "ifexist") || (rule.name == "ifnexist")) &&
-         (rule.head().contains(this)));
-    }, this);
-
-    if (relations.length === 0) {
-      // No conditionality restrictions
-      return true;
-    } else {
-      return _.all(relations, function(rule) {
-        var otherNodes = rule.tail().nodes;
-        var exist = ((! _.isUndefined(otherNodes)) && (otherNodes.length > 0));
-        return ((exist  && (rule.name == "ifexist")) ||
-                ((!exist) && (rule.name == "ifnexist")));
-      }, this);
-    }
-  },
-
-  _performIs: function() {
-    //console.log("Perform IS on", this, this.node.html(), this.relations);
-    // If there is an incoming value node, handle it.
-    // Just take the last one.
-    var rule = null;
-    _.each(this.relations, function(r) {
-      console.log(r);
-      if (r.name == "is") {
-        console.log("is is!");
-        if (r.head().contains(this)) {
-          console.log("contains this!");
-          console.log("Perform is");
-          rule = r;
-        }
-      }
-    }, this);
-
-    if (rule) {
-      console.log("Found IS rule");
-      this.isIncoming(rule.tail());
-      return true;
-    } else {
-      return false;
-    }
-  },
-
-  _performAre: function() {
-    var relation = null;
-    _.each(this.relations, function(r) {
-      if (r.name == "are") {
-        console.log("FOUND AN ARE");
-        if (r.head().contains(this)) {
-          relation = r;
-        }
-      }
-    }, this);
-
-    if (relation) {
-      // This aligns the cardinalities of the downstream trees.
-
-      // Initialize some vars from this
-      var thisSet = _.filter(this.getChildren(), function(child) { 
-        return child.isEnumerable;
-      });
-      var thisCardinality = thisSet.length;
-      if (thisCardinality.length == 0) {
-        // Bail out: there's nothing to do.
-        return;
-      }
-
-      // Initialize some vars from other
-      var otherSelection = relation.tail();
-      var otherSet = _.flatten(
-        _.map(otherSelection.nodes, function(node) {
-          return node.areOutgoing(relation, opts);
-        })
-      );
-      var otherCardinality = otherSet.length;
-      var otherKids = _.union(
-          _.map(otherSelection.nodes, function(o) {
-            o.getChildren()
-      }));
-
-      // 1. ALIGN CARDINALITY
-      var diff = Math.abs(thisCardinality - otherCardinality);
-      var i;
-      if (thisCardinality > otherCardinality) {
-        for (i = 0; i < diff; i++) {
-          var excess = thisSet.pop();
-          excess.destroy();
-          console.log(thisSet);
-        }
-      } else if (thisCardinality < otherCardinality) {
-        var toClone = thisSet[thisSet.length - 1];
-        for (i = 0; i < diff; i++) {
-          console.log("going to clone");
-          thisSet[thisSet.length] = toClone.clone();
-        }
-      }
-
-      // 2. SPLIT UP RELATIONS BETWEEN ALIGNED CHILDREN
-
-      // First, collect all relations whose selections involve all and exactly the children
-      // of both sides.
-      var relations = [];
-      var kids = this.getChildren();
-      if (kids.length > 0) {
-        var candidateRelations = kids[0].getSubtreeRelations();
-        relations = _.filter(candidateRelations, function(r) {
-          return (r.tail().matchesArray(otherKids, true, true) && 
-            r.head().matchesArray(kids, true));
-        });
-      }
-
-      // Relations is not the set of all relations that match
-      // the CTS children of the two ARE nodes.
-
-      // For each i, spawn a new relation, 
-
-      return true;
-    } else {
-      return false;
-    }
   }
 
 };
 
-// ### Constructor
-var DomNode = CTS.DomNode = function(node, tree, opts, args) {
-  var defaults;
-  this._kind = 'dom';
-  this.children = null;
-  this.parentNode = null;
-  this.relations = [];
-  this.searchedForRelations = false;
-  this.isSiblingGroup = false;
-  this.isEnumerable = false;
-
-  // A Node contains multiple DOM Nodes
-  if (typeof node == 'object') {
-    if (! _.isUndefined(node.jquery)) {
-      CTS.Debugging.DumpStack();
-      //console.log("SIBLINGS A", node);
-      this.siblings = [node];
-    } else if (node instanceof Array) {
-      //console.log("SIBLINGS B", node);
-      this.siblings = node;
-    } else if (node instanceof Element) {
-      //console.log("SIBLINGS C", node);
-      this.siblings = [$(node)];
-    } else {
-      //console.log("SIBLINGS D", node);
-      this.siblings = [];
-    }
-  } else if (typeof node == 'string') {
-    //console.log("SIBLINGS E", node);
-    this.siblings = _.map($(node), function(n) { return $(n); });
-  } else {
-    //console.log("SIBLINGS F", node);
-    this.siblings = [];
-  }
-
-  if (this.siblings.length > 1) {
-    this.isSiblingGroup = true;
-  }
-  this.opts = opts || {};
-
-  this.tree = tree;
-  if (typeof this.opts.relations != 'undefined') {
-    this.relations = this.opts.relations;
-  }
-  this.initialize.apply(this, args);
+var AbstractNode = CTS.AbstractNode = function() {
+  this.initializeNodeBase();
 };
 
-// ### Instance Methods
-_.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
-
-  initialize: function(args) {
-    this.initializeStateMachine();
-  },
-
-  destroy: function(opts) {
-    // 1. Remove from parent in the shadow DOM
-    // TODO: handle case of trying to unregister root.
-    this.parentNode.unregisterChild(this);
-
-    // 2. Remove nodes form DOM tree
-    _.each(this.siblings, function(s) {
-      s.remove();
-    });
-  },
-
-  debugName: function() {
-    return _.map(this.siblings, function(node) {
-      return node[0].nodeName; }
-    ).join(', ');
-  },
-
-  clone: function(opts) {
-    console.log("SIBSIB", this.siblings);
-    var n = _.map(this.siblings, function(s) {return s.clone();});
-    // TODO(eob): any use in saving args to apply when cloned?
-    var c = new DomNode(n, this.tree, [], this.opts);
-    var relations = _.map(this.relations, function(relation) {
-      var r = relation.clone();
-      if (r.selection1.contains(this)) {
-        r.selection1.nodes = _.without(r.selection1.nodes, this);
-        r.selection1.nodes.push(c);
-        _.each(r.selection2.nodes, function(node) {
-          node.registerRelation(r);
-        });
-      } else if (r.selection2.contains(this)) {
-        r.selection2.nodes = _.without(r.selection2.nodes, this);
-        r.selection2.nodes.push(c);
-        _.each(r.selection1.nodes, function(node) {
-          node.registerRelation(r);
-        });
-      }
-      return r;
-    }, this);
-    c.relations = relations;
-    if ((typeof this.parentNode != 'undefined') && (this.parentNode !== null)) {
-      this.parentNode.registerChild(c, {after: this, andInsert: true});
-    }
-    return c;
-  },
-
-  unregisterChild: function(child, opts) {
-    this.children = _.without(this.children, child);
-  },
-
-  registerChild: function(child, opts) {
-    console.log("registerChild", this, child);
-    if (this.children === null) {
-      // Danger: potential endless circular recursion
-      // if this function and createChildren don't coordinate
-      // properly.
-      this._createChildren();
-    }
-    var didit = false;
-
-    //TODO(eob): Handle case where there are no children.
-
-    if ((! _.isUndefined(opts)) && (! _.isUndefined(opts.after))) {
-      for (var i = this.children.length - 1; i >= 0; i--) {
-        if (this.children[i] == opts.after) {
-          // First bump forward everything
-          for (var j = this.children.length - 1; j > i; j--) {
-            this.children[j + 1] = this.children[j];
-          }
-
-          // Then set this at i+1
-          this.children[i+1] = child;
-          child.parentNode = this;
-          if ((typeof opts != 'undefined') && (typeof opts.andInsert != 'undefined') && (opts.andInsert === true)) {
-            this.children[i].siblings[this.children[i].siblings.length - 1].after(child.siblings);
-          }
-          didit = true;
-        }
-      }
-      // do it after an element
-    } 
-    
-    if (! didit) {
-      // do it at end as failback, or if no relative position specified
-      console.log("FFFF", this.children);
-      var lastChild = this.children[this.children.length - 1];
-      console.log("Last Child", lastChild, this);
-      this.children[this.children.length] = child;
-      if ((typeof opts != 'undefined') && (typeof opts.andInsert != 'undefined') && (opts.andInsert === true)) {
-        lastChild.siblings[lastChild.siblings.length - 1].after(child.siblings);
-      }
-      child.parentNode = this;
-    }
-  },
-
-  getInlineRules: function() {
-    if (this.isSiblingGroup === true) {
-      return null;
-    } else {
-      var inline = this.siblings[0].attr('data-cts');
-      console.log("SIBS", this.siblings[0], this.siblings[0].html(), this.siblings);
-      if ((inline !== null) && (typeof inline != 'undefined')) {
-        return inline;
-      } else {
-        return null;
-      }
-    }
-  },
-
-  _findChildIn: function(fringe) {
-    // Start exploring the subtree, adding the first.
-    while (fringe.length > 0) {
-      var first = CTS.$(fringe.shift());
-      var child = new DomNode(first, this.tree);
-      var relevantRelations = child.getRelations();
-      if (relevantRelations.length > 0) {
-        console.log("RELATIONS OH MY", first, child, relevantRelations);
-        child.relations = relevantRelations;
-        this.registerChild(child);
-      } else {
-        fringe = _.union(fringe, first.children().toArray());
-      }
-    }
-  },
-
-  _createChildren: function() {
-    console.log("DomNode::createChildren", this);
-    this.children = []; 
-
-    if (this.isSiblingGroup === true) {
-      // If this is a sibling group, the children are the siblings.
-      _.each(this.siblingGroup, function(node) {
-        this.registerChild(node);
-      }, this);
-    } else {
-      if (this.siblings.length > 1) {
-        // If this isn't s sibling group, there should only be one node
-        // represented by this node.
-        CTS.Debugging.Fatal("Siblings > 1", this);
-      } else {
-        // We start off with all child DOM nodes 
-        var domKids = this.siblings[0].children().toArray();
-
-        // Now we figure out if there is an ARE relation, which
-        // requires us to add all enumerables below us as a child.
-        var areRelations = _.filter(this.getRelations(), function(relation) {
-          return (relation.name == "are");
-        }, this);
-
-        if (areRelations.length > 1) {
-          CTS.Debugging.Log.Fatal(
-              "We don't know what to do with >1 ARE for a node yet.",
-              this);
-        } else if (areRelations.length > 0) {
-          /*
-           * Part 1:
-           *  Add kids in the prefix
-           */
-          var fringe = [];
-          var i = 0;
-          var opts = areRelations[0].optsFor(this);
-          for (i = 0; i < opts.prefix; i++) {
-            fringe.push(domKids[i]);
-          }
-          this._findChildIn(fringe);
-
-          /*
-           * Part 2:
-           *  Add the enumerables
-           */
-          var lastOne = 0;
-          var terminal = (domKids.length - opts.suffix);
-          for (i = opts.prefix; i < terminal; i += opts.step) {
-            var newNodes = [];
-            for (var j = 0; j < opts.step; j++) {
-              newNodes.push(CTS.$(domKids[i+j]));
-              lastOne = i+j;
-            }
-            console.log("New", newNodes);
-            var newNode = new CTS.DomNode(newNodes, this.tree);
-            newNode.isEnumerable = true;
-            this.registerChild(newNode);
-          }
-
-          /*
-           * Part 3:
-           *  Add nodes in the suffix
-           */
-          lastOne += 1;
-          fringe = [];
-          for (i = lastOne; i < domKids.length; i++) {
-            fringe.push(domKids[i]);
-          }
-          this._findChildIn(fringe);
-        } else {
-          /* The easy case: just look for CTS-related nodes in the subtree */
-          this._findChildIn(this.siblings[0].children().toArray());
-        }
-      }
-    }
-    console.log("Create Children Returned: ", this.children);
-  },
-
-  failedConditional: function() {
-    _.each(this.siblings, function(n) { n.hide(); });
-  },
-
-  /**
-   * Replaces the value of this node with the value of the
-   * other node provided.
-   */
-  isIncoming: function(otherNodeSelection, opts) {
-    console.log("IS Incoming with otherNodes", otherNodeSelection);
-    if (otherNodeSelection.nodes.length === 0) {
-      _.each(this.siblings, function(s) { s.html(""); });
-    } else {
-      var html = _.map(otherNodeSelection.nodes, function(node) {
-        return node.isOutgoing(opts);
-      }).join("");
-      _.each(this.siblings, function(s) { s.html(html); });
-    }
-  },
-
-  /**
-   * Provides the vilue of this node.
-   */
-  isOutgoing: function(opts) {
-    return _.map(this.siblings, function(node) {
-      return node.html();
-    }).join("");
-  },
-
-  areIncoming: function(otherSelection, relation, opts) {
-    // Note: all this prefix, sufix stuff should be handled
-    // by the getChildren call.
-    //var buckets = [];
-    //var kid = this.node.children();
-    //options = _.extend({
-    //  prefix: 0,
-    //  suffix: 0,
-    //  step: 1
-    //}, opts);
-
-    //for (var i = 0; i < kid.length; i++) {
-    //  if ((i >= options.prefix) && 
-    //      (i < kid.length - options.suffix)) {
-    //    // Create a new bucket at the start of a step
-    //    if (((i - options.prefix) % options.prefix) == 0) {
-    //      buckets[buckets.length] = [];
-    //    }
-    //    buckets[buckets.length - 1].append(kid[i]);
-    //  }
-    //}
-    // Find the itemscoped children of this node.
-    // var these = _.filter(this.node.children(), function(n) {
-    //  return true;
-    // }, this);
-  },
-
-  /**
-   * Provides the itemscope'd nodes.
-   */
-  areOutgoing: function(relation, opts) {
-    console.log("areOutgoing");
-    var ret = _.filter(this.getChildren(), function(child) {
-      return child.isEnumerable;
-    });
-    console.log("areOutgoing", ret);
-    return ret;
-  }
-
+CTS.Fn.extend(CTS.AbstractNode.prototype,
+    CTS.Events,
+    CTS.StateMachine,
+    CTS.NodeStateMachine,
+    CTS.Node, {
 });
 
-// ### Constructor
-var JsonNode = CTS.JsonNode = function(obj, tree, opts, args) {
-  var defaults;
-  this._kind = 'json';
-  this.dataType = null; // {set, object, property, string, boolean, number}
-  this.value = null;
-  this.tree = tree;
-  this.opts = opts || {};
-  this.initialize.apply(this, obj, args);
+CTS.NonExistantNode = new CTS.AbstractNode();
+
+
+CTS.Relation = {};
+
+CTS.Relation.RelationSpec = function(selector1, selector2, name, props1, props2) {
+  this.selectionSpec1 = selector1;
+  this.selectionSpec2 = selector2;
+  this.name = name;
+  this.opts1 = props1;
+  this.opts2 = props2;
 };
- 
-// ### Instance Methods
-_.extend(CTS.JsonNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
 
-  initialize: function(obj, args) {
-    this.initializeStateMachine();
-    this.children = [];
-
-    // Recursively create all children
-    if (_.isNull(obj)) {
-      this.dataType = 'null';
-      this.value = null;
-    } else if (_.isUndefined(obj)) {
-      this.dataType = 'null';
-      this.value = null;
-    } else if (_.isArray(obj)) {
-      this.dataType = 'set';
-      _.each(obj, function(item) {
-        this.children.push(new JsonNode(item, this.tree, opts, args));
-      }, this);
-    } else if (_.isObject(obj)) {
-      this.dataType = 'object';
-      _.each(obj, function(val, key) {
-        var kid = new JsonNode(null, this.tree, opts, args);
-        kid.dataType = 'property';
-        kid.value = key;
-        kid.children = [new JsonNode(val, this.tree, opts, args)];
-        this.children.push(kid);
-      }, this);
-    } else {
-      this.dataType = typeof obj;
-      this.value = obj;
-    }
+CTS.Fn.extend(CTS.Relation.RelationSpec.prototype, {
+  head: function() {
+    return this.selectionSpec1;
   },
 
-  destroy: function(opts) {
-    // TODO: handle case of trying to unregister root.
-  },
-
-  debugName: function() {
-  },
-
-  clone: function(opts) {
-  },
-
-  getInlineRules: function() {
-    // A JSON Node can't have inline rules.
-    return null;
-  },
-
-  toJSON: function() {
-    if (this.dataType == 'set') {
-      return _.map(this.children, function(kid) {
-        return kid.toJSON();
-      });
-    } else if (this.dataType == 'object') {
-      var ret = {};
-      _.each(this.children, function(kid) {
-        ret[kid.value] = kid.toJSON();
-      }, this);
-      return ret;
-    } else if (this.dataType == 'property') {
-      if (this.children.length == 0) {
-        return null;
-      } else if (this.children.length > 1) {
-        CTS.Debugging.Error("More than one child of property", [this]);
-        return null;
-      } else {
-        return this.children[0].toJSON();
-      }
-    } else {
-      return value;
-    }
-  },
-
-  failedConditional: function() {
-  },
-
-  isIncoming: function(otherNodeSelection, opts) {
-    if (otherNodeSelection.nodes.length === 0) {
-      this.dataType = 'undefined';
-      this.value = null;
-      this.children = [];
-    } else if (otherNodeSelection.nodes.length === 1) {
-      this.value = otherNodeSelection.nodes[0].isOutgoing(opts);
-      this.dataType = typeof this.value;
-    } else {
-      this.value = _.map(otherNodeSelection.nodes, function(n) {
-        n.isOutgoing(opts)
-      }, this).join("");
-      this.dataType = typeof this.value;
-    }
-  },
-
-  isOutgoing: function(opts) {
-    if (this.dataType == 'set') {
-      return JSON.stringify(this.toJSON());
-    } else if (this.dataType == 'object') {
-      return JSON.stringify(this.toJSON());
-    } else if (this.dataType == 'property') {
-      return this.children[0].value;
-    } else {
-      return value;
-    }
-  },
-
-  areIncoming: function(otherSelection, relation, opts) {
-  },
-
-  areOutgoing: function(relation, opts) {
+  tail: function() {
+    return this.selectionSpec2;
   }
 });
-
 
 /**
  * A Relation is a connection between two tree nodes.
  * Relations are the actual arcs between nodes.
  * Rules are the language which specify relations.
- *
- *
  */
 
-var RelationOpts = CTS.RelationOpts = {
+CTS.Relation.RelationOpts = {
   prefix: 0,
   suffix: 0,
   step: 1
 };
 
-var Relation = CTS.Relation = function(selection1, selection2, name, opts, opts1, opts2) {
-  this.selection1 = selection1;
-  this.selection2 = selection2;
-  this.name = name;
-  this.opts = _.extend({}, opts);
-  this.opts1 = _.extend(RelationOpts, opts1);
-  this.opts2 = _.extend(RelationOpts, opts2);
-};
+CTS.Relation.Relation = {
 
-_.extend(Relation.prototype, {
+  initializeBase: function() {
+    this.node1.addRelation(this);
+    this.node2.addRelation(this);
+  },
 
   addOption: function(key, value) {
     this.opts[key] = value;
@@ -1884,550 +1085,110 @@ _.extend(Relation.prototype, {
     return this.selection2;
   },
 
+  opposite: function(node) {
+    return (node == this.node1) ? this.node2 : this.node1;
+  },
+
+  rebind: function(source, destination) {
+    if (source == this.node1) {
+      this.node1 = destination;
+    } else if (source == this.node2) {
+      this.node2 = destination;
+    } else {
+      CTS.Log.Error("Asked to rebind but no match.");
+    }
+  },
+
   optsFor: function(node) {
-    if (this.selection1.contains(node)) {
-      return this.opts1;
-    } else if (this.selection2.contains(node)) {
-      return this.opts2;
+    if (this.node1 === node) {
+      return this.spec.opts1;
+    } else if (this.node2 == node) {
+      return this.spec.opts2;
     }
     return {};
   },
 
   clone: function() {
-    return new CTS.Relation(
-        this.selection1.clone(),
-        this.selection2.clone(),
-        this.name,
-        this.opts,
-        this.opts1,
-        this.opts2);
+    return new CTS.Relation.Relation(this.node1, this.node2, this.spec);
   }
+};
 
+/*
+ * IS
+ * ==
+ *
+ * Intended as a Mix-In to Relation.
+ */
+CTS.Relation.Is = function(node1, node2, spec) {
+  if (typeof spec == 'undefined') {
+    spec = {};
+  }
+  this.node1 = node1;
+  this.node2 = node2;
+  this.spec = spec;
+};
+
+CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Relation, {
+  execute: function(toward) {
+    var from = this.opposite(toward);
+    var content = from.getValue(this.optsFor(from));
+    toward.setValue(content, this.optsFor(toward));
+  }
 });
 
-/**
- * A Relation is a connection between two tree nodes.
- * Relations are the actual arcs between nodes.
- * Rules are the language which specify relations.
+
+/*
+ * IF-EXIST
+ * ========
+ *
+ * Intended as a Mix-In to Relation.
  */
 
-var Selection = CTS.Selection = function(nodes, opts) {
-  this.nodes = nodes;
-  this.opts = {};
-  if (typeof opts != 'undefined') {
-    this.opts = _.extend(this.opts, opts);
+CTS.Relation.IfExist = function(node1, node2, spec) {
+  if (typeof spec == 'undefined') {
+    spec = {};
   }
+  this.node1 = node1;
+  this.node2 = node2;
+  this.spec = spec;
 };
 
-_.extend(Selection.prototype, {
-  contains: function(node) {
-    return _.contains(this.nodes, node);
-  },
-
-  clone: function() {
-    // not a deep clone of the selection. we don't want duplicate nodes
-    // running around.
-    return new CTS.Selection(_.union([], this.nodes), this.opts);
-  },
-
-  fromSelectionSpec: function(selectionSpec, forrest) {
-    if (selectionSpec.inline === true) {
-      if (this.inlineNode === null) {
-        this.nodes = [];
-      } else {
-        this.nodes = [selectionSpec.inlineObject];
-      }
+CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Relation, {
+  execute: function(toward) {
+    var other = this.opposite(toward);
+    if (other == CTS.NonExistantNode) {
+      this.hide();
     } else {
-      if (this._selection === null) {
-        this.nodes = forrest.nodesForSelectionSpec(selectionSpec);
-      }
-    }
-    this.spec = selectionSpec;
-  },
-
-  matchesArray: function(arr, exactly, orArrayAncestor) {
-    if (typeof backoffToAncestor == 'undefined') {
-      backoffToAncestor = false;
-    }
-
-    for (var i = 0; i < this.nodes.length; i++) {
-      if (! _.contains(arr, this.nodes[i])) {
-        if (backoffToAncestor) {
-          // 
-        } else {
-          return false;
-        }
-      }
-    }
-    if ((typeof exactly != 'undefined') && (exactly === true)) {
-      return (arr.length = self.nodes.length);
-    } else {
-      return true;
+      this.show();
     }
   }
-
-});
-
-// DOM Tree
-// ==========================================================================
-//
-// ==========================================================================
-var Tree = CTS.Tree = {
-  name: "",
-  
-  render: function(opts) {
-    console.log("render root", this.root);
-    this.root.render(opts);
-  }
-
-};
-
-// Constructor
-// -----------
-var DomTree = CTS.DomTree = function(forrest, node, attributes) {
-  console.log("DomTree::constructor", forrest, node);
-  this.root = node || new CTS.DomNode('body', this);
-  this.forrest = forrest;
-  this.name = "body";
-  if ((typeof attributes != 'undefined') && ('name' in attributes)) {
-    this.name = attributes.name;
-  }
-};
-
-// Instance Methods
-// ----------------
-_.extend(DomTree.prototype, Tree, {
-  nodesForSelectionSpec: function(spec) {
-    // Assumption: root can't be a sibling group
-    var jqnodes = this.root.siblings[0].find(spec.selectorString).toArray();
-    var nodes = _.map(jqnodes, function(n) {
-      return new DomNode(CTS.$(n), this);
-    }, this);
-    return nodes;
-  }
-});
-
-var JsonTree = CTS.JsonTree = function(forrest, root, attributes) {
-  this.root = new CTS.JsonNode(root, this);
-  this.forrest = forrest;
-  this.name = "json";
-  if ((typeof attributes != 'undefined') && ('name' in attributes)) {
-    this.name = attributes.name;
-  }
-};
-
-// Instance Methods
-// ----------------
-_.extend(JsonTree.prototype, Tree, {
-
-  nodesForSelectionSpec: function(spec) {
-    alert("unimplemented!");
-    return [];
-  }
-
-});
-
-// Forrest
-// ==========================================================================
-//
-// ==========================================================================
-
-// Constructor
-// -----------
-var Forrest = CTS.Forrest = function(opts, args) {
-  this.trees = {};
-  this.rules = [];
-  this.initialize.apply(this, args);
-};
-
-// Instance Methods
-// ----------------
-_.extend(Forrest.prototype, {
-
-  initialize: function() {
-    this.addDefaultTrees();
-  },
-
-  containsTreeAlias: function(alias) {
-    _.has(this.trees, alias);
-  },
-
-  addTree: function(alias, tree) {
-    this.trees[alias] = tree;
-  },
-
-  addRule: function(rule) {
-    // Faster than .push()
-    this.rules[this.rules.length] = rule;
-  },
-
-  addRules: function(someRules) {
-    for (var i = 0; i < someRules.length; i++) {
-      // Faster than .push()
-      this.rules[this.rules.length] = someRules[i];
-    }
-  },
-
-  nodesForSelectionSpec: function(spec) {
-    if (typeof this.trees[spec.treeName] != "undefined") {
-      return this.trees[spec.treeName].nodesForSelectionSpec(spec);
-    } else {
-      return [];
-    }
-  },
-
-  getPrimaryTree: function() {
-    return this.trees.body;
-  },
-
-  ingestRules: function(someRuleString) {
-    var ruleSet = RuleParser.parse(someRuleString);
-    this.addRules(ruleSet);
-  },
-
-  /* Adds the DOM as a local tree called `body` and the `window` variable as
-   * a tree called window.
-   */ 
-  addDefaultTrees: function() {
-    this.addTree('body', new CTS.DomTree(this));
-    this.addTree('window', new CTS.JsonTree(this, window));
-  },
-
-  rulesForNode: function(node) {
-    console.log("Forrest:::rulesForNode");
-    var ret = [];
-    _.each(this.rules, function(rule) {
-      console.log("Forrest::rulesForNode Rule", rule, "for node", node);
-      if ((rule.selector1.matches(node)) || 
-          (rule.selector2.matches(node))) {
-        ret[ret.length] = rule;
-      } else {
-        console.log("Failed match", rule.selector1.selector);
-        console.log("Failed match", rule.selector2.selector);
-      }
-    }, this);
-
-    var inlineRules = node.getInlineRules();
-   
-    if (inlineRules !== null) {
-      var ruleSet = RuleParser.parseInline(node, inlineRules);
-      if (typeof ruleSet != "undefined") {
-        ret = _.union(ret, ruleSet);
-      }
-    }
-    return ret;
-  },
-
-  registerRelationsForNode: function(node) {
-    console.log("Forrest::RelationsForNode");
-    var rules = this.rulesForNode(node);
-    console.log("Rules for", node.siblings[0].html(), rules);
-    var relations = _.map(rules, function(rule) {
-      var selection1 = null;
-      var selection2 = null;
-      var selector = null;
-      var other = null;
-      if (rule.selector1.matches(node)) {
-        selection1 = new CTS.Selection([node]);
-        selection2 = rule.selector2.toSelection(this);
-        other = selection2;
-      } else {
-        selection2 = new CTS.Selection([node]);
-        selection1 = rule.selector1.toSelection(this);
-        other = selection1;
-      }
-      var relation = new Relation(selection1, selection2, rule.name, rule.opts, rule.opts1, rule.opts2);
-      node.registerRelation(relation);
-      // Make sure that we wire up the relations,
-      // since some might come in from inline.
-      _.each(other.nodes, function(n) {
-        n.registerRelation(relation);
-      }, this);
-    }, this);
-    console.log("Returning Relations for", node.siblings[0].html(), relations);
-    return relations;
-  }
-
 });
 
 /*
- * Bootstrapper
- * ==========================================================================
- * 
- * Intended to be mixed into the Engine.
- * 
- * As such, it assumes it is part of the Engine with access to StateMachine
- * and Events.
- * 
- * Methods for mix-in:
- *  * boot
+ * IF-EXIST
+ * ========
  *
- * "Private" Methods:
- *  All begin with '_bootstrap'
+ * Intended as a Mix-In to Relation.
  */
-var Bootstrapper = CTS.Bootstrapper = {
 
-  /** 
-   * Walks CTS through a full page bootup.
-   *
-   * Dependencies:
-   *  Must be mixed into Engine with StateMachine and Events
-   */
-  boot: function() {
-    CTS.Log.Debug("Bootstrap: Booting up");
-    // Boot sequence
-    this.fsmInitialize(
-      'Start', [
-      { 'from':'Start',
-          'to':'QueueingCTS',
-        'name':'Begin' },
-      { 'from':'QueueingCTS',
-          'to':'LoadingCTS',
-        'name':'QueuedCTS' },
-      { 'from':'LoadingCTS',
-          'to':'QueueingTrees',
-        'name':'LoadedCTS'},
-      { 'from':'QueueingTrees',
-          'to':'LoadingTrees',
-        'name':'QueuedTrees'},
-      { 'from':'LoadingTrees',
-          'to':'Rendering',
-        'name':'LoadedTrees'},
-      { 'from':'Rendering',
-          'to':'Rendered',
-        'name':'Rendered' }
-      ]);
+CTS.Relation.IfNexist = function(node1, node2, spec) {
+  if (typeof spec == 'undefined') {
+    spec = {};
+  }
+  this.node1 = node1;
+  this.node2 = node2;
+  this.spec = spec;
+};
 
-    this.on('FsmEdge:Begin', this._bootstrap_queue_cts, this);
-    this.on('FsmEdge:LoadedCTS', this._bootstrap_queue_trees, this);
-    this.on('FsmEdge:LoadedTrees', this._bootstrap_render, this);
-
-    // VROOOOOMMMM!
-    this.fsmTransition('QueueingCTS');
-  },
-
-  /**
-   * Finds all CTS links and queues their load.
-   */
-  _bootstrap_queue_cts: function() {
-    // Finds all CTS links and queues their load.
-    CTS.Log.Debug("Bootstrap: Loading CTS");
-    this.fsmTransition("LoadingCTS");
-    this._bootstrap_cts_to_load = {};
-    var hasRemote = false;
-
-    var blocks = CTS.Utilities.getTreesheetLinks();
-    _.each(blocks, function(block) {
-      if (block.type == 'inline') {
-        this.ingestRules(block.content);
-      } else if (block.type == 'link') {
-        // Queue Load
-        this._bootstrap_cts_to_load[block.url] = true;
-        hasRemote = true;
-        CTS.Utilities.loadRemoteString(block,
-          this._bootstrap_cts_load_success, this._bootstrap_cts_load_fail);
-      }
-    }, this);
-    
-    if (! hasRemote) {
-      this.fsmTransition("QueueingTrees"); // Edge name: LoadedCTS
-    } 
-  },
-
-  _bootstrap_queue_trees: function() {
-    CTS.Log.Debug("Bootstrap: Loading Trees");
-    this.fsmTransition("LoadingTrees");
-    this._bootstrap_trees_to_load = {};
-    var hasRemote = false;
-    _.each(this.forrest.trees, function(value, key, list) {
-      // Todo
-    }, this);
-    if (! hasRemote) {
-      this.fsmTransition("Rendering");
-    }
-  },
-
-  _bootstrap_render: function() {
-    CTS.Log.Debug("Bootstrap: Rendering");
-    this.render();
-    this.fsmTransition("Rendered");
-  },
-
-  _bootstrap_cts_load_success: function(data, textStatus, xhr) {
-    CTS.Log.Debug("Bootstrap: Loaded treesheet", xhr.url);
-    this.ingestRules(data);
-    this._bootstrap_cts_loaded(xhr.url);
-  },
-
-  _bootstrap_cts_load_fail: function(xhr, textStatus, errorThrown) {
-    CTS.Log.Error("Bootstrap: CTS Load Failed", xhr.url);
-    this._bootstrap_cts_loaded(xhr.url);
-  },
-
-  _bootstrap_tree_load_success: function(data, textStatus, xhr) {
-    CTS.Log.Debug("Bootstrap: Loaded tree", xhr.url);
-    //TODO
-    this._bootstrap_tree_loaded(xhr.url);
-  },
-
-  _bootstrap_tree_load_fail: function(xhr, textStatus, errorThrown) {
-    CTS.Log.Error("Bootstrap: Tree Load Failed", xhr.url);
-    this._bootstrap_tree_loaded(xhr.url);
-  },
-
-  _bootstrap_cts_loaded: function(filename) {
-    delete this._bootstrap_cts_to_load[filename];
-    var done = (this._bootstrap_cts_to_load.length === 0);
-    if (done) {
-      _fsmTransition("QueueingTrees"); // Edge: LoadedCTS
-    }
-  },
-
-  _bootstrap_tree_loaded: function(filename) {
-    delete this._bootstrap_trees_to_load[filename];
-    var done = (this._bootstrap_trees_to_load.length === 0);
-    if (done) {
-      _fsmTransition("Rendering");
+CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Relation, {
+  execute: function(toward) {
+    var other = this.opposite(toward);
+    if (other == CTS.NonExistantNode) {
+      this.show();
+    } else {
+      this.hide();
     }
   }
-};
-
-// Engine
-// ==========================================================================
-
-// Constructor
-// -----------
-var Engine = CTS.Engine = function(opts, args) {
-  var defaults;
-  this.opts = opts || {};
-
-  // The main tree.
-  this.forrest = null;
-
-  this.initialize.apply(this, args);
-};
-
-// Instance Methods
-// ----------------
-_.extend(Engine.prototype, Events, StateMachine, Bootstrapper, {
-
-  initialize: function() {
-    this.forrest = new CTS.Forrest();
-  },
-
-  /**
-   * Rendering picks a primary tree. For each node in the tree, we:
-   *  1: Process any *incoming* relations for its subtree.
-   *  2: Process any *outgoing* tempalte operations
-   *  3: 
-   */
-  render: function(opts) {
-    var pt = this.forrest.getPrimaryTree();
-    var options = _.extend({}, opts);
-    pt.render(options);
-  },
-
-  ingestRules: function(rules) {
-    this.forrest.ingestRules(rules);
-  },
-
 });
-
-CTS.Debugging = {
-  DumpStack: function() {
-    var e = new Error('dummy');
-    var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
-        .replace(/^\s+at\s+/gm, '')
-        .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
-        .split('\n');
-    console.log(stack);
-  },
-
-};
-
-var TreeViz = CTS.Debugging.TreeViz = function(forrest) {
-  this.forrest = forrest;
-  this.init();
-  this.finish();
-};
-
-_.extend(TreeViz.prototype, {
-
-  write: function(html) {
-    this.win.document.write(html);
-  },
-  
-  init:  function() {
-    this.win = window.open(
-        "",
-        "CTS Tree Visualization",
-        "width=1000,height=800,scrollbars=1,resizable=1"
-    );
-    this.win.document.open();
-    this.write("<html><head>");
-    this.write('<script src="http://d3js.org/d3.v3.min.js"></script>');
-    this.write('<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>');
-    this.write('<script src="http://people.csail.mit.edu/eob/files/cts/extras/tree.js"></script>');
-    this.write('<link rel="stylesheet" href="http://people.csail.mit.edu/eob/files/cts/extras/tree.css"></script>');
-    this.writeTree(this.forrest.getPrimaryTree());
-    this.write('</head><body><div id="chart"></div>');
-  },
-
-  finish: function() {
-    this.write("</body><html>");
-    this.win.document.close();
-  },
-  
-  writeTree: function(tree) {
-    this.write("<script>");
-    this.write("window.treeData = ");
-    this.writeNode(tree.root); 
-    this.write(";");
-    this.write("</script>");
-  },
-
-  writeNode: function(node) {
-    this.write("{");
-    this.write('name:"' + node.debugName() + '"');
-    var kids = node.getChildren();
-    console.log(kids);
-    console.log("Kids size for node", node, kids.length);
-    if ((typeof kids != "undefined") && (kids.length > 0)) {
-      this.write(', children: [');
-      for (var i = 0; i < kids.length; i++) {
-        this.writeNode(kids[i]);
-        if (i < kids.length - 1) {
-          this.write(",");
-        }
-      }
-      this.write(']');
-    }
-    this.write("}");
-  }
-});
-
-CTS.shouldAutoload = function() {
-  var foundCtsElement = false;
-  var autoload = true;
-
-  // Search through <script> elements to find the CTS element.
-  _.each(CTS.$('script'), function(elem) {
-    var url = $(elem).attr('src');
-    if ((!_.isUndefined(url)) && (url != null) && (url.indexOf('cts.js') != 1)) {
-      foundCtsElement = true;
-      var param = CTS.Utilities.getUrlParameter('autoload', url);
-      if (param == 'false') {
-        autoload = false;
-      }
-    }
-  }, this);
-
-  return (foundCtsElement && autoload);
-};
-
-if (CTS.shouldAutoload()) {
-  CTS.engine = new CTS.Engine();
-  CTS.engine.boot();
-}
 
 }).call(this);

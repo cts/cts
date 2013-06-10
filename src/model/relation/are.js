@@ -5,7 +5,14 @@
  * Intended as a Mix-In to Relation.
  */
 
-var CTS.Relations.Are = {
+var CTS.Relation.Are = function(node1, node2, spec) {
+  this.node1 = node1;
+  this.node2 = node2;
+  this.spec = spec;
+};
+
+CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
+
   execute: function(toward) {
     this._Are_AlignCardinalities(toward);
   },
@@ -47,5 +54,5 @@ var CTS.Relations.Are = {
   _Are_GetCardinality: function(node) {
     var opts = this.optsFor(node);
     return node.getChildren().length - opts.prefix - opts.suffix;
-  },
-};
+  }
+});

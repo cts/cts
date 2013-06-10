@@ -2,6 +2,29 @@
  * Helper functions. Many of these are taken from Underscore.js
  */
 var Fn = CTS.Fn = {
+  breaker: {},
+
+  any: function(obj, iterator, context) {
+    iterator || (iterator = _.identity);
+    var result = false;
+    if (obj == null) return result;
+    if (Array.prototype.some && obj.some === Array.prototype.some) return obj.some(iterator, context);
+    CTS.Fn.each(obj, function(value, index, list) {
+      if (result || (result = iterator.call(context, value, index, list))) return CTS.Fn.breaker;
+    });
+    return !!result;
+  },
+
+  every: function(obj, iterator, context) {
+    iterator || (iterator = _.identity);
+    var result = true;
+    if (obj == null) return result;
+    if (Array.prototype.every && obj.every === Array.prototype.every) return obj.every(iterator, context);
+    CTS.Fn.each(obj, function(value, index, list) {
+      if (!(result = result && iterator.call(context, value, index, list))) return CTS.Fn.breaker;
+    });
+    return !!result;
+  },
 
   each: function(obj, iterator, context) {
     if (obj == null) return;
@@ -9,12 +32,12 @@ var Fn = CTS.Fn = {
       obj.forEach(iterator, context);
     } else if (obj.length === +obj.length) {
       for (var i = 0, l = obj.length; i < l; i++) {
-        if (iterator.call(context, obj[i], i, obj) === breaker) return;
+        if (iterator.call(context, obj[i], i, obj) === CTS.Fn.breaker) return;
       }
     } else {
       for (var key in obj) {
         if (CTS.Fn.has(obj, key)) {
-          if (iterator.call(context, obj[key], key, obj) === breaker) return;
+          if (iterator.call(context, obj[key], key, obj) === CTS.Fn.breaker) return;
         }
       }
     }
@@ -24,14 +47,14 @@ var Fn = CTS.Fn = {
     var results = [];
     if (obj == null) return results;
     if (Array.prototype.map && obj.map === Array.prototype.map) return obj.map(iterator, context);
-    each(obj, function(value, index, list) {
+    CTS.Fn.each(obj, function(value, index, list) {
       results[results.length] = iterator.call(context, value, index, list);
     });
     return results;
   },
 
   extend: function(obj) {
-    each(Array.prototype.slice.call(arguments, 1), function(source) {
+    CTS.Fn.each(Array.prototype.slice.call(arguments, 1), function(source) {
       if (source) {
         for (var prop in source) {
           obj[prop] = source[prop];
@@ -41,9 +64,6 @@ var Fn = CTS.Fn = {
     return obj;
   },
 
-  isUndefined: function(obj) {
-  },
-  
   isObject: function(obj) {
     return obj === Object(obj);
   },
@@ -51,7 +71,11 @@ var Fn = CTS.Fn = {
   isUndefined: function(obj) {
     return obj === void 0;
   },
-  
+
+  isNull: function(obj) {
+    return obj === null;
+  },
+
   has: function(obj, key) {
     return hasOwnProperty.call(obj, key);
   },
@@ -59,7 +83,7 @@ var Fn = CTS.Fn = {
   contains: function(obj, target) {
     if (obj == null) return false;
     if (Array.prototype.indexOf && obj.indexOf === Array.prototype.indexOf) return obj.indexOf(target) != -1;
-    return any(obj, function(value) {
+    return CTS.Fn.any(obj, function(value) {
       return value === target;
     });
   },
@@ -82,7 +106,7 @@ var Fn = CTS.Fn = {
 
   union: function() {
     return CTS.Fn.uniq(concat.apply(Array.prototype, arguments));
-  };
+  },
 
   unique: function(array, isSorted, iterator, context) {
     if (CTS.Fn.isFunction(isSorted)) {
@@ -93,7 +117,7 @@ var Fn = CTS.Fn = {
     var initial = iterator ? CTS.Fn.map(array, iterator, context) : array;
     var results = [];
     var seen = [];
-    each(initial, function(value, index) {
+    CTS.Fn.each(initial, function(value, index) {
       if (isSorted ? (!index || seen[seen.length - 1] !== value) : !CTS.Fn.contains(seen, value)) {
         seen.push(value);
         results.push(array[index]);
@@ -115,14 +139,14 @@ var Fn = CTS.Fn = {
     var results = [];
     if (obj == null) return results;
     if (Array.prototype.filter && obj.filter === Array.prototype.filter) return obj.filter(iterator, context);
-    each(obj, function(value, index, list) {
+    CTS.Fn.each(obj, function(value, index, list) {
       if (iterator.call(context, value, index, list)) results[results.length] = value;
     });
     return results;
   },
 
   flattenWithOutput: function(input, shallow, output) {
-    each(input, function(value) {
+    CTS.Fn.each(input, function(value) {
       if (CTS.Fn.isArray(value)) {
         shallow ? push.apply(output, value) : flattenWithOutput(value, shallow, output);
       } else {
@@ -149,7 +173,7 @@ CTS.Fn.keys = Object.keys || function(obj) {
 };
 
 CTS.Fn.each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'], function(name) {
-  CTS.Fn.['is' + name] = function(obj) {
+  CTS.Fn['is' + name] = function(obj) {
     return toString.call(obj) == '[object ' + name + ']';
   };
 });
