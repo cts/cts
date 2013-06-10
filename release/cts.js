@@ -30,6 +30,12 @@ CTS.$ = root.jQuery;
 var Fn = CTS.Fn = {
   breaker: {},
 
+  arrDelete: function(arr, from, to) {
+    var rest = arr.slice((to || from) + 1 || arr.length);
+    arr.length = from < 0 ? arr.length + from : from;
+    return arr.push.apply(arr, rest);
+  },
+
   any: function(obj, iterator, context) {
     iterator || (iterator = _.identity);
     var result = false;
@@ -285,10 +291,7 @@ CTS.Debugging = {
       if (firstParen != -1) {
         // Handle innards.
         var substr = str.substring(firstParen + 1, secondParen);
-        console.log(firstParen, secondParen);
-        console.log(substr);
         CTS.Fn.each(CTS.Debugging.StringToNodes(substr), function(c) {
-          console.log("insert", c.getValue());
           n.insertChild(c);
         });
       }
@@ -314,7 +317,6 @@ CTS.Debugging = {
         }
       } else if ((c == ' ') && (parens == 0)) {
         pop();
-        console.log(name);
         reset();
       } else {
         if (firstParen == -1) {
@@ -343,6 +345,8 @@ CTS.Debugging = {
         r = new CTS.Relation.Is(n1, n2);
       } else if (p == "if-exist") {
         r = new CTS.Relation.IfExist(n1, n2);
+      } else if (p == "if-nexist") {
+        r = new CTS.Relation.IfNexist(n1, n2);
       }
       return r;
     });
@@ -820,9 +824,9 @@ CTS.Node = {
   destroy: function() {
     if (this.parentNode) {
       var gotIt = false;
-      for (var i = 0; i < this.children.length; i++) {
-        if (this.children[i] == node) {
-          delete this.children[node];
+      for (var i = 0; i < this.parentNode.children.length; i++) {
+        if (this.parentNode.children[i] == this) {
+          CTS.Fn.arrDelete(this.parentNode.children, i, i);
           gotIt = true;
           break;
         }
@@ -832,6 +836,9 @@ CTS.Node = {
       CTS.Log.Error("Destroying child whose parent doesn't know about it.");
     }
     this._subclass_destroy();
+  },
+
+  undestroy: function() {
   },
 
   realizeChildren: function() {
@@ -1160,10 +1167,10 @@ CTS.Relation.IfExist = function(node1, node2, spec) {
 CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Relation, {
   execute: function(toward) {
     var other = this.opposite(toward);
-    if (other == CTS.NonExistantNode) {
-      this.hide();
+    if ((other == CTS.NonExistantNode) || (other == null) || (CTS.Fn.isUndefined(other))) {
+      toward.destroy();
     } else {
-      this.show();
+      toward.undestroy();
     }
   }
 });
@@ -1187,10 +1194,10 @@ CTS.Relation.IfNexist = function(node1, node2, spec) {
 CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Relation, {
   execute: function(toward) {
     var other = this.opposite(toward);
-    if (other == CTS.NonExistantNode) {
-      this.show();
+    if ((other == CTS.NonExistantNode) || (other == null) || (CTS.Fn.isUndefined(other))) {
+      toward.undestroy();
     } else {
-      this.hide();
+      toward.destroy();
     }
   }
 });

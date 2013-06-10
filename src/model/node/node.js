@@ -89,9 +89,9 @@ CTS.Node = {
   destroy: function() {
     if (this.parentNode) {
       var gotIt = false;
-      for (var i = 0; i < this.children.length; i++) {
-        if (this.children[i] == node) {
-          delete this.children[node];
+      for (var i = 0; i < this.parentNode.children.length; i++) {
+        if (this.parentNode.children[i] == this) {
+          CTS.Fn.arrDelete(this.parentNode.children, i, i);
           gotIt = true;
           break;
         }
@@ -101,6 +101,9 @@ CTS.Node = {
       CTS.Log.Error("Destroying child whose parent doesn't know about it.");
     }
     this._subclass_destroy();
+  },
+
+  undestroy: function() {
   },
 
   realizeChildren: function() {

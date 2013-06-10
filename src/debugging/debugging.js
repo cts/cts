@@ -95,6 +95,8 @@ CTS.Debugging = {
         r = new CTS.Relation.Is(n1, n2);
       } else if (p == "if-exist") {
         r = new CTS.Relation.IfExist(n1, n2);
+      } else if (p == "if-nexist") {
+        r = new CTS.Relation.IfNexist(n1, n2);
       }
       return r;
     });

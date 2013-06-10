@@ -17,10 +17,10 @@ CTS.Relation.IfExist = function(node1, node2, spec) {
 CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Relation, {
   execute: function(toward) {
     var other = this.opposite(toward);
-    if (other == CTS.NonExistantNode) {
-      this.hide();
+    if ((other == CTS.NonExistantNode) || (other == null) || (CTS.Fn.isUndefined(other))) {
+      toward.destroy();
     } else {
-      this.show();
+      toward.undestroy();
     }
   }
 });
