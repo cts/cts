@@ -39,19 +39,21 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
     var diff = Math.abs(nodeCard - cardinality);
     var opts = this.optsFor(node);
 
-    if (nodeCard > cardinality) {
-      // Greater. We're going to have to destroy some.
-      for (i = 0; i < diff; i++) {
-        var toDestroy = opts.prefix + nodeCard - i - 1;
-        var n = node.getChildren()[toDestroy];
-        n.destroy();
-      }
-    } else if (cardinality > nodeCard) {
-      // Less. We're going to have to create some.
-      for (i = 0; i < diff; i ++) {
-        var n = node.getChildren()[opts.prefix + nodeCard - 1 + i];
-        var n2 = n.clone();
-        node.insertChild(n2, (opts.prefix + nodeCard - 1 + i));
+    if (nodeCard > 0) {
+      if (nodeCard > cardinality) {
+        // Greater. We're going to have to destroy some.
+        for (i = 0; i < diff; i++) {
+          var toDestroy = opts.prefix + nodeCard - i - 1;
+          var n = node.getChildren()[toDestroy];
+          n.destroy();
+        }
+      } else if (cardinality > nodeCard) {
+        // Less. We're going to have to create some.
+        for (i = 0; i < diff; i ++) {
+          var n = node.getChildren()[opts.prefix + nodeCard - 1 + i];
+          var n2 = n.clone();
+          node.insertChild(n2, (opts.prefix + nodeCard - 1 + i));
+        }
       }
     }
   },

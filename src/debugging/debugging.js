@@ -20,6 +20,25 @@ CTS.Debugging = {
     return ret;
   },
 
+  RenameTree: function(node, dir) {
+    if (typeof dir == 'undefined') {
+      dir = {};
+    }
+    
+    var v = node.getValue();
+    if (typeof dir[v] == 'undefined') {
+      dir[v] = 1;
+    } else {
+      dir[v]++;
+      node.setValue(v + dir[v]);
+    }
+
+    for (var i = 0; i < node.children.length; i++) {
+      CTS.Debugging.RenameTree(node.children[i], dir);
+    }
+    return node;
+  },
+
   // NODES := <null> | NODE | NODE NODES
   // NODE := NODE_WO_KIDS | NODE_W_KIDS
   // NODE_WO_KIDS := name
@@ -130,7 +149,7 @@ CTS.Debugging = {
 
   QuickTest: function(treeStr1, treeStr2, rules) {
     var n = CTS.Debugging.QuickCombine(treeStr1, treeStr2, rules);
-    return CTS.Debugging.NodesToString(n);
+    return CTS.Debugging.NodesToString(CTS.Debugging.RenameTree(n));
   }
 
 };

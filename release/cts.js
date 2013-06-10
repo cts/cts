@@ -298,6 +298,25 @@ CTS.Debugging = {
     return ret;
   },
 
+  RenameTree: function(node, dir) {
+    if (typeof dir == 'undefined') {
+      dir = {};
+    }
+    
+    var v = node.getValue();
+    if (typeof dir[v] == 'undefined') {
+      dir[v] = 1;
+    } else {
+      dir[v]++;
+      node.setValue(v + dir[v]);
+    }
+
+    for (var i = 0; i < node.children.length; i++) {
+      CTS.Debugging.RenameTree(node.children[i], dir);
+    }
+    return node;
+  },
+
   // NODES := <null> | NODE | NODE NODES
   // NODE := NODE_WO_KIDS | NODE_W_KIDS
   // NODE_WO_KIDS := name
@@ -408,7 +427,7 @@ CTS.Debugging = {
 
   QuickTest: function(treeStr1, treeStr2, rules) {
     var n = CTS.Debugging.QuickCombine(treeStr1, treeStr2, rules);
-    return CTS.Debugging.NodesToString(n);
+    return CTS.Debugging.NodesToString(CTS.Debugging.RenameTree(n));
   }
 
 };
@@ -1235,19 +1254,21 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
     var diff = Math.abs(nodeCard - cardinality);
     var opts = this.optsFor(node);
 
-    if (nodeCard > cardinality) {
-      // Greater. We're going to have to destroy some.
-      for (i = 0; i < diff; i++) {
-        var toDestroy = opts.prefix + nodeCard - i - 1;
-        var n = node.getChildren()[toDestroy];
-        n.destroy();
-      }
-    } else if (cardinality > nodeCard) {
-      // Less. We're going to have to create some.
-      for (i = 0; i < diff; i ++) {
-        var n = node.getChildren()[opts.prefix + nodeCard - 1 + i];
-        var n2 = n.clone();
-        node.insertChild(n2, (opts.prefix + nodeCard - 1 + i));
+    if (nodeCard > 0) {
+      if (nodeCard > cardinality) {
+        // Greater. We're going to have to destroy some.
+        for (i = 0; i < diff; i++) {
+          var toDestroy = opts.prefix + nodeCard - i - 1;
+          var n = node.getChildren()[toDestroy];
+          n.destroy();
+        }
+      } else if (cardinality > nodeCard) {
+        // Less. We're going to have to create some.
+        for (i = 0; i < diff; i ++) {
+          var n = node.getChildren()[opts.prefix + nodeCard - 1 + i];
+          var n2 = n.clone();
+          node.insertChild(n2, (opts.prefix + nodeCard - 1 + i));
+        }
       }
     }
   },
