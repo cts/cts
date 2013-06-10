@@ -285,7 +285,10 @@ CTS.Debugging = {
       if (firstParen != -1) {
         // Handle innards.
         var substr = str.substring(firstParen + 1, secondParen);
+        console.log(firstParen, secondParen);
+        console.log(substr);
         CTS.Fn.each(CTS.Debugging.StringToNodes(substr), function(c) {
+          console.log("insert", c.getValue());
           n.insertChild(c);
         });
       }
@@ -303,14 +306,15 @@ CTS.Debugging = {
         }
         parens++;
       } else if (c == ')') {
+        secondParen = i - 1;
         parens--;
         if (parens == 0) {
-          secondParen = i - 1;
           pop();
           reset();
         }
-      } else if (c == ' ') {
+      } else if ((c == ' ') && (parens == 0)) {
         pop();
+        console.log(name);
         reset();
       } else {
         if (firstParen == -1) {

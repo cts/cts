@@ -59,13 +59,13 @@ CTS.Debugging = {
         }
         parens++;
       } else if (c == ')') {
+        secondParen = i - 1;
         parens--;
         if (parens == 0) {
-          secondParen = i - 1;
           pop();
           reset();
         }
-      } else if (c == ' ') {
+      } else if ((c == ' ') && (parens == 0)) {
         pop();
         reset();
       } else {

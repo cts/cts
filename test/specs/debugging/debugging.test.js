@@ -10,6 +10,11 @@ test("Single Node", function() {
   equal(n[0].getValue(), "a");
 });
 
+test("Multiple Nodes", function() {
+  var n = CTS.Debugging.StringToNodes("a b");
+  equal(n.length, 2);
+});
+
 test("Single Child", function() {
   var n2 = CTS.Debugging.StringToNodes("a(b)");
   var r = n2[0];
@@ -25,7 +30,6 @@ test("String Recovery - Single Child", function() {
 
 test("Multiple Children", function() {
   var s = "a(b c d)";
-  var n = CTS.Debugging.StringToNodes(s3)[0];
+  var n = CTS.Debugging.StringToNodes(s)[0];
   equal(n.getChildren().length, 3);
 });
-
