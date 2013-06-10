@@ -8,6 +8,7 @@ module("is", {
 test("IS replaces value", function() {
   equal(CTS.Debugging.QuickTest("a", "b", "a is b"), "b");
   equal(CTS.Debugging.QuickTest("a(b)", "c", "b is c"), "a(c)");
+  equal(CTS.Debugging.QuickTest("a(b c d)", "e", "d is e"), "a(b c e)");
 });
 
 //asyncTest("IS text -> text on same page", function () {

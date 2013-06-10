@@ -28,9 +28,9 @@ CTS.Debugging = {
     var ret = [];
     var name, parens, firstParen, secondParen;
 
-    var reset = function(idx) {
+    var reset = function() {
       name = "";
-      parens = idx;
+      parens = 0;
       firstParen = -1;
       secondParen = -1;
     };
@@ -48,7 +48,7 @@ CTS.Debugging = {
       ret.push(n);
     };
 
-    reset(0);
+    reset();
 
     var i = 0;
     while (i < str.length) {
@@ -63,8 +63,11 @@ CTS.Debugging = {
         if (parens == 0) {
           secondParen = i - 1;
           pop();
-          reset(0);
+          reset();
         }
+      } else if (c == ' ') {
+        pop();
+        reset();
       } else {
         if (firstParen == -1) {
           name += c;
