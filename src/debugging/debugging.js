@@ -12,8 +12,8 @@ CTS.Debugging = {
     var ret = node.getValue();
     if (node.children.length > 0) {
       ret += "(";
-      CTS.Fn.map(node.children, function(child) {
-        return child.debugPrintTree();
+      ret += CTS.Fn.map(node.children, function(child) {
+        return CTS.Debugging.NodesToString(child);
       }).join(" ");
       ret += ")";
     }
@@ -41,9 +41,7 @@ CTS.Debugging = {
       if (firstParen != -1) {
         // Handle innards.
         var substr = str.substring(firstParen + 1, secondParen);
-        console.log(firstParen, secondParen, substr);
         CTS.Fn.each(CTS.Debugging.StringToNodes(substr), function(c) {
-          console.log(c);
           n.insertChild(c);
         });
       }
@@ -95,7 +93,6 @@ CTS.Debugging = {
       } else if (p == "if-exist") {
         r = new CTS.Relation.IfExist(n1, n2);
       }
-      console.log(p);
       return r;
     });
   },

@@ -256,8 +256,8 @@ CTS.Debugging = {
     var ret = node.getValue();
     if (node.children.length > 0) {
       ret += "(";
-      CTS.Fn.map(node.children, function(child) {
-        return child.debugPrintTree();
+      ret += CTS.Fn.map(node.children, function(child) {
+        return CTS.Debugging.NodesToString(child);
       }).join(" ");
       ret += ")";
     }
@@ -801,7 +801,7 @@ CTS.Node = {
     this.children[this.children.length] = null;
     for (var i = this.children.length - 1; i > afterIndex; i--) {
       if (i == (afterIndex + 1)) {
-        this.children[i] == node;
+        this.children[i] = node;
       } else {
         this.children[i] = this.children[i - 1];
       }
