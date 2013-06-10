@@ -11,6 +11,7 @@ CTS.Relation.Is = function(node1, node2, spec) {
   this.node1 = node1;
   this.node2 = node2;
   this.spec = spec;
+  this.initializeBase();
 };
 
 CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Relation, {

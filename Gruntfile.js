@@ -46,10 +46,10 @@ module.exports = function(grunt) {
           "src/model/relation/relation-spec.js",
           "src/model/relation/relation.js",
           "src/model/relation/is.js",
-        //  "src/model/relation/are.js",
+          "src/model/relation/are.js",
           "src/model/relation/ifexist.js",
           "src/model/relation/ifnexist.js",
-        //  "src/model/relation/graft.js",
+          "src/model/relation/graft.js",
           
         //  "src/model/tree/tree-spec.js",
         //  "src/model/tree/tree.js",

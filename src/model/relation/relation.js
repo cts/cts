@@ -4,17 +4,20 @@
  * Rules are the language which specify relations.
  */
 
-CTS.Relation.RelationOpts = {
-  prefix: 0,
-  suffix: 0,
-  step: 1
-};
-
 CTS.Relation.Relation = {
 
   initializeBase: function() {
-    this.node1.addRelation(this);
-    this.node2.addRelation(this);
+    if (this.node1 != null) {
+      this.node1.registerRelation(this);
+    }
+    if (this.node2 != null) {
+      this.node2.registerRelation(this);
+    }
+    this.defaultOpts = this.getDefaultOpts();
+  },
+
+  getDefaultOpts: function() {
+    return {};
   },
 
   addOption: function(key, value) {
@@ -44,12 +47,17 @@ CTS.Relation.Relation = {
   },
 
   optsFor: function(node) {
+    var toRet;
     if (this.node1 === node) {
-      return this.spec.opts1;
+      toRet = this.spec.opts1;
     } else if (this.node2 == node) {
-      return this.spec.opts2;
+      toRet = this.spec.opts2;
     }
-    return {};
+    if (CTS.Fn.isUndefined(toRet)) {
+      toRet = {};
+    }
+    CTS.Fn.extend(toRet, this.defaultOpts);
+    return toRet;
   },
 
   clone: function() {

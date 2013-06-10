@@ -159,11 +159,11 @@ var Fn = CTS.Fn = {
   },
   
   without: function(array) {
-    return CTS.Fn.difference(array, slice.call(arguments, 1));
+    return CTS.Fn.difference(array, Array.prototype.slice.call(arguments, 1));
   },
 
   difference: function(array) {
-    var rest = concat.apply(ArrayProto, slice.call(arguments, 1));
+    var rest = concat.apply(ArrayProto, Array.prototype.slice.call(arguments, 1));
     return CTS.Fn.filter(array, function(value){ return !CTS.Fn.contains(rest, value); });
   },
 
@@ -190,7 +190,35 @@ var Fn = CTS.Fn = {
 
   flatten: function(array, shallow) {
     return flattenWithOutput(array, shallow, []);
+  },
+
+  zip: function() {
+    var args = Array.prototype.slice.call(arguments);
+    var length = CTS.Fn.max(CTS.Fn.pluck(args, 'length'));
+    var results = new Array(length);
+    for (var i = 0; i < length; i++) {
+      results[i] = CTS.Fn.pluck(args, "" + i);
+    }
+    return results;
+  },
+
+  max:function(obj, iterator, context) {
+    if (!iterator && CTS.Fn.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {
+      return Math.max.apply(Math, obj);
+    }
+    if (!iterator && _.isEmpty(obj)) return -Infinity;
+    var result = {computed : -Infinity, value: -Infinity};
+    CTS.Fn.each(obj, function(value, index, list) {
+      var computed = iterator ? iterator.call(context, value, index, list) : value;
+      computed >= result.computed && (result = {value : value, computed : computed});
+    });
+    return result.value;
+  },
+  
+  pluck: function(obj, key) {
+    return CTS.Fn.map(obj, function(value){ return value[key]; });
   }
+
 };
 
 CTS.Fn.isArray = Array.isArray || function(obj) {
@@ -347,6 +375,8 @@ CTS.Debugging = {
         r = new CTS.Relation.IfExist(n1, n2);
       } else if (p == "if-nexist") {
         r = new CTS.Relation.IfNexist(n1, n2);
+      } else if (p == "are") {
+        r = new CTS.Relation.Are(n1, n2);
       }
       return r;
     });
@@ -1040,6 +1070,13 @@ CTS.Fn.extend(CTS.AbstractNode.prototype,
     CTS.StateMachine,
     CTS.NodeStateMachine,
     CTS.Node, {
+
+   _subclass_beginClone: function() {
+     var n = new AbstractNode ();
+     n.setValue(this.getValue());
+     n.realizeChildren();
+     return n;
+   }
 });
 
 CTS.NonExistantNode = new CTS.AbstractNode();
@@ -1071,17 +1108,20 @@ CTS.Fn.extend(CTS.Relation.RelationSpec.prototype, {
  * Rules are the language which specify relations.
  */
 
-CTS.Relation.RelationOpts = {
-  prefix: 0,
-  suffix: 0,
-  step: 1
-};
-
 CTS.Relation.Relation = {
 
   initializeBase: function() {
-    this.node1.addRelation(this);
-    this.node2.addRelation(this);
+    if (this.node1 != null) {
+      this.node1.registerRelation(this);
+    }
+    if (this.node2 != null) {
+      this.node2.registerRelation(this);
+    }
+    this.defaultOpts = this.getDefaultOpts();
+  },
+
+  getDefaultOpts: function() {
+    return {};
   },
 
   addOption: function(key, value) {
@@ -1111,12 +1151,17 @@ CTS.Relation.Relation = {
   },
 
   optsFor: function(node) {
+    var toRet;
     if (this.node1 === node) {
-      return this.spec.opts1;
+      toRet = this.spec.opts1;
     } else if (this.node2 == node) {
-      return this.spec.opts2;
+      toRet = this.spec.opts2;
     }
-    return {};
+    if (CTS.Fn.isUndefined(toRet)) {
+      toRet = {};
+    }
+    CTS.Fn.extend(toRet, this.defaultOpts);
+    return toRet;
   },
 
   clone: function() {
@@ -1137,6 +1182,7 @@ CTS.Relation.Is = function(node1, node2, spec) {
   this.node1 = node1;
   this.node2 = node2;
   this.spec = spec;
+  this.initializeBase();
 };
 
 CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Relation, {
@@ -1147,6 +1193,77 @@ CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Relation, {
   }
 });
 
+
+/*
+ * ARE
+ * ===
+ *
+ * Intended as a Mix-In to Relation.
+ */
+
+CTS.Relation.Are = function(node1, node2, spec) {
+  if (typeof spec == 'undefined') {
+    spec = {};
+  }
+  this.node1 = node1;
+  this.node2 = node2;
+  this.spec = spec;
+  this.initializeBase();
+};
+
+CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
+  getDefaultOpts: function() {
+    return {
+      prefix: 0,
+      suffix: 0,
+      step: 0
+    };
+  },
+
+  execute: function(toward) {
+    this._Are_AlignCardinalities(toward);
+  },
+
+  _Are_AlignCardinalities: function(toward) {
+    var other = this.opposite(toward);
+    var otherCardinality = this._Are_GetCardinality(other);
+    this._Are_SetCardinality(toward, otherCardinality);
+  },
+
+  _Are_SetCardinality: function(node, cardinality) {
+    var nodeCard = this._Are_GetCardinality(node);
+    var diff = Math.abs(nodeCard - cardinality);
+    var opts = this.optsFor(node);
+
+    if (nodeCard > cardinality) {
+      // Greater. We're going to have to destroy some.
+      for (i = 0; i < diff; i++) {
+        var toDestroy = opts.prefix + nodeCard - i - 1;
+        var n = node.getChildren()[toDestroy];
+        n.destroy();
+      }
+    } else if (cardinality > nodeCard) {
+      // Less. We're going to have to create some.
+      for (i = 0; i < diff; i ++) {
+        var n = node.getChildren()[opts.prefix + nodeCard - 1 + i];
+        var n2 = n.clone();
+        node.insertChild(n2, (opts.prefix + nodeCard - 1 + i));
+      }
+    }
+  },
+
+  /*
+   * Returns the number of items in the set rooted by this node,
+   * respecting the prefix and suffix settings provided to the relation.
+   *
+   * An assumption is made here that the tree structure already takes
+   * into an account the step size, using intermediate nodes.
+   */
+  _Are_GetCardinality: function(node) {
+    var opts = this.optsFor(node);
+    return node.getChildren().length - opts.prefix - opts.suffix;
+  }
+});
 
 /*
  * IF-EXIST
@@ -1162,6 +1279,7 @@ CTS.Relation.IfExist = function(node1, node2, spec) {
   this.node1 = node1;
   this.node2 = node2;
   this.spec = spec;
+  this.initializeBase();
 };
 
 CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Relation, {
@@ -1189,6 +1307,7 @@ CTS.Relation.IfNexist = function(node1, node2, spec) {
   this.node1 = node1;
   this.node2 = node2;
   this.spec = spec;
+  this.initializeBase();
 };
 
 CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Relation, {
@@ -1201,5 +1320,28 @@ CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Relation, {
     }
   }
 });
+
+/*
+ * GRAFT
+ * =====
+ *
+ * Intended as a Mix-In to Relation.
+ */
+
+CTS.Relation.Graft = function(node1, node2, spec) {
+  if (CTS.Fn.isUndefined(spec)) {
+    spec = {};
+  }
+  this.node1 = node1;
+  this.node2 = node2;
+  this.spec = spec;
+  this.initializeBase();
+};
+
+CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Relation, {
+  execute: function(toward) {
+  }
+});
+
 
 }).call(this);

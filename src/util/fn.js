@@ -133,11 +133,11 @@ var Fn = CTS.Fn = {
   },
   
   without: function(array) {
-    return CTS.Fn.difference(array, slice.call(arguments, 1));
+    return CTS.Fn.difference(array, Array.prototype.slice.call(arguments, 1));
   },
 
   difference: function(array) {
-    var rest = concat.apply(ArrayProto, slice.call(arguments, 1));
+    var rest = concat.apply(ArrayProto, Array.prototype.slice.call(arguments, 1));
     return CTS.Fn.filter(array, function(value){ return !CTS.Fn.contains(rest, value); });
   },
 
@@ -164,7 +164,35 @@ var Fn = CTS.Fn = {
 
   flatten: function(array, shallow) {
     return flattenWithOutput(array, shallow, []);
+  },
+
+  zip: function() {
+    var args = Array.prototype.slice.call(arguments);
+    var length = CTS.Fn.max(CTS.Fn.pluck(args, 'length'));
+    var results = new Array(length);
+    for (var i = 0; i < length; i++) {
+      results[i] = CTS.Fn.pluck(args, "" + i);
+    }
+    return results;
+  },
+
+  max:function(obj, iterator, context) {
+    if (!iterator && CTS.Fn.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {
+      return Math.max.apply(Math, obj);
+    }
+    if (!iterator && _.isEmpty(obj)) return -Infinity;
+    var result = {computed : -Infinity, value: -Infinity};
+    CTS.Fn.each(obj, function(value, index, list) {
+      var computed = iterator ? iterator.call(context, value, index, list) : value;
+      computed >= result.computed && (result = {value : value, computed : computed});
+    });
+    return result.value;
+  },
+  
+  pluck: function(obj, key) {
+    return CTS.Fn.map(obj, function(value){ return value[key]; });
   }
+
 };
 
 CTS.Fn.isArray = Array.isArray || function(obj) {
