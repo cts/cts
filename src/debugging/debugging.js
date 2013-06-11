@@ -8,6 +8,29 @@ CTS.Debugging = {
     console.log(stack);
   },
 
+  DumpTree: function(node, indent) {
+    if (typeof indent == 'undefined') {
+      indent = 0;
+    }
+    var indentSp = "";
+    var i;
+    for (i = 0; i < indent; i++) {
+      indentSp += " ";
+    }
+
+    console.log(indentSp + "+ " + node.getValue());
+
+    indentSp += "  ";
+
+    for (i = 0; i < node.relations.length; i++) {
+      console.log(indentSp + "- " + node.relations[i].name + " " +
+        node.relations[i].opposite(node).getValue());
+    }
+    for (i = 0; i < node.children.length; i++) {
+      CTS.Debugging.DumpTree(node.children[i], indent + 2);
+    }
+  },
+
   NodesToString: function(node) {
     var ret = node.getValue();
     if (node.children.length > 0) {
@@ -137,19 +160,53 @@ CTS.Debugging = {
     return null;
   },
 
-  QuickCombine: function(treeStr1, treeStr2, rules) {
+  QuickCombine: function(treeStr1, treeStr2, rules, ruleToRun) {
     var n1 = CTS.Debugging.StringToNodes(treeStr1)[0];
     var n2 = CTS.Debugging.StringToNodes(treeStr2)[0];
     var rs = CTS.Debugging.StringsToRelations(n1, n2, rules);
-    for (var i = 0; i < rs.length; i++) {
-      rs[i].execute(rs[i].node1);
+    if (typeof ruleToRun == 'undefined') {
+      for (var i = 0; i < rs.length; i++) {
+        rs[i].execute(rs[i].node1);
+      }
+    } else {
+      var r2 = CTS.Debugging.StringsToRelations(n1, n2, ruleToRun);
+      for (var i = 0; i < r2.length; i++) {
+        r2[i].execute(r2[i].node1);
+      }
     }
     return n1;
   },
 
-  QuickTest: function(treeStr1, treeStr2, rules) {
-    var n = CTS.Debugging.QuickCombine(treeStr1, treeStr2, rules);
+  RuleStringForTree: function(node) {
+    var ret = [];
+    var i;
+
+    for (i = 0; i < node.relations.length; i++) {
+      // XXX(eob): Note: ordering is random! Testers take note!
+      var r = node.relations[i];
+      var rstr = r.node1.getValue() + " "
+               + r.name + " " 
+               + r.node2.getValue();
+      ret.push(rstr);
+    }
+
+    for (var i = 0; i < node.children.length; i++) {
+      ret.push(CTS.Debugging.RuleStringForTree(node.children[i]));
+    }
+
+    return ret.join(";");
+  },
+
+  TreeTest: function(treeStr1, treeStr2, rules, rulesToRun) {
+    var n = CTS.Debugging.QuickCombine(treeStr1, treeStr2, rules, rulesToRun);
     return CTS.Debugging.NodesToString(CTS.Debugging.RenameTree(n));
+  },
+
+  RuleTest: function(treeStr1, treeStr2, rules, rulesToRun) {
+    var n = CTS.Debugging.QuickCombine(treeStr1, treeStr2, rules, rulesToRun);
+    var n2 = CTS.Debugging.RenameTree(n);
+    CTS.Debugging.DumpTree(n2);
+    return CTS.Debugging.RuleStringForTree(n2);
   }
 
 };

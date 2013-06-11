@@ -36,10 +36,24 @@ CTS.Relation.Relation = {
     return (node == this.node1) ? this.node2 : this.node1;
   },
 
+  /*
+   * removes this relation from both node1 and node2
+   */
+  destroy: function() {
+    if (this.node1 != null) {
+      this.node1.unregisterRelation(this);
+    }
+    if (this.node2 != null) {
+      this.node2.unregisterRelation(this);
+    }
+  },
+
   rebind: function(source, destination) {
     if (source == this.node1) {
+      this.node1.registerRelation(this);
       this.node1 = destination;
     } else if (source == this.node2) {
+      this.node2.registerRelation(this);
       this.node2 = destination;
     } else {
       CTS.Log.Error("Asked to rebind but no match.");
@@ -62,5 +76,9 @@ CTS.Relation.Relation = {
 
   clone: function() {
     return new CTS.Relation.Relation(this.node1, this.node2, this.spec);
+  },
+
+  signature: function() {
+    return "<" + this.name + " " + CTS.Fn.map(this.opts, function(v, k) { return k + ":" + v}).join(";") + ">";
   }
 };

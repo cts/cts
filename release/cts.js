@@ -137,7 +137,7 @@ var Fn = CTS.Fn = {
   },
 
   union: function() {
-    return CTS.Fn.uniq(concat.apply(Array.prototype, arguments));
+    return CTS.Fn.uniq(Array.prototype.concat.apply(Array.prototype, arguments));
   },
 
   unique: function(array, isSorted, iterator, context) {
@@ -163,7 +163,7 @@ var Fn = CTS.Fn = {
   },
 
   difference: function(array) {
-    var rest = concat.apply(ArrayProto, Array.prototype.slice.call(arguments, 1));
+    var rest = Array.prototype.concat.apply(Array.prorotype, Array.prototype.slice.call(arguments, 1));
     return CTS.Fn.filter(array, function(value){ return !CTS.Fn.contains(rest, value); });
   },
 
@@ -251,17 +251,19 @@ CTS.Log = {
 
   Fatal: function(msg, args) {
     alert(msg);
-    console.log("FATAL", msg, obj);
+    console.log("CTS FATAL", msg, args);
   },
 
   Error: function(message, args) {
-    console.log(message, args);
+    console.log("CTS ERROR", message, args);
   },
 
   Warn: function(message, args) {
+    console.log("CTS WARN", message, args)
   },
 
   Debug: function(message, args) {
+    console.log("CTS DEBUG", message, args);
   },
 
   Info: function(message, args) {
@@ -284,6 +286,29 @@ CTS.Debugging = {
         .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
         .split('\n');
     console.log(stack);
+  },
+
+  DumpTree: function(node, indent) {
+    if (typeof indent == 'undefined') {
+      indent = 0;
+    }
+    var indentSp = "";
+    var i;
+    for (i = 0; i < indent; i++) {
+      indentSp += " ";
+    }
+
+    console.log(indentSp + "+ " + node.getValue());
+
+    indentSp += "  ";
+
+    for (i = 0; i < node.relations.length; i++) {
+      console.log(indentSp + "- " + node.relations[i].name + " " +
+        node.relations[i].opposite(node).getValue());
+    }
+    for (i = 0; i < node.children.length; i++) {
+      CTS.Debugging.DumpTree(node.children[i], indent + 2);
+    }
   },
 
   NodesToString: function(node) {
@@ -415,19 +440,53 @@ CTS.Debugging = {
     return null;
   },
 
-  QuickCombine: function(treeStr1, treeStr2, rules) {
+  QuickCombine: function(treeStr1, treeStr2, rules, ruleToRun) {
     var n1 = CTS.Debugging.StringToNodes(treeStr1)[0];
     var n2 = CTS.Debugging.StringToNodes(treeStr2)[0];
     var rs = CTS.Debugging.StringsToRelations(n1, n2, rules);
-    for (var i = 0; i < rs.length; i++) {
-      rs[i].execute(rs[i].node1);
+    if (typeof ruleToRun == 'undefined') {
+      for (var i = 0; i < rs.length; i++) {
+        rs[i].execute(rs[i].node1);
+      }
+    } else {
+      var r2 = CTS.Debugging.StringsToRelations(n1, n2, ruleToRun);
+      for (var i = 0; i < r2.length; i++) {
+        r2[i].execute(r2[i].node1);
+      }
     }
     return n1;
   },
 
-  QuickTest: function(treeStr1, treeStr2, rules) {
-    var n = CTS.Debugging.QuickCombine(treeStr1, treeStr2, rules);
+  RuleStringForTree: function(node) {
+    var ret = [];
+    var i;
+
+    for (i = 0; i < node.relations.length; i++) {
+      // XXX(eob): Note: ordering is random! Testers take note!
+      var r = node.relations[i];
+      var rstr = r.node1.getValue() + " "
+               + r.name + " " 
+               + r.node2.getValue();
+      ret.push(rstr);
+    }
+
+    for (var i = 0; i < node.children.length; i++) {
+      ret.push(CTS.Debugging.RuleStringForTree(node.children[i]));
+    }
+
+    return ret.join(";");
+  },
+
+  TreeTest: function(treeStr1, treeStr2, rules, rulesToRun) {
+    var n = CTS.Debugging.QuickCombine(treeStr1, treeStr2, rules, rulesToRun);
     return CTS.Debugging.NodesToString(CTS.Debugging.RenameTree(n));
+  },
+
+  RuleTest: function(treeStr1, treeStr2, rules, rulesToRun) {
+    var n = CTS.Debugging.QuickCombine(treeStr1, treeStr2, rules, rulesToRun);
+    var n2 = CTS.Debugging.RenameTree(n);
+    CTS.Debugging.DumpTree(n2);
+    return CTS.Debugging.RuleStringForTree(n2);
   }
 
 };
@@ -815,6 +874,11 @@ CTS.Node = {
     }
   },
 
+  unregisterRelation: function(relation) {
+    this.relations = CTS.Fn.filter(this.relations,
+        function(r) { return r != relation; });
+  },
+
   getRelations: function() {
     if (! this.addedMyInlineRelationsToForrest) {
       this.registerInlineRelationSpecs();
@@ -902,23 +966,22 @@ CTS.Node = {
 
   clone: function() {
     var c = this._subclass_beginClone();
-    var self = this;
 
-    // Clone all the relations of this ndoe, and all nodes downtree.
-    var copyRelationsRecursively = function(source, dest) {
-      CTS.Fn.each(source.relations, function(relation) {
-        var relationClone = relation.clone();
-        relationClone.rebind(source, dest);
-        dest.relations.push(relationClone);
-      });
-
-      // Now get the children.
-      CTS.Fn.each(CTS.Fn.zip(source.children, dest.children), function(grp) {
-        self.copyRelationsRecursively(grp[0], grp[1]);
-      });
+    // Note: because the subclass constructs it's own subtree,
+    // that means it is also responsible for cloning downstream nodes.
+    // thus we only take care of THIS NODE's relations.
+    for (var i = 0; i < this.relations.length; i++) {
+      var n1 = this.relations[i].node1;
+      var n2 = this.relations[i].node2;
+      if (n1 == this) {
+        n1 = c;
+      } else if (n2 == this) {
+        n2 = c;
+      } else {
+        CTS.Fatal("Clone failed");
+      }
+      var relationClone = this.relations[i].clone(n1, n2);
     };
-    copyRelationsRecursively(this, c);
-
     // Note that we DON'T wire up any parent-child relationships
     // because that would result in more than just cloning the node
     // but also modifying other structures, such as the tree which
@@ -938,6 +1001,10 @@ CTS.Node = {
 
   setValue: function(v, opts) {
     this.value = v;
+  },
+
+  descendantOf: function(other) {
+    return false;
   },
 
   _subclass_realizeChildren: function() {},
@@ -1093,9 +1160,30 @@ CTS.Fn.extend(CTS.AbstractNode.prototype,
    _subclass_beginClone: function() {
      var n = new AbstractNode ();
      n.setValue(this.getValue());
-     n.realizeChildren();
+
+     for (var i = 0; i < this.children.length; i++) {
+       var k = this.children[i].clone();
+       n.insertChild(k);
+     }
+
      return n;
+   },
+
+   descendantOf: function(other) {
+     var p = this.parentNode;
+     var foundIt = false;
+     if (this == other) {
+       return true;
+     }
+     while ((!foundIt) && (p != null)) {
+       if (p == other) {
+         foundIt = true;
+       }
+       p = p.parentNode;
+     }
+     return foundIt;
    }
+
 });
 
 CTS.NonExistantNode = new CTS.AbstractNode();
@@ -1103,12 +1191,13 @@ CTS.NonExistantNode = new CTS.AbstractNode();
 
 CTS.Relation = {};
 
-CTS.Relation.RelationSpec = function(selector1, selector2, name, props1, props2) {
+CTS.Relation.RelationSpec = function(selector1, selector2, name, props1, props2, propsMiddle) {
   this.selectionSpec1 = selector1;
   this.selectionSpec2 = selector2;
   this.name = name;
   this.opts1 = props1;
   this.opts2 = props2;
+  this.opts = propsMiddle || {};
 };
 
 CTS.Fn.extend(CTS.Relation.RelationSpec.prototype, {
@@ -1159,10 +1248,24 @@ CTS.Relation.Relation = {
     return (node == this.node1) ? this.node2 : this.node1;
   },
 
+  /*
+   * removes this relation from both node1 and node2
+   */
+  destroy: function() {
+    if (this.node1 != null) {
+      this.node1.unregisterRelation(this);
+    }
+    if (this.node2 != null) {
+      this.node2.unregisterRelation(this);
+    }
+  },
+
   rebind: function(source, destination) {
     if (source == this.node1) {
+      this.node1.registerRelation(this);
       this.node1 = destination;
     } else if (source == this.node2) {
+      this.node2.registerRelation(this);
       this.node2 = destination;
     } else {
       CTS.Log.Error("Asked to rebind but no match.");
@@ -1185,6 +1288,10 @@ CTS.Relation.Relation = {
 
   clone: function() {
     return new CTS.Relation.Relation(this.node1, this.node2, this.spec);
+  },
+
+  signature: function() {
+    return "<" + this.name + " " + CTS.Fn.map(this.opts, function(v, k) { return k + ":" + v}).join(";") + ">";
   }
 };
 
@@ -1201,6 +1308,7 @@ CTS.Relation.Is = function(node1, node2, spec) {
   this.node1 = node1;
   this.node2 = node2;
   this.spec = spec;
+  this.name = 'is';
   this.initializeBase();
 };
 
@@ -1209,7 +1317,19 @@ CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Relation, {
     var from = this.opposite(toward);
     var content = from.getValue(this.optsFor(from));
     toward.setValue(content, this.optsFor(toward));
+  },
+
+  clone: function(n1, n2) {
+    if (CTS.Fn.isUndefined(n1)) {
+      n1 = this.node1;
+    }
+    if (CTS.Fn.isUndefined(n2)) {
+      n2 = this.node2;
+    }
+    return new CTS.Relation.Is(n1, n2, this.spec);
   }
+
+
 });
 
 
@@ -1228,6 +1348,7 @@ CTS.Relation.Are = function(node1, node2, spec) {
   this.node2 = node2;
   this.spec = spec;
   this.initializeBase();
+  this.name = 'are';
 };
 
 CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
@@ -1241,6 +1362,17 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
 
   execute: function(toward) {
     this._Are_AlignCardinalities(toward);
+    this._Are_PruneRules(toward);
+  },
+
+  clone: function(n1, n2) {
+    if (CTS.Fn.isUndefined(n1)) {
+      n1 = this.node1;
+    }
+    if (CTS.Fn.isUndefined(n2)) {
+      n2 = this.node2;
+    }
+    return new CTS.Relation.Are(n1, n2, this.spec);
   },
 
   _Are_AlignCardinalities: function(toward) {
@@ -1283,7 +1415,105 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
   _Are_GetCardinality: function(node) {
     var opts = this.optsFor(node);
     return node.getChildren().length - opts.prefix - opts.suffix;
-  }
+  },
+
+  /* 
+   * Takes nodes that are splayed across all opposites, and deletes
+   * all but the one for the proper index.
+   */
+  _Are_PruneRules: function(node, index, opposites) {
+    if ((typeof index == 'undefined') && (typeof opposites == 'undefined')) {
+      // This is the base case, called on th PARENT of the are.
+      // ASSUMPTION! Cardinalities are already aligned.
+      var card = this._Are_GetCardinality(node);
+      var opts = this.optsFor(node);
+      var opposite = this.opposite(node);
+      var oppositeOpts = this.optsFor(opposite);
+
+      var opposites = opposite.children.slice(oppositeOpts.prefix, oppositeOpts.prefix + card);
+
+      for (var i = 0; i < card; i++) {
+        var child = node.children[opts.prefix + i];
+        this._Are_PruneRules(child, i, opposites);
+      }
+    } else {
+      var templates = this._Are_RuleTemplates(node);
+      console.log("TT", templates);
+      CTS.Fn.each(templates, function(rules, sig) {
+        this._Are_MaybePruneTemplate(node, index, opposites, rules);
+      }, this);
+      for (var i = 0; i < node.children.length; i++) {
+        this._Are_PruneRules(node.children[i], index, opposites);
+      }
+    }
+  },
+
+  /*
+   * Returns a hash of lists of rules for this node, grouped by 
+   * node signature
+   */
+  _Are_RuleTemplates: function(node) {
+    var ret = {};
+    for (var i = 0; i < node.relations.length; i++) {
+      var r = node.relations[i];
+      var sig = r.signature();
+      if (! CTS.Fn.has(ret, sig)) {
+        ret[sig] = [];
+      }
+      ret[sig].push(r);
+    }
+    return ret;
+  },
+
+  /*
+   * maybe prunes out templates
+   */
+  _Are_MaybePruneTemplate: function(node, index, opposites, rules) {
+    if (rules.length < opposites.length) {
+      return;
+    }
+
+    var slots = [];
+    var i, j;
+    for (i = 0; i < opposites.length; i++) {
+      slots[i] = null;
+    }
+    
+    for (i = 0; i < rules.length; i++) {
+      var r = rules[i];
+      var opposite = r.opposite(node);
+      var foundIt = false;
+      for (j = 0; ((!foundIt) && (j < opposites.length)); j++) {
+        if (slots[j] == null) {
+          // Check to see if opposite is in lineage of opposites[j]
+          if (opposite.descendantOf(opposites[j])) {
+            slots[j] = r;
+            foundIt = true;
+          }
+        }
+      }
+    }
+
+    // Check if splayed. Remember which is our index
+    var splayed = true;
+    for (i = 0; i < slots.length; i++) {
+      if (slots[i] == null) {
+        splayed = false;
+        break;
+      }
+    }
+
+    // If it is splayed, remove all except the one at index
+    if (splayed) {
+      for (i=0; i<slots.length; i++) {
+        if (i != index) {
+          slots[i].destroy();
+        }
+      }
+    }
+
+  },
+
 });
 
 /*
@@ -1300,6 +1530,7 @@ CTS.Relation.IfExist = function(node1, node2, spec) {
   this.node1 = node1;
   this.node2 = node2;
   this.spec = spec;
+  this.name = 'if-exist';
   this.initializeBase();
 };
 
@@ -1311,7 +1542,19 @@ CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Relation, {
     } else {
       toward.undestroy();
     }
+  },
+
+  clone: function(n1, n2) {
+    if (CTS.Fn.isUndefined(n1)) {
+      n1 = this.node1;
+    }
+    if (CTS.Fn.isUndefined(n2)) {
+      n2 = this.node2;
+    }
+    return new CTS.Relation.IfExist(n1, n2, this.spec);
   }
+
+
 });
 
 /*
@@ -1328,6 +1571,7 @@ CTS.Relation.IfNexist = function(node1, node2, spec) {
   this.node1 = node1;
   this.node2 = node2;
   this.spec = spec;
+  this.name = 'if-nexist';
   this.initializeBase();
 };
 
@@ -1339,7 +1583,19 @@ CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Relation, {
     } else {
       toward.destroy();
     }
+  },
+
+  clone: function(n1, n2) {
+    if (CTS.Fn.isUndefined(n1)) {
+      n1 = this.node1;
+    }
+    if (CTS.Fn.isUndefined(n2)) {
+      n2 = this.node2;
+    }
+    return new CTS.Relation.IfNexist(n1, n2, this.spec);
   }
+
+
 });
 
 /*
@@ -1356,12 +1612,25 @@ CTS.Relation.Graft = function(node1, node2, spec) {
   this.node1 = node1;
   this.node2 = node2;
   this.spec = spec;
+  this.name = 'graft';
   this.initializeBase();
 };
 
 CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Relation, {
   execute: function(toward) {
+  },
+ 
+  clone: function(n1, n2) {
+    if (CTS.Fn.isUndefined(n1)) {
+      n1 = this.node1;
+    }
+    if (CTS.Fn.isUndefined(n2)) {
+      n2 = this.node2;
+    }
+    return new CTS.Relation.Graft(n1, n2, this.spec);
   }
+
+
 });
 
 

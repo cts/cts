@@ -21,6 +21,12 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
    **
    ************************************************************************/
 
+   descendantOf: function(other) {
+     // jQuery trick
+     // this.value is a jQuery node
+     return this.value.closest(other.value).length != 0;
+   }
+
    /*
     * Precondition: this.children.length == 0
     *

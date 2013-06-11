@@ -111,7 +111,7 @@ var Fn = CTS.Fn = {
   },
 
   union: function() {
-    return CTS.Fn.uniq(concat.apply(Array.prototype, arguments));
+    return CTS.Fn.uniq(Array.prototype.concat.apply(Array.prototype, arguments));
   },
 
   unique: function(array, isSorted, iterator, context) {
@@ -137,7 +137,7 @@ var Fn = CTS.Fn = {
   },
 
   difference: function(array) {
-    var rest = concat.apply(ArrayProto, Array.prototype.slice.call(arguments, 1));
+    var rest = Array.prototype.concat.apply(Array.prorotype, Array.prototype.slice.call(arguments, 1));
     return CTS.Fn.filter(array, function(value){ return !CTS.Fn.contains(rest, value); });
   },
 

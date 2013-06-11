@@ -31,6 +31,11 @@ CTS.Node = {
     }
   },
 
+  unregisterRelation: function(relation) {
+    this.relations = CTS.Fn.filter(this.relations,
+        function(r) { return r != relation; });
+  },
+
   getRelations: function() {
     if (! this.addedMyInlineRelationsToForrest) {
       this.registerInlineRelationSpecs();
@@ -118,23 +123,22 @@ CTS.Node = {
 
   clone: function() {
     var c = this._subclass_beginClone();
-    var self = this;
 
-    // Clone all the relations of this ndoe, and all nodes downtree.
-    var copyRelationsRecursively = function(source, dest) {
-      CTS.Fn.each(source.relations, function(relation) {
-        var relationClone = relation.clone();
-        relationClone.rebind(source, dest);
-        dest.relations.push(relationClone);
-      });
-
-      // Now get the children.
-      CTS.Fn.each(CTS.Fn.zip(source.children, dest.children), function(grp) {
-        self.copyRelationsRecursively(grp[0], grp[1]);
-      });
+    // Note: because the subclass constructs it's own subtree,
+    // that means it is also responsible for cloning downstream nodes.
+    // thus we only take care of THIS NODE's relations.
+    for (var i = 0; i < this.relations.length; i++) {
+      var n1 = this.relations[i].node1;
+      var n2 = this.relations[i].node2;
+      if (n1 == this) {
+        n1 = c;
+      } else if (n2 == this) {
+        n2 = c;
+      } else {
+        CTS.Fatal("Clone failed");
+      }
+      var relationClone = this.relations[i].clone(n1, n2);
     };
-    copyRelationsRecursively(this, c);
-
     // Note that we DON'T wire up any parent-child relationships
     // because that would result in more than just cloning the node
     // but also modifying other structures, such as the tree which
@@ -154,6 +158,10 @@ CTS.Node = {
 
   setValue: function(v, opts) {
     this.value = v;
+  },
+
+  descendantOf: function(other) {
+    return false;
   },
 
   _subclass_realizeChildren: function() {},
