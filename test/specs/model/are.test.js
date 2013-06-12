@@ -29,10 +29,36 @@ test("ARE Rewrites Rules", function() {
     CTS.Debugging.RuleTest(
       "ul(li(span))",
       "names(a b c)",
-      "span is a;span is b;span is c",
+      "span is a",
       "ul are names"),
     "ul are names;span is a;span2 is b;span3 is c");
+
+  equal(
+    CTS.Debugging.RuleTest(
+      "ul(li(span))",
+      "names()",
+      "ul are names"),
+    "ul are names");
+
+  equal(
+    CTS.Debugging.RuleTest(
+      "ul(li(div(span)))",
+      "continents(america(usa can mex) europe(gbr fra spa))",
+      "div are america;span is usa",
+      "ul are continents"),
+    "ul are continents;div are america;span is usa;span is can;span is mex;div2 are europe;span2 is gbr;span2 is fra;span2 is spa");
+
 });
 
+//test("Two-level ARE", function() {
+//  equal(
+//    CTS.Debugging.RuleTest(
+//      "ul(li(div(span)))",
+//      "names(a b c)",
+//      "span is usa;span is can;span is mex;span is gbr;span is fra;span is spa",
+//      "ul are names"),
+//    "ul are names;span is a;span2 is b;span3 is c");
+//});
+//
 
 

@@ -41,9 +41,31 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
   },
 
   _Are_AlignCardinalities: function(toward) {
+    var myOpts = this.optsFor(toward);
     var other = this.opposite(toward);
-    var otherCardinality = this._Are_GetCardinality(other);
-    this._Are_SetCardinality(toward, otherCardinality);
+    var otherIterables = this._Are_GetIterables(other);
+    var myIterables = this._Are_GetIterables(toward);
+
+    if (myIterables.length > 0) {
+      while (myIterables.length > 1) {
+        var bye = myIterables.pop();
+        bye.destroy();
+      }
+  
+      // Now build it back up.
+      if (otherIterables.length == 0) {
+        myIterables[0].destroy();
+      } else if (otherIterables.length > 1) {
+        var lastIndex = myOpts.prefix;
+        // WARNING: Note that i starts at 1
+        for (var i = 1; i < otherIterables.length; i++) {
+          // Clone the iterable.
+          var clone = myIterables[0].clone();
+          myIterables[0].parentNode.insertChild(clone, lastIndex);
+          lastIndex++;
+        }
+      }
+    }
   },
 
   _Are_SetCardinality: function(node, cardinality) {
@@ -68,6 +90,12 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
         }
       }
     }
+  },
+
+  _Are_GetIterables: function(node) {
+    var opts = this.optsFor(node);
+    var kids = node.getChildren();
+    return kids.splice(opts.prefix, kids.length - suffix);
   },
 
   /*
