@@ -18,22 +18,22 @@ CTS.Fn.extend(CTS.AbstractNode.prototype,
      }
 
      return n;
-   },
-
-   descendantOf: function(other) {
-     var p = this.parentNode;
-     var foundIt = false;
-     if (this == other) {
-       return true;
-     }
-     while ((!foundIt) && (p != null)) {
-       if (p == other) {
-         foundIt = true;
-       }
-       p = p.parentNode;
-     }
-     return foundIt;
    }
+
+//   descendantOf: function(other) {
+//     var p = this.parentNode;
+//     var foundIt = false;
+//     if (this == other) {
+//       return true;
+//     }
+//     while ((!foundIt) && (p != null)) {
+//       if (p == other) {
+//         foundIt = true;
+//       }
+//       p = p.parentNode;
+//     }
+//     return foundIt;
+//   }
 
 });
 

@@ -249,29 +249,33 @@ CTS.Fn.idCounter = 0;
 
 CTS.Log = {
 
-  Fatal: function(msg, args) {
+  Fatal: function(msg) {
     alert(msg);
-    console.log("CTS FATAL", msg, args);
+    CTS.Log.LogWithLevel("FATAL", arguments);
   },
 
-  Error: function(message, args) {
-    console.log("CTS ERROR", message, args);
+  Error: function(message) {
+    CTS.Log.LogWithLevel("ERROR", arguments);
   },
 
-  Warn: function(message, args) {
-    console.log("CTS WARN", message, args)
+  Warn: function(message) {
+    CTS.Log.LogWithLevel("WARN", arguments);
   },
 
-  Debug: function(message, args) {
-    console.log("CTS DEBUG", message, args);
+  Debug: function(message) {
+    CTS.Log.LogWithLevel("DEBUG", arguments);
   },
 
-  Info: function(message, args) {
-    if (typeof args == 'undefined') {
-      args = [];
+  Info: function(message) {
+    CTS.Log.LogWithLevel("INFO", arguments);
+  },
+
+  LogWithLevel: function(level, args) {
+    if (console) {
+      var args = Array.prototype.slice.call(args);
+      args.unshift(level);
+      console.log.apply(console, args);
     }
-    args.unshift(message);
-    console.log.call(this, args);
   }
 
 };
@@ -914,7 +918,7 @@ CTS.Node = {
     );
   },
   
-  insertChild: function(node, afterIndex) {
+  insertChild: function(node, afterIndex, log) {
     if (typeof afterIndex == 'undefined') {
       afterIndex = this.children.length - 1;
     }
@@ -927,6 +931,9 @@ CTS.Node = {
         this.children[i] = this.children[i - 1];
       }
     }
+    if (log) {
+      console.log("Adding", node, "to", this);
+    }
 
     node.parentNode = this;
 
@@ -935,8 +942,8 @@ CTS.Node = {
   },
 
   destroy: function() {
+    var gotIt = false;
     if (this.parentNode) {
-      var gotIt = false;
       for (var i = 0; i < this.parentNode.children.length; i++) {
         if (this.parentNode.children[i] == this) {
           CTS.Fn.arrDelete(this.parentNode.children, i, i);
@@ -945,9 +952,8 @@ CTS.Node = {
         }
       }
     }
-    if (! gotIt) {
-      CTS.Log.Error("Destroying child whose parent doesn't know about it.");
-    }
+    // No need to log if we don't have it. That means it's root.
+    // TODO(eob) log error if not tree root
     this._subclass_destroy();
   },
 
@@ -1167,22 +1173,22 @@ CTS.Fn.extend(CTS.AbstractNode.prototype,
      }
 
      return n;
-   },
-
-   descendantOf: function(other) {
-     var p = this.parentNode;
-     var foundIt = false;
-     if (this == other) {
-       return true;
-     }
-     while ((!foundIt) && (p != null)) {
-       if (p == other) {
-         foundIt = true;
-       }
-       p = p.parentNode;
-     }
-     return foundIt;
    }
+
+//   descendantOf: function(other) {
+//     var p = this.parentNode;
+//     var foundIt = false;
+//     if (this == other) {
+//       return true;
+//     }
+//     while ((!foundIt) && (p != null)) {
+//       if (p == other) {
+//         foundIt = true;
+//       }
+//       p = p.parentNode;
+//     }
+//     return foundIt;
+//   }
 
 });
 
@@ -1362,7 +1368,7 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
 
   execute: function(toward) {
     this._Are_AlignCardinalities(toward);
-    this._Are_PruneRules(toward);
+    //this._Are_PruneRules(toward);
   },
 
   clone: function(n1, n2) {
@@ -1376,33 +1382,63 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
   },
 
   _Are_AlignCardinalities: function(toward) {
+    var myOpts = this.optsFor(toward);
     var other = this.opposite(toward);
-    var otherCardinality = this._Are_GetCardinality(other);
-    this._Are_SetCardinality(toward, otherCardinality);
-  },
+    var otherIterables = this._Are_GetIterables(other);
+    var myIterables = this._Are_GetIterables(toward);
 
-  _Are_SetCardinality: function(node, cardinality) {
-    var nodeCard = this._Are_GetCardinality(node);
-    var diff = Math.abs(nodeCard - cardinality);
-    var opts = this.optsFor(node);
-
-    if (nodeCard > 0) {
-      if (nodeCard > cardinality) {
-        // Greater. We're going to have to destroy some.
-        for (i = 0; i < diff; i++) {
-          var toDestroy = opts.prefix + nodeCard - i - 1;
-          var n = node.getChildren()[toDestroy];
-          n.destroy();
-        }
-      } else if (cardinality > nodeCard) {
-        // Less. We're going to have to create some.
-        for (i = 0; i < diff; i ++) {
-          var n = node.getChildren()[opts.prefix + nodeCard - 1 + i];
-          var n2 = n.clone();
-          node.insertChild(n2, (opts.prefix + nodeCard - 1 + i));
+    if (myIterables.length > 0) {
+      while (myIterables.length > 1) {
+        var bye = myIterables.pop();
+        bye.destroy();
+      }
+  
+      // Now build it back up.
+      if (otherIterables.length == 0) {
+        myIterables[0].destroy();
+      } else if (otherIterables.length > 1) {
+        var lastIndex = myOpts.prefix;
+        // WARNING: Note that i starts at 1
+        for (var i = 1; i < otherIterables.length; i++) {
+          // Clone the iterable.
+          var clone = myIterables[0].clone();
+          toward.insertChild(clone, lastIndex, true);
+          console.log("added", clone, "to", toward);
+          console.log(myIterables[0], clone);
+          lastIndex++;
         }
       }
     }
+  },
+
+//  _Are_SetCardinality: function(node, cardinality) {
+//    var nodeCard = this._Are_GetCardinality(node);
+//    var diff = Math.abs(nodeCard - cardinality);
+//    var opts = this.optsFor(node);
+//
+//    if (nodeCard > 0) {
+//      if (nodeCard > cardinality) {
+//        // Greater. We're going to have to destroy some.
+//        for (i = 0; i < diff; i++) {
+//          var toDestroy = opts.prefix + nodeCard - i - 1;
+//          var n = node.getChildren()[toDestroy];
+//          n.destroy();
+//        }
+//      } else if (cardinality > nodeCard) {
+//        // Less. We're going to have to create some.
+//        for (i = 0; i < diff; i ++) {
+//          var n = node.getChildren()[opts.prefix + nodeCard - 1 + i];
+//          var n2 = n.clone();
+//          node.insertChild(n2, (opts.prefix + nodeCard - 1 + i));
+//        }
+//      }
+//    }
+//  },
+
+  _Are_GetIterables: function(node) {
+    var opts = this.optsFor(node);
+    var kids = node.getChildren();
+    return kids.slice(opts.prefix, kids.length - opts.suffix);
   },
 
   /*
@@ -1421,98 +1457,98 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
    * Takes nodes that are splayed across all opposites, and deletes
    * all but the one for the proper index.
    */
-  _Are_PruneRules: function(node, index, opposites) {
-    if ((typeof index == 'undefined') && (typeof opposites == 'undefined')) {
-      // This is the base case, called on th PARENT of the are.
-      // ASSUMPTION! Cardinalities are already aligned.
-      var card = this._Are_GetCardinality(node);
-      var opts = this.optsFor(node);
-      var opposite = this.opposite(node);
-      var oppositeOpts = this.optsFor(opposite);
-
-      var opposites = opposite.children.slice(oppositeOpts.prefix, oppositeOpts.prefix + card);
-
-      for (var i = 0; i < card; i++) {
-        var child = node.children[opts.prefix + i];
-        this._Are_PruneRules(child, i, opposites);
-      }
-    } else {
-      var templates = this._Are_RuleTemplates(node);
-      console.log("TT", templates);
-      CTS.Fn.each(templates, function(rules, sig) {
-        this._Are_MaybePruneTemplate(node, index, opposites, rules);
-      }, this);
-      for (var i = 0; i < node.children.length; i++) {
-        this._Are_PruneRules(node.children[i], index, opposites);
-      }
-    }
-  },
-
-  /*
-   * Returns a hash of lists of rules for this node, grouped by 
-   * node signature
-   */
-  _Are_RuleTemplates: function(node) {
-    var ret = {};
-    for (var i = 0; i < node.relations.length; i++) {
-      var r = node.relations[i];
-      var sig = r.signature();
-      if (! CTS.Fn.has(ret, sig)) {
-        ret[sig] = [];
-      }
-      ret[sig].push(r);
-    }
-    return ret;
-  },
+//  _Are_PruneRules: function(node, index, opposites) {
+//    if ((typeof index == 'undefined') && (typeof opposites == 'undefined')) {
+//      // This is the base case, called on th PARENT of the are.
+//      // ASSUMPTION! Cardinalities are already aligned.
+//      var card = this._Are_GetCardinality(node);
+//      var opts = this.optsFor(node);
+//      var opposite = this.opposite(node);
+//      var oppositeOpts = this.optsFor(opposite);
+//
+//      var opposites = opposite.children.slice(oppositeOpts.prefix, oppositeOpts.prefix + card);
+//
+//      for (var i = 0; i < card; i++) {
+//        var child = node.children[opts.prefix + i];
+//        this._Are_PruneRules(child, i, opposites);
+//      }
+//    } else {
+//      var templates = this._Are_RuleTemplates(node);
+//      console.log("TT", templates);
+//      CTS.Fn.each(templates, function(rules, sig) {
+//        this._Are_MaybePruneTemplate(node, index, opposites, rules);
+//      }, this);
+//      for (var i = 0; i < node.children.length; i++) {
+//        this._Are_PruneRules(node.children[i], index, opposites);
+//      }
+//    }
+//  },
+//
+//  /*
+//   * Returns a hash of lists of rules for this node, grouped by 
+//   * node signature
+//   */
+//  _Are_RuleTemplates: function(node) {
+//    var ret = {};
+//    for (var i = 0; i < node.relations.length; i++) {
+//      var r = node.relations[i];
+//      var sig = r.signature();
+//      if (! CTS.Fn.has(ret, sig)) {
+//        ret[sig] = [];
+//      }
+//      ret[sig].push(r);
+//    }
+//    return ret;
+//  },
 
   /*
    * maybe prunes out templates
    */
-  _Are_MaybePruneTemplate: function(node, index, opposites, rules) {
-    if (rules.length < opposites.length) {
-      return;
-    }
-
-    var slots = [];
-    var i, j;
-    for (i = 0; i < opposites.length; i++) {
-      slots[i] = null;
-    }
-    
-    for (i = 0; i < rules.length; i++) {
-      var r = rules[i];
-      var opposite = r.opposite(node);
-      var foundIt = false;
-      for (j = 0; ((!foundIt) && (j < opposites.length)); j++) {
-        if (slots[j] == null) {
-          // Check to see if opposite is in lineage of opposites[j]
-          if (opposite.descendantOf(opposites[j])) {
-            slots[j] = r;
-            foundIt = true;
-          }
-        }
-      }
-    }
-
-    // Check if splayed. Remember which is our index
-    var splayed = true;
-    for (i = 0; i < slots.length; i++) {
-      if (slots[i] == null) {
-        splayed = false;
-        break;
-      }
-    }
-
-    // If it is splayed, remove all except the one at index
-    if (splayed) {
-      for (i=0; i<slots.length; i++) {
-        if (i != index) {
-          slots[i].destroy();
-        }
-      }
-    }
-
-  },
+//  _Are_MaybePruneTemplate: function(node, index, opposites, rules) {
+//    if (rules.length < opposites.length) {
+//      return;
+//    }
+//
+//    var slots = [];
+//    var i, j;
+//    for (i = 0; i < opposites.length; i++) {
+//      slots[i] = null;
+//    }
+//    
+//    for (i = 0; i < rules.length; i++) {
+//      var r = rules[i];
+//      var opposite = r.opposite(node);
+//      var foundIt = false;
+//      for (j = 0; ((!foundIt) && (j < opposites.length)); j++) {
+//        if (slots[j] == null) {
+//          // Check to see if opposite is in lineage of opposites[j]
+//          if (opposite.descendantOf(opposites[j])) {
+//            slots[j] = r;
+//            foundIt = true;
+//          }
+//        }
+//      }
+//    }
+//
+//    // Check if splayed. Remember which is our index
+//    var splayed = true;
+//    for (i = 0; i < slots.length; i++) {
+//      if (slots[i] == null) {
+//        splayed = false;
+//        break;
+//      }
+//    }
+//
+//    // If it is splayed, remove all except the one at index
+//    if (splayed) {
+//      for (i=0; i<slots.length; i++) {
+//        if (i != index) {
+//          slots[i].destroy();
+//        }
+//      }
+//    }
+//
+//  },
 
 });
 

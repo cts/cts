@@ -1,28 +1,32 @@
 CTS.Log = {
 
-  Fatal: function(msg, args) {
+  Fatal: function(msg) {
     alert(msg);
-    console.log("CTS FATAL", msg, args);
+    CTS.Log.LogWithLevel("FATAL", arguments);
   },
 
-  Error: function(message, args) {
-    console.log("CTS ERROR", message, args);
+  Error: function(message) {
+    CTS.Log.LogWithLevel("ERROR", arguments);
   },
 
-  Warn: function(message, args) {
-    console.log("CTS WARN", message, args)
+  Warn: function(message) {
+    CTS.Log.LogWithLevel("WARN", arguments);
   },
 
-  Debug: function(message, args) {
-    console.log("CTS DEBUG", message, args);
+  Debug: function(message) {
+    CTS.Log.LogWithLevel("DEBUG", arguments);
   },
 
-  Info: function(message, args) {
-    if (typeof args == 'undefined') {
-      args = [];
+  Info: function(message) {
+    CTS.Log.LogWithLevel("INFO", arguments);
+  },
+
+  LogWithLevel: function(level, args) {
+    if (console) {
+      var args = Array.prototype.slice.call(args);
+      args.unshift(level);
+      console.log.apply(console, args);
     }
-    args.unshift(message);
-    console.log.call(this, args);
   }
 
 };

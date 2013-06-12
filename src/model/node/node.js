@@ -71,7 +71,7 @@ CTS.Node = {
     );
   },
   
-  insertChild: function(node, afterIndex) {
+  insertChild: function(node, afterIndex, log) {
     if (typeof afterIndex == 'undefined') {
       afterIndex = this.children.length - 1;
     }
@@ -84,6 +84,9 @@ CTS.Node = {
         this.children[i] = this.children[i - 1];
       }
     }
+    if (log) {
+      console.log("Adding", node, "to", this);
+    }
 
     node.parentNode = this;
 
@@ -92,8 +95,8 @@ CTS.Node = {
   },
 
   destroy: function() {
+    var gotIt = false;
     if (this.parentNode) {
-      var gotIt = false;
       for (var i = 0; i < this.parentNode.children.length; i++) {
         if (this.parentNode.children[i] == this) {
           CTS.Fn.arrDelete(this.parentNode.children, i, i);
@@ -102,9 +105,8 @@ CTS.Node = {
         }
       }
     }
-    if (! gotIt) {
-      CTS.Log.Error("Destroying child whose parent doesn't know about it.");
-    }
+    // No need to log if we don't have it. That means it's root.
+    // TODO(eob) log error if not tree root
     this._subclass_destroy();
   },
 
