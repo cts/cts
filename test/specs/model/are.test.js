@@ -29,7 +29,7 @@ test("ARE Rewrites Rules", function() {
     CTS.Debugging.RuleTest(
       "ul(li(span))",
       "names(a b c)",
-      "span is a",
+      "span is a;span is b;span is c",
       "ul are names"),
     "ul are names;span is a;span2 is b;span3 is c");
 
@@ -44,9 +44,18 @@ test("ARE Rewrites Rules", function() {
     CTS.Debugging.RuleTest(
       "ul(li(div(span)))",
       "continents(america(usa can mex) europe(gbr fra spa))",
-      "div are america;span is usa",
+      "div are america;div are europe",
       "ul are continents"),
-    "ul are continents;div are america;span is usa;span is can;span is mex;div2 are europe;span2 is gbr;span2 is fra;span2 is spa");
+    "ul are continents;div are america;div2 are europe");
+
+  equal(
+    CTS.Debugging.RuleTest(
+      "ul(li(div(span)))",
+      "continents(america(usa can mex) europe(gbr fra spa))",
+      "span is usa;span is can;span is mex;span is gbr;span is fra;span is spa",
+      "ul are continents;div are america;div are europe",
+      true),
+    "ul are continents;div are america;usa is usa;can is can;mex is mex;div2 are europe;gbr is gbr;fra is fra;spa is spa");
 
 });
 

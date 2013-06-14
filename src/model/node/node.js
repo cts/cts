@@ -94,6 +94,22 @@ CTS.Node = {
     this._subclass_insertChild(node, afterIndex);
   },
 
+  isDescendantOf: function(other) {
+    var p = this.parentNode;
+    while (p != null) {
+      if (p.equals(other)) {
+        return true;
+      }
+      p = p.parentNode;
+    }
+    return false;
+  },
+
+  // TODO(eob): potentially override later
+  equals: function(other) {
+    return this == other;
+  },
+
   destroy: function() {
     var gotIt = false;
     if (this.parentNode) {

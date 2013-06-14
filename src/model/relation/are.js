@@ -27,7 +27,7 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
 
   execute: function(toward) {
     this._Are_AlignCardinalities(toward);
-    //this._Are_PruneRules(toward);
+    CTS.Debugging.DumpTree(toward);
   },
 
   clone: function(n1, n2) {
@@ -58,46 +58,40 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
       } else if (otherIterables.length > 1) {
         var lastIndex = myOpts.prefix;
         // WARNING: Note that i starts at 1
+
         for (var i = 1; i < otherIterables.length; i++) {
           // Clone the iterable.
           var clone = myIterables[0].clone();
           toward.insertChild(clone, lastIndex, true);
-          console.log("added", clone, "to", toward);
-          console.log(myIterables[0], clone);
+          this._Are_RemoveSome(clone, otherIterables[i]);
           lastIndex++;
         }
+        this._Are_RemoveSome(myIterables[0], otherIterables[0]);
       }
     }
   },
 
-//  _Are_SetCardinality: function(node, cardinality) {
-//    var nodeCard = this._Are_GetCardinality(node);
-//    var diff = Math.abs(nodeCard - cardinality);
-//    var opts = this.optsFor(node);
-//
-//    if (nodeCard > 0) {
-//      if (nodeCard > cardinality) {
-//        // Greater. We're going to have to destroy some.
-//        for (i = 0; i < diff; i++) {
-//          var toDestroy = opts.prefix + nodeCard - i - 1;
-//          var n = node.getChildren()[toDestroy];
-//          n.destroy();
-//        }
-//      } else if (cardinality > nodeCard) {
-//        // Less. We're going to have to create some.
-//        for (i = 0; i < diff; i ++) {
-//          var n = node.getChildren()[opts.prefix + nodeCard - 1 + i];
-//          var n2 = n.clone();
-//          node.insertChild(n2, (opts.prefix + nodeCard - 1 + i));
-//        }
-//      }
-//    }
-//  },
+  _Are_RemoveSome: function(node, otherParent) {
+    node.relations = CTS.Fn.filter(node.relations, function(r) {
+      var other = r.opposite(node);
+      if (! (other.equals(otherParent) || other.isDescendantOf(otherParent))) { 
+        r.destroy();
+        return false;
+      } else {
+        return true;
+      }
+    });
+    
+    for (var i = 0; i < node.children.length; i++) {
+      this._Are_RemoveSome(node.children[i], otherParent);
+    }
+  },
 
   _Are_GetIterables: function(node) {
     var opts = this.optsFor(node);
     var kids = node.getChildren();
-    return kids.slice(opts.prefix, kids.length - opts.suffix);
+    var iterables = kids.slice(opts.prefix, kids.length - opts.suffix);
+    return iterables;
   },
 
   /*
@@ -111,102 +105,5 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
     var opts = this.optsFor(node);
     return node.getChildren().length - opts.prefix - opts.suffix;
   },
-
-  /* 
-   * Takes nodes that are splayed across all opposites, and deletes
-   * all but the one for the proper index.
-   */
-//  _Are_PruneRules: function(node, index, opposites) {
-//    if ((typeof index == 'undefined') && (typeof opposites == 'undefined')) {
-//      // This is the base case, called on th PARENT of the are.
-//      // ASSUMPTION! Cardinalities are already aligned.
-//      var card = this._Are_GetCardinality(node);
-//      var opts = this.optsFor(node);
-//      var opposite = this.opposite(node);
-//      var oppositeOpts = this.optsFor(opposite);
-//
-//      var opposites = opposite.children.slice(oppositeOpts.prefix, oppositeOpts.prefix + card);
-//
-//      for (var i = 0; i < card; i++) {
-//        var child = node.children[opts.prefix + i];
-//        this._Are_PruneRules(child, i, opposites);
-//      }
-//    } else {
-//      var templates = this._Are_RuleTemplates(node);
-//      console.log("TT", templates);
-//      CTS.Fn.each(templates, function(rules, sig) {
-//        this._Are_MaybePruneTemplate(node, index, opposites, rules);
-//      }, this);
-//      for (var i = 0; i < node.children.length; i++) {
-//        this._Are_PruneRules(node.children[i], index, opposites);
-//      }
-//    }
-//  },
-//
-//  /*
-//   * Returns a hash of lists of rules for this node, grouped by 
-//   * node signature
-//   */
-//  _Are_RuleTemplates: function(node) {
-//    var ret = {};
-//    for (var i = 0; i < node.relations.length; i++) {
-//      var r = node.relations[i];
-//      var sig = r.signature();
-//      if (! CTS.Fn.has(ret, sig)) {
-//        ret[sig] = [];
-//      }
-//      ret[sig].push(r);
-//    }
-//    return ret;
-//  },
-
-  /*
-   * maybe prunes out templates
-   */
-//  _Are_MaybePruneTemplate: function(node, index, opposites, rules) {
-//    if (rules.length < opposites.length) {
-//      return;
-//    }
-//
-//    var slots = [];
-//    var i, j;
-//    for (i = 0; i < opposites.length; i++) {
-//      slots[i] = null;
-//    }
-//    
-//    for (i = 0; i < rules.length; i++) {
-//      var r = rules[i];
-//      var opposite = r.opposite(node);
-//      var foundIt = false;
-//      for (j = 0; ((!foundIt) && (j < opposites.length)); j++) {
-//        if (slots[j] == null) {
-//          // Check to see if opposite is in lineage of opposites[j]
-//          if (opposite.descendantOf(opposites[j])) {
-//            slots[j] = r;
-//            foundIt = true;
-//          }
-//        }
-//      }
-//    }
-//
-//    // Check if splayed. Remember which is our index
-//    var splayed = true;
-//    for (i = 0; i < slots.length; i++) {
-//      if (slots[i] == null) {
-//        splayed = false;
-//        break;
-//      }
-//    }
-//
-//    // If it is splayed, remove all except the one at index
-//    if (splayed) {
-//      for (i=0; i<slots.length; i++) {
-//        if (i != index) {
-//          slots[i].destroy();
-//        }
-//      }
-//    }
-//
-//  },
 
 });
