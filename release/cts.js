@@ -924,6 +924,12 @@ var Utilities = CTS.Utilities = {
   },
 
   fetchTree: function(spec, callback, context) {
+    if ((spec.url == null) && (spec.name == 'body')) {
+      callback.call(context, null, CTS.$('body'));
+    } else {
+      CTS.Log.Fatal("FETCH TREE NOT IMPLEMENTED");
+      callback.call(context, "Not Implemented");
+    }
   }
 
 };
@@ -949,7 +955,7 @@ CTS.Node = {
     this.relations = [];
     this.value = null;
     this.addedMyInlineRelationsToForrest = false;
-    this.initializeStateMachine();
+    //this.initializeStateMachine();
   },
 
   getChildren: function() {
@@ -974,19 +980,15 @@ CTS.Node = {
     return this.relations;
   },
 
-  getInlineRelationSpecs: function() {
-    return _subclass_getInlineRelationSpecs();
-  },
-
   registerInlineRelationSpecs: function() {
     if (this.addedMyInlineRelationsToForrest) {
       CTS.Log.Warn("Not registering inline relations: have already done so.");
     } else {
       if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-        CTS.Fn.Each(this.getInlineRelationSpecs(), function(spec) {
-          this.tree.forrest.addRelationSpec(spec);
-          this.tree.forrest.realizeRelationSpec(spec);
-        }, this);
+        var specStr = _subclass_getInlineRelationSpecString();
+        if (specStr) {
+          CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
+        }
         this.addedMyInlineRelationsToForrest = true;
       } else {
         CTS.Log.Warn("Could not add inline relations to null tree.forrest");
@@ -1088,9 +1090,10 @@ CTS.Node = {
     // Note: because the subclass constructs it's own subtree,
     // that means it is also responsible for cloning downstream nodes.
     // thus we only take care of THIS NODE's relations.
-    for (var i = 0; i < this.relations.length; i++) {
-      var n1 = this.relations[i].node1;
-      var n2 = this.relations[i].node2;
+    var r = this.getRelations();
+    for (var i = 0; i < r.length; i++) {
+      var n1 = r[i].node1;
+      var n2 = r[i].node2;
       if (n1 == this) {
         n1 = c;
       } else if (n2 == this) {
@@ -1098,8 +1101,8 @@ CTS.Node = {
       } else {
         CTS.Fatal("Clone failed");
       }
-      var relationClone = this.relations[i].clone(n1, n2);
-      console.log("Cloning", this.relations[i].name, "for", this.getValue());
+      var relationClone = r[i].clone(n1, n2);
+      console.log("Cloning", r[i].name, "for", this.getValue());
     };
     // Note that we DON'T wire up any parent-child relationships
     // because that would result in more than just cloning the node
@@ -1110,7 +1113,7 @@ CTS.Node = {
 
   pruneRelations: function(otherParent, otherContainer) {
     var self = this;
-    this.relations = CTS.Fn.filter(this.relations, function(r) {
+    this.relations = CTS.Fn.filter(this.getRelations(), function(r) {
       var other = r.opposite(self);
       // If the rule ISN'T subtree of this iterable
       // But it IS inside the other container
@@ -1127,6 +1130,41 @@ CTS.Node = {
     
     for (var i = 0; i < this.children.length; i++) {
       this.children[i].pruneRelations(otherParent, otherContainer);
+    }
+  },
+
+  _processIncoming: function() {
+    // Do incoming nodes except graft
+    this._processIncomingRelations('if-exist');
+    this._processIncomingRelations('if-nexist');
+    this._processIncomingRelations('is');
+    this._processIncomingRelations('are');
+
+    CTS.Log.Info("Dump Pre");
+    CTS.Debugging.DumpTree(this);
+    // Do children
+    for (var i = 0; i < this.children.length; i++) {
+      this.children[i]._processIncoming();
+    }
+    CTS.Log.Info("Dump Post");
+    CTS.Debugging.DumpTree(this);
+
+    // Do graft
+    this._processIncomingRelations('graft', true);
+  },
+
+  _processIncomingRelations: function(name, once) {
+    console.log("proc inc from node", this.getValue(), name);
+    for (var i = 0; i < this.relations.length; i++) {
+      if (this.relations[i].name == name) {
+        if (this.relations[i].node1.equals(this)) {
+          this.relations[i].execute(this);
+          console.log("found one " + this.relations[i].name, name);
+          if (once) {
+            break;
+          }
+        }
+      }
     }
   },
 
@@ -1165,163 +1203,128 @@ CTS.Node = {
 
 CTS.NodeStateMachine = {  
 
-  initializeStateMachine: function() {
-      this.fsmInitialize(
-        'Ready', [
-        { 'from':'Ready',
-            'to':'BeginRender',
-          'name':'BeginRender'},
-        { 'from':'BeginRender',
-            'to':'ProcessIncoming',
-          'name':'ProcessIncoming'},
-        { 'from':'ProcessIncoming',
-            'to':'ProcessIncomingChildren',
-          'name':'ProcessIncomingChildren'},
-        { 'from':'ProcessIncomingChildren',
-            'to':'ProcessedIncoming',
-          'name':'ProcessedIncoming'},
-        { 'from':'ProcessIncoming',
-            'to':'FailedConditional',
-          'name':'FailedConditional'},
-        { 'from':'FailedConditional',
-            'to':'Finished',
-          'name':'Finished_Invisible'},
-        { 'from':'ProcessedIncoming',
-            'to':'Finished',
-          'name':'Finished_NoTemplate'},
-        { 'from':'ProcessIncomming',
-            'to':'ProcessedIncoming',
-          'name':'SkipRecursion'}
-      ]);
-  
-      this.on('FsmEdge:BeginRender', this._onBeginRender, this);
-      this.on('FsmEdge:ProcessIncoming', this._onProcessIncoming, this);
-      this.on('FsmEntered:ProcessIncomingChildren', this._onProcessIncomingChildren, this);
-      this.on('FsmEntered:ProcessedIncoming', this._onProcessedIncoming, this);
-      this.on('FsmEdge:FailedConditional', this._onFailedConditional, this);
-      this.on('FsmEntered:Finished', this._onFinished, this);
-   },
-
-  render: function(opts) {
-    console.log(this, "render");
-
-    if (! CTS.Fn.isUndefined(opts)) {
-      if (CTS.Fn.has(opts, 'callback')) {
-        var scope = this;
-        if (CTS.Fn.has(opts, 'callbackScope')) {
-          scope = opts.callbackScope;
-        }
-        this.once('FsmEntered:Finished', opts.callback, scope);
-      }
-    }
-
-    this.fsmTransition("BeginRender");
-  },
-
-
-  _onBeginRender: function() {
-    console.log(this, "onBeginRender");
-    this.fsmTransition("ProcessIncoming");
-  },
-
-  _onProcessIncoming: function() {
-    console.log(this, "onProcessIncoming");
-    if (! this._performConditional()) {
-      console.log("Fail conditional");
-      this.fsmTransition("FailedConditional");
-    } else {
-      if (this._performIs()) {
-        console.log("Performed is");
-        // We did a value map, so move to Processed state.
-        // TODO(eob): what if we want to interpret the value as cts-laden html?
-        this.fsmTransition("ProcessedIncoming");
-      } else if (this._performAre()) {
-        this.fsmTransition("ProcessIncomingChildren");
-      } else {
-        this.fsmTransition("ProcessIncomingChildren");
-      }
-    }
-  },
-
-  _onProcessIncomingChildren: function() {
-    console.log(this, "onProcessChildren");
-
-    // Now we've created any children we're interested in.
-    // Decide how to proceed.
-    var kids = this.getChildren();
-    this.outstandingChildren = kids.length;
-    if (this.outstandingChildren === 0) {
-      this.fsmTransition("ProcessedIncoming");
-    } else {
-      // Listen to finish events
-      CTS.Fn.each(kids, function(child) {
-        child.on("FsmEntered:Finished", this._onChildFinished, this);
-      }, this);
-      // Execute children.
-      // TODO(eob): Explore parallelization options.
-      CTS.Fn.each(kids, function(child) {
-        console.log("RENDERING CHILD");
-        child.render();
-      }, this);
-    }
-  },
-
-  _onChildFinished: function() {
-    this.outstandingChildren = this.outstandingChildren - 1;
-    if (this.outstandingChildren === 0) {
-      this.fsmTransition("ProcessedIncoming");
-    }
-  },
-
-  _onProcessedIncoming: function() {
-    console.log("Trans to finish");
-    this.fsmTransition("Finished");
-  },
-
-  _onFailedConditional: function() {
-    this.failedConditional();
-    this.fsmTransition("Finished");
-  },
-
-  _onFinished: function() {
-  },
+//  initializeStateMachine: function() {
+//      this.fsmInitialize(
+//        'Ready', [
+//        { 'from':'Ready',
+//            'to':'BeginRender',
+//          'name':'BeginRender'},
+//        { 'from':'BeginRender',
+//            'to':'ProcessIncoming',
+//          'name':'ProcessIncoming'},
+//        { 'from':'ProcessIncoming',
+//            'to':'ProcessIncomingChildren',
+//          'name':'ProcessIncomingChildren'},
+//        { 'from':'ProcessIncomingChildren',
+//            'to':'ProcessedIncoming',
+//          'name':'ProcessedIncoming'},
+//        { 'from':'ProcessIncoming',
+//            'to':'FailedConditional',
+//          'name':'FailedConditional'},
+//        { 'from':'FailedConditional',
+//            'to':'Finished',
+//          'name':'Finished_Invisible'},
+//        { 'from':'ProcessedIncoming',
+//            'to':'Finished',
+//          'name':'Finished_NoTemplate'},
+//        { 'from':'ProcessIncomming',
+//            'to':'ProcessedIncoming',
+//          'name':'SkipRecursion'}
+//      ]);
+//  
+//      this.on('FsmEdge:BeginRender', this._onBeginRender, this);
+//      this.on('FsmEdge:ProcessIncoming', this._onProcessIncoming, this);
+//      this.on('FsmEntered:ProcessIncomingChildren', this._onProcessIncomingChildren, this);
+//      this.on('FsmEntered:ProcessedIncoming', this._onProcessedIncoming, this);
+//      this.on('FsmEdge:FailedConditional', this._onFailedConditional, this);
+//      this.on('FsmEntered:Finished', this._onFinished, this);
+//   },
+//
+//  render: function(opts) {
+//    console.log(this, "render");
+//
+//    if (! CTS.Fn.isUndefined(opts)) {
+//      if (CTS.Fn.has(opts, 'callback')) {
+//        var scope = this;
+//        if (CTS.Fn.has(opts, 'callbackScope')) {
+//          scope = opts.callbackScope;
+//        }
+//        this.once('FsmEntered:Finished', opts.callback, scope);
+//      }
+//    }
+//
+//    this.fsmTransition("BeginRender");
+//  },
+//
+//
+//  _onBeginRender: function() {
+//    console.log(this, "onBeginRender");
+//    this.fsmTransition("ProcessIncoming");
+//  },
+//
+//  _onProcessIncoming: function() {
+//    console.log(this, "onProcessIncoming");
+//    if (! this._performConditional()) {
+//      console.log("Fail conditional");
+//      this.fsmTransition("FailedConditional");
+//    } else {
+//      if (this._performIs()) {
+//        console.log("Performed is");
+//        // We did a value map, so move to Processed state.
+//        // TODO(eob): what if we want to interpret the value as cts-laden html?
+//        this.fsmTransition("ProcessedIncoming");
+//      } else if (this._performAre()) {
+//        this.fsmTransition("ProcessIncomingChildren");
+//      } else {
+//        this.fsmTransition("ProcessIncomingChildren");
+//      }
+//    }
+//  },
+//
+//  _onProcessIncomingChildren: function() {
+//    console.log(this, "onProcessChildren");
+//
+//    // Now we've created any children we're interested in.
+//    // Decide how to proceed.
+//    var kids = this.getChildren();
+//    this.outstandingChildren = kids.length;
+//    if (this.outstandingChildren === 0) {
+//      this.fsmTransition("ProcessedIncoming");
+//    } else {
+//      // Listen to finish events
+//      CTS.Fn.each(kids, function(child) {
+//        child.on("FsmEntered:Finished", this._onChildFinished, this);
+//      }, this);
+//      // Execute children.
+//      // TODO(eob): Explore parallelization options.
+//      CTS.Fn.each(kids, function(child) {
+//        console.log("RENDERING CHILD");
+//        child.render();
+//      }, this);
+//    }
+//  },
+//
+//  _onChildFinished: function() {
+//    this.outstandingChildren = this.outstandingChildren - 1;
+//    if (this.outstandingChildren === 0) {
+//      this.fsmTransition("ProcessedIncoming");
+//    }
+//  },
+//
+//  _onProcessedIncoming: function() {
+//    console.log("Trans to finish");
+//    this.fsmTransition("Finished");
+//  },
+//
+//  _onFailedConditional: function() {
+//    this.failedConditional();
+//    this.fsmTransition("Finished");
+//  },
+//
+//  _onFinished: function() {
+//  },
 
   /***********************/
-
-  _processIncoming: function() {
-    // Do incoming nodes except graft
-    this._processIncomingRelations('if-exist');
-    this._processIncomingRelations('if-nexist');
-    this._processIncomingRelations('is');
-    this._processIncomingRelations('are');
-
-    CTS.Log.Info("Dump Pre");
-    CTS.Debugging.DumpTree(this);
-    // Do children
-    for (var i = 0; i < this.children.length; i++) {
-      this.children[i]._processIncoming();
-    }
-    CTS.Log.Info("Dump Post");
-    CTS.Debugging.DumpTree(this);
-
-    // Do graft
-    this._processIncomingRelations('graft', true);
-  },
-
-  _processIncomingRelations: function(name, once) {
-    console.log("proc inc from node", this.getValue(), name);
-    for (var i = 0; i < this.relations.length; i++) {
-      if (this.relations[i].name == name) {
-        if (this.relations[i].node1.equals(this)) {
-          this.relations[i].execute(this);
-          console.log("found one " + this.relations[i].name, name);
-          if (once) {
-            break;
-          }
-        }
-      }
-    }
-  }
 
 };
 
@@ -1332,8 +1335,6 @@ var AbstractNode = CTS.AbstractNode = function() {
 
 CTS.Fn.extend(CTS.AbstractNode.prototype,
     CTS.Events,
-    CTS.StateMachine,
-    CTS.NodeStateMachine,
     CTS.Node, {
 
    _subclass_beginClone: function() {
@@ -1368,6 +1369,255 @@ CTS.Fn.extend(CTS.AbstractNode.prototype,
 CTS.NonExistantNode = new CTS.AbstractNode();
 
 
+// ### Constructor
+var DomNode = CTS.DomNode = function(node, tree, opts) {
+  opts = opts || {};
+  this.initializeNodeBase(tree, opts);
+  this.kind = "HTML";
+  this.value = this._createJqueryNode(node);
+};
+
+// ### Instance Methods
+CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
+
+  debugName: function() {
+    return CTS.Fn.map(this.siblings, function(node) {
+      return node[0].nodeName; }
+    ).join(', ');
+  },
+
+  /************************************************************************
+   **
+   ** Required by Node base class
+   **
+   ************************************************************************/
+
+   descendantOf: function(other) {
+     // jQuery trick
+     // this.value is a jQuery node
+     return this.value.closest(other.value).length != 0;
+   },
+
+   /*
+    * Precondition: this.children.length == 0
+    *
+    * Realizes all children.
+    */
+   _subclass_realizeChildren: function() {
+     this.children = CTS.Fn.map(this.value.children(), function(child) {
+       var node = new DomNode(child);
+       return node;
+     });
+   },
+
+   /* 
+    * Inserts this DOM node after the child at the specified index.
+    */
+   _subclass_insertChild: function(child, afterIndex) {
+     var leftSibling = this.getChildren()[afterIndex];
+     leftSibling.value.after(this.value);
+   },
+
+   /* 
+    *  Removes this DOM node from the DOM tree it is in.
+    */
+   _subclass_destroy: function() {
+     this.value.remove();
+   },
+
+   _subclass_getInlineRelationSpecString: function() {
+     if (this.value !== null) {
+       var inline = this.value.attr('data-cts');
+       return inline;
+     }
+   },
+
+   _subclass_beginClone: function() {
+     var c = this.value.clone();
+     var d = new DomNode(c, this.tree, this.opts);
+     d.realizeChildren();
+     return d;
+   },
+
+  /************************************************************************
+   **
+   ** Required by Relation classes
+   **
+   ************************************************************************/
+
+  getValue: function(opts) {
+    return this.value.html();
+  },
+
+  setValue: function(value, opts) {
+    this.value.html(value);
+  },
+
+  /************************************************************************
+   **
+   ** Utility Helpers
+   **
+   ************************************************************************/
+
+  _createJqueryNode: function(node) {
+    // A Node contains multiple DOM Nodes
+    if (typeof node == 'object') {
+      if (! CTS.Fn.isUndefined(node.jquery)) {
+        CTS.Debugging.DumpStack();
+        return node;
+      } else if (node instanceof Array) {
+        return node[0];
+      } else if (node instanceof Element) {
+        return CTS.$(node);
+      } else {
+        return null;
+      }
+    } else if (typeof node == 'string') {
+      //console.log("SIBLINGS E", node);
+      return $(node);
+    } else {
+      return null;
+    }
+  }
+
+});
+
+// ### Constructor
+var JsonNode = CTS.JsonNode = function(node, tree, opts) {
+  opts = opts || {};
+  this.initializeNodeBase(tree, opts);
+  this.kind = "JSON";
+  this.value = null;
+  this.dataType = null;
+  if (opts.property) {
+    this.value = opts.property;
+    this.dataType = 'property'
+  } else {
+    this.value = node;
+    this.updateDataType();
+  }
+};
+ 
+// ### Instance Methods
+CTS.Fn.extend(CTS.JsonNode.prototype, CTS.Events, CTS.Node, {
+
+  updateDataType: function() {
+    if (CTS.Fn.isNull(this.value)) {
+      this.dataType = 'null';
+    } else if (CTS.Fn.isUndefined(this.value)) {
+      this.dataType = 'null';
+    } else if (CTS.Fn.isArray(this.value)) {
+      this.dataType = 'array';
+    } else if (CTS.Fn.isObject(this.value)) {
+      this.dataType = 'object';
+    } else {
+      this.dataType = typeof this.value;
+    }
+  },
+
+  toJSON: function() {
+    if (this.dataType == 'set') {
+      return CTS.Fn.map(this.children, function(kid) {
+        return kid.toJSON();
+      });
+    } else if (this.dataType == 'object') {
+      var ret = {};
+      CTS.Fn.each(this.children, function(kid) {
+        ret[kid.value] = kid.toJSON();
+      }, this);
+      return ret;
+    } else if (this.dataType == 'property') {
+      if (this.children.length == 0) {
+        return null;
+      } else if (this.children.length > 1) {
+        CTS.Debugging.Error("More than one child of property", [this]);
+        return null;
+      } else {
+        return this.children[0].toJSON();
+      }
+    } else {
+      return value;
+    }
+  },
+
+  debugName: function() {
+    return "<JsonNode " + this.dataType + " :: " + this.value + ">"
+  },
+
+  /************************************************************************
+   **
+   ** Required by Node base class
+   **
+   ************************************************************************/
+
+  /*
+   * Precondition: this.children.length == 0
+   *
+   * Realizes all children.
+   */
+  _subclass_realizeChildren: function() {
+    this.children = [];
+  },
+
+  /* 
+   * Inserts this DOM node after the child at the specified index.
+   */
+  _subclass_insertChild: function(child, afterIndex) {
+    var leftSibling = this.getChildren()[afterIndex];
+  },
+
+  /* 
+   *  Removes this DOM node from the DOM tree it is in.
+   */
+  _subclass_destroy: function() {
+    this.jQueryNode.remove();
+  },
+
+  _subclass_getInlineRelationSpecs: function() {
+    return null;
+  },
+
+  _subclass_beginClone: function() {
+    var c = this.originalJson;
+    var d = new JsonNode(c, this.tree, this.opts);
+    d.realizeChildren();
+    return d;
+  },
+
+ /************************************************************************
+  **
+  ** Required by Relation classes
+  **
+  ************************************************************************/
+
+  getValue: function(opts) {
+    if (this.dataType == 'set') {
+      return JSON.stringify(this.toJSON());
+    } else if (this.dataType == 'object') {
+      return JSON.stringify(this.toJSON());
+    } else if (this.dataType == 'property') {
+      return this.children[0].value;
+    } else {
+      return value;
+    }
+  },
+
+  setValue: function(value, opts) {
+    if (this.dataType == 'property') {
+      CTS.Log.Warn("Should not be setting the value of a property.");
+    }
+    this.value = value;
+  }
+  
+  /************************************************************************
+   **
+   ** Utility Helpers
+   **
+   ************************************************************************/
+
+});
+
+
 CTS.Relation = {};
 
 CTS.Relation.RelationSpec = function(selector1, selector2, name, props1, props2, propsMiddle) {
@@ -1386,7 +1636,7 @@ CTS.Fn.extend(CTS.Relation.RelationSpec.prototype, {
 
   tail: function() {
     return this.selectionSpec2;
-  }
+  },
 });
 
 /**
@@ -1748,5 +1998,636 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Relation, {
 
 });
 
+
+var TreeSpec = CTS.TreeSpec = function(kind, name, url) {
+  this.kind = kind;
+  this.name = name;
+  this.url = url;
+};
+
+// DOM Tree
+// ==========================================================================
+//
+// ==========================================================================
+
+
+var Tree = CTS.Tree = {
+  name: "",
+  
+  render: function(opts) {
+    console.log("render root", this.root);
+    this.root.render(opts);
+  },
+
+};
+
+// Constructor
+// -----------
+var DomTree = CTS.DomTree = function(forrest, node, spec) {
+  CTS.Log.Info("DomTree::Constructor", [forrest, node]);
+  this.root = new CTS.DomNode(node, this);
+  this.forrest = forrest;
+  this.spec = spec;
+  this.name = spec.name;
+};
+
+// Instance Methods
+// ----------------
+CTS.Fn.extend(DomTree.prototype, Tree, {
+  nodesForSelectionSpec: function(spec) {
+    if (spec.inline) {
+      return [this.inlineObject];
+    } else {
+      // Assumption: root can't be a sibling group
+      var jqnodes = this.root.find(spec.selectorString).toArray();
+      var nodes = CTS.Fn.map(jqnodes, function(n) {
+        return new DomNode(CTS.$(n), this);
+      }, this);
+      return nodes;
+    }
+  }
+});
+
+// Constructor
+// -----------
+var JsonTree = CTS.JsonTree = function(forrest, root, spec) {
+  this.root = new CTS.JsonNode(root, this);
+  this.forrest = forrest;
+  this.spec = spec;
+  this.name = spec.name;
+};
+
+// Instance Methods
+// ----------------
+CTS.Fn.extend(JsonTree.prototype, Tree, {
+  nodesForSelectionSpec: function(spec) {
+    CTS.Log.Fatal("JsonTree::nodesForSelectionSpec - Unimplemented!");
+    return [];
+  }
+});
+
+/* Like a JSON tree but any CTS rules CREATE the keypath upon resolution.
+ */
+var ScraperTree = CTS.ScraperTree = function(forrest, attributes) {
+  this.forrest = forrest;
+  this.root = {};
+};
+
+// Instance Methods
+// ----------------
+CTS.Fn.extend(JsonTree.prototype, Tree, {
+
+  nodesForSelectionSpec: function(spec) {
+    alert("unimplemented!");
+    return [];
+  }
+
+
+});
+
+var ForrestSpec = CTS.ForrestSpec = function() {
+  this.treeSpeecs = [];
+  this.relationSpecs = [];
+};
+
+CTS.Fn.extend(ForrestSpec.prototype, {
+  incorporateJson: function(json) {
+    if (typeof json.relations != 'undefined') {
+      for (var i = 0; i < json.relations.length; i++) {
+        if (json.relations[i].length == 3) {
+          var s1 = this._jsonToSelectorSpec(json.relations[i][0]);
+          var s2 = this._jsonToSelectorSpec(json.relations[i][2]);
+          var rule = this._jsonToRelationSpec(json.relations[i][1], s1, s2);
+          this.relationSpecs.push(rule);
+        }
+      }
+    }
+
+    if (typeof json.trees != 'undefined') {
+      for (var i = 0; i < json.trees.length; i++) {
+        if (json.trees[i].length == 3) {
+          this.treeSpecs.push(new CTS.TreeSpec(
+            json.trees[i][0],
+            json.trees[i][1],
+            json.trees[i][2]));
+        }
+      }
+    }
+  },
+
+  /* The JSON should be of the form:
+   * 1. [
+   * 2.   ["TreeName", "SelectorName", {"selector1-prop":"selector1-val"}]
+   * 3.   ["Relation",  {"prop":"selector1-val"}]
+   * 4.   ["TreeName", "SelectorName", {"selector2-prop":"selector1-val"}]
+   * 5. ]
+   *
+   * The outer array (lines 1 and 5) are optional if you only have a single rule.
+   *
+   */
+  incorporateInlineJson: function(json, node) {
+    if (json.length == 0) {
+      return [];
+    }
+    if (! CTS.Fn.isArray(json[0])) {
+      json = [json];
+    }
+    var ret = [];
+    for (var i = 0; i < json.length; i++) {
+      var s1 = this._jsonToSelectorSpec(json[i][0], node);
+      var s2 = this._jsonToSelectorSpec(json[i][2], node);
+      var rule = this._jsonToRelationSpec(json[i][1], s1, s2);
+      this.relationSpecs.push(rule);
+      ret.push(rule);
+    }
+    return ret;
+  },
+
+  _jsonToSelectorSpec: function(json, inlineNode) {
+    var treeName = null;
+    var selectorString = null;
+    var args = {};
+
+    if ((json === null) && (inlineNode)) {
+      treeName = inlineNode.tree.name;
+    } else if (CTS.Fn.isArray(json)) {
+      if (json.length == 1) {
+        selectorString = json[0];
+      } else if (json.length == 2) {
+        treeName = json[0];
+        selectorString = json[1];
+      } else if (json.length == 3) {
+        treeName = json[0];
+        selectorString = json[1];
+        args = json[2];
+      }
+    } else if (typeof json == 'string') {
+      selectorString = json;
+    }
+    var s = new CTS.SelectionSpec(treeName, selectorString, args);
+    if ((json === null) && (inlineNode)) {
+      s.inline = true;
+      s.inlineObject = inlineNode;
+    }
+    return s;
+  },
+
+  _jsonToRelationSpec: function(json, selectorSpec1, selectorSpec2) {
+    var ruleName = null;
+    var ruleProps = {};
+    if (CTS.Fn.isArray(json)) {
+      if (json.length == 2) {
+        CTS.Fn.extend(ruleProps, json[1]);
+      }
+      if (json.length > 0) {
+        ruleName = json[0];
+      }
+    } else if (typeof json == 'string') {
+      ruleName = json;
+    }
+    return new CTS.RelationSpec(selectorSpec1, selectorSpec2, ruleName, ruleProps);
+  }
+});
+
+// Forrest
+// ==========================================================================
+// A Forrest contains:
+//  * Named trees
+//  * Relations between those trees
+// ==========================================================================
+
+// Constructor
+// -----------
+var Forrest = CTS.Forrest = function(opts) {
+  this.forrestSpecs = [];
+
+  this.treeSpecs = {};
+  this.trees = {};
+  
+  this.relationSpecs = [];
+  this.relations= [];
+
+  this.opts = opts || {};
+  this.initialize();
+};
+
+// Instance Methods
+// ----------------
+CTS.Fn.extend(Forrest.prototype, {
+
+  /*
+   * Initialization Bits
+   *
+   * -------------------------------------------------------- */
+
+  initialize: function() {
+    this.addAndRealizeDefaultTrees();
+    // If there is a forrest spec in the opts, we'll use it
+    if (typeof this.opts.spec != 'undefined') {
+      this.addSpec(this.opts.spec);
+    }
+  },
+
+  addAndRealizeDefaultTrees: function() {
+    var pageBody = new CTS.TreeSpec('HTML', 'body', null);
+    this.addTreeSpec(pageBody);
+    this.realizeTreeSpec(pageBody);
+  },
+
+  /*
+   * Adding Specs
+   *
+   * A forrest is built by adding SPECS (from the language/ package) to it
+   * rather than actual objects. These specs are lazily instantiated into
+   * model objects as they are needed.  Thus, the addTree method takes a
+   * TreeSpec, rather than a Tree, and so on.
+   *
+   * -------------------------------------------------------- */
+
+  addSpec: function(forrestSpec) {
+    this.forrestSpecs.push(forrestSpec);
+    var i;
+    for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
+      this.addTree(forrestSpec.treeSpecs[i]);
+    }
+    for (i = 0; i < forrestSpec.relationSpecs.length; i++) {
+      this.addRelation(forrestSpec.relationSpecs[i]);
+    }
+  },
+
+  addTreeSpec: function(treeSpec) {
+    this.treeSpecs[treeSpec.name] = treeSpec;
+  },
+
+  addRelationSpec: function(relationSpec) {
+    this.relationSpecs.push(relationSpec);
+  },
+
+  addRelationSpecs: function(someRelationSpecs) {
+    for (var i = 0; i < someRelationSpecs.length; i++) {
+      // Faster than .push()
+      this.relationSpecs.push(someRelationSpecs[i]);
+    }
+  },
+
+  /*
+   * Realizing Specs
+   *
+   * Here, we take specs (ideally those that we've already added, but
+   * currently that constraint isn't enforced) and actually transform them
+   * into model objects such as Tree and Relation objects.
+   *
+   * Note that realizing a relation depends upon the prior realization of the
+   * trees that the relation references. 
+   *
+   * -------------------------------------------------------- */
+
+  realizeTreeSpec: function(spec) {
+    var self = this;
+    CTS.Utilities.fetchTree(spec, function(error, root) {
+      if (error) {
+        CTS.Log.Error("Could not fetch Tree for Spec " + alias);
+      } else {
+        if (spec.kind == 'HTML') {
+          var tree = new CTS.DomTree(self, root, spec);
+          this.trees[spec.name] = tree;
+        } else if (spec.kind == 'JSON') {
+          var tree = new CTS.JsonTree(self, root, spec);
+          this.trees[spec.name] = tree;
+        } else {
+          CTS.Log.Error("Unknown kind of Tree in Spec " + alias); 
+        }
+      }
+    }, this);
+  },
+
+  realizeRelationSpec: function(spec) {
+    var s1 = spec.selectionSpec1;
+    var s2 = spec.selectionSpec2;
+
+    // Realizing a relation spec has a dependency on the realization of
+    // the realization of the treespecs.
+    // TODO(eob): One day, having a nice dependency DAG would be nice.
+    // For now, we'll error if deps aren't met.
+    if (! (this.containsTree(s1.treeName) && this.containsTree(s2.treeName))) {
+      CTS.Log.Error("Can not realize RelationSpec becasue one or more trees are not available");
+      return;
+    }
+
+    // Here we're guaranteed that the trees are available.
+
+    // Now we find all the nodes that this spec matches on each side and
+    // take the cross product of all combinations.
+
+    var nodes1 = this.trees[s1.treeName].nodesForSelectionSpec(s1);
+    var nodes2 = this.trees[s2.treeName].nodesForSelectionSpec(s2);
+
+    for (var i = 0; i < nodes1.length; i++) {
+      for (var j = 0; j < nodes2.length; j++) {
+        // Realize a relation between i and j. Creating the relation adds
+        // a pointer back to the nodes.
+        var relation = new CTS.Relation(nodes1[i], nodes2[j], spec);
+        // Add the relation to the forrest
+        this.relations.push(relation);
+      }
+    }
+  },
+
+  /*
+   * Fetching Objects
+   *
+   * -------------------------------------------------------- */
+
+  containsTree: function(alias) {
+    CTS.Fn.has(this.trees, alias);
+  },
+
+  getTree: function(alias) {
+    return this.trees[alias];
+  },
+
+  getPrimaryTree: function() {
+    return this.trees.body;
+  }
+
+  /*
+   * NOTE:
+   *  All the below code was very clever, but a premature optimization aimed at lazy-loading.
+   *  Consider bringing it back once we achieve (slow) functionality.
+   */
+
+  //nodesForSelectionSpec: function(spec) {
+  //  if (typeof this.trees[spec.treeName] != "undefined") {
+  //    return this.trees[spec.treeName].nodesForSelectionSpec(spec);
+  //  } else {
+  //    return [];
+  //  }
+  //},
+
+  //rulesForNode: function(node) {
+  //  console.log("Forrest:::rulesForNode");
+  //  var ret = [];
+  //  CTS.Fn.each(this.rules, function(rule) {
+  //    console.log("Forrest::rulesForNode Rule", rule, "for node", node);
+  //    if ((rule.selector1.matches(node)) || 
+  //        (rule.selector2.matches(node))) {
+  //      ret[ret.length] = rule;
+  //    } else {
+  //      console.log("Failed match", rule.selector1.selector);
+  //      console.log("Failed match", rule.selector2.selector);
+  //    }
+  //  }, this);
+
+  //  var inlineRules = node.getInlineRules();
+  // 
+  //  if (inlineRules !== null) {
+  //    var ruleSet = RuleParser.parseInline(node, inlineRules);
+  //    if (typeof ruleSet != "undefined") {
+  //      ret = CTS.Fn.union(ret, ruleSet);
+  //    }
+  //  }
+  //  return ret;
+  //},
+
+  //registerRelationsForNode: function(node) {
+  //  console.log("Forrest::RelationsForNode");
+  //  var rules = this.rulesForNode(node);
+  //  console.log("Rules for", node.siblings[0].html(), rules);
+  //  var relations = CTS.Fn.map(rules, function(rule) {
+  //    var selection1 = null;
+  //    var selection2 = null;
+  //    var selector = null;
+  //    var other = null;
+  //    if (rule.selector1.matches(node)) {
+  //      selection1 = new CTS.Selection([node]);
+  //      selection2 = rule.selector2.toSelection(this);
+  //      other = selection2;
+  //    } else {
+  //      selection2 = new CTS.Selection([node]);
+  //      selection1 = rule.selector1.toSelection(this);
+  //      other = selection1;
+  //    }
+  //    var relation = new Relation(selection1, selection2, rule.name, rule.opts, rule.opts1, rule.opts2);
+  //    node.registerRelation(relation);
+  //    // Make sure that we wire up the relations,
+  //    // since some might come in from inline.
+  //    CTS.Fn.each(other.nodes, function(n) {
+  //      n.registerRelation(relation);
+  //    }, this);
+  //  }, this);
+  //  console.log("Returning Relations for", node.siblings[0].html(), relations);
+  //  return relations;
+  //}
+
+});
+
+/*
+ * Bootstrapper
+ * ==========================================================================
+ * 
+ * Intended to be mixed into the Engine.
+ * 
+ * As such, it assumes it is part of the Engine with access to StateMachine
+ * and Events.
+ * 
+ * Methods for mix-in:
+ *  * boot
+ *
+ * "Private" Methods:
+ *  All begin with '_bootstrap'
+ */
+var Bootstrapper = CTS.Bootstrapper = {
+
+  /** 
+   * Walks CTS through a full page bootup.
+   *
+   * Dependencies:
+   *  Must be mixed into Engine with StateMachine and Events
+   */
+  boot: function() {
+    CTS.Log.Debug("Bootstrap: Booting up");
+    // Boot sequence
+    this.fsmInitialize(
+      'Start', [
+      { 'from':'Start',
+          'to':'QueueingCTS',
+        'name':'Begin' },
+      { 'from':'QueueingCTS',
+          'to':'LoadingCTS',
+        'name':'QueuedCTS' },
+      { 'from':'LoadingCTS',
+          'to':'QueueingTrees',
+        'name':'LoadedCTS'},
+      { 'from':'QueueingTrees',
+          'to':'LoadingTrees',
+        'name':'QueuedTrees'},
+      { 'from':'LoadingTrees',
+          'to':'Rendering',
+        'name':'LoadedTrees'},
+      { 'from':'Rendering',
+          'to':'Rendered',
+        'name':'Rendered' }
+      ]);
+
+    this.on('FsmEdge:Begin', this._bootstrap_queue_cts, this);
+    this.on('FsmEdge:LoadedCTS', this._bootstrap_queue_trees, this);
+    this.on('FsmEdge:LoadedTrees', this._bootstrap_render, this);
+
+    // VROOOOOMMMM!
+    this.fsmTransition('QueueingCTS');
+  },
+
+  /**
+   * Finds all CTS links and queues their load.
+   */
+  _bootstrap_queue_cts: function() {
+    // Finds all CTS links and queues their load.
+    CTS.Log.Debug("Bootstrap: Loading CTS");
+    this.fsmTransition("LoadingCTS");
+    this._bootstrap_cts_to_load = {};
+    var hasRemote = false;
+
+    var blocks = CTS.Utilities.getTreesheetLinks();
+    CTS.Fn.each(blocks, function(block) {
+      if (block.type == 'inline') {
+        this.ingestRules(block.content);
+      } else if (block.type == 'link') {
+        // Queue Load
+        this._bootstrap_cts_to_load[block.url] = true;
+        hasRemote = true;
+        CTS.Utilities.loadRemoteString(block,
+          this._bootstrap_cts_load_success, this._bootstrap_cts_load_fail);
+      }
+    }, this);
+    
+    if (! hasRemote) {
+      this.fsmTransition("QueueingTrees"); // Edge name: LoadedCTS
+    } 
+  },
+
+  _bootstrap_queue_trees: function() {
+    CTS.Log.Debug("Bootstrap: Loading Trees");
+    this.fsmTransition("LoadingTrees");
+    this._bootstrap_trees_to_load = {};
+    var hasRemote = false;
+    CTS.Fn.each(this.forrest.trees, function(value, key, list) {
+      // Todo
+    }, this);
+    if (! hasRemote) {
+      this.fsmTransition("Rendering");
+    }
+  },
+
+  _bootstrap_render: function() {
+    CTS.Log.Debug("Bootstrap: Rendering");
+    this.render();
+    this.fsmTransition("Rendered");
+  },
+
+  _bootstrap_cts_load_success: function(data, textStatus, xhr) {
+    CTS.Log.Debug("Bootstrap: Loaded treesheet", xhr.url);
+    this.ingestRules(data);
+    this._bootstrap_cts_loaded(xhr.url);
+  },
+
+  _bootstrap_cts_load_fail: function(xhr, textStatus, errorThrown) {
+    CTS.Log.Error("Bootstrap: CTS Load Failed", xhr.url);
+    this._bootstrap_cts_loaded(xhr.url);
+  },
+
+  _bootstrap_tree_load_success: function(data, textStatus, xhr) {
+    CTS.Log.Debug("Bootstrap: Loaded tree", xhr.url);
+    //TODO
+    this._bootstrap_tree_loaded(xhr.url);
+  },
+
+  _bootstrap_tree_load_fail: function(xhr, textStatus, errorThrown) {
+    CTS.Log.Error("Bootstrap: Tree Load Failed", xhr.url);
+    this._bootstrap_tree_loaded(xhr.url);
+  },
+
+  _bootstrap_cts_loaded: function(filename) {
+    delete this._bootstrap_cts_to_load[filename];
+    var done = (this._bootstrap_cts_to_load.length === 0);
+    if (done) {
+      _fsmTransition("QueueingTrees"); // Edge: LoadedCTS
+    }
+  },
+
+  _bootstrap_tree_loaded: function(filename) {
+    delete this._bootstrap_trees_to_load[filename];
+    var done = (this._bootstrap_trees_to_load.length === 0);
+    if (done) {
+      _fsmTransition("Rendering");
+    }
+  }
+};
+
+// Engine
+// ==========================================================================
+
+// Constructor
+// -----------
+var Engine = CTS.Engine = function(opts, args) {
+  var defaults;
+  this.opts = opts || {};
+
+  // The main tree.
+  this.forrest = null;
+
+  this.initialize.apply(this, args);
+};
+
+// Instance Methods
+// ----------------
+CTS.Fn.extend(Engine.prototype, Events, StateMachine, Bootstrapper, {
+
+  initialize: function() {
+    this.forrest = new CTS.Forrest();
+  },
+
+  /**
+   * Rendering picks a primary tree. For each node in the tree, we:
+   *  1: Process any *incoming* relations for its subtree.
+   *  2: Process any *outgoing* tempalte operations
+   *  3: 
+   */
+  render: function(opts) {
+    console.log(pt);
+    var pt = this.forrest.getPrimaryTree();
+    var options = CTS.Fn.extend({}, opts);
+    pt.root._processIncoming();
+    //pt.render(options);
+  },
+
+  ingestRules: function(rules) {
+    this.forrest.ingestRules(rules);
+  },
+
+});
+
+CTS.shouldAutoload = function() {
+  var foundCtsElement = false;
+  var autoload = true;
+
+  // Search through <script> elements to find the CTS element.
+  CTS.Fn.each(CTS.$('script'), function(elem) {
+    var url = $(elem).attr('src');
+    if ((!CTS.Fn.isUndefined(url)) && (url != null) && (url.indexOf('cts.js') != 1)) {
+      foundCtsElement = true;
+      var param = CTS.Utilities.getUrlParameter('autoload', url);
+      if (param == 'false') {
+        autoload = false;
+      }
+    }
+  }, this);
+
+  return (foundCtsElement && autoload);
+};
+
+if (CTS.shouldAutoload()) {
+  CTS.engine = new CTS.Engine();
+  CTS.engine.boot();
+}
 
 }).call(this);

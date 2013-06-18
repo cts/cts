@@ -18,7 +18,7 @@ CTS.Node = {
     this.relations = [];
     this.value = null;
     this.addedMyInlineRelationsToForrest = false;
-    this.initializeStateMachine();
+    //this.initializeStateMachine();
   },
 
   getChildren: function() {
@@ -43,19 +43,15 @@ CTS.Node = {
     return this.relations;
   },
 
-  getInlineRelationSpecs: function() {
-    return _subclass_getInlineRelationSpecs();
-  },
-
   registerInlineRelationSpecs: function() {
     if (this.addedMyInlineRelationsToForrest) {
       CTS.Log.Warn("Not registering inline relations: have already done so.");
     } else {
       if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-        CTS.Fn.Each(this.getInlineRelationSpecs(), function(spec) {
-          this.tree.forrest.addRelationSpec(spec);
-          this.tree.forrest.realizeRelationSpec(spec);
-        }, this);
+        var specStr = _subclass_getInlineRelationSpecString();
+        if (specStr) {
+          CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
+        }
         this.addedMyInlineRelationsToForrest = true;
       } else {
         CTS.Log.Warn("Could not add inline relations to null tree.forrest");
@@ -157,9 +153,10 @@ CTS.Node = {
     // Note: because the subclass constructs it's own subtree,
     // that means it is also responsible for cloning downstream nodes.
     // thus we only take care of THIS NODE's relations.
-    for (var i = 0; i < this.relations.length; i++) {
-      var n1 = this.relations[i].node1;
-      var n2 = this.relations[i].node2;
+    var r = this.getRelations();
+    for (var i = 0; i < r.length; i++) {
+      var n1 = r[i].node1;
+      var n2 = r[i].node2;
       if (n1 == this) {
         n1 = c;
       } else if (n2 == this) {
@@ -167,8 +164,8 @@ CTS.Node = {
       } else {
         CTS.Fatal("Clone failed");
       }
-      var relationClone = this.relations[i].clone(n1, n2);
-      console.log("Cloning", this.relations[i].name, "for", this.getValue());
+      var relationClone = r[i].clone(n1, n2);
+      console.log("Cloning", r[i].name, "for", this.getValue());
     };
     // Note that we DON'T wire up any parent-child relationships
     // because that would result in more than just cloning the node
@@ -179,7 +176,7 @@ CTS.Node = {
 
   pruneRelations: function(otherParent, otherContainer) {
     var self = this;
-    this.relations = CTS.Fn.filter(this.relations, function(r) {
+    this.relations = CTS.Fn.filter(this.getRelations(), function(r) {
       var other = r.opposite(self);
       // If the rule ISN'T subtree of this iterable
       // But it IS inside the other container
@@ -196,6 +193,41 @@ CTS.Node = {
     
     for (var i = 0; i < this.children.length; i++) {
       this.children[i].pruneRelations(otherParent, otherContainer);
+    }
+  },
+
+  _processIncoming: function() {
+    // Do incoming nodes except graft
+    this._processIncomingRelations('if-exist');
+    this._processIncomingRelations('if-nexist');
+    this._processIncomingRelations('is');
+    this._processIncomingRelations('are');
+
+    CTS.Log.Info("Dump Pre");
+    CTS.Debugging.DumpTree(this);
+    // Do children
+    for (var i = 0; i < this.children.length; i++) {
+      this.children[i]._processIncoming();
+    }
+    CTS.Log.Info("Dump Post");
+    CTS.Debugging.DumpTree(this);
+
+    // Do graft
+    this._processIncomingRelations('graft', true);
+  },
+
+  _processIncomingRelations: function(name, once) {
+    console.log("proc inc from node", this.getValue(), name);
+    for (var i = 0; i < this.relations.length; i++) {
+      if (this.relations[i].name == name) {
+        if (this.relations[i].node1.equals(this)) {
+          this.relations[i].execute(this);
+          console.log("found one " + this.relations[i].name, name);
+          if (once) {
+            break;
+          }
+        }
+      }
     }
   },
 

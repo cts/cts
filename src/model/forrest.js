@@ -16,8 +16,8 @@ var Forrest = CTS.Forrest = function(opts) {
   this.relationSpecs = [];
   this.relations= [];
 
-  this.opts = opts;
-  this.initialize.apply(this);
+  this.opts = opts || {};
+  this.initialize();
 };
 
 // Instance Methods
@@ -30,7 +30,7 @@ CTS.Fn.extend(Forrest.prototype, {
    * -------------------------------------------------------- */
 
   initialize: function() {
-    this.addDefaultTrees();
+    this.addAndRealizeDefaultTrees();
     // If there is a forrest spec in the opts, we'll use it
     if (typeof this.opts.spec != 'undefined') {
       this.addSpec(this.opts.spec);
@@ -38,14 +38,9 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   addAndRealizeDefaultTrees: function() {
-    var pageBody = new CTS.TreeSpec('DOM', 'body', null);
-    var jsonBody = new CTS.TreeSpec('JSON', 'window', null);
-
+    var pageBody = new CTS.TreeSpec('HTML', 'body', null);
     this.addTreeSpec(pageBody);
-    this.addTreeSpec(jsonBody);
-
     this.realizeTreeSpec(pageBody);
-    this.realizeTreeSpec(jsonBody);
   },
 
   /*
@@ -62,7 +57,7 @@ CTS.Fn.extend(Forrest.prototype, {
     this.forrestSpecs.push(forrestSpec);
     var i;
     for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
-      this.addTree(forrestSpec.treeSpecs[i];
+      this.addTree(forrestSpec.treeSpecs[i]);
     }
     for (i = 0; i < forrestSpec.relationSpecs.length; i++) {
       this.addRelation(forrestSpec.relationSpecs[i]);
@@ -70,7 +65,7 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   addTreeSpec: function(treeSpec) {
-    this.treeSpecs[treeSpec.name] = treeSpecs;
+    this.treeSpecs[treeSpec.name] = treeSpec;
   },
 
   addRelationSpec: function(relationSpec) {
@@ -97,15 +92,16 @@ CTS.Fn.extend(Forrest.prototype, {
    * -------------------------------------------------------- */
 
   realizeTreeSpec: function(spec) {
-    CTS.Utilities.FetchTree(spec, function(error, root) {
+    var self = this;
+    CTS.Utilities.fetchTree(spec, function(error, root) {
       if (error) {
         CTS.Log.Error("Could not fetch Tree for Spec " + alias);
       } else {
-        if (spec.kind == 'DOM') {
-          var tree = new CTS.DomTree(this, root, spec);
+        if (spec.kind == 'HTML') {
+          var tree = new CTS.DomTree(self, root, spec);
           this.trees[spec.name] = tree;
         } else if (spec.kind == 'JSON') {
-          var tree = new CTS.JsonTree(this, root, spec);
+          var tree = new CTS.JsonTree(self, root, spec);
           this.trees[spec.name] = tree;
         } else {
           CTS.Log.Error("Unknown kind of Tree in Spec " + alias); 

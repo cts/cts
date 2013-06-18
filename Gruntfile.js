@@ -40,8 +40,8 @@ module.exports = function(grunt) {
           "src/model/node/node.js",
           "src/model/node/node-state-machine.js",
           "src/model/node/node-abstract.js",
-        //  "src/model/node/node-dom.js",
-        //  "src/model/node/node-json.js",
+          "src/model/node/node-dom.js",
+          "src/model/node/node-json.js",
 
           "src/model/relation/relation-spec.js",
           "src/model/relation/relation.js",
@@ -51,14 +51,14 @@ module.exports = function(grunt) {
           "src/model/relation/ifnexist.js",
           "src/model/relation/graft.js",
           
-        //  "src/model/tree/tree-spec.js",
-        //  "src/model/tree/tree.js",
-        //  "src/model/tree/tree-dom.js",
-        //  "src/model/tree/tree-json.js",
-        //  "src/model/tree/tree-xpando.js",
+          "src/model/tree/tree-spec.js",
+          "src/model/tree/tree.js",
+          "src/model/tree/tree-dom.js",
+          "src/model/tree/tree-json.js",
+          "src/model/tree/tree-xpando.js",
           
-        //  "src/model/forrest-spec.js",
-        //  "src/model/forrest.js",
+          "src/model/forrest-spec.js",
+          "src/model/forrest.js",
         //  
         //  "src/model/selection-spec.js",
         //  "src/model/selection.js",
@@ -66,9 +66,9 @@ module.exports = function(grunt) {
          // "src/parser/parser.js",
          // "src/parser/parser-json.js",
 
-         // "src/bootstrapper.js",
-         // "src/engine.js",
-         // "src/autoloader.js",
+          "src/bootstrapper.js",
+          "src/engine.js",
+          "src/autoloader.js",
 
           "src/fragments/postfix._js"
         ],

@@ -5,8 +5,6 @@ var AbstractNode = CTS.AbstractNode = function() {
 
 CTS.Fn.extend(CTS.AbstractNode.prototype,
     CTS.Events,
-    CTS.StateMachine,
-    CTS.NodeStateMachine,
     CTS.Node, {
 
    _subclass_beginClone: function() {

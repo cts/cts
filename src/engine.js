@@ -28,9 +28,11 @@ CTS.Fn.extend(Engine.prototype, Events, StateMachine, Bootstrapper, {
    *  3: 
    */
   render: function(opts) {
+    console.log(pt);
     var pt = this.forrest.getPrimaryTree();
     var options = CTS.Fn.extend({}, opts);
-    pt.render(options);
+    pt.root._processIncoming();
+    //pt.render(options);
   },
 
   ingestRules: function(rules) {

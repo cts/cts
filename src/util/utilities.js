@@ -60,6 +60,12 @@ var Utilities = CTS.Utilities = {
   },
 
   fetchTree: function(spec, callback, context) {
+    if ((spec.url == null) && (spec.name == 'body')) {
+      callback.call(context, null, CTS.$('body'));
+    } else {
+      CTS.Log.Fatal("FETCH TREE NOT IMPLEMENTED");
+      callback.call(context, "Not Implemented");
+    }
   }
 
 };

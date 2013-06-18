@@ -16,5 +16,5 @@ CTS.Fn.extend(CTS.Relation.RelationSpec.prototype, {
 
   tail: function() {
     return this.selectionSpec2;
-  }
+  },
 });

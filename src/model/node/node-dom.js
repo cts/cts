@@ -2,12 +2,12 @@
 var DomNode = CTS.DomNode = function(node, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
-  this.kind = "DOM";
-  this.value = this.createJqueryNode(node);
+  this.kind = "HTML";
+  this.value = this._createJqueryNode(node);
 };
 
 // ### Instance Methods
-CTS.Fn.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
+CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
 
   debugName: function() {
     return CTS.Fn.map(this.siblings, function(node) {
@@ -25,7 +25,7 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
      // jQuery trick
      // this.value is a jQuery node
      return this.value.closest(other.value).length != 0;
-   }
+   },
 
    /*
     * Precondition: this.children.length == 0
@@ -54,11 +54,10 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
      this.value.remove();
    },
 
-   _subclass_getInlineRelationSpecs: function() {
-     if (this.value!== null) {
+   _subclass_getInlineRelationSpecString: function() {
+     if (this.value !== null) {
        var inline = this.value.attr('data-cts');
-       var specs = CTS.Parser.ParseInlineSpecs(inline, this);
-       return specs;
+       return inline;
      }
    },
 

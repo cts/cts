@@ -15,7 +15,7 @@ var JsonNode = CTS.JsonNode = function(node, tree, opts) {
 };
  
 // ### Instance Methods
-CTS.Fn.extend(CTS.JsonNode.prototype, CTS.Events, CTS.StateMachine, CTS.Node, {
+CTS.Fn.extend(CTS.JsonNode.prototype, CTS.Events, CTS.Node, {
 
   updateDataType: function() {
     if (CTS.Fn.isNull(this.value)) {

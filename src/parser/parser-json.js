@@ -1,4 +1,20 @@
-var CTS.Language.Parser.JsonParser = {
+var CTS.Parser.Json = {
+
+  parseInlineSpecs(json, node, intoForrest, realize) {
+    if (typeof json == 'string') {
+      json = JSON.parse(json);
+    }
+
+    // Now we build a proper spec document around it.
+    var relations = intoForrest.spec.inforporateInlineJson(json, node, realize);
+    
+    if (realize) {
+      for (var i = 0; i < relations.length; i++) {
+        intoForrest.realizeRelationSpec(relations[i]);
+      }
+    }
+  },
+
   /* 
    * Returns a Forrest.
    *
