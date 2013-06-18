@@ -126,6 +126,43 @@ CTS.NodeStateMachine = {
   },
 
   _onFinished: function() {
+  },
+
+  /***********************/
+
+  _processIncoming: function() {
+    // Do incoming nodes except graft
+    this._processIncomingRelations('if-exist');
+    this._processIncomingRelations('if-nexist');
+    this._processIncomingRelations('is');
+    this._processIncomingRelations('are');
+
+    CTS.Log.Info("Dump Pre");
+    CTS.Debugging.DumpTree(this);
+    // Do children
+    for (var i = 0; i < this.children.length; i++) {
+      this.children[i]._processIncoming();
+    }
+    CTS.Log.Info("Dump Post");
+    CTS.Debugging.DumpTree(this);
+
+    // Do graft
+    this._processIncomingRelations('graft', true);
+  },
+
+  _processIncomingRelations: function(name, once) {
+    console.log("proc inc from node", this.getValue(), name);
+    for (var i = 0; i < this.relations.length; i++) {
+      if (this.relations[i].name == name) {
+        if (this.relations[i].node1.equals(this)) {
+          this.relations[i].execute(this);
+          console.log("found one " + this.relations[i].name, name);
+          if (once) {
+            break;
+          }
+        }
+      }
+    }
   }
 
 };

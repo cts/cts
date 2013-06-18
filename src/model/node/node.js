@@ -105,6 +105,18 @@ CTS.Node = {
     return false;
   },
 
+  replaceChildrenWith: function(nodes) {
+    var goodbye = this.children;
+    this.children = [];
+    for (var i = 0; i < goodbye.length; i++) {
+      goodbye[i]._subclass_destroy();
+    }
+
+    for (var j = 0; j < nodes.length; j++) {
+      this.insertChild(nodes[j]);
+    }
+  },
+
   // TODO(eob): potentially override later
   equals: function(other) {
     return this == other;
@@ -156,12 +168,35 @@ CTS.Node = {
         CTS.Fatal("Clone failed");
       }
       var relationClone = this.relations[i].clone(n1, n2);
+      console.log("Cloning", this.relations[i].name, "for", this.getValue());
     };
     // Note that we DON'T wire up any parent-child relationships
     // because that would result in more than just cloning the node
     // but also modifying other structures, such as the tree which
     // contained the source.
     return c;
+  },
+
+  pruneRelations: function(otherParent, otherContainer) {
+    var self = this;
+    this.relations = CTS.Fn.filter(this.relations, function(r) {
+      var other = r.opposite(self);
+      // If the rule ISN'T subtree of this iterable
+      // But it IS inside the other container
+      // Remove it
+      if ((! (other.equals(otherParent) || other.isDescendantOf(otherParent))) 
+         && ((typeof otherContainer == 'undefined') || other.isDescendantOf(otherContainer)))
+        { 
+        r.destroy();
+        return false;
+      } else {
+        return true;
+      }
+    });
+    
+    for (var i = 0; i < this.children.length; i++) {
+      this.children[i].pruneRelations(otherParent, otherContainer);
+    }
   },
 
   /************************************************************************

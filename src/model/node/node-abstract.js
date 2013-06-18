@@ -1,5 +1,6 @@
 var AbstractNode = CTS.AbstractNode = function() {
   this.initializeNodeBase();
+  this.value = null;
 };
 
 CTS.Fn.extend(CTS.AbstractNode.prototype,

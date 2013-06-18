@@ -45,7 +45,7 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
     var other = this.opposite(toward);
     var otherIterables = this._Are_GetIterables(other);
     var myIterables = this._Are_GetIterables(toward);
-
+ 
     if (myIterables.length > 0) {
       while (myIterables.length > 1) {
         var bye = myIterables.pop();
@@ -63,27 +63,11 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
           // Clone the iterable.
           var clone = myIterables[0].clone();
           toward.insertChild(clone, lastIndex, true);
-          this._Are_RemoveSome(clone, otherIterables[i]);
+          clone.pruneRelations(otherIterables[i], other);
           lastIndex++;
         }
-        this._Are_RemoveSome(myIterables[0], otherIterables[0]);
+        myIterables[0].pruneRelations(otherIterables[0], other);
       }
-    }
-  },
-
-  _Are_RemoveSome: function(node, otherParent) {
-    node.relations = CTS.Fn.filter(node.relations, function(r) {
-      var other = r.opposite(node);
-      if (! (other.equals(otherParent) || other.isDescendantOf(otherParent))) { 
-        r.destroy();
-        return false;
-      } else {
-        return true;
-      }
-    });
-    
-    for (var i = 0; i < node.children.length; i++) {
-      this._Are_RemoveSome(node.children[i], otherParent);
     }
   },
 

@@ -128,15 +128,43 @@ CTS.Debugging = {
     return ret;
   },
 
-  StringsToRelations: function(root1, root2, strs) {
+  StringsToRelations: function(root1, others, strs) {
+    if (! CTS.Fn.isArray(others)) {
+      var item = others;
+      others = [item];
+    }
+    others.push(root1);
+
+    if (typeof strs == 'string') {
+      strs = strs.split(";");
+    } else if (! CTS.Fn.isArray(strs)) {
+      strs = [];
+    }
+
     if ((! CTS.Fn.isUndefined(strs)) && (strs != null)) {
-      var rules = CTS.Fn.map(strs.split(";"), function(str) {
+      var rules = CTS.Fn.map(strs, function(str) {
         var parts = str.split(" ");
         var v1 = parts[0];
         var p  = parts[1];
         var v2 = parts[2];
-        var n1 = CTS.Debugging.NodeWithValue(root1, v1);
-        var n2 = CTS.Debugging.NodeWithValue(root2, v2);
+        var n1 = null;
+        var n2 = null;
+        for (var i = 0; i < others.length; i++) {
+          var nn = CTS.Debugging.NodeWithValue(others[i], v2);
+          if (nn != null) {
+            n2 = nn;
+            break;
+          }
+        }
+        for (var i = 0; i < others.length; i++) {
+          var nn = CTS.Debugging.NodeWithValue(others[i], v1);
+          if (nn != null) {
+            n1 = nn;
+            break;
+          }
+        }
+
+
         var r = null;
         if (p == "is") {
           r = new CTS.Relation.Is(n1, n2);
@@ -146,6 +174,8 @@ CTS.Debugging = {
           r = new CTS.Relation.IfNexist(n1, n2);
         } else if (p == "are") {
           r = new CTS.Relation.Are(n1, n2);
+        } else if (p == "graft") {
+          r = new CTS.Relation.Graft(n1, n2);
         }
         return r;
       });
@@ -177,9 +207,7 @@ CTS.Debugging = {
     var rules = CTS.Debugging.StringsToRelations(n1, n2, rules);
     var rulesToRun = CTS.Debugging.StringsToRelations(n1, n2, ruleToRun);
 
-    console.log("ABOUT TO COMBINE A");
     CTS.Debugging.DumpTree(n1);
-    console.log("ABOUT TO COMBINE B");
     CTS.Debugging.DumpTree(n2);
 
     var rulesToExecute = rules;
@@ -191,11 +219,8 @@ CTS.Debugging = {
 
     if (executeAll) {
       var execRules = function(n) {
-        console.log("Executing rules for ", n.getValue(), n.relations);
         for (var i = 0; i < n.relations.length; i++) {
-          console.log("executing ", i, n.getValue(), n.relations[i].name, n.relations[i].opposite(n).getValue());
           n.relations[i].execute(n);
-          console.log("length " + n.relations.length);
           break;
         }
         for (var j = 0; j < n.children.length; j++) {
@@ -205,7 +230,6 @@ CTS.Debugging = {
       execRules(n1);
     } else {
       for (var i = 0; i < rulesToExecute.length; i++) {
-        console.log("Executing rule", rulesToExecute[i]);
         rulesToExecute[i].execute(rulesToExecute[i].node1);
       }
     }
@@ -239,6 +263,27 @@ CTS.Debugging = {
   TreeTest: function(treeStr1, treeStr2, rules, rulesToRun) {
     var n = CTS.Debugging.QuickCombine(treeStr1, treeStr2, rules, rulesToRun);
     return CTS.Debugging.NodesToString(CTS.Debugging.RenameTree(n));
+  },
+
+  ForrestTest: function(tree, otherTrees, rules) {
+    if (! CTS.Fn.isArray(otherTrees)) {
+      otherTrees = [otherTrees];
+    }
+    var primary = CTS.Debugging.StringToNodes(tree)[0];
+    var others = CTS.Fn.map(otherTrees, function(t) {
+      return CTS.Debugging.StringToNodes(t)[0];
+    }, self);
+    CTS.Fn.map(rules, function(r) {
+      CTS.Debugging.StringsToRelations(primary, others, r);
+    });
+
+    CTS.Log.Info("Beginning Forrest Test")
+    CTS.Debugging.DumpTree(primary);
+    primary._processIncoming();
+    primary = CTS.Debugging.RenameTree(primary);
+    CTS.Log.Info("Finished Forrest Test")
+    CTS.Debugging.DumpTree(primary);
+    return CTS.Debugging.NodesToString(primary);
   },
 
   RuleTest: function(treeStr1, treeStr2, rules, rulesToRun, executeAll) {

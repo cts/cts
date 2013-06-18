@@ -412,15 +412,43 @@ CTS.Debugging = {
     return ret;
   },
 
-  StringsToRelations: function(root1, root2, strs) {
+  StringsToRelations: function(root1, others, strs) {
+    if (! CTS.Fn.isArray(others)) {
+      var item = others;
+      others = [item];
+    }
+    others.push(root1);
+
+    if (typeof strs == 'string') {
+      strs = strs.split(";");
+    } else if (! CTS.Fn.isArray(strs)) {
+      strs = [];
+    }
+
     if ((! CTS.Fn.isUndefined(strs)) && (strs != null)) {
-      var rules = CTS.Fn.map(strs.split(";"), function(str) {
+      var rules = CTS.Fn.map(strs, function(str) {
         var parts = str.split(" ");
         var v1 = parts[0];
         var p  = parts[1];
         var v2 = parts[2];
-        var n1 = CTS.Debugging.NodeWithValue(root1, v1);
-        var n2 = CTS.Debugging.NodeWithValue(root2, v2);
+        var n1 = null;
+        var n2 = null;
+        for (var i = 0; i < others.length; i++) {
+          var nn = CTS.Debugging.NodeWithValue(others[i], v2);
+          if (nn != null) {
+            n2 = nn;
+            break;
+          }
+        }
+        for (var i = 0; i < others.length; i++) {
+          var nn = CTS.Debugging.NodeWithValue(others[i], v1);
+          if (nn != null) {
+            n1 = nn;
+            break;
+          }
+        }
+
+
         var r = null;
         if (p == "is") {
           r = new CTS.Relation.Is(n1, n2);
@@ -430,6 +458,8 @@ CTS.Debugging = {
           r = new CTS.Relation.IfNexist(n1, n2);
         } else if (p == "are") {
           r = new CTS.Relation.Are(n1, n2);
+        } else if (p == "graft") {
+          r = new CTS.Relation.Graft(n1, n2);
         }
         return r;
       });
@@ -461,9 +491,7 @@ CTS.Debugging = {
     var rules = CTS.Debugging.StringsToRelations(n1, n2, rules);
     var rulesToRun = CTS.Debugging.StringsToRelations(n1, n2, ruleToRun);
 
-    console.log("ABOUT TO COMBINE A");
     CTS.Debugging.DumpTree(n1);
-    console.log("ABOUT TO COMBINE B");
     CTS.Debugging.DumpTree(n2);
 
     var rulesToExecute = rules;
@@ -475,11 +503,8 @@ CTS.Debugging = {
 
     if (executeAll) {
       var execRules = function(n) {
-        console.log("Executing rules for ", n.getValue(), n.relations);
         for (var i = 0; i < n.relations.length; i++) {
-          console.log("executing ", i, n.getValue(), n.relations[i].name, n.relations[i].opposite(n).getValue());
           n.relations[i].execute(n);
-          console.log("length " + n.relations.length);
           break;
         }
         for (var j = 0; j < n.children.length; j++) {
@@ -489,7 +514,6 @@ CTS.Debugging = {
       execRules(n1);
     } else {
       for (var i = 0; i < rulesToExecute.length; i++) {
-        console.log("Executing rule", rulesToExecute[i]);
         rulesToExecute[i].execute(rulesToExecute[i].node1);
       }
     }
@@ -523,6 +547,27 @@ CTS.Debugging = {
   TreeTest: function(treeStr1, treeStr2, rules, rulesToRun) {
     var n = CTS.Debugging.QuickCombine(treeStr1, treeStr2, rules, rulesToRun);
     return CTS.Debugging.NodesToString(CTS.Debugging.RenameTree(n));
+  },
+
+  ForrestTest: function(tree, otherTrees, rules) {
+    if (! CTS.Fn.isArray(otherTrees)) {
+      otherTrees = [otherTrees];
+    }
+    var primary = CTS.Debugging.StringToNodes(tree)[0];
+    var others = CTS.Fn.map(otherTrees, function(t) {
+      return CTS.Debugging.StringToNodes(t)[0];
+    }, self);
+    CTS.Fn.map(rules, function(r) {
+      CTS.Debugging.StringsToRelations(primary, others, r);
+    });
+
+    CTS.Log.Info("Beginning Forrest Test")
+    CTS.Debugging.DumpTree(primary);
+    primary._processIncoming();
+    primary = CTS.Debugging.RenameTree(primary);
+    CTS.Log.Info("Finished Forrest Test")
+    CTS.Debugging.DumpTree(primary);
+    return CTS.Debugging.NodesToString(primary);
   },
 
   RuleTest: function(treeStr1, treeStr2, rules, rulesToRun, executeAll) {
@@ -991,6 +1036,18 @@ CTS.Node = {
     return false;
   },
 
+  replaceChildrenWith: function(nodes) {
+    var goodbye = this.children;
+    this.children = [];
+    for (var i = 0; i < goodbye.length; i++) {
+      goodbye[i]._subclass_destroy();
+    }
+
+    for (var j = 0; j < nodes.length; j++) {
+      this.insertChild(nodes[j]);
+    }
+  },
+
   // TODO(eob): potentially override later
   equals: function(other) {
     return this == other;
@@ -1042,12 +1099,35 @@ CTS.Node = {
         CTS.Fatal("Clone failed");
       }
       var relationClone = this.relations[i].clone(n1, n2);
+      console.log("Cloning", this.relations[i].name, "for", this.getValue());
     };
     // Note that we DON'T wire up any parent-child relationships
     // because that would result in more than just cloning the node
     // but also modifying other structures, such as the tree which
     // contained the source.
     return c;
+  },
+
+  pruneRelations: function(otherParent, otherContainer) {
+    var self = this;
+    this.relations = CTS.Fn.filter(this.relations, function(r) {
+      var other = r.opposite(self);
+      // If the rule ISN'T subtree of this iterable
+      // But it IS inside the other container
+      // Remove it
+      if ((! (other.equals(otherParent) || other.isDescendantOf(otherParent))) 
+         && ((typeof otherContainer == 'undefined') || other.isDescendantOf(otherContainer)))
+        { 
+        r.destroy();
+        return false;
+      } else {
+        return true;
+      }
+    });
+    
+    for (var i = 0; i < this.children.length; i++) {
+      this.children[i].pruneRelations(otherParent, otherContainer);
+    }
   },
 
   /************************************************************************
@@ -1204,12 +1284,50 @@ CTS.NodeStateMachine = {
   },
 
   _onFinished: function() {
+  },
+
+  /***********************/
+
+  _processIncoming: function() {
+    // Do incoming nodes except graft
+    this._processIncomingRelations('if-exist');
+    this._processIncomingRelations('if-nexist');
+    this._processIncomingRelations('is');
+    this._processIncomingRelations('are');
+
+    CTS.Log.Info("Dump Pre");
+    CTS.Debugging.DumpTree(this);
+    // Do children
+    for (var i = 0; i < this.children.length; i++) {
+      this.children[i]._processIncoming();
+    }
+    CTS.Log.Info("Dump Post");
+    CTS.Debugging.DumpTree(this);
+
+    // Do graft
+    this._processIncomingRelations('graft', true);
+  },
+
+  _processIncomingRelations: function(name, once) {
+    console.log("proc inc from node", this.getValue(), name);
+    for (var i = 0; i < this.relations.length; i++) {
+      if (this.relations[i].name == name) {
+        if (this.relations[i].node1.equals(this)) {
+          this.relations[i].execute(this);
+          console.log("found one " + this.relations[i].name, name);
+          if (once) {
+            break;
+          }
+        }
+      }
+    }
   }
 
 };
 
 var AbstractNode = CTS.AbstractNode = function() {
   this.initializeNodeBase();
+  this.value = null;
 };
 
 CTS.Fn.extend(CTS.AbstractNode.prototype,
@@ -1423,7 +1541,6 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
 
   execute: function(toward) {
     this._Are_AlignCardinalities(toward);
-    console.log("Finished ARE", toward.getValue(), this.opposite(toward).getValue());
     CTS.Debugging.DumpTree(toward);
   },
 
@@ -1442,7 +1559,7 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
     var other = this.opposite(toward);
     var otherIterables = this._Are_GetIterables(other);
     var myIterables = this._Are_GetIterables(toward);
-
+ 
     if (myIterables.length > 0) {
       while (myIterables.length > 1) {
         var bye = myIterables.pop();
@@ -1457,66 +1574,21 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
         // WARNING: Note that i starts at 1
 
         for (var i = 1; i < otherIterables.length; i++) {
-          console.log("OTHER IT", i, otherIterables);
           // Clone the iterable.
           var clone = myIterables[0].clone();
           toward.insertChild(clone, lastIndex, true);
-          this._Are_RemoveSome(clone, otherIterables[i]);
+          clone.pruneRelations(otherIterables[i], other);
           lastIndex++;
         }
-        this._Are_RemoveSome(myIterables[0], otherIterables[0]);
+        myIterables[0].pruneRelations(otherIterables[0], other);
       }
     }
   },
-
-  _Are_RemoveSome: function(node, otherParent) {
-    console.log("RULES BEFORE PRUNE", node.relations, node.getValue(), node.parentNode);
-    node.relations = CTS.Fn.filter(node.relations, function(r) {
-      var other = r.opposite(node);
-      if (! (other.equals(otherParent) || other.isDescendantOf(otherParent))) { 
-        console.log("DESTROY", node.getValue(), r.name, other.getValue(), otherParent.getValue());
-        r.destroy();
-        return false;
-      } else {
-        return true;
-      }
-    });
-    console.log("RULES AFTER PRUNE", node.relations);
-    
-    for (var i = 0; i < node.children.length; i++) {
-      this._Are_RemoveSome(node.children[i], otherParent);
-    }
-  },
-
-//  _Are_SetCardinality: function(node, cardinality) {
-//    var nodeCard = this._Are_GetCardinality(node);
-//    var diff = Math.abs(nodeCard - cardinality);
-//    var opts = this.optsFor(node);
-//
-//    if (nodeCard > 0) {
-//      if (nodeCard > cardinality) {
-//        // Greater. We're going to have to destroy some.
-//        for (i = 0; i < diff; i++) {
-//          var toDestroy = opts.prefix + nodeCard - i - 1;
-//          var n = node.getChildren()[toDestroy];
-//          n.destroy();
-//        }
-//      } else if (cardinality > nodeCard) {
-//        // Less. We're going to have to create some.
-//        for (i = 0; i < diff; i ++) {
-//          var n = node.getChildren()[opts.prefix + nodeCard - 1 + i];
-//          var n2 = n.clone();
-//          node.insertChild(n2, (opts.prefix + nodeCard - 1 + i));
-//        }
-//      }
-//    }
-//  },
 
   _Are_GetIterables: function(node) {
     var opts = this.optsFor(node);
     var kids = node.getChildren();
     var iterables = kids.slice(opts.prefix, kids.length - opts.suffix);
-    console.log("ITerables", iterables);
     return iterables;
   },
 
@@ -1531,103 +1603,6 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
     var opts = this.optsFor(node);
     return node.getChildren().length - opts.prefix - opts.suffix;
   },
-
-  /* 
-   * Takes nodes that are splayed across all opposites, and deletes
-   * all but the one for the proper index.
-   */
-//  _Are_PruneRules: function(node, index, opposites) {
-//    if ((typeof index == 'undefined') && (typeof opposites == 'undefined')) {
-//      // This is the base case, called on th PARENT of the are.
-//      // ASSUMPTION! Cardinalities are already aligned.
-//      var card = this._Are_GetCardinality(node);
-//      var opts = this.optsFor(node);
-//      var opposite = this.opposite(node);
-//      var oppositeOpts = this.optsFor(opposite);
-//
-//      var opposites = opposite.children.slice(oppositeOpts.prefix, oppositeOpts.prefix + card);
-//
-//      for (var i = 0; i < card; i++) {
-//        var child = node.children[opts.prefix + i];
-//        this._Are_PruneRules(child, i, opposites);
-//      }
-//    } else {
-//      var templates = this._Are_RuleTemplates(node);
-//      console.log("TT", templates);
-//      CTS.Fn.each(templates, function(rules, sig) {
-//        this._Are_MaybePruneTemplate(node, index, opposites, rules);
-//      }, this);
-//      for (var i = 0; i < node.children.length; i++) {
-//        this._Are_PruneRules(node.children[i], index, opposites);
-//      }
-//    }
-//  },
-//
-//  /*
-//   * Returns a hash of lists of rules for this node, grouped by 
-//   * node signature
-//   */
-//  _Are_RuleTemplates: function(node) {
-//    var ret = {};
-//    for (var i = 0; i < node.relations.length; i++) {
-//      var r = node.relations[i];
-//      var sig = r.signature();
-//      if (! CTS.Fn.has(ret, sig)) {
-//        ret[sig] = [];
-//      }
-//      ret[sig].push(r);
-//    }
-//    return ret;
-//  },
-
-  /*
-   * maybe prunes out templates
-   */
-//  _Are_MaybePruneTemplate: function(node, index, opposites, rules) {
-//    if (rules.length < opposites.length) {
-//      return;
-//    }
-//
-//    var slots = [];
-//    var i, j;
-//    for (i = 0; i < opposites.length; i++) {
-//      slots[i] = null;
-//    }
-//    
-//    for (i = 0; i < rules.length; i++) {
-//      var r = rules[i];
-//      var opposite = r.opposite(node);
-//      var foundIt = false;
-//      for (j = 0; ((!foundIt) && (j < opposites.length)); j++) {
-//        if (slots[j] == null) {
-//          // Check to see if opposite is in lineage of opposites[j]
-//          if (opposite.descendantOf(opposites[j])) {
-//            slots[j] = r;
-//            foundIt = true;
-//          }
-//        }
-//      }
-//    }
-//
-//    // Check if splayed. Remember which is our index
-//    var splayed = true;
-//    for (i = 0; i < slots.length; i++) {
-//      if (slots[i] == null) {
-//        splayed = false;
-//        break;
-//      }
-//    }
-//
-//    // If it is splayed, remove all except the one at index
-//    if (splayed) {
-//      for (i=0; i<slots.length; i++) {
-//        if (i != index) {
-//          slots[i].destroy();
-//        }
-//      }
-//    }
-//
-//  },
 
 });
 
@@ -1718,6 +1693,12 @@ CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Relation, {
  * =====
  *
  * Intended as a Mix-In to Relation.
+ *
+ * Graft does the following:
+ *
+ *  1. Copy the subtree of the FROM node.
+ *  2. Run all (FROM -> TOWARD) rules in the direction TOWARD->FROM
+ *  3. Replace TOWARD subtree with the result of 1 and 2.
  */
 
 CTS.Relation.Graft = function(node1, node2, spec) {
@@ -1733,6 +1714,25 @@ CTS.Relation.Graft = function(node1, node2, spec) {
 
 CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Relation, {
   execute: function(toward) {
+    var opp = this.opposite(toward);
+    if (opp != null) {
+
+      console.log("GRAFT THE FOLLOWING");
+      CTS.Debugging.DumpTree(opp);
+      console.log("GRAFT ONTO THE FOLLOWING");
+      CTS.Debugging.DumpTree(toward);
+
+      var replacements = [];
+      for (var i = 0; i < opp.children.length; i++) {
+        var child = opp.children[i].clone();
+        // TODO(eob): This is a subtle bug. It means that you can't graft-map anything outside
+        // the toward node that is being grafted.
+        child.pruneRelations(toward);
+        child._processIncoming();
+        replacements.push(child);
+      }
+      toward.replaceChildrenWith(replacements);
+    }
   },
  
   clone: function(n1, n2) {
