@@ -15,6 +15,20 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
     ).join(', ');
   },
 
+  // Horrendously inefficient.
+  find: function(selector, ret) {
+    if (typeof ret == 'undefined') {
+      ret = [];
+    }
+    if (this.value.is(selector)) {
+      ret.push(this);
+    }
+    for (var i = 0; i < this.children.length; i++) {
+      this.children[i].find(selector, ret);
+    }
+    return ret;
+  },
+
   /************************************************************************
    **
    ** Required by Node base class
@@ -34,9 +48,10 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
     */
    _subclass_realizeChildren: function() {
      this.children = CTS.Fn.map(this.value.children(), function(child) {
-       var node = new DomNode(child);
+       var node = new DomNode(child, this.tree, this.opts);
+       node.parentNode = this;
        return node;
-     });
+     }, this);
    },
 
    /* 
@@ -90,23 +105,32 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
 
   _createJqueryNode: function(node) {
     // A Node contains multiple DOM Nodes
+    var n = null;
     if (typeof node == 'object') {
       if (! CTS.Fn.isUndefined(node.jquery)) {
         CTS.Debugging.DumpStack();
-        return node;
+        n = node;
       } else if (node instanceof Array) {
-        return node[0];
+        n = node[0];
       } else if (node instanceof Element) {
-        return CTS.$(node);
+        n = CTS.$(node);
       } else {
-        return null;
+        n = null;
       }
     } else if (typeof node == 'string') {
       //console.log("SIBLINGS E", node);
-      return $(node);
+      n = $(node);
     } else {
-      return null;
+      n = null;
     }
+
+    if (n !== null) {
+      // n is now a jqnode.
+      // place a little link to us.
+      n.data('ctsnode', this);
+    }
+
+    return n;
   }
 
 });

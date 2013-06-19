@@ -963,6 +963,7 @@ CTS.Node = {
   },
 
   registerRelation: function(relation) {
+    console.log("Registering Relation", self, relation);
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
     }
@@ -985,7 +986,7 @@ CTS.Node = {
       CTS.Log.Warn("Not registering inline relations: have already done so.");
     } else {
       if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-        var specStr = _subclass_getInlineRelationSpecString();
+        var specStr = this._subclass_getInlineRelationSpecString();
         if (specStr) {
           CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
         }
@@ -1386,6 +1387,20 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
     ).join(', ');
   },
 
+  // Horrendously inefficient.
+  find: function(selector, ret) {
+    if (typeof ret == 'undefined') {
+      ret = [];
+    }
+    if (this.value.is(selector)) {
+      ret.push(this);
+    }
+    for (var i = 0; i < this.children.length; i++) {
+      this.children[i].find(selector, ret);
+    }
+    return ret;
+  },
+
   /************************************************************************
    **
    ** Required by Node base class
@@ -1405,9 +1420,10 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
     */
    _subclass_realizeChildren: function() {
      this.children = CTS.Fn.map(this.value.children(), function(child) {
-       var node = new DomNode(child);
+       var node = new DomNode(child, this.tree, this.opts);
+       node.parentNode = this;
        return node;
-     });
+     }, this);
    },
 
    /* 
@@ -1461,23 +1477,32 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
 
   _createJqueryNode: function(node) {
     // A Node contains multiple DOM Nodes
+    var n = null;
     if (typeof node == 'object') {
       if (! CTS.Fn.isUndefined(node.jquery)) {
         CTS.Debugging.DumpStack();
-        return node;
+        n = node;
       } else if (node instanceof Array) {
-        return node[0];
+        n = node[0];
       } else if (node instanceof Element) {
-        return CTS.$(node);
+        n = CTS.$(node);
       } else {
-        return null;
+        n = null;
       }
     } else if (typeof node == 'string') {
       //console.log("SIBLINGS E", node);
-      return $(node);
+      n = $(node);
     } else {
-      return null;
+      n = null;
     }
+
+    if (n !== null) {
+      // n is now a jqnode.
+      // place a little link to us.
+      n.data('ctsnode', this);
+    }
+
+    return n;
   }
 
 });
@@ -1618,9 +1643,7 @@ CTS.Fn.extend(CTS.JsonNode.prototype, CTS.Events, CTS.Node, {
 });
 
 
-CTS.Relation = {};
-
-CTS.Relation.RelationSpec = function(selector1, selector2, name, props1, props2, propsMiddle) {
+CTS.RelationSpec = function(selector1, selector2, name, props1, props2, propsMiddle) {
   this.selectionSpec1 = selector1;
   this.selectionSpec2 = selector2;
   this.name = name;
@@ -1629,7 +1652,7 @@ CTS.Relation.RelationSpec = function(selector1, selector2, name, props1, props2,
   this.opts = propsMiddle || {};
 };
 
-CTS.Fn.extend(CTS.Relation.RelationSpec.prototype, {
+CTS.Fn.extend(CTS.RelationSpec.prototype, {
   head: function() {
     return this.selectionSpec1;
   },
@@ -1645,7 +1668,27 @@ CTS.Fn.extend(CTS.Relation.RelationSpec.prototype, {
  * Rules are the language which specify relations.
  */
 
-CTS.Relation.Relation = {
+CTS.Relation = {};
+
+CTS.Relation.CreateFromSpec = function(node1, node2, spec) {
+  if (spec.name == 'is') {
+    return new CTS.Relation.Is(node1, node2, spec);
+  } else if (spec.name == 'are') {
+    return new CTS.Relation.Are(node1, node2, spec);
+  } else if (spec.name == 'graft') {
+    return new CTS.Relation.Graft(node1, node2, spec);
+  } else if (spec.name == 'if-exist') {
+    return new CTS.Relation.IfExist(node1, node2, spec);
+  } else if (spec.name == 'if-nexist') {
+    return new CTS.Relation.Are(node1, node2, spec);
+    return new CTS.Relation.IfNexist(node1, node2, spec);
+  } else {
+    CTS.Log.Fatal("Unsure what kind of relation this is:", spec.name);
+    return null;
+  }
+};
+
+CTS.Relation.Base = {
 
   initializeBase: function() {
     if (this.node1 != null) {
@@ -1741,7 +1784,7 @@ CTS.Relation.Is = function(node1, node2, spec) {
   this.initializeBase();
 };
 
-CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Relation, {
+CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var from = this.opposite(toward);
     var content = from.getValue(this.optsFor(from));
@@ -1780,7 +1823,7 @@ CTS.Relation.Are = function(node1, node2, spec) {
   this.name = 'are';
 };
 
-CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
+CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
   getDefaultOpts: function() {
     return {
       prefix: 0,
@@ -1874,7 +1917,7 @@ CTS.Relation.IfExist = function(node1, node2, spec) {
   this.initializeBase();
 };
 
-CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Relation, {
+CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var other = this.opposite(toward);
     if ((other == CTS.NonExistantNode) || (other == null) || (CTS.Fn.isUndefined(other))) {
@@ -1915,7 +1958,7 @@ CTS.Relation.IfNexist = function(node1, node2, spec) {
   this.initializeBase();
 };
 
-CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Relation, {
+CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var other = this.opposite(toward);
     if ((other == CTS.NonExistantNode) || (other == null) || (CTS.Fn.isUndefined(other))) {
@@ -1962,7 +2005,7 @@ CTS.Relation.Graft = function(node1, node2, spec) {
   this.initializeBase();
 };
 
-CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Relation, {
+CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var opp = this.opposite(toward);
     if (opp != null) {
@@ -2029,6 +2072,7 @@ var DomTree = CTS.DomTree = function(forrest, node, spec) {
   this.forrest = forrest;
   this.spec = spec;
   this.name = spec.name;
+  this.root.realizeChildren();
 };
 
 // Instance Methods
@@ -2036,16 +2080,14 @@ var DomTree = CTS.DomTree = function(forrest, node, spec) {
 CTS.Fn.extend(DomTree.prototype, Tree, {
   nodesForSelectionSpec: function(spec) {
     if (spec.inline) {
-      return [this.inlineObject];
+      console.log("Nodes for inline spec", this.inlineObject);
+      return [spec.inlineObject];
     } else {
-      // Assumption: root can't be a sibling group
-      var jqnodes = this.root.find(spec.selectorString).toArray();
-      var nodes = CTS.Fn.map(jqnodes, function(n) {
-        return new DomNode(CTS.$(n), this);
-      }, this);
-      return nodes;
+      console.log("nodes for selector string spec");
+      return this.root.find(spec.selectorString);
     }
   }
+
 });
 
 // Constructor
@@ -2095,9 +2137,9 @@ CTS.Fn.extend(ForrestSpec.prototype, {
     if (typeof json.relations != 'undefined') {
       for (var i = 0; i < json.relations.length; i++) {
         if (json.relations[i].length == 3) {
-          var s1 = this._jsonToSelectorSpec(json.relations[i][0]);
-          var s2 = this._jsonToSelectorSpec(json.relations[i][2]);
-          var rule = this._jsonToRelationSpec(json.relations[i][1], s1, s2);
+          var s1 = CTS.Parser.Json.parseSelectorSpec(json.relations[i][0]);
+          var s2 = CTS.Parser.Json.parseSelectorSpec(json.relations[i][2]);
+          var rule = CTS.Parser.Json.parseRelationSpec(json.relations[i][1], s1, s2);
           this.relationSpecs.push(rule);
         }
       }
@@ -2115,78 +2157,11 @@ CTS.Fn.extend(ForrestSpec.prototype, {
     }
   },
 
-  /* The JSON should be of the form:
-   * 1. [
-   * 2.   ["TreeName", "SelectorName", {"selector1-prop":"selector1-val"}]
-   * 3.   ["Relation",  {"prop":"selector1-val"}]
-   * 4.   ["TreeName", "SelectorName", {"selector2-prop":"selector1-val"}]
-   * 5. ]
-   *
-   * The outer array (lines 1 and 5) are optional if you only have a single rule.
-   *
-   */
-  incorporateInlineJson: function(json, node) {
-    if (json.length == 0) {
-      return [];
-    }
-    if (! CTS.Fn.isArray(json[0])) {
-      json = [json];
-    }
-    var ret = [];
-    for (var i = 0; i < json.length; i++) {
-      var s1 = this._jsonToSelectorSpec(json[i][0], node);
-      var s2 = this._jsonToSelectorSpec(json[i][2], node);
-      var rule = this._jsonToRelationSpec(json[i][1], s1, s2);
-      this.relationSpecs.push(rule);
-      ret.push(rule);
-    }
-    return ret;
-  },
 
-  _jsonToSelectorSpec: function(json, inlineNode) {
-    var treeName = null;
-    var selectorString = null;
-    var args = {};
 
-    if ((json === null) && (inlineNode)) {
-      treeName = inlineNode.tree.name;
-    } else if (CTS.Fn.isArray(json)) {
-      if (json.length == 1) {
-        selectorString = json[0];
-      } else if (json.length == 2) {
-        treeName = json[0];
-        selectorString = json[1];
-      } else if (json.length == 3) {
-        treeName = json[0];
-        selectorString = json[1];
-        args = json[2];
-      }
-    } else if (typeof json == 'string') {
-      selectorString = json;
-    }
-    var s = new CTS.SelectionSpec(treeName, selectorString, args);
-    if ((json === null) && (inlineNode)) {
-      s.inline = true;
-      s.inlineObject = inlineNode;
-    }
-    return s;
-  },
 
-  _jsonToRelationSpec: function(json, selectorSpec1, selectorSpec2) {
-    var ruleName = null;
-    var ruleProps = {};
-    if (CTS.Fn.isArray(json)) {
-      if (json.length == 2) {
-        CTS.Fn.extend(ruleProps, json[1]);
-      }
-      if (json.length > 0) {
-        ruleName = json[0];
-      }
-    } else if (typeof json == 'string') {
-      ruleName = json;
-    }
-    return new CTS.RelationSpec(selectorSpec1, selectorSpec2, ruleName, ruleProps);
-  }
+
+
 });
 
 // Forrest
@@ -2270,6 +2245,34 @@ CTS.Fn.extend(Forrest.prototype, {
     }
   },
 
+  /* The JSON should be of the form:
+   * 1. [
+   * 2.   ["TreeName", "SelectorName", {"selector1-prop":"selector1-val"}]
+   * 3.   ["Relation",  {"prop":"selector1-val"}]
+   * 4.   ["TreeName", "SelectorName", {"selector2-prop":"selector1-val"}]
+   * 5. ]
+   *
+   * The outer array (lines 1 and 5) are optional if you only have a single rule.
+   *
+   */
+  incorporateInlineJson: function(json, node) {
+    if (json.length == 0) {
+      return [];
+    }
+    if (! CTS.Fn.isArray(json[0])) {
+      json = [json];
+    }
+    var ret = [];
+    for (var i = 0; i < json.length; i++) {
+      var s1 = CTS.Parser.Json.parseSelectorSpec(json[i][0], node);
+      var s2 = CTS.Parser.Json.parseSelectorSpec(json[i][2], node);
+      var rule = CTS.Parser.Json.parseRelationSpec(json[i][1], s1, s2);
+      this.relationSpecs.push(rule);
+      ret.push(rule);
+    }
+    return ret;
+  },
+
   /*
    * Realizing Specs
    *
@@ -2310,7 +2313,12 @@ CTS.Fn.extend(Forrest.prototype, {
     // TODO(eob): One day, having a nice dependency DAG would be nice.
     // For now, we'll error if deps aren't met.
     if (! (this.containsTree(s1.treeName) && this.containsTree(s2.treeName))) {
-      CTS.Log.Error("Can not realize RelationSpec becasue one or more trees are not available");
+      if (! this.containsTree(s1.treeName)) {
+        CTS.Log.Error("Can not realize RelationSpec becasue one or more trees are not available", s1.treeName);
+      }
+      if (! this.containsTree(s2.treeName)) {
+        CTS.Log.Error("Can not realize RelationSpec becasue one or more trees are not available", s2.treeName);
+      }
       return;
     }
 
@@ -2326,7 +2334,8 @@ CTS.Fn.extend(Forrest.prototype, {
       for (var j = 0; j < nodes2.length; j++) {
         // Realize a relation between i and j. Creating the relation adds
         // a pointer back to the nodes.
-        var relation = new CTS.Relation(nodes1[i], nodes2[j], spec);
+        var relation = new CTS.Relation.CreateFromSpec(nodes1[i], nodes2[j], spec);
+        console.log("Created relation", relation);
         // Add the relation to the forrest
         this.relations.push(relation);
       }
@@ -2339,7 +2348,7 @@ CTS.Fn.extend(Forrest.prototype, {
    * -------------------------------------------------------- */
 
   containsTree: function(alias) {
-    CTS.Fn.has(this.trees, alias);
+    return CTS.Fn.has(this.trees, alias);
   },
 
   getTree: function(alias) {
@@ -2420,6 +2429,276 @@ CTS.Fn.extend(Forrest.prototype, {
   //}
 
 });
+
+var SelectionSpec = CTS.SelectionSpec = function(treeName, selectorString, props) {
+  this.treeName = treeName;
+  this.selectorString = selectorString;
+  this.props = props;
+  this.inline = false;
+  this.inlineObject = null;
+};
+
+CTS.Fn.extend(SelectionSpec.prototype, {
+  toString: function() {
+    return "<Selector {tree:" + this.treeName +
+           ", type:" + this.treeType +
+           ", selector:" + this.selector +
+           ", variant:" + this.variant + "}>";
+  },
+
+  matches: function(node) {
+    if (CTS.Fn.isUndefined(node._kind)) {
+      CTS.Debugging.Error("Node has no kind", [node]); 
+      return false;
+    } else if (node._kind != this._kind) {
+      CTS.Debugging.Error("Node has wrong kind", [node]);
+      return false;
+    } else {
+      if (this.inline) {
+        return (this.inlineNode == node);
+      } else {
+        var res = ((this.treeName == node.tree.name) && (node.node.is(this.selector)));
+        return res;
+      }
+    }
+  },
+
+  // Returns tuple of [treeName, treeType, stringSpec]
+  PreParse: function(selectorString) {
+    var treeName = "body";
+    var treeType = "html";
+    var selector = null;
+
+    var trimmed = CTS.$.trim(selectorString);
+    if (trimmed[0] == "@") {
+      var pair = trimmed.split('|');
+      if (pair.length == 1) {
+        throw new Error("Cound not parse: " + self.stringSpec);
+      } else {
+        treeName = CTS.$.trim(pair.shift().substring(1));
+        // TODO(eob): set tree type
+        selector = CTS.$.trim(pair);
+      }
+    } else {
+      selector = selectorString;
+    }
+    return [treeName, treeType, selector];
+  },
+
+  // Factory for new selectors
+  Create: function(selectorString) {
+    var parts = this.PreParse(selectorString);
+    var selector = null;
+
+    if (parts[1] == "html") {
+      selector = new DomSelector(parts[2]);
+    } 
+
+    console.log("s", selector);
+    if (selector !== null) {
+      selector.treeName = parts[0];
+      selector.treeType = parts[1];
+      selector.originalString = selectorString;
+    }
+
+    return selector;
+  }
+});
+
+/**
+ * A Relation is a connection between two tree nodes.
+ * Relations are the actual arcs between nodes.
+ * Rules are the language which specify relations.
+ */
+
+var Selection = CTS.Selection = function(nodes, opts) {
+  this.nodes = nodes;
+  this.opts = {};
+  if (typeof opts != 'undefined') {
+    this.opts = CTS.Fn.extend(this.opts, opts);
+  }
+};
+
+CTS.Fn.extend(Selection.prototype, {
+  contains: function(node) {
+    return CTS.Fn.contains(this.nodes, node);
+  },
+
+  clone: function() {
+    // not a deep clone of the selection. we don't want duplicate nodes
+    // running around.
+    return new CTS.Selection(CTS.Fn.union([], this.nodes), this.opts);
+  },
+
+  fromSelectionSpec: function(selectionSpec, forrest) {
+    if (selectionSpec.inline === true) {
+      if (this.inlineNode === null) {
+        this.nodes = [];
+      } else {
+        this.nodes = [selectionSpec.inlineObject];
+      }
+    } else {
+      if (this._selection === null) {
+        this.nodes = forrest.nodesForSelectionSpec(selectionSpec);
+      }
+    }
+    this.spec = selectionSpec;
+  },
+
+  matchesArray: function(arr, exactly, orArrayAncestor) {
+    if (typeof backoffToAncestor == 'undefined') {
+      backoffToAncestor = false;
+    }
+
+    for (var i = 0; i < this.nodes.length; i++) {
+      if (! CTS.Fn.contains(arr, this.nodes[i])) {
+        if (backoffToAncestor) {
+          // 
+        } else {
+          return false;
+        }
+      }
+    }
+    if ((typeof exactly != 'undefined') && (exactly === true)) {
+      return (arr.length = self.nodes.length);
+    } else {
+      return true;
+    }
+  }
+
+});
+
+CTS.Parser = {
+  parseInlineSpecs: function(str, node, intoForrest, realize) {
+    var tup = CTS.Parser._typeAndBodyForInline(str);
+    var kind = tup[0];
+    var body = tup[1];
+    if (kind == 'json') {
+      return CTS.Parser.Json.parseInlineSpecs(body, node, intoForrest, realize);
+    } else if (kind == 'string') {
+      return CTS.Parser.String.parseInlineSpecs(body, node, intoForrest, realize);
+    } else {
+      CTS.Log.Error("I don't understand the inline CTS format", kind);
+      return null;
+    }
+  },
+
+  /* Inline specs can take the form:
+   *  1.  <syntax>:<cts string>
+   *  2.  <cts string>
+   *
+   * Syntax may be one of {string, json}
+   *
+   * If no syntax is specified, string will be assumed.
+   */
+  _typeAndBodyForInline: function(str) {
+    var res = /^([a-zA-Z]+):(.*)$/.exec(str);
+    if (res === null) {
+      return ['string', str];
+    } else {
+      console.log(res);
+      return [res[1], res[2]];
+    }
+  }
+};
+
+CTS.Parser.Json = {
+
+  parseInlineSpecs: function(json, node, intoForrest, realize) {
+    if (typeof json == 'string') {
+      console.log("string", json);
+      json = JSON.parse(json);
+      console.log("parsed", json);
+    }
+    console.log("parse inline specs for", node);
+
+    // Now we build a proper spec document around it.
+    var relations = intoForrest.incorporateInlineJson(json, node);
+    console.log("relns");
+    
+    if (realize) {
+      for (var i = 0; i < relations.length; i++) {
+        console.log("realize", relations[i]);
+        intoForrest.realizeRelationSpec(relations[i]);
+      }
+    }
+  },
+
+  /* 
+   * Returns a Forrest.
+   *
+   * Arguments:
+   *  json - Either a string or JSON object containing CTS.
+   *
+   */
+  parseTreeSheet: function(json, intoForrestSpec) {
+    if (typeof json == 'string') {
+      json = JSON.parse(json);
+    }
+
+    if ((typeof intoForrestSpec == 'undefined') || (intoForrestSpec == null)) {
+      intoForrestSpec = new CTS.ForrestSpec();
+    }
+
+    intoForrestSpec.incorporate(json);
+  },
+
+  parseRelationSpec: function(json, selectorSpec1, selectorSpec2) {
+    console.log("j2r", json);
+    var ruleName = null;
+    var ruleProps = {};
+    if (CTS.Fn.isArray(json)) {
+      if (json.length == 2) {
+        CTS.Fn.extend(ruleProps, json[1]);
+      }
+      if (json.length > 0) {
+        ruleName = json[0];
+      }
+    } else if (typeof json == 'string') {
+      ruleName = json;
+    }
+    var r = new CTS.RelationSpec(selectorSpec1, selectorSpec2, ruleName, ruleProps);
+    console.log("parsed new relation spec", r);
+    return r;
+  },
+
+  parseSelectorSpec: function(json, inlineNode) {
+    console.log("json to selec", json);
+    var treeName = null;
+    var selectorString = null;
+    var args = {};
+
+    if ((json === null) && (inlineNode)) {
+      treeName = inlineNode.tree.name;
+    } else if (CTS.Fn.isArray(json)) {
+      if (json.length == 1) {
+        selectorString = json[0];
+      } else if (json.length == 2) {
+        treeName = json[0];
+        selectorString = json[1];
+      } else if (json.length == 3) {
+        treeName = json[0];
+        selectorString = json[1];
+        args = json[2];
+      }
+    } else if (typeof json == 'string') {
+      selectorString = json;
+    }
+
+    if (treeName == null) {
+      treeName = 'body';
+    }
+
+    var s = new CTS.SelectionSpec(treeName, selectorString, args);
+    if ((json === null) && (inlineNode)) {
+      console.log("setting inline", inlineNode);
+      s.inline = true;
+      s.inlineObject = inlineNode;
+    }
+    return s;
+  }
+
+};
 
 /*
  * Bootstrapper

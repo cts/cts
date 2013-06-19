@@ -1,12 +1,12 @@
 CTS.Parser = {
-  parseInlineSpecs(str, node, intoForrest, realize) {
+  parseInlineSpecs: function(str, node, intoForrest, realize) {
     var tup = CTS.Parser._typeAndBodyForInline(str);
     var kind = tup[0];
     var body = tup[1];
     if (kind == 'json') {
-      return CTS.Parser.Json.parseInlineSpecs(str, node, intoForrest, realize);
+      return CTS.Parser.Json.parseInlineSpecs(body, node, intoForrest, realize);
     } else if (kind == 'string') {
-      return CTS.Parser.String.parseInlineSpecs(str, node, intoForrest, realize);
+      return CTS.Parser.String.parseInlineSpecs(body, node, intoForrest, realize);
     } else {
       CTS.Log.Error("I don't understand the inline CTS format", kind);
       return null;
@@ -21,11 +21,12 @@ CTS.Parser = {
    *
    * If no syntax is specified, string will be assumed.
    */
-  _typeAndBodyForInline(str) {
-    var res = /^\s*([a-zA-Z]+):(.*)$/.exec(str);
-    if (res !== null) {
+  _typeAndBodyForInline: function(str) {
+    var res = /^([a-zA-Z]+):(.*)$/.exec(str);
+    if (res === null) {
       return ['string', str];
     } else {
+      console.log(res);
       return [res[1], res[2]];
     }
   }

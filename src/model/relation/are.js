@@ -16,7 +16,7 @@ CTS.Relation.Are = function(node1, node2, spec) {
   this.name = 'are';
 };
 
-CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Relation, {
+CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
   getDefaultOpts: function() {
     return {
       prefix: 0,

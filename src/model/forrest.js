@@ -79,6 +79,34 @@ CTS.Fn.extend(Forrest.prototype, {
     }
   },
 
+  /* The JSON should be of the form:
+   * 1. [
+   * 2.   ["TreeName", "SelectorName", {"selector1-prop":"selector1-val"}]
+   * 3.   ["Relation",  {"prop":"selector1-val"}]
+   * 4.   ["TreeName", "SelectorName", {"selector2-prop":"selector1-val"}]
+   * 5. ]
+   *
+   * The outer array (lines 1 and 5) are optional if you only have a single rule.
+   *
+   */
+  incorporateInlineJson: function(json, node) {
+    if (json.length == 0) {
+      return [];
+    }
+    if (! CTS.Fn.isArray(json[0])) {
+      json = [json];
+    }
+    var ret = [];
+    for (var i = 0; i < json.length; i++) {
+      var s1 = CTS.Parser.Json.parseSelectorSpec(json[i][0], node);
+      var s2 = CTS.Parser.Json.parseSelectorSpec(json[i][2], node);
+      var rule = CTS.Parser.Json.parseRelationSpec(json[i][1], s1, s2);
+      this.relationSpecs.push(rule);
+      ret.push(rule);
+    }
+    return ret;
+  },
+
   /*
    * Realizing Specs
    *
@@ -119,7 +147,12 @@ CTS.Fn.extend(Forrest.prototype, {
     // TODO(eob): One day, having a nice dependency DAG would be nice.
     // For now, we'll error if deps aren't met.
     if (! (this.containsTree(s1.treeName) && this.containsTree(s2.treeName))) {
-      CTS.Log.Error("Can not realize RelationSpec becasue one or more trees are not available");
+      if (! this.containsTree(s1.treeName)) {
+        CTS.Log.Error("Can not realize RelationSpec becasue one or more trees are not available", s1.treeName);
+      }
+      if (! this.containsTree(s2.treeName)) {
+        CTS.Log.Error("Can not realize RelationSpec becasue one or more trees are not available", s2.treeName);
+      }
       return;
     }
 
@@ -135,7 +168,8 @@ CTS.Fn.extend(Forrest.prototype, {
       for (var j = 0; j < nodes2.length; j++) {
         // Realize a relation between i and j. Creating the relation adds
         // a pointer back to the nodes.
-        var relation = new CTS.Relation(nodes1[i], nodes2[j], spec);
+        var relation = new CTS.Relation.CreateFromSpec(nodes1[i], nodes2[j], spec);
+        console.log("Created relation", relation);
         // Add the relation to the forrest
         this.relations.push(relation);
       }
@@ -148,7 +182,7 @@ CTS.Fn.extend(Forrest.prototype, {
    * -------------------------------------------------------- */
 
   containsTree: function(alias) {
-    CTS.Fn.has(this.trees, alias);
+    return CTS.Fn.has(this.trees, alias);
   },
 
   getTree: function(alias) {

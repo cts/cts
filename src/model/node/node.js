@@ -26,6 +26,7 @@ CTS.Node = {
   },
 
   registerRelation: function(relation) {
+    console.log("Registering Relation", self, relation);
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
     }
@@ -48,7 +49,7 @@ CTS.Node = {
       CTS.Log.Warn("Not registering inline relations: have already done so.");
     } else {
       if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-        var specStr = _subclass_getInlineRelationSpecString();
+        var specStr = this._subclass_getInlineRelationSpecString();
         if (specStr) {
           CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
         }

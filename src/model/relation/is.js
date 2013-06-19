@@ -15,7 +15,7 @@ CTS.Relation.Is = function(node1, node2, spec) {
   this.initializeBase();
 };
 
-CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Relation, {
+CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var from = this.opposite(toward);
     var content = from.getValue(this.optsFor(from));

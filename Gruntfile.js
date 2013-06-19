@@ -59,12 +59,12 @@ module.exports = function(grunt) {
           
           "src/model/forrest-spec.js",
           "src/model/forrest.js",
-        //  
-        //  "src/model/selection-spec.js",
-        //  "src/model/selection.js",
+          
+          "src/model/selection-spec.js",
+          "src/model/selection.js",
 
-         // "src/parser/parser.js",
-         // "src/parser/parser-json.js",
+          "src/parser/parser.js",
+          "src/parser/parser-json.js",
 
           "src/bootstrapper.js",
           "src/engine.js",

@@ -4,7 +4,27 @@
  * Rules are the language which specify relations.
  */
 
-CTS.Relation.Relation = {
+CTS.Relation = {};
+
+CTS.Relation.CreateFromSpec = function(node1, node2, spec) {
+  if (spec.name == 'is') {
+    return new CTS.Relation.Is(node1, node2, spec);
+  } else if (spec.name == 'are') {
+    return new CTS.Relation.Are(node1, node2, spec);
+  } else if (spec.name == 'graft') {
+    return new CTS.Relation.Graft(node1, node2, spec);
+  } else if (spec.name == 'if-exist') {
+    return new CTS.Relation.IfExist(node1, node2, spec);
+  } else if (spec.name == 'if-nexist') {
+    return new CTS.Relation.Are(node1, node2, spec);
+    return new CTS.Relation.IfNexist(node1, node2, spec);
+  } else {
+    CTS.Log.Fatal("Unsure what kind of relation this is:", spec.name);
+    return null;
+  }
+};
+
+CTS.Relation.Base = {
 
   initializeBase: function() {
     if (this.node1 != null) {

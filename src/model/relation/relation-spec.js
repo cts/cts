@@ -1,6 +1,4 @@
-CTS.Relation = {};
-
-CTS.Relation.RelationSpec = function(selector1, selector2, name, props1, props2, propsMiddle) {
+CTS.RelationSpec = function(selector1, selector2, name, props1, props2, propsMiddle) {
   this.selectionSpec1 = selector1;
   this.selectionSpec2 = selector2;
   this.name = name;
@@ -9,7 +7,7 @@ CTS.Relation.RelationSpec = function(selector1, selector2, name, props1, props2,
   this.opts = propsMiddle || {};
 };
 
-CTS.Fn.extend(CTS.Relation.RelationSpec.prototype, {
+CTS.Fn.extend(CTS.RelationSpec.prototype, {
   head: function() {
     return this.selectionSpec1;
   },

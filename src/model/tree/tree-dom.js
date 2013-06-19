@@ -6,6 +6,7 @@ var DomTree = CTS.DomTree = function(forrest, node, spec) {
   this.forrest = forrest;
   this.spec = spec;
   this.name = spec.name;
+  this.root.realizeChildren();
 };
 
 // Instance Methods
@@ -13,14 +14,12 @@ var DomTree = CTS.DomTree = function(forrest, node, spec) {
 CTS.Fn.extend(DomTree.prototype, Tree, {
   nodesForSelectionSpec: function(spec) {
     if (spec.inline) {
-      return [this.inlineObject];
+      console.log("Nodes for inline spec", this.inlineObject);
+      return [spec.inlineObject];
     } else {
-      // Assumption: root can't be a sibling group
-      var jqnodes = this.root.find(spec.selectorString).toArray();
-      var nodes = CTS.Fn.map(jqnodes, function(n) {
-        return new DomNode(CTS.$(n), this);
-      }, this);
-      return nodes;
+      console.log("nodes for selector string spec");
+      return this.root.find(spec.selectorString);
     }
   }
+
 });

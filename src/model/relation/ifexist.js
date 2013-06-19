@@ -16,7 +16,7 @@ CTS.Relation.IfExist = function(node1, node2, spec) {
   this.initializeBase();
 };
 
-CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Relation, {
+CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var other = this.opposite(toward);
     if ((other == CTS.NonExistantNode) || (other == null) || (CTS.Fn.isUndefined(other))) {

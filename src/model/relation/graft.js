@@ -22,7 +22,7 @@ CTS.Relation.Graft = function(node1, node2, spec) {
   this.initializeBase();
 };
 
-CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Relation, {
+CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var opp = this.opposite(toward);
     if (opp != null) {
