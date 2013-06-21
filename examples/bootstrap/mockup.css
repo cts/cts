@@ -1,0 +1,59 @@
+.topper {
+  background-color: #202020;
+}
+
+body {
+  background-color: #F1F1F3 !important
+}
+
+ /* Custom container */
+.container-narrow {
+  margin: 0 auto;
+  max-width: 700px;
+}
+
+.container-narrow > hr {
+  margin: 30px 0;
+}
+
+/* Base class
+------------------------- */
+.headstrip {
+  position: relative;
+  padding: 40px 0;
+  color: #fff;
+}
+
+.headstrip h1 {
+  font-family: 'Raleway', sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 40px;
+  float: left;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+/* http://themes.playnethemes.com/?theme=showy */
+
+.headstrip p {
+  text-align: right;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 200;
+  float: right;
+  line-height: 40px;
+  font-size: 18px;
+}
+
+.headstrip p span {
+  margin-left: 28px;
+  color: #aaa;
+}
+
+.headstrip p span.selected {
+  border-bottom: 2px solid #73d2b9;
+  color: #fff;
+}
+

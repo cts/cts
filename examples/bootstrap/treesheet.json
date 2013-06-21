@@ -1,0 +1,10 @@
+{
+  "trees": [["HTML", "mockup", "mockup.html"]],
+  "relations": [
+    ["body", "graft", ["mockup", ".template"]],
+    [["mockup", ".title"], "is", "h1"],
+    [["mockup", "#blocks"], "are", "section"],
+    [["mockup", "#blocks .content"], "is", "article"]
+  ]
+}
+
