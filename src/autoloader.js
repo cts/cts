@@ -18,6 +18,8 @@ CTS.shouldAutoload = function() {
 };
 
 if (CTS.shouldAutoload()) {
-  CTS.engine = new CTS.Engine();
-  CTS.engine.boot();
+  CTS.$(function() {
+    CTS.engine = new CTS.Engine();
+    CTS.engine.boot();
+  });
 }

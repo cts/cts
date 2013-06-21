@@ -1,13 +1,13 @@
 /* Like a JSON tree but any CTS rules CREATE the keypath upon resolution.
  */
-var ScraperTree = CTS.ScraperTree = function(forrest, attributes) {
+CTS.Tree.Xpando = function(forrest, attributes) {
   this.forrest = forrest;
   this.root = {};
 };
 
 // Instance Methods
 // ----------------
-CTS.Fn.extend(JsonTree.prototype, Tree, {
+CTS.Fn.extend(CTS.Tree.Xpando, CTS.Tree.Base, {
 
   nodesForSelectionSpec: function(spec) {
     alert("unimplemented!");

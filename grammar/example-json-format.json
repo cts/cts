@@ -2,6 +2,9 @@
   "name": "OptionalName",
   "kind": "inline|linked",
   "url": "URL",
+  "aliases": [
+    ["mockup": "mockup.html"]
+  ],
   "relations": [
      [
        ["TreeName", "SelectorName", {"selector1-prop":"selector1-val"}]

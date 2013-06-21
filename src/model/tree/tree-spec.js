@@ -1,4 +1,4 @@
-var TreeSpec = CTS.TreeSpec = function(kind, name, url) {
+CTS.Tree.Spec = function(kind, name, url) {
   this.kind = kind;
   this.name = name;
   this.url = url;

@@ -78,7 +78,7 @@ CTS.Debugging = {
     };
 
     var pop = function() {
-      var n = new CTS.AbstractNode();
+      var n = new CTS.Node.Abstract();
       n.setValue(name);
       if (firstParen != -1) {
         // Handle innards.
@@ -121,7 +121,7 @@ CTS.Debugging = {
       last = c;
     }
     if (name != "") {
-      var n = new CTS.AbstractNode();
+      var n = new CTS.Node.Abstract();
       n.setValue(name);
       ret.push(n);
     }

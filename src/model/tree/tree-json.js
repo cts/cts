@@ -1,6 +1,6 @@
 // Constructor
 // -----------
-var JsonTree = CTS.JsonTree = function(forrest, root, spec) {
+CTS.Tree.Json = function(forrest, root, spec) {
   this.root = new CTS.JsonNode(root, this);
   this.forrest = forrest;
   this.spec = spec;
@@ -9,7 +9,7 @@ var JsonTree = CTS.JsonTree = function(forrest, root, spec) {
 
 // Instance Methods
 // ----------------
-CTS.Fn.extend(JsonTree.prototype, Tree, {
+CTS.Fn.extend(CTS.Tree.Json, CTS.Tree.Base, {
   nodesForSelectionSpec: function(spec) {
     CTS.Log.Fatal("JsonTree::nodesForSelectionSpec - Unimplemented!");
     return [];

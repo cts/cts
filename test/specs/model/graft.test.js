@@ -96,24 +96,29 @@ test("Graft and Are coordinate well", function() {
 
   // ARE
   t1.children[0].relations[0].execute(t1.children[0]);
-  // IS
+  console.log("DUMB");
+  CTS.Debugging.DumpTree(t1);
+
   var span1 = t1.children[0].children[0].children[0];
+  var span2 = t1.children[0].children[1].children[0];
+  var span3 = t1.children[0].children[2].children[0];
+
+  equal(span1.relations.length, 2, "Span1 has two relations"); 
+  equal(span2.relations.length, 2, "Span2 has two relations"); 
+  equal(span3.relations.length, 2, "Span3 has two relations");
+  
+  // IS
   equal(span1.getValue(), "span");
   span1.relations[0].execute(span1);
   equal(span1.getValue(), "name1");
-  equal(span1.relations.length, 2); 
 
-  var span2 = t1.children[0].children[1].children[0];
   equal(span2.getValue(), "span");
   span2.relations[0].execute(span2);
   equal(span2.getValue(), "name2");
-  equal(span2.relations.length, 2); 
 
-  var span3 = t1.children[0].children[2].children[0];
   equal(span3.getValue(), "span");
   span3.relations[0].execute(span3);
-  equal(span3.getValue(), "name3");
-  equal(span3.relations.length, 2);
+  equal(span3.getValue(), "name3", "Span3 is Name3");
 
   // Now we manually process the graft
   var w1 = t1.children[0].children[0];

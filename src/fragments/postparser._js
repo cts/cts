@@ -1,1 +1,1 @@
-var Parser = CTS.Parser = parser;
+CTS.Parser.CTS2Autogen = parser;

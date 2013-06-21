@@ -31,32 +31,55 @@ var Utilities = CTS.Utilities = {
     CTS.Fn.each(CTS.$('style[type="text/cts"]'), function(elem) {
       var block = {
         type: 'inline',
+        format: 'cts',
         content: $(elem).html()
       };
-      ret.append(block);
+      ret.push(block);
+    }, this);
+    CTS.Fn.each(CTS.$('style[type="json/cts"]'), function(elem) {
+      var block = {
+        type: 'inline',
+        format: 'json',
+        content: $(elem).html()
+      };
+      ret.push(block);
     }, this);
     CTS.Fn.each(CTS.$('link[rel="treesheet"]'), function(elem) {
+      var e = $(elem);
+      var type = e.attr('type');
+      var format = 'cts';
+      if (type == 'json/cts') {
+        format = 'json';
+      }
       var block = {
         type: 'link',
-        url: $(elem).attr('href')
+        url: $(elem).attr('href'),
+        format: format
       };
-      ret.append(block);
+      ret.push(block);
     }, this);
     return ret;
   },
 
-  loadRemoteString: function(params, successFn, errorFn) {
-    $.ajax({url: params.url,
-            dataType: 'text',
-            success: success,
-            error: error,
-            beforeSend: function(xhr, settings) {
-              CTS.Fn
-      .each(params, function(value, key, list) {
-                xhr[key] = value;
-              }, this);
-            }
+  fetchString: function(params, successFn, errorFn) {
+    var deferred = Q.defer();
+    var xhr = $.ajax({
+      url: params.url,
+      dataType: 'text',
+      beforeSend: function(xhr, settings) {
+        CTS.Fn.each(params, function(value, key, list) {
+          xhr[key] = value;
+        }, this);
+      }
     });
+    xhr.done(function(data, textStatus, jqXhr) {
+      deferred.resolve(data, textStatus, jqXhr);
+    });
+    xhr.fail(function(jqXhr, textStatus, errorThrown) {
+      CTS.Log.Error("Couldn't fetch string at:", params.url);
+      deferred.reject(jqXhr, textStatus, errorThrown);
+    });
+    return deferred.promise;
   },
 
   fetchTree: function(spec, callback, context) {

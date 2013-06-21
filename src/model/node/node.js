@@ -6,8 +6,9 @@
 // Nodes are responsible for understanding how to behave when acted on
 // by certain relations (in both directions). The differences between
 // different types of trees (JSON, HTML, etc) are concealed at this level.
+CTS.Node = {};
 
-CTS.Node = {
+CTS.Node.Base = {
 
   initializeNodeBase: function(tree, opts) {
     this.opts = opts;
@@ -26,7 +27,6 @@ CTS.Node = {
   },
 
   registerRelation: function(relation) {
-    console.log("Registering Relation", self, relation);
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
     }
@@ -48,14 +48,19 @@ CTS.Node = {
     if (this.addedMyInlineRelationsToForrest) {
       CTS.Log.Warn("Not registering inline relations: have already done so.");
     } else {
-      if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-        var specStr = this._subclass_getInlineRelationSpecString();
-        if (specStr) {
+      var specStr = this._subclass_getInlineRelationSpecString();
+      this.addedMyInlineRelationsToForrest = true;
+      if (specStr) {
+        if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
           CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
+        } else {
+          this.addedMyInlineRelationsToForrest = false;
+          if (Fn.isUndefined(this.tree) || (this.tree === null)) {
+            CTS.Log.Error("[Node] Could not add inline relns to null tree");
+          } else if (Fn.isUndefined(this.tree.forrest) || (this.tree.forrest === null)) {
+            CTS.Log.Error("[Node] Could not add inline relns to null forrest");
+          }
         }
-        this.addedMyInlineRelationsToForrest = true;
-      } else {
-        CTS.Log.Warn("Could not add inline relations to null tree.forrest");
       }
     }
   },
@@ -80,9 +85,6 @@ CTS.Node = {
       } else {
         this.children[i] = this.children[i - 1];
       }
-    }
-    if (log) {
-      console.log("Adding", node, "to", this);
     }
 
     node.parentNode = this;
@@ -150,29 +152,38 @@ CTS.Node = {
 
   clone: function() {
     var c = this._subclass_beginClone();
-
     // Note: because the subclass constructs it's own subtree,
     // that means it is also responsible for cloning downstream nodes.
-    // thus we only take care of THIS NODE's relations.
-    var r = this.getRelations();
-    for (var i = 0; i < r.length; i++) {
-      var n1 = r[i].node1;
-      var n2 = r[i].node2;
-      if (n1 == this) {
-        n1 = c;
-      } else if (n2 == this) {
-        n2 = c;
-      } else {
-        CTS.Fatal("Clone failed");
-      }
-      var relationClone = r[i].clone(n1, n2);
-      console.log("Cloning", r[i].name, "for", this.getValue());
-    };
+    // But we DO need to clone downstream relations.
+    this.recursivelyCloneRelations(c);
     // Note that we DON'T wire up any parent-child relationships
     // because that would result in more than just cloning the node
     // but also modifying other structures, such as the tree which
     // contained the source.
     return c;
+  },
+
+  recursivelyCloneRelations: function(to) {
+    var i;
+    var r = this.getRelations();
+    for (i = 0; i < r.length; i++) {
+      var n1 = r[i].node1;
+      var n2 = r[i].node2;
+      if (n1 == this) {
+        n1 = to;
+      } else if (n2 == this) {
+        n2 = to;
+      } else {
+        CTS.Fatal("Clone failed");
+      }
+      var relationClone = r[i].clone(n1, n2);
+    };
+
+    for (i = 0; i < this.getChildren().length; i++) {
+      var myKid = this.children[i];
+      var otherKid = to.children[i];
+      myKid.recursivelyCloneRelations(otherKid);
+    }
   },
 
   pruneRelations: function(otherParent, otherContainer) {
@@ -199,31 +210,26 @@ CTS.Node = {
 
   _processIncoming: function() {
     // Do incoming nodes except graft
-    this._processIncomingRelations('if-exist');
-    this._processIncomingRelations('if-nexist');
-    this._processIncomingRelations('is');
-    this._processIncomingRelations('are');
+    var r = this.getRelations();
+    this._processIncomingRelations(r, 'if-exist');
+    this._processIncomingRelations(r, 'if-nexist');
+    this._processIncomingRelations(r, 'is');
+    this._processIncomingRelations(r, 'are');
 
-    CTS.Log.Info("Dump Pre");
-    CTS.Debugging.DumpTree(this);
     // Do children
     for (var i = 0; i < this.children.length; i++) {
       this.children[i]._processIncoming();
     }
-    CTS.Log.Info("Dump Post");
-    CTS.Debugging.DumpTree(this);
 
     // Do graft
-    this._processIncomingRelations('graft', true);
+    this._processIncomingRelations(r, 'graft', true);
   },
 
-  _processIncomingRelations: function(name, once) {
-    console.log("proc inc from node", this.getValue(), name);
-    for (var i = 0; i < this.relations.length; i++) {
-      if (this.relations[i].name == name) {
-        if (this.relations[i].node1.equals(this)) {
-          this.relations[i].execute(this);
-          console.log("found one " + this.relations[i].name, name);
+  _processIncomingRelations: function(relations, name, once) {
+    for (var i = 0; i < relations.length; i++) {
+      if (relations[i].name == name) {
+        if (relations[i].node1.equals(this)) {
+          relations[i].execute(this);
           if (once) {
             break;
           }
@@ -253,7 +259,8 @@ CTS.Node = {
   _subclass_realizeChildren: function() {},
   _subclass_insertChild: function(child, afterIndex) {},
   _subclass_destroy: function() {},
-  _subclass_getInlineRelations: function() {},
-  _subclass_beginClone: function() {}
+  _subclass_beginClone: function() {},
+  _subclass_getInlineRelationSpecString: function() { return null; }
+
 
 };

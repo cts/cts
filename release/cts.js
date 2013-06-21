@@ -362,7 +362,7 @@ CTS.Debugging = {
     };
 
     var pop = function() {
-      var n = new CTS.AbstractNode();
+      var n = new CTS.Node.Abstract();
       n.setValue(name);
       if (firstParen != -1) {
         // Handle innards.
@@ -405,7 +405,7 @@ CTS.Debugging = {
       last = c;
     }
     if (name != "") {
-      var n = new CTS.AbstractNode();
+      var n = new CTS.Node.Abstract();
       n.setValue(name);
       ret.push(n);
     }
@@ -639,6 +639,1728 @@ CTS.Fn.extend(TreeViz.prototype, {
     this.write("}");
   }
 });
+
+/*!
+ *
+ * Copyright 2009-2012 Kris Kowal under the terms of the MIT
+ * license found at http://github.com/kriskowal/q/raw/master/LICENSE
+ *
+ * With parts by Tyler Close
+ * Copyright 2007-2009 Tyler Close under the terms of the MIT X license found
+ * at http://www.opensource.org/licenses/mit-license.html
+ * Forked at ref_send.js version: 2009-05-11
+ *
+ * With parts by Mark Miller
+ * Copyright (C) 2011 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+var Q = CTS.Q = (function () {
+"use strict";
+
+var hasStacks = false;
+try {
+    throw new Error();
+} catch (e) {
+    hasStacks = !!e.stack;
+}
+
+// All code after this point will be filtered from stack traces reported
+// by Q.
+var qStartingLine = captureLine();
+var qFileName;
+
+// shims
+
+// used for fallback in "allResolved"
+var noop = function () {};
+
+// Use the fastest possible means to execute a task in a future turn
+// of the event loop.
+var nextTick =(function () {
+    // linked list of tasks (single, with head node)
+    var head = {task: void 0, next: null};
+    var tail = head;
+    var flushing = false;
+    var requestTick = void 0;
+    var isNodeJS = false;
+
+    function flush() {
+        /* jshint loopfunc: true */
+
+        while (head.next) {
+            head = head.next;
+            var task = head.task;
+            head.task = void 0;
+            var domain = head.domain;
+
+            if (domain) {
+                head.domain = void 0;
+                domain.enter();
+            }
+
+            try {
+                task();
+
+            } catch (e) {
+                if (isNodeJS) {
+                    // In node, uncaught exceptions are considered fatal errors.
+                    // Re-throw them synchronously to interrupt flushing!
+
+                    // Ensure continuation if the uncaught exception is suppressed
+                    // listening "uncaughtException" events (as domains does).
+                    // Continue in next event to avoid tick recursion.
+                    if (domain) {
+                        domain.exit();
+                    }
+                    setTimeout(flush, 0);
+                    if (domain) {
+                        domain.enter();
+                    }
+
+                    throw e;
+
+                } else {
+                    // In browsers, uncaught exceptions are not fatal.
+                    // Re-throw them asynchronously to avoid slow-downs.
+                    setTimeout(function() {
+                       throw e;
+                    }, 0);
+                }
+            }
+
+            if (domain) {
+                domain.exit();
+            }
+        }
+
+        flushing = false;
+    }
+
+    nextTick = function (task) {
+        tail = tail.next = {
+            task: task,
+            domain: isNodeJS && process.domain,
+            next: null
+        };
+
+        if (!flushing) {
+            flushing = true;
+            requestTick();
+        }
+    };
+
+    if (typeof process !== "undefined" && process.nextTick) {
+        // Node.js before 0.9. Note that some fake-Node environments, like the
+        // Mocha test runner, introduce a `process` global without a `nextTick`.
+        isNodeJS = true;
+
+        requestTick = function () {
+            process.nextTick(flush);
+        };
+
+    } else if (typeof setImmediate === "function") {
+        // In IE10, Node.js 0.9+, or https://github.com/NobleJS/setImmediate
+        if (typeof window !== "undefined") {
+            requestTick = setImmediate.bind(window, flush);
+        } else {
+            requestTick = function () {
+                setImmediate(flush);
+            };
+        }
+
+    } else if (typeof MessageChannel !== "undefined") {
+        // modern browsers
+        // http://www.nonblocking.io/2011/06/windownexttick.html
+        var channel = new MessageChannel();
+        channel.port1.onmessage = flush;
+        requestTick = function () {
+            channel.port2.postMessage(0);
+        };
+
+    } else {
+        // old browsers
+        requestTick = function () {
+            setTimeout(flush, 0);
+        };
+    }
+
+    return nextTick;
+})();
+
+// Attempt to make generics safe in the face of downstream
+// modifications.
+// There is no situation where this is necessary.
+// If you need a security guarantee, these primordials need to be
+// deeply frozen anyway, and if you don’t need a security guarantee,
+// this is just plain paranoid.
+// However, this does have the nice side-effect of reducing the size
+// of the code by reducing x.call() to merely x(), eliminating many
+// hard-to-minify characters.
+// See Mark Miller’s explanation of what this does.
+// http://wiki.ecmascript.org/doku.php?id=conventions:safe_meta_programming
+function uncurryThis(f) {
+    var call = Function.call;
+    return function () {
+        return call.apply(f, arguments);
+    };
+}
+// This is equivalent, but slower:
+// uncurryThis = Function_bind.bind(Function_bind.call);
+// http://jsperf.com/uncurrythis
+
+var array_slice = uncurryThis(Array.prototype.slice);
+
+var array_reduce = uncurryThis(
+    Array.prototype.reduce || function (callback, basis) {
+        var index = 0,
+            length = this.length;
+        // concerning the initial value, if one is not provided
+        if (arguments.length === 1) {
+            // seek to the first value in the array, accounting
+            // for the possibility that is is a sparse array
+            do {
+                if (index in this) {
+                    basis = this[index++];
+                    break;
+                }
+                if (++index >= length) {
+                    throw new TypeError();
+                }
+            } while (1);
+        }
+        // reduce
+        for (; index < length; index++) {
+            // account for the possibility that the array is sparse
+            if (index in this) {
+                basis = callback(basis, this[index], index);
+            }
+        }
+        return basis;
+    }
+);
+
+var array_indexOf = uncurryThis(
+    Array.prototype.indexOf || function (value) {
+        // not a very good shim, but good enough for our one use of it
+        for (var i = 0; i < this.length; i++) {
+            if (this[i] === value) {
+                return i;
+            }
+        }
+        return -1;
+    }
+);
+
+var array_map = uncurryThis(
+    Array.prototype.map || function (callback, thisp) {
+        var self = this;
+        var collect = [];
+        array_reduce(self, function (undefined, value, index) {
+            collect.push(callback.call(thisp, value, index, self));
+        }, void 0);
+        return collect;
+    }
+);
+
+var object_create = Object.create || function (prototype) {
+    function Type() { }
+    Type.prototype = prototype;
+    return new Type();
+};
+
+var object_hasOwnProperty = uncurryThis(Object.prototype.hasOwnProperty);
+
+var object_keys = Object.keys || function (object) {
+    var keys = [];
+    for (var key in object) {
+        if (object_hasOwnProperty(object, key)) {
+            keys.push(key);
+        }
+    }
+    return keys;
+};
+
+var object_toString = uncurryThis(Object.prototype.toString);
+
+function isObject(value) {
+    return value === Object(value);
+}
+
+// generator related shims
+
+// FIXME: Remove this function once ES6 generators are in SpiderMonkey.
+function isStopIteration(exception) {
+    return (
+        object_toString(exception) === "[object StopIteration]" ||
+        exception instanceof QReturnValue
+    );
+}
+
+// FIXME: Remove this helper and Q.return once ES6 generators are in
+// SpiderMonkey.
+var QReturnValue;
+if (typeof ReturnValue !== "undefined") {
+    QReturnValue = ReturnValue;
+} else {
+    QReturnValue = function (value) {
+        this.value = value;
+    };
+}
+
+// Until V8 3.19 / Chromium 29 is released, SpiderMonkey is the only
+// engine that has a deployed base of browsers that support generators.
+// However, SM's generators use the Python-inspired semantics of
+// outdated ES6 drafts.  We would like to support ES6, but we'd also
+// like to make it possible to use generators in deployed browsers, so
+// we also support Python-style generators.  At some point we can remove
+// this block.
+var hasES6Generators;
+try {
+    /* jshint evil: true, nonew: false */
+    new Function("(function* (){ yield 1; })");
+    hasES6Generators = true;
+} catch (e) {
+    hasES6Generators = false;
+}
+
+// long stack traces
+
+var STACK_JUMP_SEPARATOR = "From previous event:";
+
+function makeStackTraceLong(error, promise) {
+    // If possible, transform the error stack trace by removing Node and Q
+    // cruft, then concatenating with the stack trace of `promise`. See #57.
+    if (hasStacks &&
+        promise.stack &&
+        typeof error === "object" &&
+        error !== null &&
+        error.stack &&
+        error.stack.indexOf(STACK_JUMP_SEPARATOR) === -1
+    ) {
+        var stacks = [];
+        for (var p = promise; !!p; p = p.source) {
+            if (p.stack) {
+                stacks.unshift(p.stack);
+            }
+        }
+        stacks.unshift(error.stack);
+
+        var concatedStacks = stacks.join("\n" + STACK_JUMP_SEPARATOR + "\n");
+        error.stack = filterStackString(concatedStacks);
+    }
+}
+
+function filterStackString(stackString) {
+    var lines = stackString.split("\n");
+    var desiredLines = [];
+    for (var i = 0; i < lines.length; ++i) {
+        var line = lines[i];
+
+        if (!isInternalFrame(line) && !isNodeFrame(line) && line) {
+            desiredLines.push(line);
+        }
+    }
+    return desiredLines.join("\n");
+}
+
+function isNodeFrame(stackLine) {
+    return stackLine.indexOf("(module.js:") !== -1 ||
+           stackLine.indexOf("(node.js:") !== -1;
+}
+
+function getFileNameAndLineNumber(stackLine) {
+    // Named functions: "at functionName (filename:lineNumber:columnNumber)"
+    // In IE10 function name can have spaces ("Anonymous function") O_o
+    var attempt1 = /at .+ \((.+):(\d+):(?:\d+)\)$/.exec(stackLine);
+    if (attempt1) {
+        return [attempt1[1], Number(attempt1[2])];
+    }
+
+    // Anonymous functions: "at filename:lineNumber:columnNumber"
+    var attempt2 = /at ([^ ]+):(\d+):(?:\d+)$/.exec(stackLine);
+    if (attempt2) {
+        return [attempt2[1], Number(attempt2[2])];
+    }
+
+    // Firefox style: "function@filename:lineNumber or @filename:lineNumber"
+    var attempt3 = /.*@(.+):(\d+)$/.exec(stackLine);
+    if (attempt3) {
+        return [attempt3[1], Number(attempt3[2])];
+    }
+}
+
+function isInternalFrame(stackLine) {
+    var fileNameAndLineNumber = getFileNameAndLineNumber(stackLine);
+
+    if (!fileNameAndLineNumber) {
+        return false;
+    }
+
+    var fileName = fileNameAndLineNumber[0];
+    var lineNumber = fileNameAndLineNumber[1];
+
+    return fileName === qFileName &&
+        lineNumber >= qStartingLine &&
+        lineNumber <= qEndingLine;
+}
+
+// discover own file name and line number range for filtering stack
+// traces
+function captureLine() {
+    if (!hasStacks) {
+        return;
+    }
+
+    try {
+        throw new Error();
+    } catch (e) {
+        var lines = e.stack.split("\n");
+        var firstLine = lines[0].indexOf("@") > 0 ? lines[1] : lines[2];
+        var fileNameAndLineNumber = getFileNameAndLineNumber(firstLine);
+        if (!fileNameAndLineNumber) {
+            return;
+        }
+
+        qFileName = fileNameAndLineNumber[0];
+        return fileNameAndLineNumber[1];
+    }
+}
+
+function deprecate(callback, name, alternative) {
+    return function () {
+        if (typeof console !== "undefined" &&
+            typeof console.warn === "function") {
+            console.warn(name + " is deprecated, use " + alternative +
+                         " instead.", new Error("").stack);
+        }
+        return callback.apply(callback, arguments);
+    };
+}
+
+// end of shims
+// beginning of real work
+
+/**
+ * Creates fulfilled promises from non-thenables,
+ * Passes Q promises through,
+ * Coerces other thenables to Q promises.
+ */
+function Q(value) {
+    return resolve(value);
+}
+
+/**
+ * Performs a task in a future turn of the event loop.
+ * @param {Function} task
+ */
+Q.nextTick = nextTick;
+
+/**
+ * Controls whether or not long stack traces will be on
+ */
+Q.longStackSupport = false;
+
+/**
+ * Constructs a {promise, resolve, reject} object.
+ *
+ * `resolve` is a callback to invoke with a more resolved value for the
+ * promise. To fulfill the promise, invoke `resolve` with any value that is
+ * not a thenable. To reject the promise, invoke `resolve` with a rejected
+ * thenable, or invoke `reject` with the reason directly. To resolve the
+ * promise to another thenable, thus putting it in the same state, invoke
+ * `resolve` with that other thenable.
+ */
+Q.defer = defer;
+function defer() {
+    // if "messages" is an "Array", that indicates that the promise has not yet
+    // been resolved.  If it is "undefined", it has been resolved.  Each
+    // element of the messages array is itself an array of complete arguments to
+    // forward to the resolved promise.  We coerce the resolution value to a
+    // promise using the `resolve` function because it handles both fully
+    // non-thenable values and other thenables gracefully.
+    var messages = [], progressListeners = [], resolvedPromise;
+
+    var deferred = object_create(defer.prototype);
+    var promise = object_create(Promise.prototype);
+
+    promise.promiseDispatch = function (resolve, op, operands) {
+        var args = array_slice(arguments);
+        if (messages) {
+            messages.push(args);
+            if (op === "when" && operands[1]) { // progress operand
+                progressListeners.push(operands[1]);
+            }
+        } else {
+            nextTick(function () {
+                resolvedPromise.promiseDispatch.apply(resolvedPromise, args);
+            });
+        }
+    };
+
+    // XXX deprecated
+    promise.valueOf = deprecate(function () {
+        if (messages) {
+            return promise;
+        }
+        var nearerValue = nearer(resolvedPromise);
+        if (isPromise(nearerValue)) {
+            resolvedPromise = nearerValue; // shorten chain
+        }
+        return nearerValue;
+    }, "valueOf", "inspect");
+
+    promise.inspect = function () {
+        if (!resolvedPromise) {
+            return { state: "pending" };
+        }
+        return resolvedPromise.inspect();
+    };
+
+    if (Q.longStackSupport && hasStacks) {
+        try {
+            throw new Error();
+        } catch (e) {
+            // NOTE: don't try to use `Error.captureStackTrace` or transfer the
+            // accessor around; that causes memory leaks as per GH-111. Just
+            // reify the stack trace as a string ASAP.
+            //
+            // At the same time, cut off the first line; it's always just
+            // "[object Promise]\n", as per the `toString`.
+            promise.stack = e.stack.substring(e.stack.indexOf("\n") + 1);
+        }
+    }
+
+    // NOTE: we do the checks for `resolvedPromise` in each method, instead of
+    // consolidating them into `become`, since otherwise we'd create new
+    // promises with the lines `become(whatever(value))`. See e.g. GH-252.
+
+    function become(newPromise) {
+        resolvedPromise = newPromise;
+        promise.source = newPromise;
+
+        array_reduce(messages, function (undefined, message) {
+            nextTick(function () {
+                newPromise.promiseDispatch.apply(newPromise, message);
+            });
+        }, void 0);
+
+        messages = void 0;
+        progressListeners = void 0;
+    }
+
+    deferred.promise = promise;
+    deferred.resolve = function (value) {
+        if (resolvedPromise) {
+            return;
+        }
+
+        become(resolve(value));
+    };
+
+    deferred.fulfill = function (value) {
+        if (resolvedPromise) {
+            return;
+        }
+
+        become(fulfill(value));
+    };
+    deferred.reject = function (reason) {
+        if (resolvedPromise) {
+            return;
+        }
+
+        become(reject(reason));
+    };
+    deferred.notify = function (progress) {
+        if (resolvedPromise) {
+            return;
+        }
+
+        array_reduce(progressListeners, function (undefined, progressListener) {
+            nextTick(function () {
+                progressListener(progress);
+            });
+        }, void 0);
+    };
+
+    return deferred;
+}
+
+/**
+ * Creates a Node-style callback that will resolve or reject the deferred
+ * promise.
+ * @returns a nodeback
+ */
+defer.prototype.makeNodeResolver = function () {
+    var self = this;
+    return function (error, value) {
+        if (error) {
+            self.reject(error);
+        } else if (arguments.length > 2) {
+            self.resolve(array_slice(arguments, 1));
+        } else {
+            self.resolve(value);
+        }
+    };
+};
+
+/**
+ * @param resolver {Function} a function that returns nothing and accepts
+ * the resolve, reject, and notify functions for a deferred.
+ * @returns a promise that may be resolved with the given resolve and reject
+ * functions, or rejected by a thrown exception in resolver
+ */
+Q.promise = promise;
+function promise(resolver) {
+    if (typeof resolver !== "function") {
+        throw new TypeError("resolver must be a function.");
+    }
+
+    var deferred = defer();
+    fcall(
+        resolver,
+        deferred.resolve,
+        deferred.reject,
+        deferred.notify
+    ).fail(deferred.reject);
+    return deferred.promise;
+}
+
+/**
+ * Constructs a Promise with a promise descriptor object and optional fallback
+ * function.  The descriptor contains methods like when(rejected), get(name),
+ * set(name, value), post(name, args), and delete(name), which all
+ * return either a value, a promise for a value, or a rejection.  The fallback
+ * accepts the operation name, a resolver, and any further arguments that would
+ * have been forwarded to the appropriate method above had a method been
+ * provided with the proper name.  The API makes no guarantees about the nature
+ * of the returned object, apart from that it is usable whereever promises are
+ * bought and sold.
+ */
+Q.makePromise = Promise;
+function Promise(descriptor, fallback, inspect) {
+    if (fallback === void 0) {
+        fallback = function (op) {
+            return reject(new Error(
+                "Promise does not support operation: " + op
+            ));
+        };
+    }
+    if (inspect === void 0) {
+        inspect = function () {
+            return {state: "unknown"};
+        };
+    }
+
+    var promise = object_create(Promise.prototype);
+
+    promise.promiseDispatch = function (resolve, op, args) {
+        var result;
+        try {
+            if (descriptor[op]) {
+                result = descriptor[op].apply(promise, args);
+            } else {
+                result = fallback.call(promise, op, args);
+            }
+        } catch (exception) {
+            result = reject(exception);
+        }
+        if (resolve) {
+            resolve(result);
+        }
+    };
+
+    promise.inspect = inspect;
+
+    // XXX deprecated `valueOf` and `exception` support
+    if (inspect) {
+        var inspected = inspect();
+        if (inspected.state === "rejected") {
+            promise.exception = inspected.reason;
+        }
+
+        promise.valueOf = deprecate(function () {
+            var inspected = inspect();
+            if (inspected.state === "pending" ||
+                inspected.state === "rejected") {
+                return promise;
+            }
+            return inspected.value;
+        });
+    }
+
+    return promise;
+}
+
+Promise.prototype.then = function (fulfilled, rejected, progressed) {
+    var self = this;
+    var deferred = defer();
+    var done = false;   // ensure the untrusted promise makes at most a
+                        // single call to one of the callbacks
+
+    function _fulfilled(value) {
+        try {
+            return typeof fulfilled === "function" ? fulfilled(value) : value;
+        } catch (exception) {
+            return reject(exception);
+        }
+    }
+
+    function _rejected(exception) {
+        if (typeof rejected === "function") {
+            makeStackTraceLong(exception, self);
+            try {
+                return rejected(exception);
+            } catch (newException) {
+                return reject(newException);
+            }
+        }
+        return reject(exception);
+    }
+
+    function _progressed(value) {
+        return typeof progressed === "function" ? progressed(value) : value;
+    }
+
+    nextTick(function () {
+        self.promiseDispatch(function (value) {
+            if (done) {
+                return;
+            }
+            done = true;
+
+            deferred.resolve(_fulfilled(value));
+        }, "when", [function (exception) {
+            if (done) {
+                return;
+            }
+            done = true;
+
+            deferred.resolve(_rejected(exception));
+        }]);
+    });
+
+    // Progress propagator need to be attached in the current tick.
+    self.promiseDispatch(void 0, "when", [void 0, function (value) {
+        var newValue;
+        var threw = false;
+        try {
+            newValue = _progressed(value);
+        } catch (e) {
+            threw = true;
+            if (Q.onerror) {
+                Q.onerror(e);
+            } else {
+                throw e;
+            }
+        }
+
+        if (!threw) {
+            deferred.notify(newValue);
+        }
+    }]);
+
+    return deferred.promise;
+};
+
+Promise.prototype.thenResolve = function (value) {
+    return when(this, function () { return value; });
+};
+
+Promise.prototype.thenReject = function (reason) {
+    return when(this, function () { throw reason; });
+};
+
+// Chainable methods
+array_reduce(
+    [
+        "isFulfilled", "isRejected", "isPending",
+        "dispatch",
+        "when", "spread",
+        "get", "set", "del", "delete",
+        "post", "send", "mapply", "invoke", "mcall",
+        "keys",
+        "fapply", "fcall", "fbind",
+        "all", "allResolved",
+        "timeout", "delay",
+        "catch", "finally", "fail", "fin", "progress", "done",
+        "nfcall", "nfapply", "nfbind", "denodeify", "nbind",
+        "npost", "nsend", "nmapply", "ninvoke", "nmcall",
+        "nodeify"
+    ],
+    function (undefined, name) {
+        Promise.prototype[name] = function () {
+            return Q[name].apply(
+                Q,
+                [this].concat(array_slice(arguments))
+            );
+        };
+    },
+    void 0
+);
+
+Promise.prototype.toSource = function () {
+    return this.toString();
+};
+
+Promise.prototype.toString = function () {
+    return "[object Promise]";
+};
+
+/**
+ * If an object is not a promise, it is as "near" as possible.
+ * If a promise is rejected, it is as "near" as possible too.
+ * If it’s a fulfilled promise, the fulfillment value is nearer.
+ * If it’s a deferred promise and the deferred has been resolved, the
+ * resolution is "nearer".
+ * @param object
+ * @returns most resolved (nearest) form of the object
+ */
+
+// XXX should we re-do this?
+Q.nearer = nearer;
+function nearer(value) {
+    if (isPromise(value)) {
+        var inspected = value.inspect();
+        if (inspected.state === "fulfilled") {
+            return inspected.value;
+        }
+    }
+    return value;
+}
+
+/**
+ * @returns whether the given object is a promise.
+ * Otherwise it is a fulfilled value.
+ */
+Q.isPromise = isPromise;
+function isPromise(object) {
+    return isObject(object) &&
+        typeof object.promiseDispatch === "function" &&
+        typeof object.inspect === "function";
+}
+
+Q.isPromiseAlike = isPromiseAlike;
+function isPromiseAlike(object) {
+    return isObject(object) && typeof object.then === "function";
+}
+
+/**
+ * @returns whether the given object is a pending promise, meaning not
+ * fulfilled or rejected.
+ */
+Q.isPending = isPending;
+function isPending(object) {
+    return isPromise(object) && object.inspect().state === "pending";
+}
+
+/**
+ * @returns whether the given object is a value or fulfilled
+ * promise.
+ */
+Q.isFulfilled = isFulfilled;
+function isFulfilled(object) {
+    return !isPromise(object) || object.inspect().state === "fulfilled";
+}
+
+/**
+ * @returns whether the given object is a rejected promise.
+ */
+Q.isRejected = isRejected;
+function isRejected(object) {
+    return isPromise(object) && object.inspect().state === "rejected";
+}
+
+//// BEGIN UNHANDLED REJECTION TRACKING
+
+// This promise library consumes exceptions thrown in handlers so they can be
+// handled by a subsequent promise.  The exceptions get added to this array when
+// they are created, and removed when they are handled.  Note that in ES6 or
+// shimmed environments, this would naturally be a `Set`.
+var unhandledReasons = [];
+var unhandledRejections = [];
+var unhandledReasonsDisplayed = false;
+var trackUnhandledRejections = true;
+function displayUnhandledReasons() {
+    if (
+        !unhandledReasonsDisplayed &&
+        typeof window !== "undefined" &&
+        !window.Touch &&
+        window.console
+    ) {
+        console.warn("[Q] Unhandled rejection reasons (should be empty):",
+                     unhandledReasons);
+    }
+
+    unhandledReasonsDisplayed = true;
+}
+
+function logUnhandledReasons() {
+    for (var i = 0; i < unhandledReasons.length; i++) {
+        var reason = unhandledReasons[i];
+        if (reason && typeof reason.stack !== "undefined") {
+            console.warn("Unhandled rejection reason:", reason.stack);
+        } else {
+            console.warn("Unhandled rejection reason (no stack):", reason);
+        }
+    }
+}
+
+function resetUnhandledRejections() {
+    unhandledReasons.length = 0;
+    unhandledRejections.length = 0;
+    unhandledReasonsDisplayed = false;
+
+    if (!trackUnhandledRejections) {
+        trackUnhandledRejections = true;
+
+        // Show unhandled rejection reasons if Node exits without handling an
+        // outstanding rejection.  (Note that Browserify presently produces a
+        // `process` global without the `EventEmitter` `on` method.)
+        if (typeof process !== "undefined" && process.on) {
+            process.on("exit", logUnhandledReasons);
+        }
+    }
+}
+
+function trackRejection(promise, reason) {
+    if (!trackUnhandledRejections) {
+        return;
+    }
+
+    unhandledRejections.push(promise);
+    unhandledReasons.push(reason);
+    displayUnhandledReasons();
+}
+
+function untrackRejection(promise) {
+    if (!trackUnhandledRejections) {
+        return;
+    }
+
+    var at = array_indexOf(unhandledRejections, promise);
+    if (at !== -1) {
+        unhandledRejections.splice(at, 1);
+        unhandledReasons.splice(at, 1);
+    }
+}
+
+Q.resetUnhandledRejections = resetUnhandledRejections;
+
+Q.getUnhandledReasons = function () {
+    // Make a copy so that consumers can't interfere with our internal state.
+    return unhandledReasons.slice();
+};
+
+Q.stopUnhandledRejectionTracking = function () {
+    resetUnhandledRejections();
+    if (typeof process !== "undefined" && process.on) {
+        process.removeListener("exit", logUnhandledReasons);
+    }
+    trackUnhandledRejections = false;
+};
+
+resetUnhandledRejections();
+
+//// END UNHANDLED REJECTION TRACKING
+
+/**
+ * Constructs a rejected promise.
+ * @param reason value describing the failure
+ */
+Q.reject = reject;
+function reject(reason) {
+    var rejection = Promise({
+        "when": function (rejected) {
+            // note that the error has been handled
+            if (rejected) {
+                untrackRejection(this);
+            }
+            return rejected ? rejected(reason) : this;
+        }
+    }, function fallback() {
+        return this;
+    }, function inspect() {
+        return { state: "rejected", reason: reason };
+    });
+
+    // Note that the reason has not been handled.
+    trackRejection(rejection, reason);
+
+    return rejection;
+}
+
+/**
+ * Constructs a fulfilled promise for an immediate reference.
+ * @param value immediate reference
+ */
+Q.fulfill = fulfill;
+function fulfill(value) {
+    return Promise({
+        "when": function () {
+            return value;
+        },
+        "get": function (name) {
+            return value[name];
+        },
+        "set": function (name, rhs) {
+            value[name] = rhs;
+        },
+        "delete": function (name) {
+            delete value[name];
+        },
+        "post": function (name, args) {
+            // Mark Miller proposes that post with no name should apply a
+            // promised function.
+            if (name === null || name === void 0) {
+                return value.apply(void 0, args);
+            } else {
+                return value[name].apply(value, args);
+            }
+        },
+        "apply": function (thisP, args) {
+            return value.apply(thisP, args);
+        },
+        "keys": function () {
+            return object_keys(value);
+        }
+    }, void 0, function inspect() {
+        return { state: "fulfilled", value: value };
+    });
+}
+
+/**
+ * Constructs a promise for an immediate reference, passes promises through, or
+ * coerces promises from different systems.
+ * @param value immediate reference or promise
+ */
+Q.resolve = resolve;
+function resolve(value) {
+    // If the object is already a Promise, return it directly.  This enables
+    // the resolve function to both be used to created references from objects,
+    // but to tolerably coerce non-promises to promises.
+    if (isPromise(value)) {
+        return value;
+    }
+
+    // assimilate thenables
+    if (isPromiseAlike(value)) {
+        return coerce(value);
+    } else {
+        return fulfill(value);
+    }
+}
+
+/**
+ * Converts thenables to Q promises.
+ * @param promise thenable promise
+ * @returns a Q promise
+ */
+function coerce(promise) {
+    var deferred = defer();
+    nextTick(function () {
+        try {
+            promise.then(deferred.resolve, deferred.reject, deferred.notify);
+        } catch (exception) {
+            deferred.reject(exception);
+        }
+    });
+    return deferred.promise;
+}
+
+/**
+ * Annotates an object such that it will never be
+ * transferred away from this process over any promise
+ * communication channel.
+ * @param object
+ * @returns promise a wrapping of that object that
+ * additionally responds to the "isDef" message
+ * without a rejection.
+ */
+Q.master = master;
+function master(object) {
+    return Promise({
+        "isDef": function () {}
+    }, function fallback(op, args) {
+        return dispatch(object, op, args);
+    }, function () {
+        return resolve(object).inspect();
+    });
+}
+
+/**
+ * Registers an observer on a promise.
+ *
+ * Guarantees:
+ *
+ * 1. that fulfilled and rejected will be called only once.
+ * 2. that either the fulfilled callback or the rejected callback will be
+ *    called, but not both.
+ * 3. that fulfilled and rejected will not be called in this turn.
+ *
+ * @param value      promise or immediate reference to observe
+ * @param fulfilled  function to be called with the fulfilled value
+ * @param rejected   function to be called with the rejection exception
+ * @param progressed function to be called on any progress notifications
+ * @return promise for the return value from the invoked callback
+ */
+Q.when = when;
+function when(value, fulfilled, rejected, progressed) {
+    return Q(value).then(fulfilled, rejected, progressed);
+}
+
+/**
+ * Spreads the values of a promised array of arguments into the
+ * fulfillment callback.
+ * @param fulfilled callback that receives variadic arguments from the
+ * promised array
+ * @param rejected callback that receives the exception if the promise
+ * is rejected.
+ * @returns a promise for the return value or thrown exception of
+ * either callback.
+ */
+Q.spread = spread;
+function spread(promise, fulfilled, rejected) {
+    return when(promise, function (valuesOrPromises) {
+        return all(valuesOrPromises).then(function (values) {
+            return fulfilled.apply(void 0, values);
+        }, rejected);
+    }, rejected);
+}
+
+/**
+ * The async function is a decorator for generator functions, turning
+ * them into asynchronous generators.  Although generators are only part
+ * of the newest ECMAScript 6 drafts, this code does not cause syntax
+ * errors in older engines.  This code should continue to work and will
+ * in fact improve over time as the language improves.
+ *
+ * ES6 generators are currently part of V8 version 3.19 with the
+ * --harmony-generators runtime flag enabled.  SpiderMonkey has had them
+ * for longer, but under an older Python-inspired form.  This function
+ * works on both kinds of generators.
+ *
+ * Decorates a generator function such that:
+ *  - it may yield promises
+ *  - execution will continue when that promise is fulfilled
+ *  - the value of the yield expression will be the fulfilled value
+ *  - it returns a promise for the return value (when the generator
+ *    stops iterating)
+ *  - the decorated function returns a promise for the return value
+ *    of the generator or the first rejected promise among those
+ *    yielded.
+ *  - if an error is thrown in the generator, it propagates through
+ *    every following yield until it is caught, or until it escapes
+ *    the generator function altogether, and is translated into a
+ *    rejection for the promise returned by the decorated generator.
+ */
+Q.async = async;
+function async(makeGenerator) {
+    return function () {
+        // when verb is "send", arg is a value
+        // when verb is "throw", arg is an exception
+        function continuer(verb, arg) {
+            var result;
+            if (hasES6Generators) {
+                try {
+                    result = generator[verb](arg);
+                } catch (exception) {
+                    return reject(exception);
+                }
+                if (result.done) {
+                    return result.value;
+                } else {
+                    return when(result.value, callback, errback);
+                }
+            } else {
+                // FIXME: Remove this case when SM does ES6 generators.
+                try {
+                    result = generator[verb](arg);
+                } catch (exception) {
+                    if (isStopIteration(exception)) {
+                        return exception.value;
+                    } else {
+                        return reject(exception);
+                    }
+                }
+                return when(result, callback, errback);
+            }
+        }
+        var generator = makeGenerator.apply(this, arguments);
+        var callback = continuer.bind(continuer, "send");
+        var errback = continuer.bind(continuer, "throw");
+        return callback();
+    };
+}
+
+/**
+ * The spawn function is a small wrapper around async that immediately
+ * calls the generator and also ends the promise chain, so that any
+ * unhandled errors are thrown instead of forwarded to the error
+ * handler. This is useful because it's extremely common to run
+ * generators at the top-level to work with libraries.
+ */
+Q.spawn = spawn;
+function spawn(makeGenerator) {
+    Q.done(Q.async(makeGenerator)());
+}
+
+// FIXME: Remove this interface once ES6 generators are in SpiderMonkey.
+/**
+ * Throws a ReturnValue exception to stop an asynchronous generator.
+ *
+ * This interface is a stop-gap measure to support generator return
+ * values in older Firefox/SpiderMonkey.  In browsers that support ES6
+ * generators like Chromium 29, just use "return" in your generator
+ * functions.
+ *
+ * @param value the return value for the surrounding generator
+ * @throws ReturnValue exception with the value.
+ * @example
+ * // ES6 style
+ * Q.async(function* () {
+ *      var foo = yield getFooPromise();
+ *      var bar = yield getBarPromise();
+ *      return foo + bar;
+ * })
+ * // Older SpiderMonkey style
+ * Q.async(function () {
+ *      var foo = yield getFooPromise();
+ *      var bar = yield getBarPromise();
+ *      Q.return(foo + bar);
+ * })
+ */
+Q["return"] = _return;
+function _return(value) {
+    throw new QReturnValue(value);
+}
+
+/**
+ * The promised function decorator ensures that any promise arguments
+ * are settled and passed as values (`this` is also settled and passed
+ * as a value).  It will also ensure that the result of a function is
+ * always a promise.
+ *
+ * @example
+ * var add = Q.promised(function (a, b) {
+ *     return a + b;
+ * });
+ * add(Q.resolve(a), Q.resolve(B));
+ *
+ * @param {function} callback The function to decorate
+ * @returns {function} a function that has been decorated.
+ */
+Q.promised = promised;
+function promised(callback) {
+    return function () {
+        return spread([this, all(arguments)], function (self, args) {
+            return callback.apply(self, args);
+        });
+    };
+}
+
+/**
+ * sends a message to a value in a future turn
+ * @param object* the recipient
+ * @param op the name of the message operation, e.g., "when",
+ * @param args further arguments to be forwarded to the operation
+ * @returns result {Promise} a promise for the result of the operation
+ */
+Q.dispatch = dispatch;
+function dispatch(object, op, args) {
+    var deferred = defer();
+    nextTick(function () {
+        resolve(object).promiseDispatch(deferred.resolve, op, args);
+    });
+    return deferred.promise;
+}
+
+/**
+ * Constructs a promise method that can be used to safely observe resolution of
+ * a promise for an arbitrarily named method like "propfind" in a future turn.
+ *
+ * "dispatcher" constructs methods like "get(promise, name)" and "set(promise)".
+ */
+Q.dispatcher = dispatcher;
+function dispatcher(op) {
+    return function (object) {
+        var args = array_slice(arguments, 1);
+        return dispatch(object, op, args);
+    };
+}
+
+/**
+ * Gets the value of a property in a future turn.
+ * @param object    promise or immediate reference for target object
+ * @param name      name of property to get
+ * @return promise for the property value
+ */
+Q.get = dispatcher("get");
+
+/**
+ * Sets the value of a property in a future turn.
+ * @param object    promise or immediate reference for object object
+ * @param name      name of property to set
+ * @param value     new value of property
+ * @return promise for the return value
+ */
+Q.set = dispatcher("set");
+
+/**
+ * Deletes a property in a future turn.
+ * @param object    promise or immediate reference for target object
+ * @param name      name of property to delete
+ * @return promise for the return value
+ */
+Q["delete"] = // XXX experimental
+Q.del = dispatcher("delete");
+
+/**
+ * Invokes a method in a future turn.
+ * @param object    promise or immediate reference for target object
+ * @param name      name of method to invoke
+ * @param value     a value to post, typically an array of
+ *                  invocation arguments for promises that
+ *                  are ultimately backed with `resolve` values,
+ *                  as opposed to those backed with URLs
+ *                  wherein the posted value can be any
+ *                  JSON serializable object.
+ * @return promise for the return value
+ */
+// bound locally because it is used by other methods
+var post = Q.post = dispatcher("post");
+Q.mapply = post; // experimental
+
+/**
+ * Invokes a method in a future turn.
+ * @param object    promise or immediate reference for target object
+ * @param name      name of method to invoke
+ * @param ...args   array of invocation arguments
+ * @return promise for the return value
+ */
+Q.send = send;
+Q.invoke = send; // synonyms
+Q.mcall = send; // experimental
+function send(value, name) {
+    var args = array_slice(arguments, 2);
+    return post(value, name, args);
+}
+
+/**
+ * Applies the promised function in a future turn.
+ * @param object    promise or immediate reference for target function
+ * @param args      array of application arguments
+ */
+Q.fapply = fapply;
+function fapply(value, args) {
+    return dispatch(value, "apply", [void 0, args]);
+}
+
+/**
+ * Calls the promised function in a future turn.
+ * @param object    promise or immediate reference for target function
+ * @param ...args   array of application arguments
+ */
+Q["try"] = fcall; // XXX experimental
+Q.fcall = fcall;
+function fcall(value) {
+    var args = array_slice(arguments, 1);
+    return fapply(value, args);
+}
+
+/**
+ * Binds the promised function, transforming return values into a fulfilled
+ * promise and thrown errors into a rejected one.
+ * @param object    promise or immediate reference for target function
+ * @param ...args   array of application arguments
+ */
+Q.fbind = fbind;
+function fbind(value) {
+    var args = array_slice(arguments, 1);
+    return function fbound() {
+        var allArgs = args.concat(array_slice(arguments));
+        return dispatch(value, "apply", [this, allArgs]);
+    };
+}
+
+/**
+ * Requests the names of the owned properties of a promised
+ * object in a future turn.
+ * @param object    promise or immediate reference for target object
+ * @return promise for the keys of the eventually settled object
+ */
+Q.keys = dispatcher("keys");
+
+/**
+ * Turns an array of promises into a promise for an array.  If any of
+ * the promises gets rejected, the whole array is rejected immediately.
+ * @param {Array*} an array (or promise for an array) of values (or
+ * promises for values)
+ * @returns a promise for an array of the corresponding values
+ */
+// By Mark Miller
+// http://wiki.ecmascript.org/doku.php?id=strawman:concurrency&rev=1308776521#allfulfilled
+Q.all = all;
+function all(promises) {
+    return when(promises, function (promises) {
+        var countDown = 0;
+        var deferred = defer();
+        array_reduce(promises, function (undefined, promise, index) {
+            var snapshot;
+            if (
+                isPromise(promise) &&
+                (snapshot = promise.inspect()).state === "fulfilled"
+            ) {
+                promises[index] = snapshot.value;
+            } else {
+                ++countDown;
+                when(promise, function (value) {
+                    promises[index] = value;
+                    if (--countDown === 0) {
+                        deferred.resolve(promises);
+                    }
+                }, deferred.reject);
+            }
+        }, void 0);
+        if (countDown === 0) {
+            deferred.resolve(promises);
+        }
+        return deferred.promise;
+    });
+}
+
+/**
+ * Waits for all promises to be settled, either fulfilled or
+ * rejected.  This is distinct from `all` since that would stop
+ * waiting at the first rejection.  The promise returned by
+ * `allResolved` will never be rejected.
+ * @param promises a promise for an array (or an array) of promises
+ * (or values)
+ * @return a promise for an array of promises
+ */
+Q.allResolved = deprecate(allResolved, "allResolved", "allSettled");
+function allResolved(promises) {
+    return when(promises, function (promises) {
+        promises = array_map(promises, resolve);
+        return when(all(array_map(promises, function (promise) {
+            return when(promise, noop, noop);
+        })), function () {
+            return promises;
+        });
+    });
+}
+
+Q.allSettled = allSettled;
+function allSettled(values) {
+    return when(values, function (values) {
+        return all(array_map(values, function (value, i) {
+            return when(
+                value,
+                function (fulfillmentValue) {
+                    values[i] = { state: "fulfilled", value: fulfillmentValue };
+                    return values[i];
+                },
+                function (reason) {
+                    values[i] = { state: "rejected", reason: reason };
+                    return values[i];
+                }
+            );
+        })).thenResolve(values);
+    });
+}
+
+/**
+ * Captures the failure of a promise, giving an oportunity to recover
+ * with a callback.  If the given promise is fulfilled, the returned
+ * promise is fulfilled.
+ * @param {Any*} promise for something
+ * @param {Function} callback to fulfill the returned promise if the
+ * given promise is rejected
+ * @returns a promise for the return value of the callback
+ */
+Q["catch"] = // XXX experimental
+Q.fail = fail;
+function fail(promise, rejected) {
+    return when(promise, void 0, rejected);
+}
+
+/**
+ * Attaches a listener that can respond to progress notifications from a
+ * promise's originating deferred. This listener receives the exact arguments
+ * passed to ``deferred.notify``.
+ * @param {Any*} promise for something
+ * @param {Function} callback to receive any progress notifications
+ * @returns the given promise, unchanged
+ */
+Q.progress = progress;
+function progress(promise, progressed) {
+    return when(promise, void 0, void 0, progressed);
+}
+
+/**
+ * Provides an opportunity to observe the settling of a promise,
+ * regardless of whether the promise is fulfilled or rejected.  Forwards
+ * the resolution to the returned promise when the callback is done.
+ * The callback can return a promise to defer completion.
+ * @param {Any*} promise
+ * @param {Function} callback to observe the resolution of the given
+ * promise, takes no arguments.
+ * @returns a promise for the resolution of the given promise when
+ * ``fin`` is done.
+ */
+Q["finally"] = // XXX experimental
+Q.fin = fin;
+function fin(promise, callback) {
+    return when(promise, function (value) {
+        return when(callback(), function () {
+            return value;
+        });
+    }, function (exception) {
+        return when(callback(), function () {
+            return reject(exception);
+        });
+    });
+}
+
+/**
+ * Terminates a chain of promises, forcing rejections to be
+ * thrown as exceptions.
+ * @param {Any*} promise at the end of a chain of promises
+ * @returns nothing
+ */
+Q.done = done;
+function done(promise, fulfilled, rejected, progress) {
+    var onUnhandledError = function (error) {
+        // forward to a future turn so that ``when``
+        // does not catch it and turn it into a rejection.
+        nextTick(function () {
+            makeStackTraceLong(error, promise);
+
+            if (Q.onerror) {
+                Q.onerror(error);
+            } else {
+                throw error;
+            }
+        });
+    };
+
+    // Avoid unnecessary `nextTick`ing via an unnecessary `when`.
+    var promiseToHandle = fulfilled || rejected || progress ?
+        when(promise, fulfilled, rejected, progress) :
+        promise;
+
+    if (typeof process === "object" && process && process.domain) {
+        onUnhandledError = process.domain.bind(onUnhandledError);
+    }
+    fail(promiseToHandle, onUnhandledError);
+}
+
+/**
+ * Causes a promise to be rejected if it does not get fulfilled before
+ * some milliseconds time out.
+ * @param {Any*} promise
+ * @param {Number} milliseconds timeout
+ * @param {String} custom error message (optional)
+ * @returns a promise for the resolution of the given promise if it is
+ * fulfilled before the timeout, otherwise rejected.
+ */
+Q.timeout = timeout;
+function timeout(promise, ms, msg) {
+    var deferred = defer();
+    var timeoutId = setTimeout(function () {
+        deferred.reject(new Error(msg || "Timed out after " + ms + " ms"));
+    }, ms);
+
+    when(promise, function (value) {
+        clearTimeout(timeoutId);
+        deferred.resolve(value);
+    }, function (exception) {
+        clearTimeout(timeoutId);
+        deferred.reject(exception);
+    }, deferred.notify);
+
+    return deferred.promise;
+}
+
+/**
+ * Returns a promise for the given value (or promised value) after some
+ * milliseconds.
+ * @param {Any*} promise
+ * @param {Number} milliseconds
+ * @returns a promise for the resolution of the given promise after some
+ * time has elapsed.
+ */
+Q.delay = delay;
+function delay(promise, timeout) {
+    if (timeout === void 0) {
+        timeout = promise;
+        promise = void 0;
+    }
+
+    var deferred = defer();
+
+    when(promise, undefined, undefined, deferred.notify);
+    setTimeout(function () {
+        deferred.resolve(promise);
+    }, timeout);
+
+    return deferred.promise;
+}
+
+/**
+ * Passes a continuation to a Node function, which is called with the given
+ * arguments provided as an array, and returns a promise.
+ *
+ *      Q.nfapply(FS.readFile, [__filename])
+ *      .then(function (content) {
+ *      })
+ *
+ */
+Q.nfapply = nfapply;
+function nfapply(callback, args) {
+    var nodeArgs = array_slice(args);
+    var deferred = defer();
+    nodeArgs.push(deferred.makeNodeResolver());
+
+    fapply(callback, nodeArgs).fail(deferred.reject);
+    return deferred.promise;
+}
+
+/**
+ * Passes a continuation to a Node function, which is called with the given
+ * arguments provided individually, and returns a promise.
+ *
+ *      Q.nfcall(FS.readFile, __filename)
+ *      .then(function (content) {
+ *      })
+ *
+ */
+Q.nfcall = nfcall;
+function nfcall(callback/*, ...args */) {
+    var nodeArgs = array_slice(arguments, 1);
+    var deferred = defer();
+    nodeArgs.push(deferred.makeNodeResolver());
+
+    fapply(callback, nodeArgs).fail(deferred.reject);
+    return deferred.promise;
+}
+
+/**
+ * Wraps a NodeJS continuation passing function and returns an equivalent
+ * version that returns a promise.
+ *
+ *      Q.nfbind(FS.readFile, __filename)("utf-8")
+ *      .then(console.log)
+ *      .done()
+ *
+ */
+Q.nfbind = nfbind;
+Q.denodeify = Q.nfbind; // synonyms
+function nfbind(callback/*, ...args */) {
+    var baseArgs = array_slice(arguments, 1);
+    return function () {
+        var nodeArgs = baseArgs.concat(array_slice(arguments));
+        var deferred = defer();
+        nodeArgs.push(deferred.makeNodeResolver());
+
+        fapply(callback, nodeArgs).fail(deferred.reject);
+        return deferred.promise;
+    };
+}
+
+Q.nbind = nbind;
+function nbind(callback, thisArg /*, ... args*/) {
+    var baseArgs = array_slice(arguments, 2);
+    return function () {
+        var nodeArgs = baseArgs.concat(array_slice(arguments));
+        var deferred = defer();
+        nodeArgs.push(deferred.makeNodeResolver());
+
+        function bound() {
+            return callback.apply(thisArg, arguments);
+        }
+
+        fapply(bound, nodeArgs).fail(deferred.reject);
+        return deferred.promise;
+    };
+}
+
+/**
+ * Calls a method of a Node-style object that accepts a Node-style
+ * callback with a given array of arguments, plus a provided callback.
+ * @param object an object that has the named method
+ * @param {String} name name of the method of object
+ * @param {Array} args arguments to pass to the method; the callback
+ * will be provided by Q and appended to these arguments.
+ * @returns a promise for the value or error
+ */
+Q.npost = npost;
+Q.nmapply = npost; // synonyms
+function npost(object, name, args) {
+    var nodeArgs = array_slice(args || []);
+    var deferred = defer();
+    nodeArgs.push(deferred.makeNodeResolver());
+
+    post(object, name, nodeArgs).fail(deferred.reject);
+    return deferred.promise;
+}
+
+/**
+ * Calls a method of a Node-style object that accepts a Node-style
+ * callback, forwarding the given variadic arguments, plus a provided
+ * callback argument.
+ * @param object an object that has the named method
+ * @param {String} name name of the method of object
+ * @param ...args arguments to pass to the method; the callback will
+ * be provided by Q and appended to these arguments.
+ * @returns a promise for the value or error
+ */
+Q.nsend = nsend;
+Q.ninvoke = Q.nsend; // synonyms
+Q.nmcall = Q.nsend; // synonyms
+function nsend(object, name /*, ...args*/) {
+    var nodeArgs = array_slice(arguments, 2);
+    var deferred = defer();
+    nodeArgs.push(deferred.makeNodeResolver());
+    post(object, name, nodeArgs).fail(deferred.reject);
+    return deferred.promise;
+}
+
+Q.nodeify = nodeify;
+function nodeify(promise, nodeback) {
+    if (nodeback) {
+        promise.then(function (value) {
+            nextTick(function () {
+                nodeback(null, value);
+            });
+        }, function (error) {
+            nextTick(function () {
+                nodeback(error);
+            });
+        });
+    } else {
+        return promise;
+    }
+}
+
+// All code before this point will be filtered from stack traces.
+var qEndingLine = captureLine();
+
+return Q;
+
+})();
 
 // StateMachine
 // ==========================================================================
@@ -895,32 +2617,55 @@ var Utilities = CTS.Utilities = {
     CTS.Fn.each(CTS.$('style[type="text/cts"]'), function(elem) {
       var block = {
         type: 'inline',
+        format: 'cts',
         content: $(elem).html()
       };
-      ret.append(block);
+      ret.push(block);
+    }, this);
+    CTS.Fn.each(CTS.$('style[type="json/cts"]'), function(elem) {
+      var block = {
+        type: 'inline',
+        format: 'json',
+        content: $(elem).html()
+      };
+      ret.push(block);
     }, this);
     CTS.Fn.each(CTS.$('link[rel="treesheet"]'), function(elem) {
+      var e = $(elem);
+      var type = e.attr('type');
+      var format = 'cts';
+      if (type == 'json/cts') {
+        format = 'json';
+      }
       var block = {
         type: 'link',
-        url: $(elem).attr('href')
+        url: $(elem).attr('href'),
+        format: format
       };
-      ret.append(block);
+      ret.push(block);
     }, this);
     return ret;
   },
 
-  loadRemoteString: function(params, successFn, errorFn) {
-    $.ajax({url: params.url,
-            dataType: 'text',
-            success: success,
-            error: error,
-            beforeSend: function(xhr, settings) {
-              CTS.Fn
-      .each(params, function(value, key, list) {
-                xhr[key] = value;
-              }, this);
-            }
+  fetchString: function(params, successFn, errorFn) {
+    var deferred = Q.defer();
+    var xhr = $.ajax({
+      url: params.url,
+      dataType: 'text',
+      beforeSend: function(xhr, settings) {
+        CTS.Fn.each(params, function(value, key, list) {
+          xhr[key] = value;
+        }, this);
+      }
     });
+    xhr.done(function(data, textStatus, jqXhr) {
+      deferred.resolve(data, textStatus, jqXhr);
+    });
+    xhr.fail(function(jqXhr, textStatus, errorThrown) {
+      CTS.Log.Error("Couldn't fetch string at:", params.url);
+      deferred.reject(jqXhr, textStatus, errorThrown);
+    });
+    return deferred.promise;
   },
 
   fetchTree: function(spec, callback, context) {
@@ -943,8 +2688,9 @@ var Utilities = CTS.Utilities = {
 // Nodes are responsible for understanding how to behave when acted on
 // by certain relations (in both directions). The differences between
 // different types of trees (JSON, HTML, etc) are concealed at this level.
+CTS.Node = {};
 
-CTS.Node = {
+CTS.Node.Base = {
 
   initializeNodeBase: function(tree, opts) {
     this.opts = opts;
@@ -963,7 +2709,6 @@ CTS.Node = {
   },
 
   registerRelation: function(relation) {
-    console.log("Registering Relation", self, relation);
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
     }
@@ -985,14 +2730,19 @@ CTS.Node = {
     if (this.addedMyInlineRelationsToForrest) {
       CTS.Log.Warn("Not registering inline relations: have already done so.");
     } else {
-      if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-        var specStr = this._subclass_getInlineRelationSpecString();
-        if (specStr) {
+      var specStr = this._subclass_getInlineRelationSpecString();
+      this.addedMyInlineRelationsToForrest = true;
+      if (specStr) {
+        if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
           CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
+        } else {
+          this.addedMyInlineRelationsToForrest = false;
+          if (Fn.isUndefined(this.tree) || (this.tree === null)) {
+            CTS.Log.Error("[Node] Could not add inline relns to null tree");
+          } else if (Fn.isUndefined(this.tree.forrest) || (this.tree.forrest === null)) {
+            CTS.Log.Error("[Node] Could not add inline relns to null forrest");
+          }
         }
-        this.addedMyInlineRelationsToForrest = true;
-      } else {
-        CTS.Log.Warn("Could not add inline relations to null tree.forrest");
       }
     }
   },
@@ -1017,9 +2767,6 @@ CTS.Node = {
       } else {
         this.children[i] = this.children[i - 1];
       }
-    }
-    if (log) {
-      console.log("Adding", node, "to", this);
     }
 
     node.parentNode = this;
@@ -1087,29 +2834,38 @@ CTS.Node = {
 
   clone: function() {
     var c = this._subclass_beginClone();
-
     // Note: because the subclass constructs it's own subtree,
     // that means it is also responsible for cloning downstream nodes.
-    // thus we only take care of THIS NODE's relations.
-    var r = this.getRelations();
-    for (var i = 0; i < r.length; i++) {
-      var n1 = r[i].node1;
-      var n2 = r[i].node2;
-      if (n1 == this) {
-        n1 = c;
-      } else if (n2 == this) {
-        n2 = c;
-      } else {
-        CTS.Fatal("Clone failed");
-      }
-      var relationClone = r[i].clone(n1, n2);
-      console.log("Cloning", r[i].name, "for", this.getValue());
-    };
+    // But we DO need to clone downstream relations.
+    this.recursivelyCloneRelations(c);
     // Note that we DON'T wire up any parent-child relationships
     // because that would result in more than just cloning the node
     // but also modifying other structures, such as the tree which
     // contained the source.
     return c;
+  },
+
+  recursivelyCloneRelations: function(to) {
+    var i;
+    var r = this.getRelations();
+    for (i = 0; i < r.length; i++) {
+      var n1 = r[i].node1;
+      var n2 = r[i].node2;
+      if (n1 == this) {
+        n1 = to;
+      } else if (n2 == this) {
+        n2 = to;
+      } else {
+        CTS.Fatal("Clone failed");
+      }
+      var relationClone = r[i].clone(n1, n2);
+    };
+
+    for (i = 0; i < this.getChildren().length; i++) {
+      var myKid = this.children[i];
+      var otherKid = to.children[i];
+      myKid.recursivelyCloneRelations(otherKid);
+    }
   },
 
   pruneRelations: function(otherParent, otherContainer) {
@@ -1136,31 +2892,26 @@ CTS.Node = {
 
   _processIncoming: function() {
     // Do incoming nodes except graft
-    this._processIncomingRelations('if-exist');
-    this._processIncomingRelations('if-nexist');
-    this._processIncomingRelations('is');
-    this._processIncomingRelations('are');
+    var r = this.getRelations();
+    this._processIncomingRelations(r, 'if-exist');
+    this._processIncomingRelations(r, 'if-nexist');
+    this._processIncomingRelations(r, 'is');
+    this._processIncomingRelations(r, 'are');
 
-    CTS.Log.Info("Dump Pre");
-    CTS.Debugging.DumpTree(this);
     // Do children
     for (var i = 0; i < this.children.length; i++) {
       this.children[i]._processIncoming();
     }
-    CTS.Log.Info("Dump Post");
-    CTS.Debugging.DumpTree(this);
 
     // Do graft
-    this._processIncomingRelations('graft', true);
+    this._processIncomingRelations(r, 'graft', true);
   },
 
-  _processIncomingRelations: function(name, once) {
-    console.log("proc inc from node", this.getValue(), name);
-    for (var i = 0; i < this.relations.length; i++) {
-      if (this.relations[i].name == name) {
-        if (this.relations[i].node1.equals(this)) {
-          this.relations[i].execute(this);
-          console.log("found one " + this.relations[i].name, name);
+  _processIncomingRelations: function(relations, name, once) {
+    for (var i = 0; i < relations.length; i++) {
+      if (relations[i].name == name) {
+        if (relations[i].node1.equals(this)) {
+          relations[i].execute(this);
           if (once) {
             break;
           }
@@ -1190,8 +2941,9 @@ CTS.Node = {
   _subclass_realizeChildren: function() {},
   _subclass_insertChild: function(child, afterIndex) {},
   _subclass_destroy: function() {},
-  _subclass_getInlineRelations: function() {},
-  _subclass_beginClone: function() {}
+  _subclass_beginClone: function() {},
+  _subclass_getInlineRelationSpecString: function() { return null; }
+
 
 };
 
@@ -1329,17 +3081,17 @@ CTS.NodeStateMachine = {
 
 };
 
-var AbstractNode = CTS.AbstractNode = function() {
+CTS.Node.Abstract = function() {
   this.initializeNodeBase();
   this.value = null;
 };
 
-CTS.Fn.extend(CTS.AbstractNode.prototype,
+CTS.Fn.extend(CTS.Node.Abstract.prototype,
     CTS.Events,
-    CTS.Node, {
+    CTS.Node.Base, {
 
    _subclass_beginClone: function() {
-     var n = new AbstractNode ();
+     var n = new CTS.Node.Abstract();
      n.setValue(this.getValue());
 
      for (var i = 0; i < this.children.length; i++) {
@@ -1349,6 +3101,8 @@ CTS.Fn.extend(CTS.AbstractNode.prototype,
 
      return n;
    }
+
+
 
 //   descendantOf: function(other) {
 //     var p = this.parentNode;
@@ -1367,11 +3121,11 @@ CTS.Fn.extend(CTS.AbstractNode.prototype,
 
 });
 
-CTS.NonExistantNode = new CTS.AbstractNode();
+CTS.NonExistantNode = new CTS.Node.Abstract();
 
 
 // ### Constructor
-var DomNode = CTS.DomNode = function(node, tree, opts) {
+CTS.Node.Html = function(node, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
   this.kind = "HTML";
@@ -1379,7 +3133,7 @@ var DomNode = CTS.DomNode = function(node, tree, opts) {
 };
 
 // ### Instance Methods
-CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
+CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
 
   debugName: function() {
     return CTS.Fn.map(this.siblings, function(node) {
@@ -1420,7 +3174,7 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
     */
    _subclass_realizeChildren: function() {
      this.children = CTS.Fn.map(this.value.children(), function(child) {
-       var node = new DomNode(child, this.tree, this.opts);
+       var node = new CTS.Node.Html(child, this.tree, this.opts);
        node.parentNode = this;
        return node;
      }, this);
@@ -1430,8 +3184,18 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
     * Inserts this DOM node after the child at the specified index.
     */
    _subclass_insertChild: function(child, afterIndex) {
-     var leftSibling = this.getChildren()[afterIndex];
-     leftSibling.value.after(this.value);
+     if (afterIndex == -1) {
+       if (this.getChildren().length == 0) {
+         this.value.append(child.value);
+       } else {
+         this.value.prepend(child.value)
+       }
+     } else if (afterIndex > -1) {
+       var leftSibling = this.getChildren()[afterIndex];
+       leftSibling.value.after(child.value);
+     } else {
+       CTS.Log.Error("[HTML Node] Afer index shouldn't be ", afterIndex);
+     }
    },
 
    /* 
@@ -1450,7 +3214,7 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
 
    _subclass_beginClone: function() {
      var c = this.value.clone();
-     var d = new DomNode(c, this.tree, this.opts);
+     var d = new CTS.Node.Html(c, this.tree, this.opts);
      d.realizeChildren();
      return d;
    },
@@ -1508,7 +3272,7 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
 });
 
 // ### Constructor
-var JsonNode = CTS.JsonNode = function(node, tree, opts) {
+CTS.Node.Json = function(node, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
   this.kind = "JSON";
@@ -1524,7 +3288,7 @@ var JsonNode = CTS.JsonNode = function(node, tree, opts) {
 };
  
 // ### Instance Methods
-CTS.Fn.extend(CTS.JsonNode.prototype, CTS.Events, CTS.Node, {
+CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
 
   updateDataType: function() {
     if (CTS.Fn.isNull(this.value)) {
@@ -1834,7 +3598,11 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
 
   execute: function(toward) {
     this._Are_AlignCardinalities(toward);
+    console.log("Are Toward", toward.children.length, " from ", this.opposite(toward).children.length);
+    console.log("Dumping Toward");
     CTS.Debugging.DumpTree(toward);
+    console.log("Dumping Opposite");
+    CTS.Debugging.DumpTree(this.opposite(toward));
   },
 
   clone: function(n1, n2) {
@@ -2010,10 +3778,10 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
     var opp = this.opposite(toward);
     if (opp != null) {
 
-      console.log("GRAFT THE FOLLOWING");
-      CTS.Debugging.DumpTree(opp);
-      console.log("GRAFT ONTO THE FOLLOWING");
-      CTS.Debugging.DumpTree(toward);
+      //console.log("GRAFT THE FOLLOWING");
+      //CTS.Debugging.DumpTree(opp);
+      //console.log("GRAFT ONTO THE FOLLOWING");
+      //CTS.Debugging.DumpTree(toward);
 
       var replacements = [];
       for (var i = 0; i < opp.children.length; i++) {
@@ -2042,33 +3810,66 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
 });
 
 
-var TreeSpec = CTS.TreeSpec = function(kind, name, url) {
-  this.kind = kind;
-  this.name = name;
-  this.url = url;
-};
-
 // DOM Tree
 // ==========================================================================
 //
 // ==========================================================================
 
+var Tree = CTS.Tree = {};
 
-var Tree = CTS.Tree = {
-  name: "",
-  
+CTS.Tree.Base = {
   render: function(opts) {
-    console.log("render root", this.root);
     this.root.render(opts);
-  },
+  }
+};
 
+/*
+ * Returns a promise
+ */
+CTS.Tree.Create = function(spec, forrest) {
+  var deferred = Q.defer();
+  // Special case
+  if ((spec.url == null) && (spec.name = 'body')) {
+    var node = $('body');
+    var tree = new CTS.Tree.Html(forrest, node, spec);
+    deferred.resolve(tree);
+  } else {
+    CTS.Utilities.fetchString(spec).then(
+      function(content) {
+        if ((spec.kind == 'HTML') || (spec.kind == 'html')) {
+          //try {
+          //  var domNodes = CTS.Parser.Html.HTMLtoDOM(content); 
+          //} catch (e) {
+          //  console.log(e);
+          //  CTS.Debugging.DumpStack();
+          //  debugger;
+          //}
+          var node = $(content);
+          var tree = new CTS.Tree.Html(forrest, node, spec);
+          deferred.resolve(tree);
+        } else {
+          deferred.reject();
+        }
+      },
+      function() {
+        deferred.reject();
+      }
+    );
+  }
+  return deferred.promise;
+};
+
+CTS.Tree.Spec = function(kind, name, url) {
+  this.kind = kind;
+  this.name = name;
+  this.url = url;
 };
 
 // Constructor
 // -----------
-var DomTree = CTS.DomTree = function(forrest, node, spec) {
+CTS.Tree.Html = function(forrest, node, spec) {
   CTS.Log.Info("DomTree::Constructor", [forrest, node]);
-  this.root = new CTS.DomNode(node, this);
+  this.root = new CTS.Node.Html(node, this);
   this.forrest = forrest;
   this.spec = spec;
   this.name = spec.name;
@@ -2077,14 +3878,20 @@ var DomTree = CTS.DomTree = function(forrest, node, spec) {
 
 // Instance Methods
 // ----------------
-CTS.Fn.extend(DomTree.prototype, Tree, {
+CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
   nodesForSelectionSpec: function(spec) {
+    console.log("nodes for: " + spec.selectorString);
     if (spec.inline) {
       console.log("Nodes for inline spec", this.inlineObject);
       return [spec.inlineObject];
     } else {
       console.log("nodes for selector string spec");
-      return this.root.find(spec.selectorString);
+      var results = this.root.find(spec.selectorString);
+      if (results.length == 0) {
+        console.log(this.name, spec.selectorString);
+        console.log(this.root.value.html());
+      }
+      return results;
     }
   }
 
@@ -2092,7 +3899,7 @@ CTS.Fn.extend(DomTree.prototype, Tree, {
 
 // Constructor
 // -----------
-var JsonTree = CTS.JsonTree = function(forrest, root, spec) {
+CTS.Tree.Json = function(forrest, root, spec) {
   this.root = new CTS.JsonNode(root, this);
   this.forrest = forrest;
   this.spec = spec;
@@ -2101,7 +3908,7 @@ var JsonTree = CTS.JsonTree = function(forrest, root, spec) {
 
 // Instance Methods
 // ----------------
-CTS.Fn.extend(JsonTree.prototype, Tree, {
+CTS.Fn.extend(CTS.Tree.Json, CTS.Tree.Base, {
   nodesForSelectionSpec: function(spec) {
     CTS.Log.Fatal("JsonTree::nodesForSelectionSpec - Unimplemented!");
     return [];
@@ -2110,14 +3917,14 @@ CTS.Fn.extend(JsonTree.prototype, Tree, {
 
 /* Like a JSON tree but any CTS rules CREATE the keypath upon resolution.
  */
-var ScraperTree = CTS.ScraperTree = function(forrest, attributes) {
+CTS.Tree.Xpando = function(forrest, attributes) {
   this.forrest = forrest;
   this.root = {};
 };
 
 // Instance Methods
 // ----------------
-CTS.Fn.extend(JsonTree.prototype, Tree, {
+CTS.Fn.extend(CTS.Tree.Xpando, CTS.Tree.Base, {
 
   nodesForSelectionSpec: function(spec) {
     alert("unimplemented!");
@@ -2128,7 +3935,7 @@ CTS.Fn.extend(JsonTree.prototype, Tree, {
 });
 
 var ForrestSpec = CTS.ForrestSpec = function() {
-  this.treeSpeecs = [];
+  this.treeSpecs = [];
   this.relationSpecs = [];
 };
 
@@ -2204,9 +4011,9 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   addAndRealizeDefaultTrees: function() {
-    var pageBody = new CTS.TreeSpec('HTML', 'body', null);
+    var pageBody = new CTS.Tree.Spec('HTML', 'body', null);
     this.addTreeSpec(pageBody);
-    this.realizeTreeSpec(pageBody);
+    this.realizeTree(pageBody);
   },
 
   /*
@@ -2223,10 +4030,10 @@ CTS.Fn.extend(Forrest.prototype, {
     this.forrestSpecs.push(forrestSpec);
     var i;
     for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
-      this.addTree(forrestSpec.treeSpecs[i]);
+      this.addTreeSpec(forrestSpec.treeSpecs[i]);
     }
     for (i = 0; i < forrestSpec.relationSpecs.length; i++) {
-      this.addRelation(forrestSpec.relationSpecs[i]);
+      this.addRelationSpec(forrestSpec.relationSpecs[i]);
     }
   },
 
@@ -2242,6 +4049,37 @@ CTS.Fn.extend(Forrest.prototype, {
     for (var i = 0; i < someRelationSpecs.length; i++) {
       // Faster than .push()
       this.relationSpecs.push(someRelationSpecs[i]);
+    }
+  },
+
+  realizeTrees: function() {
+    var promises = [];
+    Fn.each(this.treeSpecs, function(treeSpec, name, list) {
+      if (! Fn.has(this.trees, name)) {
+        promises.push(this.realizeTree(treeSpec));
+      }
+    }, this);
+    return Q.all(promises);
+  },
+
+  realizeTree: function(treeSpec) {
+    var deferred = Q.defer();
+    var self = this;
+    CTS.Tree.Create(treeSpec, this).then(
+      function(tree) {
+        self.trees[treeSpec.name] = tree;
+        deferred.resolve();
+      },
+      function() {
+        deferred.reject();
+      }
+    );
+    return deferred.promise;
+  },
+
+  realizeRelations: function() {
+    for (var i = 0; i < this.relationSpecs.length; i++) {
+      this.realizeRelation(this.relationSpecs[i]);
     }
   },
 
@@ -2273,38 +4111,7 @@ CTS.Fn.extend(Forrest.prototype, {
     return ret;
   },
 
-  /*
-   * Realizing Specs
-   *
-   * Here, we take specs (ideally those that we've already added, but
-   * currently that constraint isn't enforced) and actually transform them
-   * into model objects such as Tree and Relation objects.
-   *
-   * Note that realizing a relation depends upon the prior realization of the
-   * trees that the relation references. 
-   *
-   * -------------------------------------------------------- */
-
-  realizeTreeSpec: function(spec) {
-    var self = this;
-    CTS.Utilities.fetchTree(spec, function(error, root) {
-      if (error) {
-        CTS.Log.Error("Could not fetch Tree for Spec " + alias);
-      } else {
-        if (spec.kind == 'HTML') {
-          var tree = new CTS.DomTree(self, root, spec);
-          this.trees[spec.name] = tree;
-        } else if (spec.kind == 'JSON') {
-          var tree = new CTS.JsonTree(self, root, spec);
-          this.trees[spec.name] = tree;
-        } else {
-          CTS.Log.Error("Unknown kind of Tree in Spec " + alias); 
-        }
-      }
-    }, this);
-  },
-
-  realizeRelationSpec: function(spec) {
+  realizeRelation: function(spec) {
     var s1 = spec.selectionSpec1;
     var s2 = spec.selectionSpec2;
 
@@ -2335,7 +4142,7 @@ CTS.Fn.extend(Forrest.prototype, {
         // Realize a relation between i and j. Creating the relation adds
         // a pointer back to the nodes.
         var relation = new CTS.Relation.CreateFromSpec(nodes1[i], nodes2[j], spec);
-        console.log("Created relation", relation);
+        console.log("Did a relation between", relation, relation.name, nodes1[i], nodes2[j]);
         // Add the relation to the forrest
         this.relations.push(relation);
       }
@@ -2358,75 +4165,6 @@ CTS.Fn.extend(Forrest.prototype, {
   getPrimaryTree: function() {
     return this.trees.body;
   }
-
-  /*
-   * NOTE:
-   *  All the below code was very clever, but a premature optimization aimed at lazy-loading.
-   *  Consider bringing it back once we achieve (slow) functionality.
-   */
-
-  //nodesForSelectionSpec: function(spec) {
-  //  if (typeof this.trees[spec.treeName] != "undefined") {
-  //    return this.trees[spec.treeName].nodesForSelectionSpec(spec);
-  //  } else {
-  //    return [];
-  //  }
-  //},
-
-  //rulesForNode: function(node) {
-  //  console.log("Forrest:::rulesForNode");
-  //  var ret = [];
-  //  CTS.Fn.each(this.rules, function(rule) {
-  //    console.log("Forrest::rulesForNode Rule", rule, "for node", node);
-  //    if ((rule.selector1.matches(node)) || 
-  //        (rule.selector2.matches(node))) {
-  //      ret[ret.length] = rule;
-  //    } else {
-  //      console.log("Failed match", rule.selector1.selector);
-  //      console.log("Failed match", rule.selector2.selector);
-  //    }
-  //  }, this);
-
-  //  var inlineRules = node.getInlineRules();
-  // 
-  //  if (inlineRules !== null) {
-  //    var ruleSet = RuleParser.parseInline(node, inlineRules);
-  //    if (typeof ruleSet != "undefined") {
-  //      ret = CTS.Fn.union(ret, ruleSet);
-  //    }
-  //  }
-  //  return ret;
-  //},
-
-  //registerRelationsForNode: function(node) {
-  //  console.log("Forrest::RelationsForNode");
-  //  var rules = this.rulesForNode(node);
-  //  console.log("Rules for", node.siblings[0].html(), rules);
-  //  var relations = CTS.Fn.map(rules, function(rule) {
-  //    var selection1 = null;
-  //    var selection2 = null;
-  //    var selector = null;
-  //    var other = null;
-  //    if (rule.selector1.matches(node)) {
-  //      selection1 = new CTS.Selection([node]);
-  //      selection2 = rule.selector2.toSelection(this);
-  //      other = selection2;
-  //    } else {
-  //      selection2 = new CTS.Selection([node]);
-  //      selection1 = rule.selector1.toSelection(this);
-  //      other = selection1;
-  //    }
-  //    var relation = new Relation(selection1, selection2, rule.name, rule.opts, rule.opts1, rule.opts2);
-  //    node.registerRelation(relation);
-  //    // Make sure that we wire up the relations,
-  //    // since some might come in from inline.
-  //    CTS.Fn.each(other.nodes, function(n) {
-  //      n.registerRelation(relation);
-  //    }, this);
-  //  }, this);
-  //  console.log("Returning Relations for", node.siblings[0].html(), relations);
-  //  return relations;
-  //}
 
 });
 
@@ -2583,6 +4321,16 @@ CTS.Parser = {
     }
   },
 
+  parseForrestSpec: function(str, kind) {
+    if (kind == 'json') {
+      return CTS.Parser.Json.parseForrestSpec(str);
+    } else if (kind == 'string') {
+      return CTS.Parser.String.parseForrestSpec(str);
+    } else {
+      CTS.Log.Error("I don't understand the CTS Format", kind);
+    }
+  },
+
   /* Inline specs can take the form:
    *  1.  <syntax>:<cts string>
    *  2.  <cts string>
@@ -2596,25 +4344,22 @@ CTS.Parser = {
     if (res === null) {
       return ['string', str];
     } else {
-      console.log(res);
       return [res[1], res[2]];
     }
   }
+
 };
 
 CTS.Parser.Json = {
 
   parseInlineSpecs: function(json, node, intoForrest, realize) {
     if (typeof json == 'string') {
-      console.log("string", json);
       json = JSON.parse(json);
-      console.log("parsed", json);
     }
     console.log("parse inline specs for", node);
 
     // Now we build a proper spec document around it.
     var relations = intoForrest.incorporateInlineJson(json, node);
-    console.log("relns");
     
     if (realize) {
       for (var i = 0; i < relations.length; i++) {
@@ -2622,6 +4367,32 @@ CTS.Parser.Json = {
         intoForrest.realizeRelationSpec(relations[i]);
       }
     }
+  },
+
+  parseForrestSpec: function(json) {
+    console.log(json);
+    if (typeof json == 'string') {
+      json = JSON.parse(json);
+    }
+    var ret = new CTS.ForrestSpec();
+
+    if (! CTS.Fn.isUndefined(json.trees)) {
+      CTS.Fn.each(json.trees, function(treeSpecJson) {
+        var ts = CTS.Parser.Json.parseTreeSpec(treeSpecJson);
+        ret.treeSpecs.push(ts);
+      });
+    };
+
+    if (! CTS.Fn.isUndefined(json.relations)) {
+      CTS.Fn.each(json.relations, function(relationSpecJson) {
+        var s1 = CTS.Parser.Json.parseSelectorSpec(relationSpecJson[0]);
+        var s2 = CTS.Parser.Json.parseSelectorSpec(relationSpecJson[2]);
+        var r  = CTS.Parser.Json.parseRelationSpec(relationSpecJson[1], s1, s2);
+        ret.relationSpecs.push(r);
+      });
+    }
+
+    return ret;
   },
 
   /* 
@@ -2662,6 +4433,14 @@ CTS.Parser.Json = {
     return r;
   },
 
+  parseTreeSpec: function(json) {
+    var ret = new CTS.Tree.Spec();
+    ret.kind = json[0];
+    ret.name = json[1];
+    ret.url = json[2];
+    return ret;
+  },
+
   parseSelectorSpec: function(json, inlineNode) {
     console.log("json to selec", json);
     var treeName = null;
@@ -2700,148 +4479,1039 @@ CTS.Parser.Json = {
 
 };
 
+CTS.Parser.Html = new (function(){
+	// Regular Expressions for parsing tags and attributes
+	var startTag = /^<([-A-Za-z0-9_]+)((?:\s+\w+(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/,
+		endTag = /^<\/([-A-Za-z0-9_]+)[^>]*>/,
+		attr = /([-A-Za-z0-9_]+)(?:\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))?/g;
+		
+	// Empty Elements - HTML 4.01
+	var empty = makeMap("area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed");
+
+	// Block Elements - HTML 4.01
+	var block = makeMap("address,applet,blockquote,button,center,dd,del,dir,div,dl,dt,fieldset,form,frameset,hr,iframe,ins,isindex,li,map,menu,noframes,noscript,object,ol,p,pre,script,table,tbody,td,tfoot,th,thead,tr,ul");
+
+	// Inline Elements - HTML 4.01
+	var inline = makeMap("a,abbr,acronym,applet,b,basefont,bdo,big,br,button,cite,code,del,dfn,em,font,i,iframe,img,input,ins,kbd,label,map,object,q,s,samp,script,select,small,span,strike,strong,sub,sup,textarea,tt,u,var");
+
+	// Elements that you can, intentionally, leave open
+	// (and which close themselves)
+	var closeSelf = makeMap("colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr");
+
+	// Attributes that have their values filled in disabled="disabled"
+	var fillAttrs = makeMap("checked,compact,declare,defer,disabled,ismap,multiple,nohref,noresize,noshade,nowrap,readonly,selected");
+
+	// Special Elements (can contain anything)
+	var special = makeMap("script,style");
+
+	var HTMLParser = this.HTMLParser = function( html, handler ) {
+		var index, chars, match, stack = [], last = html;
+		stack.last = function(){
+			return this[ this.length - 1 ];
+		};
+
+		while ( html ) {
+			chars = true;
+
+			// Make sure we're not in a script or style element
+			if ( !stack.last() || !special[ stack.last() ] ) {
+
+				// Comment
+				if ( html.indexOf("<!--") == 0 ) {
+					index = html.indexOf("-->");
+	
+					if ( index >= 0 ) {
+						if ( handler.comment )
+							handler.comment( html.substring( 4, index ) );
+						html = html.substring( index + 3 );
+						chars = false;
+					}
+	
+				// end tag
+				} else if ( html.indexOf("</") == 0 ) {
+					match = html.match( endTag );
+	
+					if ( match ) {
+						html = html.substring( match[0].length );
+						match[0].replace( endTag, parseEndTag );
+						chars = false;
+					}
+	
+				// start tag
+				} else if ( html.indexOf("<") == 0 ) {
+					match = html.match( startTag );
+	
+					if ( match ) {
+						html = html.substring( match[0].length );
+						match[0].replace( startTag, parseStartTag );
+						chars = false;
+					}
+				}
+
+				if ( chars ) {
+					index = html.indexOf("<");
+					
+					var text = index < 0 ? html : html.substring( 0, index );
+					html = index < 0 ? "" : html.substring( index );
+					
+					if ( handler.chars )
+						handler.chars( text );
+				}
+
+			} else {
+				html = html.replace(new RegExp("(.*)<\/" + stack.last() + "[^>]*>"), function(all, text){
+					text = text.replace(/<!--(.*?)-->/g, "$1")
+						.replace(/<!\[CDATA\[(.*?)]]>/g, "$1");
+
+					if ( handler.chars )
+						handler.chars( text );
+
+					return "";
+				});
+
+				parseEndTag( "", stack.last() );
+			}
+
+			if ( html == last )
+				throw "Parse Error: " + html;
+			last = html;
+		}
+		
+		// Clean up any remaining tags
+		parseEndTag();
+
+		function parseStartTag( tag, tagName, rest, unary ) {
+			tagName = tagName.toLowerCase();
+
+			if ( block[ tagName ] ) {
+				while ( stack.last() && inline[ stack.last() ] ) {
+					parseEndTag( "", stack.last() );
+				}
+			}
+
+			if ( closeSelf[ tagName ] && stack.last() == tagName ) {
+				parseEndTag( "", tagName );
+			}
+
+			unary = empty[ tagName ] || !!unary;
+
+			if ( !unary )
+				stack.push( tagName );
+			
+			if ( handler.start ) {
+				var attrs = [];
+	
+				rest.replace(attr, function(match, name) {
+					var value = arguments[2] ? arguments[2] :
+						arguments[3] ? arguments[3] :
+						arguments[4] ? arguments[4] :
+						fillAttrs[name] ? name : "";
+					
+					attrs.push({
+						name: name,
+						value: value,
+						escaped: value.replace(/(^|[^\\])"/g, '$1\\\"') //"
+					});
+				});
+	
+				if ( handler.start )
+					handler.start( tagName, attrs, unary );
+			}
+		}
+
+		function parseEndTag( tag, tagName ) {
+			// If no tag name is provided, clean shop
+			if ( !tagName )
+				var pos = 0;
+				
+			// Find the closest opened tag of the same type
+			else
+				for ( var pos = stack.length - 1; pos >= 0; pos-- )
+					if ( stack[ pos ] == tagName )
+						break;
+			
+			if ( pos >= 0 ) {
+				// Close all the open elements, up the stack
+				for ( var i = stack.length - 1; i >= pos; i-- )
+					if ( handler.end )
+						handler.end( stack[ i ] );
+				
+				// Remove the open elements from the stack
+				stack.length = pos;
+			}
+		}
+	};
+	
+	this.HTMLtoXML = function( html ) {
+		var results = "";
+		
+		HTMLParser(html, {
+			start: function( tag, attrs, unary ) {
+				results += "<" + tag;
+		
+				for ( var i = 0; i < attrs.length; i++ )
+					results += " " + attrs[i].name + '="' + attrs[i].escaped + '"';
+		
+				results += (unary ? "/" : "") + ">";
+			},
+			end: function( tag ) {
+				results += "</" + tag + ">";
+			},
+			chars: function( text ) {
+				results += text;
+			},
+			comment: function( text ) {
+				results += "<!--" + text + "-->";
+			}
+		});
+		
+		return results;
+	};
+	
+	this.HTMLtoDOM = function( html, doc ) {
+		// There can be only one of these elements
+		var one = makeMap("html,head,body,title");
+		
+		// Enforce a structure for the document
+		var structure = {
+			link: "head",
+			base: "head"
+		};
+	
+		if ( !doc ) {
+			if ( typeof DOMDocument != "undefined" )
+				doc = new DOMDocument();
+			else if ( typeof document != "undefined" && document.implementation && document.implementation.createDocument )
+				doc = document.implementation.createDocument("", "", null);
+			else if ( typeof ActiveX != "undefined" )
+				doc = new ActiveXObject("Msxml.DOMDocument");
+			
+		} else
+			doc = doc.ownerDocument ||
+				doc.getOwnerDocument && doc.getOwnerDocument() ||
+				doc;
+		
+		var elems = [],
+			documentElement = doc.documentElement ||
+				doc.getDocumentElement && doc.getDocumentElement();
+				
+		// If we're dealing with an empty document then we
+		// need to pre-populate it with the HTML document structure
+		if ( !documentElement && doc.createElement ) (function(){
+			var html = doc.createElement("html");
+			var head = doc.createElement("head");
+			head.appendChild( doc.createElement("title") );
+			html.appendChild( head );
+			html.appendChild( doc.createElement("body") );
+			doc.appendChild( html );
+		})();
+		
+		// Find all the unique elements
+		if ( doc.getElementsByTagName )
+			for ( var i in one )
+				one[ i ] = doc.getElementsByTagName( i )[0];
+		
+		// If we're working with a document, inject contents into
+		// the body element
+		var curParentNode = one.body;
+		
+		HTMLParser( html, {
+			start: function( tagName, attrs, unary ) {
+				// If it's a pre-built element, then we can ignore
+				// its construction
+				if ( one[ tagName ] ) {
+					curParentNode = one[ tagName ];
+					if ( !unary ) {
+						elems.push( curParentNode );
+					}
+					return;
+				}
+			
+				var elem = doc.createElement( tagName );
+				
+				for ( var attr in attrs )
+					elem.setAttribute( attrs[ attr ].name, attrs[ attr ].value );
+				
+				if ( structure[ tagName ] && typeof one[ structure[ tagName ] ] != "boolean" )
+					one[ structure[ tagName ] ].appendChild( elem );
+				
+				else if ( curParentNode && curParentNode.appendChild )
+					curParentNode.appendChild( elem );
+					
+				if ( !unary ) {
+					elems.push( elem );
+					curParentNode = elem;
+				}
+			},
+			end: function( tag ) {
+				elems.length -= 1;
+				
+				// Init the new parentNode
+				curParentNode = elems[ elems.length - 1 ];
+			},
+			chars: function( text ) {
+				curParentNode.appendChild( doc.createTextNode( text ) );
+			},
+			comment: function( text ) {
+				// create comment node
+			}
+		});
+		
+		return doc;
+	};
+
+	function makeMap(str){
+		var obj = {}, items = str.split(",");
+		for ( var i = 0; i < items.length; i++ )
+			obj[ items[i] ] = true;
+		return obj;
+	}
+})();
+
+/* parser generated by jison 0.4.4 */
 /*
- * Bootstrapper
- * ==========================================================================
- * 
- * Intended to be mixed into the Engine.
- * 
- * As such, it assumes it is part of the Engine with access to StateMachine
- * and Events.
- * 
- * Methods for mix-in:
- *  * boot
- *
- * "Private" Methods:
- *  All begin with '_bootstrap'
- */
-var Bootstrapper = CTS.Bootstrapper = {
+  Returns a Parser object of the following structure:
 
-  /** 
-   * Walks CTS through a full page bootup.
-   *
-   * Dependencies:
-   *  Must be mixed into Engine with StateMachine and Events
-   */
-  boot: function() {
-    CTS.Log.Debug("Bootstrap: Booting up");
-    // Boot sequence
-    this.fsmInitialize(
-      'Start', [
-      { 'from':'Start',
-          'to':'QueueingCTS',
-        'name':'Begin' },
-      { 'from':'QueueingCTS',
-          'to':'LoadingCTS',
-        'name':'QueuedCTS' },
-      { 'from':'LoadingCTS',
-          'to':'QueueingTrees',
-        'name':'LoadedCTS'},
-      { 'from':'QueueingTrees',
-          'to':'LoadingTrees',
-        'name':'QueuedTrees'},
-      { 'from':'LoadingTrees',
-          'to':'Rendering',
-        'name':'LoadedTrees'},
-      { 'from':'Rendering',
-          'to':'Rendered',
-        'name':'Rendered' }
-      ]);
+  Parser: {
+    yy: {}
+  }
 
-    this.on('FsmEdge:Begin', this._bootstrap_queue_cts, this);
-    this.on('FsmEdge:LoadedCTS', this._bootstrap_queue_trees, this);
-    this.on('FsmEdge:LoadedTrees', this._bootstrap_render, this);
+  Parser.prototype: {
+    yy: {},
+    trace: function(),
+    symbols_: {associative list: name ==> number},
+    terminals_: {associative list: number ==> name},
+    productions_: [...],
+    performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate, $$, _$),
+    table: [...],
+    defaultActions: {...},
+    parseError: function(str, hash),
+    parse: function(input),
 
-    // VROOOOOMMMM!
-    this.fsmTransition('QueueingCTS');
-  },
+    lexer: {
+        EOF: 1,
+        parseError: function(str, hash),
+        setInput: function(input),
+        input: function(),
+        unput: function(str),
+        more: function(),
+        less: function(n),
+        pastInput: function(),
+        upcomingInput: function(),
+        showPosition: function(),
+        test_match: function(regex_match_array, rule_index),
+        next: function(),
+        lex: function(),
+        begin: function(condition),
+        popState: function(),
+        _currentRules: function(),
+        topState: function(),
+        pushState: function(condition),
 
-  /**
-   * Finds all CTS links and queues their load.
-   */
-  _bootstrap_queue_cts: function() {
-    // Finds all CTS links and queues their load.
-    CTS.Log.Debug("Bootstrap: Loading CTS");
-    this.fsmTransition("LoadingCTS");
-    this._bootstrap_cts_to_load = {};
-    var hasRemote = false;
+        options: {
+            ranges: boolean           (optional: true ==> token location info will include a .range[] member)
+            flex: boolean             (optional: true ==> flex-like lexing behaviour where the rules are tested exhaustively to find the longest match)
+            backtrack_lexer: boolean  (optional: true ==> lexer regexes are tested in order and for each matching regex the action code is invoked; the lexer terminates the scan when a token is returned by the action code)
+        },
 
-    var blocks = CTS.Utilities.getTreesheetLinks();
-    CTS.Fn.each(blocks, function(block) {
-      if (block.type == 'inline') {
-        this.ingestRules(block.content);
-      } else if (block.type == 'link') {
-        // Queue Load
-        this._bootstrap_cts_to_load[block.url] = true;
-        hasRemote = true;
-        CTS.Utilities.loadRemoteString(block,
-          this._bootstrap_cts_load_success, this._bootstrap_cts_load_fail);
-      }
-    }, this);
-    
-    if (! hasRemote) {
-      this.fsmTransition("QueueingTrees"); // Edge name: LoadedCTS
-    } 
-  },
-
-  _bootstrap_queue_trees: function() {
-    CTS.Log.Debug("Bootstrap: Loading Trees");
-    this.fsmTransition("LoadingTrees");
-    this._bootstrap_trees_to_load = {};
-    var hasRemote = false;
-    CTS.Fn.each(this.forrest.trees, function(value, key, list) {
-      // Todo
-    }, this);
-    if (! hasRemote) {
-      this.fsmTransition("Rendering");
-    }
-  },
-
-  _bootstrap_render: function() {
-    CTS.Log.Debug("Bootstrap: Rendering");
-    this.render();
-    this.fsmTransition("Rendered");
-  },
-
-  _bootstrap_cts_load_success: function(data, textStatus, xhr) {
-    CTS.Log.Debug("Bootstrap: Loaded treesheet", xhr.url);
-    this.ingestRules(data);
-    this._bootstrap_cts_loaded(xhr.url);
-  },
-
-  _bootstrap_cts_load_fail: function(xhr, textStatus, errorThrown) {
-    CTS.Log.Error("Bootstrap: CTS Load Failed", xhr.url);
-    this._bootstrap_cts_loaded(xhr.url);
-  },
-
-  _bootstrap_tree_load_success: function(data, textStatus, xhr) {
-    CTS.Log.Debug("Bootstrap: Loaded tree", xhr.url);
-    //TODO
-    this._bootstrap_tree_loaded(xhr.url);
-  },
-
-  _bootstrap_tree_load_fail: function(xhr, textStatus, errorThrown) {
-    CTS.Log.Error("Bootstrap: Tree Load Failed", xhr.url);
-    this._bootstrap_tree_loaded(xhr.url);
-  },
-
-  _bootstrap_cts_loaded: function(filename) {
-    delete this._bootstrap_cts_to_load[filename];
-    var done = (this._bootstrap_cts_to_load.length === 0);
-    if (done) {
-      _fsmTransition("QueueingTrees"); // Edge: LoadedCTS
-    }
-  },
-
-  _bootstrap_tree_loaded: function(filename) {
-    delete this._bootstrap_trees_to_load[filename];
-    var done = (this._bootstrap_trees_to_load.length === 0);
-    if (done) {
-      _fsmTransition("Rendering");
+        performAction: function(yy, yy_, $avoiding_name_collisions, YY_START),
+        rules: [...],
+        conditions: {associative list: name ==> set},
     }
   }
-};
 
+
+  token location info (@$, _$, etc.): {
+    first_line: n,
+    last_line: n,
+    first_column: n,
+    last_column: n,
+    range: [start_number, end_number]       (where the numbers are indexes into the input string, regular zero-based)
+  }
+
+
+  the parseError function receives a 'hash' object with these members for lexer and parser errors: {
+    text:        (matched text)
+    token:       (the produced terminal token, if any)
+    line:        (yylineno)
+  }
+  while parser (grammar) errors will also provide these members, i.e. parser errors deliver a superset of attributes: {
+    loc:         (yylloc)
+    expected:    (string describing the set of expected tokens)
+    recoverable: (boolean: TRUE when the parser has a error recovery rule available for this particular error)
+  }
+*/
+var parser = (function(){
+var parser = {trace: function trace() { },
+yy: {},
+symbols_: {"error":2,"treesheet":3,"tree_list":4,"relation_list":5,"tree_item":6,"tree_ref":7,"space_cdata_list":8,"TREE_SYM":9,"wempty":10,"IDENT":11,"whitespace":12,"string_or_uri":13,";":14,"relation_item":15,"selector":16,"relator":17,"selectorstring":18,"props":19,"TREE_VAR":20,"treevar":21,"relatorstring":22,"maybetreeprefix":23,"{":24,"proplist":25,"}":26,"space_cdata":27,"S":28,"CDO":29,"CDC":30,"STRING":31,"URI":32,"$accept":0,"$end":1},
+terminals_: {2:"error",9:"TREE_SYM",11:"IDENT",14:";",20:"TREE_VAR",24:"{",26:"}",28:"S",29:"CDO",30:"CDC",31:"STRING",32:"URI"},
+productions_: [0,[3,2],[4,1],[4,2],[4,0],[6,1],[6,1],[7,9],[5,1],[5,2],[15,8],[16,3],[16,5],[16,2],[16,4],[21,2],[21,1],[17,3],[17,2],[23,1],[23,0],[18,1],[22,1],[19,4],[25,1],[8,1],[8,2],[8,0],[27,1],[27,1],[27,1],[12,1],[12,2],[10,1],[10,0],[13,2],[13,2]],
+performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
+/* this == yyval */
+
+var $0 = $$.length - 1;
+switch (yystate) {
+case 1:
+      this.$ = {};
+      if ($$[$0-1])
+        this.$["trees"] = $$[$0-1];
+      if ($$[$0])
+        this.$["relations"] = $$[$0];
+      return this.$;
+    
+break;
+case 2:
+      this.$ = [];
+      if ($$[$0] !== null)
+        this.$.push($$[$0]);
+    
+break;
+case 3:
+      this.$ = $$[$0-1];
+      if ($$[$0] !== null)
+        this.$.push($$[$0]);
+    
+break;
+case 4:this.$ = null;
+break;
+case 5:this.$ = $$[$0];
+break;
+case 7:
+      this.$ = [$$[$0-6], $$[$0-4], $$[$0-2]];
+    
+break;
+case 8:
+      this.$ = [];
+      if ($$[$0] !== null)
+        this.$.push($$[$0]);
+    
+break;
+case 9:
+      this.$ = $$[$0-1];
+      if ($$[$0] !== null)
+        this.$.push($$[$0]);
+    $
+break;
+case 10:
+      this.$ = [$$[$0-7], $$[$0-5], $$[$0-3]];
+    
+break;
+case 11:
+      this.$ = {
+        selectorString: $$[$0-2],
+        props: $$[$0]
+      };
+    
+break;
+case 12:
+      this.$ = {
+        treeName: $$[$0-4],
+        selectorString: $$[$0-2],
+        props: $$[$0]
+      };
+    
+break;
+case 13:
+      this.$ = {
+        selectorString: $$[$0-1]
+      };
+    
+break;
+case 14:
+      this.$ = {
+        treeName: $$[$0-3],
+        selectorString: $$[$0-1]
+      };
+    
+break;
+case 15:this.$ = $$[$0-1];
+break;
+case 16:this.$ = "";
+break;
+case 17:
+      this.$ = {
+        name: $$[$0-2],
+        props: $$[$0]
+      };
+    
+break;
+case 18:
+      this.$ = {
+        name: $$[$0-1]
+      };
+    
+break;
+case 19:this.$ = $$[$0];
+break;
+case 20:this.$ = null;
+break;
+case 21:this.$ = $$[$0];
+break;
+case 22:this.$ = $$[$0];
+break;
+case 23:this.$ = $$[$0-1];
+break;
+case 24:this.$ = $$[$0];
+break;
+case 25:this.$ = null;
+break;
+case 26:this.$ = null;
+break;
+case 28:this.$ = null;
+break;
+case 29:this.$ = null;
+break;
+case 30:this.$ = null;
+break;
+case 31:this.$ = ' ';
+break;
+case 32:this.$ = ' ';
+break;
+case 33:this.$ = $$[$0];
+break;
+case 34:this.$ = "";
+break;
+case 35:this.$ = $$[$0-1];
+break;
+case 36:this.$ = $$[$0-1];
+break;
+}
+},
+table: [{3:1,4:2,6:3,7:4,8:5,9:[1,6],11:[2,4],20:[2,4],27:7,28:[1,8],29:[1,9],30:[1,10]},{1:[3]},{5:11,6:12,7:4,8:5,9:[1,6],11:[1,17],15:13,16:14,18:15,20:[1,16],27:7,28:[1,8],29:[1,9],30:[1,10]},{9:[2,2],11:[2,2],20:[2,2],28:[2,2],29:[2,2],30:[2,2]},{9:[2,5],11:[2,5],20:[2,5],28:[2,5],29:[2,5],30:[2,5]},{9:[2,6],11:[2,6],20:[2,6],27:18,28:[1,8],29:[1,9],30:[1,10]},{10:19,11:[2,34],12:20,28:[1,21]},{9:[2,25],11:[2,25],20:[2,25],28:[2,25],29:[2,25],30:[2,25]},{9:[2,28],11:[2,28],20:[2,28],28:[2,28],29:[2,28],30:[2,28]},{9:[2,29],11:[2,29],20:[2,29],28:[2,29],29:[2,29],30:[2,29]},{9:[2,30],11:[2,30],20:[2,30],28:[2,30],29:[2,30],30:[2,30]},{1:[2,1],11:[1,17],15:22,16:14,18:15,20:[1,16]},{9:[2,3],11:[2,3],20:[2,3],28:[2,3],29:[2,3],30:[2,3]},{1:[2,8],11:[2,8],20:[2,8]},{12:23,28:[1,21]},{10:24,12:20,14:[2,34],24:[2,34],28:[1,21]},{10:25,11:[2,34],12:20,28:[1,21]},{14:[2,21],24:[2,21],28:[2,21]},{9:[2,26],11:[2,26],20:[2,26],28:[2,26],29:[2,26],30:[2,26]},{11:[1,26]},{1:[2,33],9:[2,33],11:[2,33],14:[2,33],20:[2,33],24:[2,33],28:[1,27],29:[2,33],30:[2,33]},{1:[2,31],9:[2,31],11:[2,31],14:[2,31],20:[2,31],24:[2,31],28:[2,31],29:[2,31],30:[2,31],31:[2,31],32:[2,31]},{1:[2,9],11:[2,9],20:[2,9]},{11:[1,30],17:28,22:29,28:[1,27]},{14:[2,13],19:31,24:[1,32],28:[2,13]},{11:[1,17],18:33},{12:34,28:[1,21]},{1:[2,32],9:[2,32],11:[2,32],14:[2,32],20:[2,32],24:[2,32],28:[2,32],29:[2,32],30:[2,32],31:[2,32],32:[2,32]},{10:35,11:[2,34],12:20,20:[2,34],28:[1,21]},{10:36,11:[2,34],12:20,20:[2,34],24:[2,34],28:[1,21]},{11:[2,22],20:[2,22],24:[2,22],28:[2,22]},{14:[2,11],28:[2,11]},{10:37,11:[2,34],12:20,28:[1,21]},{10:38,12:20,14:[2,34],24:[2,34],28:[1,21]},{11:[1,39],28:[1,27]},{11:[1,17],16:40,18:15,20:[1,16]},{11:[2,18],19:41,20:[2,18],24:[1,32],28:[2,18]},{11:[1,43],25:42},{14:[2,14],19:44,24:[1,32],28:[2,14]},{12:45,28:[1,21]},{10:46,12:20,14:[2,34],28:[1,21]},{11:[2,17],20:[2,17],28:[2,17]},{26:[1,47]},{26:[2,24]},{14:[2,12],28:[2,12]},{13:48,28:[1,27],31:[1,49],32:[1,50]},{14:[1,51]},{11:[2,23],14:[2,23],20:[2,23],28:[2,23]},{14:[1,52]},{10:53,12:20,14:[2,34],28:[1,21]},{10:54,12:20,14:[2,34],28:[1,21]},{1:[2,34],10:55,11:[2,34],12:20,20:[2,34],28:[1,21]},{9:[2,34],10:56,11:[2,34],12:20,20:[2,34],28:[1,21],29:[2,34],30:[2,34]},{14:[2,35]},{14:[2,36]},{1:[2,10],11:[2,10],20:[2,10]},{9:[2,7],11:[2,7],20:[2,7],28:[2,7],29:[2,7],30:[2,7]}],
+defaultActions: {43:[2,24],53:[2,35],54:[2,36]},
+parseError: function parseError(str, hash) {
+    if (hash.recoverable) {
+        this.trace(str);
+    } else {
+        throw new Error(str);
+    }
+},
+parse: function parse(input) {
+    var self = this, stack = [0], vstack = [null], lstack = [], table = this.table, yytext = '', yylineno = 0, yyleng = 0, recovering = 0, TERROR = 2, EOF = 1;
+    this.lexer.setInput(input);
+    this.lexer.yy = this.yy;
+    this.yy.lexer = this.lexer;
+    this.yy.parser = this;
+    if (typeof this.lexer.yylloc == 'undefined') {
+        this.lexer.yylloc = {};
+    }
+    var yyloc = this.lexer.yylloc;
+    lstack.push(yyloc);
+    var ranges = this.lexer.options && this.lexer.options.ranges;
+    if (typeof this.yy.parseError === 'function') {
+        this.parseError = this.yy.parseError;
+    } else {
+        this.parseError = Object.getPrototypeOf(this).parseError;
+    }
+    function popStack(n) {
+        stack.length = stack.length - 2 * n;
+        vstack.length = vstack.length - n;
+        lstack.length = lstack.length - n;
+    }
+    function lex() {
+        var token;
+        token = self.lexer.lex() || EOF;
+        if (typeof token !== 'number') {
+            token = self.symbols_[token] || token;
+        }
+        return token;
+    }
+    var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
+    while (true) {
+        state = stack[stack.length - 1];
+        if (this.defaultActions[state]) {
+            action = this.defaultActions[state];
+        } else {
+            if (symbol === null || typeof symbol == 'undefined') {
+                symbol = lex();
+            }
+            action = table[state] && table[state][symbol];
+        }
+                    if (typeof action === 'undefined' || !action.length || !action[0]) {
+                var errStr = '';
+                expected = [];
+                for (p in table[state]) {
+                    if (this.terminals_[p] && p > TERROR) {
+                        expected.push('\'' + this.terminals_[p] + '\'');
+                    }
+                }
+                if (this.lexer.showPosition) {
+                    errStr = 'Parse error on line ' + (yylineno + 1) + ':\n' + this.lexer.showPosition() + '\nExpecting ' + expected.join(', ') + ', got \'' + (this.terminals_[symbol] || symbol) + '\'';
+                } else {
+                    errStr = 'Parse error on line ' + (yylineno + 1) + ': Unexpected ' + (symbol == EOF ? 'end of input' : '\'' + (this.terminals_[symbol] || symbol) + '\'');
+                }
+                this.parseError(errStr, {
+                    text: this.lexer.match,
+                    token: this.terminals_[symbol] || symbol,
+                    line: this.lexer.yylineno,
+                    loc: yyloc,
+                    expected: expected
+                });
+            }
+        if (action[0] instanceof Array && action.length > 1) {
+            throw new Error('Parse Error: multiple actions possible at state: ' + state + ', token: ' + symbol);
+        }
+        switch (action[0]) {
+        case 1:
+            stack.push(symbol);
+            vstack.push(this.lexer.yytext);
+            lstack.push(this.lexer.yylloc);
+            stack.push(action[1]);
+            symbol = null;
+            if (!preErrorSymbol) {
+                yyleng = this.lexer.yyleng;
+                yytext = this.lexer.yytext;
+                yylineno = this.lexer.yylineno;
+                yyloc = this.lexer.yylloc;
+                if (recovering > 0) {
+                    recovering--;
+                }
+            } else {
+                symbol = preErrorSymbol;
+                preErrorSymbol = null;
+            }
+            break;
+        case 2:
+            len = this.productions_[action[1]][1];
+            yyval.$ = vstack[vstack.length - len];
+            yyval._$ = {
+                first_line: lstack[lstack.length - (len || 1)].first_line,
+                last_line: lstack[lstack.length - 1].last_line,
+                first_column: lstack[lstack.length - (len || 1)].first_column,
+                last_column: lstack[lstack.length - 1].last_column
+            };
+            if (ranges) {
+                yyval._$.range = [
+                    lstack[lstack.length - (len || 1)].range[0],
+                    lstack[lstack.length - 1].range[1]
+                ];
+            }
+            r = this.performAction.call(yyval, yytext, yyleng, yylineno, this.yy, action[1], vstack, lstack);
+            if (typeof r !== 'undefined') {
+                return r;
+            }
+            if (len) {
+                stack = stack.slice(0, -1 * len * 2);
+                vstack = vstack.slice(0, -1 * len);
+                lstack = lstack.slice(0, -1 * len);
+            }
+            stack.push(this.productions_[action[1]][0]);
+            vstack.push(yyval.$);
+            lstack.push(yyval._$);
+            newState = table[stack[stack.length - 2]][stack[stack.length - 1]];
+            stack.push(newState);
+            break;
+        case 3:
+            return true;
+        }
+    }
+    return true;
+}};
+undefined/* generated by jison-lex 0.2.0 */
+var lexer = (function(){
+var lexer = {
+
+EOF:1,
+
+parseError:function parseError(str, hash) {
+        if (this.yy.parser) {
+            this.yy.parser.parseError(str, hash);
+        } else {
+            throw new Error(str);
+        }
+    },
+
+// resets the lexer, sets new input
+setInput:function (input) {
+        this._input = input;
+        this._more = this._backtrack = this.done = false;
+        this.yylineno = this.yyleng = 0;
+        this.yytext = this.matched = this.match = '';
+        this.conditionStack = ['INITIAL'];
+        this.yylloc = {
+            first_line: 1,
+            first_column: 0,
+            last_line: 1,
+            last_column: 0
+        };
+        if (this.options.ranges) {
+            this.yylloc.range = [0,0];
+        }
+        this.offset = 0;
+        return this;
+    },
+
+// consumes and returns one char from the input
+input:function () {
+        var ch = this._input[0];
+        this.yytext += ch;
+        this.yyleng++;
+        this.offset++;
+        this.match += ch;
+        this.matched += ch;
+        var lines = ch.match(/(?:\r\n?|\n).*/g);
+        if (lines) {
+            this.yylineno++;
+            this.yylloc.last_line++;
+        } else {
+            this.yylloc.last_column++;
+        }
+        if (this.options.ranges) {
+            this.yylloc.range[1]++;
+        }
+
+        this._input = this._input.slice(1);
+        return ch;
+    },
+
+// unshifts one char (or a string) into the input
+unput:function (ch) {
+        var len = ch.length;
+        var lines = ch.split(/(?:\r\n?|\n)/g);
+
+        this._input = ch + this._input;
+        this.yytext = this.yytext.substr(0, this.yytext.length - len - 1);
+        //this.yyleng -= len;
+        this.offset -= len;
+        var oldLines = this.match.split(/(?:\r\n?|\n)/g);
+        this.match = this.match.substr(0, this.match.length - 1);
+        this.matched = this.matched.substr(0, this.matched.length - 1);
+
+        if (lines.length - 1) {
+            this.yylineno -= lines.length - 1;
+        }
+        var r = this.yylloc.range;
+
+        this.yylloc = {
+            first_line: this.yylloc.first_line,
+            last_line: this.yylineno + 1,
+            first_column: this.yylloc.first_column,
+            last_column: lines ?
+                (lines.length === oldLines.length ? this.yylloc.first_column : 0)
+                 + oldLines[oldLines.length - lines.length].length - lines[0].length :
+              this.yylloc.first_column - len
+        };
+
+        if (this.options.ranges) {
+            this.yylloc.range = [r[0], r[0] + this.yyleng - len];
+        }
+        this.yyleng = this.yytext.length;
+        return this;
+    },
+
+// When called from action, caches matched text and appends it on next action
+more:function () {
+        this._more = true;
+        return this;
+    },
+
+// When called from action, signals the lexer that this rule fails to match the input, so the next matching rule (regex) should be tested instead.
+reject:function () {
+        if (this.options.backtrack_lexer) {
+            this._backtrack = true;
+        } else {
+            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. You can only invoke reject() in the lexer when the lexer is of the backtracking persuasion (options.backtrack_lexer = true).\n' + this.showPosition(), {
+                text: "",
+                token: null,
+                line: this.yylineno
+            });
+
+        }
+        return this;
+    },
+
+// retain first n characters of the match
+less:function (n) {
+        this.unput(this.match.slice(n));
+    },
+
+// displays already matched input, i.e. for error messages
+pastInput:function () {
+        var past = this.matched.substr(0, this.matched.length - this.match.length);
+        return (past.length > 20 ? '...':'') + past.substr(-20).replace(/\n/g, "");
+    },
+
+// displays upcoming input, i.e. for error messages
+upcomingInput:function () {
+        var next = this.match;
+        if (next.length < 20) {
+            next += this._input.substr(0, 20-next.length);
+        }
+        return (next.substr(0,20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
+    },
+
+// displays the character position where the lexing error occurred, i.e. for error messages
+showPosition:function () {
+        var pre = this.pastInput();
+        var c = new Array(pre.length + 1).join("-");
+        return pre + this.upcomingInput() + "\n" + c + "^";
+    },
+
+// test the lexed token: return FALSE when not a match, otherwise return token
+test_match:function (match, indexed_rule) {
+        var token,
+            lines,
+            backup;
+
+        if (this.options.backtrack_lexer) {
+            // save context
+            backup = {
+                yylineno: this.yylineno,
+                yylloc: {
+                    first_line: this.yylloc.first_line,
+                    last_line: this.last_line,
+                    first_column: this.yylloc.first_column,
+                    last_column: this.yylloc.last_column
+                },
+                yytext: this.yytext,
+                match: this.match,
+                matches: this.matches,
+                matched: this.matched,
+                yyleng: this.yyleng,
+                offset: this.offset,
+                _more: this._more,
+                _input: this._input,
+                yy: this.yy,
+                conditionStack: this.conditionStack.slice(0),
+                done: this.done
+            };
+            if (this.options.ranges) {
+                backup.yylloc.range = this.yylloc.range.slice(0);
+            }
+        }
+
+        lines = match[0].match(/(?:\r\n?|\n).*/g);
+        if (lines) {
+            this.yylineno += lines.length;
+        }
+        this.yylloc = {
+            first_line: this.yylloc.last_line,
+            last_line: this.yylineno + 1,
+            first_column: this.yylloc.last_column,
+            last_column: lines ?
+                         lines[lines.length - 1].length - lines[lines.length - 1].match(/\r?\n?/)[0].length :
+                         this.yylloc.last_column + match[0].length
+        };
+        this.yytext += match[0];
+        this.match += match[0];
+        this.matches = match;
+        this.yyleng = this.yytext.length;
+        if (this.options.ranges) {
+            this.yylloc.range = [this.offset, this.offset += this.yyleng];
+        }
+        this._more = false;
+        this._backtrack = false;
+        this._input = this._input.slice(match[0].length);
+        this.matched += match[0];
+        token = this.performAction.call(this, this.yy, this, indexed_rule, this.conditionStack[this.conditionStack.length - 1]);
+        if (this.done && this._input) {
+            this.done = false;
+        }
+        if (token) {
+            if (this.options.backtrack_lexer) {
+                delete backup;
+            }
+            return token;
+        } else if (this._backtrack) {
+            // recover context
+            for (var k in backup) {
+                this[k] = backup[k];
+            }
+            return false; // rule action called reject() implying the next rule should be tested instead.
+        }
+        if (this.options.backtrack_lexer) {
+            delete backup;
+        }
+        return false;
+    },
+
+// return next match in input
+next:function () {
+        if (this.done) {
+            return this.EOF;
+        }
+        if (!this._input) {
+            this.done = true;
+        }
+
+        var token,
+            match,
+            tempMatch,
+            index;
+        if (!this._more) {
+            this.yytext = '';
+            this.match = '';
+        }
+        var rules = this._currentRules();
+        for (var i = 0; i < rules.length; i++) {
+            tempMatch = this._input.match(this.rules[rules[i]]);
+            if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
+                match = tempMatch;
+                index = i;
+                if (this.options.backtrack_lexer) {
+                    token = this.test_match(tempMatch, rules[i]);
+                    if (token !== false) {
+                        return token;
+                    } else if (this._backtrack) {
+                        match = false;
+                        continue; // rule action called reject() implying a rule MISmatch.
+                    } else {
+                        // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
+                        return false;
+                    }
+                } else if (!this.options.flex) {
+                    break;
+                }
+            }
+        }
+        if (match) {
+            token = this.test_match(match, rules[index]);
+            if (token !== false) {
+                return token;
+            }
+            // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
+            return false;
+        }
+        if (this._input === "") {
+            return this.EOF;
+        } else {
+            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. Unrecognized text.\n' + this.showPosition(), {
+                text: "",
+                token: null,
+                line: this.yylineno
+            });
+        }
+    },
+
+// return next match that has a token
+lex:function lex() {
+        var r = this.next();
+        if (r) {
+            return r;
+        } else {
+            return this.lex();
+        }
+    },
+
+// activates a new lexer condition state (pushes the new lexer condition state onto the condition stack)
+begin:function begin(condition) {
+        this.conditionStack.push(condition);
+    },
+
+// pop the previously active lexer condition state off the condition stack
+popState:function popState() {
+        var n = this.conditionStack.length - 1;
+        if (n > 0) {
+            return this.conditionStack.pop();
+        } else {
+            return this.conditionStack[0];
+        }
+    },
+
+// produce the lexer rule set which is active for the currently active lexer condition state
+_currentRules:function _currentRules() {
+        if (this.conditionStack.length && this.conditionStack[this.conditionStack.length - 1]) {
+            return this.conditions[this.conditionStack[this.conditionStack.length - 1]].rules;
+        } else {
+            return this.conditions["INITIAL"].rules;
+        }
+    },
+
+// return the currently active lexer condition state; when an index argument is provided it produces the N-th previous condition state, if available
+topState:function topState(n) {
+        n = this.conditionStack.length - 1 - Math.abs(n || 0);
+        if (n >= 0) {
+            return this.conditionStack[n];
+        } else {
+            return "INITIAL";
+        }
+    },
+
+// alias for begin(condition)
+pushState:function pushState(condition) {
+        this.begin(condition);
+    },
+
+// return the number of states currently on the stack
+stateStackSize:function stateStackSize() {
+        return this.conditionStack.length;
+    },
+options: {},
+performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
+
+var YYSTATE=YY_START;
+switch($avoiding_name_collisions) {
+case 0:return 28;
+break;
+case 1:
+break;
+case 2:return 29;
+break;
+case 3:return 30;
+break;
+case 4:return 'INCLUDES';
+break;
+case 5:return 'DASHMATCH';
+break;
+case 6:return 'PREFIXMATCH';
+break;
+case 7:return 'SUFFIXMATCH';
+break;
+case 8:return 'SUBSTRINGMATCH';
+break;
+case 9:return 'IMPORTANT_SYM';
+break;
+case 10:return 32;
+break;
+case 11:return 32;
+break;
+case 12:return "FUNCTION";
+break;
+case 13:return "TREE_VAR";
+break;
+case 14:return 'KEYFRAMES';
+break;
+case 15:return 31;
+break;
+case 16:return 11;
+break;
+case 17:return 'HASH';
+break;
+case 18:return 'IMPORT_SYM';
+break;
+case 19:return 'PAGE_SYM';
+break;
+case 20:return 'MEDIA_SYM';
+break;
+case 21:return 'FONT_FACE_SYM';
+break;
+case 22:return 'CHARSET_SYM';
+break;
+case 23:return 'NAMESPACE_SYM';
+break;
+case 24:return 9;
+break;
+case 25:return 'UNICODERANGE';
+break;
+case 26:return 'UNICODERANGE';
+break;
+case 27:return yy_.yytext;
+break;
+}
+},
+rules: [/^(?:[ \t\r\n\f]+)/,/^(?:\/\*[^*]*\*+([^/][^*]*\*+)*\/)/,/^(?:<!--)/,/^(?:-->)/,/^(?:~=)/,/^(?:\|=)/,/^(?:\^=)/,/^(?:\$=)/,/^(?:\*=)/,/^(?:!([ \t\r\n\f]*)important\b)/,/^(?:url\(([ \t\r\n\f]*)(("([\t !#$%&(-~]|\\(\n|\r\n|\r|\f\b)|'|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377]))*")|('([\t !#$%&(-~]|\\(\n|\r\n|\r|\f\b)|"|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377]))*'))([ \t\r\n\f]*)\))/,/^(?:url\(([ \t\r\n\f]*)(([!#$%&*-~]|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377]))*)([ \t\r\n\f]*)\))/,/^(?:([-]?([a-zA-Z]|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377]))([_]|([a-zA-Z0-9-]|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377])))*)\()/,/^(?:([-]?([a-zA-Z]|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377]))([_]|([a-zA-Z0-9-]|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377])))*)([ \t\r\n\f]*)\|)/,/^(?:{keyframes})/,/^(?:(("([\t !#$%&(-~]|\\(\n|\r\n|\r|\f\b)|'|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377]))*")|('([\t !#$%&(-~]|\\(\n|\r\n|\r|\f\b)|"|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377]))*')))/,/^(?:([-]?([a-zA-Z]|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377]))([_]|([a-zA-Z0-9-]|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377])))*))/,/^(?:#(([_]|([a-zA-Z0-9-]|([\200-\377])|((\\([0-9a-fA-F]){1,6}[ \t\r\n\f]?)|\\[ -~\200-\377])))+))/,/^(?:@import\b)/,/^(?:@page\b)/,/^(?:@media\b)/,/^(?:@font-face\b)/,/^(?:@charset\b)/,/^(?:@namespace\b)/,/^(?:@tree\b)/,/^(?:U\+(\?{1,6}|([0-9a-fA-F])(\?{0,5}|([0-9a-fA-F])(\?{0,4}|([0-9a-fA-F])(\?{0,3}|([0-9a-fA-F])(\?{0,2}|([0-9a-fA-F])(\??|([0-9a-fA-F]))))))))/,/^(?:U\+([0-9a-fA-F]){1,6}([0-9a-fA-F]){1,6})/,/^(?:.)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27],"inclusive":true}}
+};
+return lexer;
+})();
+parser.lexer = lexer;
+function Parser () {
+  this.yy = {};
+}
+Parser.prototype = parser;parser.Parser = Parser;
+return new Parser;
+})();
 // Engine
 // ==========================================================================
 
@@ -2859,7 +5529,7 @@ var Engine = CTS.Engine = function(opts, args) {
 
 // Instance Methods
 // ----------------
-CTS.Fn.extend(Engine.prototype, Events, StateMachine, Bootstrapper, {
+CTS.Fn.extend(Engine.prototype, Events, {
 
   initialize: function() {
     this.forrest = new CTS.Forrest();
@@ -2872,16 +5542,68 @@ CTS.Fn.extend(Engine.prototype, Events, StateMachine, Bootstrapper, {
    *  3: 
    */
   render: function(opts) {
-    console.log(pt);
     var pt = this.forrest.getPrimaryTree();
+    console.log("rendering primary tree", pt);
     var options = CTS.Fn.extend({}, opts);
     pt.root._processIncoming();
     //pt.render(options);
   },
 
-  ingestRules: function(rules) {
-    this.forrest.ingestRules(rules);
+  boot: function() {
+    var self = this;
+    var ctsLoaded = this.loadCts();
+    var treesLoaded = ctsLoaded.then(
+      function() {
+        self.forrest.realizeTrees().then(
+          function() {
+            self.forrest.realizeRelations();
+            self.render();
+          },
+          function(err) {
+            CTS.Log.Error("Couldn't load trees", err);
+          }
+        ).done();
+      },
+      function(err) {
+        CTS.Log.Error("Couldn't load CTS.", err);
+      }
+    ).done();
+
+    //    self.loadCts()
+//      .then(function() {
+//        self.forrest.realizeTrees().then(function() {
+//          alert("realized " + this.forrest.trees.length);
+//          self.forrest.realizeRelations();
+//          self.render();
+//        });
+//      });
   },
+
+  loadCts: function() {
+    var promises = [];
+    var self = this;
+    Fn.each(Utilities.getTreesheetLinks(), function(block) {
+      if (block.type == 'inline') {
+        var spec = CTS.Parser.parseForrestSpec(block.content, block.format);
+        self.forrest.addSpec(spec);
+      } else if (block.type == 'link') {
+        var deferred = Q.defer();
+        CTS.Utilities.fetchString(block).then(
+          function(content) { 
+            var spec = CTS.Parser.parseForrestSpec(content, block.format);
+            self.forrest.addSpec(spec);
+            deferred.resolve(); 
+          },
+          function() {
+            CTS.Log.Error("Couldn't fetch string.");
+            deferred.reject();
+          }
+        );
+        promises.push(deferred.promise);
+      }
+    }, this);
+    return Q.all(promises);
+  }
 
 });
 
@@ -2905,8 +5627,10 @@ CTS.shouldAutoload = function() {
 };
 
 if (CTS.shouldAutoload()) {
-  CTS.engine = new CTS.Engine();
-  CTS.engine.boot();
+  CTS.$(function() {
+    CTS.engine = new CTS.Engine();
+    CTS.engine.boot();
+  });
 }
 
 }).call(this);

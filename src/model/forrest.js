@@ -38,9 +38,9 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   addAndRealizeDefaultTrees: function() {
-    var pageBody = new CTS.TreeSpec('HTML', 'body', null);
+    var pageBody = new CTS.Tree.Spec('HTML', 'body', null);
     this.addTreeSpec(pageBody);
-    this.realizeTreeSpec(pageBody);
+    this.realizeTree(pageBody);
   },
 
   /*
@@ -57,10 +57,10 @@ CTS.Fn.extend(Forrest.prototype, {
     this.forrestSpecs.push(forrestSpec);
     var i;
     for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
-      this.addTree(forrestSpec.treeSpecs[i]);
+      this.addTreeSpec(forrestSpec.treeSpecs[i]);
     }
     for (i = 0; i < forrestSpec.relationSpecs.length; i++) {
-      this.addRelation(forrestSpec.relationSpecs[i]);
+      this.addRelationSpec(forrestSpec.relationSpecs[i]);
     }
   },
 
@@ -76,6 +76,37 @@ CTS.Fn.extend(Forrest.prototype, {
     for (var i = 0; i < someRelationSpecs.length; i++) {
       // Faster than .push()
       this.relationSpecs.push(someRelationSpecs[i]);
+    }
+  },
+
+  realizeTrees: function() {
+    var promises = [];
+    Fn.each(this.treeSpecs, function(treeSpec, name, list) {
+      if (! Fn.has(this.trees, name)) {
+        promises.push(this.realizeTree(treeSpec));
+      }
+    }, this);
+    return Q.all(promises);
+  },
+
+  realizeTree: function(treeSpec) {
+    var deferred = Q.defer();
+    var self = this;
+    CTS.Tree.Create(treeSpec, this).then(
+      function(tree) {
+        self.trees[treeSpec.name] = tree;
+        deferred.resolve();
+      },
+      function() {
+        deferred.reject();
+      }
+    );
+    return deferred.promise;
+  },
+
+  realizeRelations: function() {
+    for (var i = 0; i < this.relationSpecs.length; i++) {
+      this.realizeRelation(this.relationSpecs[i]);
     }
   },
 
@@ -107,38 +138,7 @@ CTS.Fn.extend(Forrest.prototype, {
     return ret;
   },
 
-  /*
-   * Realizing Specs
-   *
-   * Here, we take specs (ideally those that we've already added, but
-   * currently that constraint isn't enforced) and actually transform them
-   * into model objects such as Tree and Relation objects.
-   *
-   * Note that realizing a relation depends upon the prior realization of the
-   * trees that the relation references. 
-   *
-   * -------------------------------------------------------- */
-
-  realizeTreeSpec: function(spec) {
-    var self = this;
-    CTS.Utilities.fetchTree(spec, function(error, root) {
-      if (error) {
-        CTS.Log.Error("Could not fetch Tree for Spec " + alias);
-      } else {
-        if (spec.kind == 'HTML') {
-          var tree = new CTS.DomTree(self, root, spec);
-          this.trees[spec.name] = tree;
-        } else if (spec.kind == 'JSON') {
-          var tree = new CTS.JsonTree(self, root, spec);
-          this.trees[spec.name] = tree;
-        } else {
-          CTS.Log.Error("Unknown kind of Tree in Spec " + alias); 
-        }
-      }
-    }, this);
-  },
-
-  realizeRelationSpec: function(spec) {
+  realizeRelation: function(spec) {
     var s1 = spec.selectionSpec1;
     var s2 = spec.selectionSpec2;
 
@@ -169,7 +169,7 @@ CTS.Fn.extend(Forrest.prototype, {
         // Realize a relation between i and j. Creating the relation adds
         // a pointer back to the nodes.
         var relation = new CTS.Relation.CreateFromSpec(nodes1[i], nodes2[j], spec);
-        console.log("Created relation", relation);
+        console.log("Did a relation between", relation, relation.name, nodes1[i], nodes2[j]);
         // Add the relation to the forrest
         this.relations.push(relation);
       }
@@ -192,74 +192,5 @@ CTS.Fn.extend(Forrest.prototype, {
   getPrimaryTree: function() {
     return this.trees.body;
   }
-
-  /*
-   * NOTE:
-   *  All the below code was very clever, but a premature optimization aimed at lazy-loading.
-   *  Consider bringing it back once we achieve (slow) functionality.
-   */
-
-  //nodesForSelectionSpec: function(spec) {
-  //  if (typeof this.trees[spec.treeName] != "undefined") {
-  //    return this.trees[spec.treeName].nodesForSelectionSpec(spec);
-  //  } else {
-  //    return [];
-  //  }
-  //},
-
-  //rulesForNode: function(node) {
-  //  console.log("Forrest:::rulesForNode");
-  //  var ret = [];
-  //  CTS.Fn.each(this.rules, function(rule) {
-  //    console.log("Forrest::rulesForNode Rule", rule, "for node", node);
-  //    if ((rule.selector1.matches(node)) || 
-  //        (rule.selector2.matches(node))) {
-  //      ret[ret.length] = rule;
-  //    } else {
-  //      console.log("Failed match", rule.selector1.selector);
-  //      console.log("Failed match", rule.selector2.selector);
-  //    }
-  //  }, this);
-
-  //  var inlineRules = node.getInlineRules();
-  // 
-  //  if (inlineRules !== null) {
-  //    var ruleSet = RuleParser.parseInline(node, inlineRules);
-  //    if (typeof ruleSet != "undefined") {
-  //      ret = CTS.Fn.union(ret, ruleSet);
-  //    }
-  //  }
-  //  return ret;
-  //},
-
-  //registerRelationsForNode: function(node) {
-  //  console.log("Forrest::RelationsForNode");
-  //  var rules = this.rulesForNode(node);
-  //  console.log("Rules for", node.siblings[0].html(), rules);
-  //  var relations = CTS.Fn.map(rules, function(rule) {
-  //    var selection1 = null;
-  //    var selection2 = null;
-  //    var selector = null;
-  //    var other = null;
-  //    if (rule.selector1.matches(node)) {
-  //      selection1 = new CTS.Selection([node]);
-  //      selection2 = rule.selector2.toSelection(this);
-  //      other = selection2;
-  //    } else {
-  //      selection2 = new CTS.Selection([node]);
-  //      selection1 = rule.selector1.toSelection(this);
-  //      other = selection1;
-  //    }
-  //    var relation = new Relation(selection1, selection2, rule.name, rule.opts, rule.opts1, rule.opts2);
-  //    node.registerRelation(relation);
-  //    // Make sure that we wire up the relations,
-  //    // since some might come in from inline.
-  //    CTS.Fn.each(other.nodes, function(n) {
-  //      n.registerRelation(relation);
-  //    }, this);
-  //  }, this);
-  //  console.log("Returning Relations for", node.siblings[0].html(), relations);
-  //  return relations;
-  //}
 
 });

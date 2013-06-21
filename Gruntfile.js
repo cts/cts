@@ -33,16 +33,20 @@ module.exports = function(grunt) {
           "src/debugging/debugging.js",
           "src/debugging/tree-viz.js",
 
+          /* Misc */
+          "src/util/q.js",
           "src/util/state-machine.js",
           "src/util/events.js",
           "src/util/utilities.js",
 
+          /* Node Containers */
           "src/model/node/node.js",
           "src/model/node/node-state-machine.js",
           "src/model/node/node-abstract.js",
           "src/model/node/node-dom.js",
           "src/model/node/node-json.js",
 
+          /* Relations */
           "src/model/relation/relation-spec.js",
           "src/model/relation/relation.js",
           "src/model/relation/is.js",
@@ -50,23 +54,25 @@ module.exports = function(grunt) {
           "src/model/relation/ifexist.js",
           "src/model/relation/ifnexist.js",
           "src/model/relation/graft.js",
-          
-          "src/model/tree/tree-spec.js",
+         
+          /* Tree Model */
           "src/model/tree/tree.js",
+          "src/model/tree/tree-spec.js",
           "src/model/tree/tree-dom.js",
           "src/model/tree/tree-json.js",
           "src/model/tree/tree-xpando.js",
-          
           "src/model/forrest-spec.js",
           "src/model/forrest.js",
-          
           "src/model/selection-spec.js",
           "src/model/selection.js",
 
+          /* Parser */
           "src/parser/parser.js",
           "src/parser/parser-json.js",
+          "src/parser/html.js",
+          "autogen/cts2-parser.js",
+          "src/parser/postparser._js",
 
-          "src/bootstrapper.js",
           "src/engine.js",
           "src/autoloader.js",
 
@@ -102,7 +108,7 @@ module.exports = function(grunt) {
         outputType: "js",
         inputType: 'jison',
         files: {
-          'grammar/parsers/cts-2.js': 'grammar/cts2.jison'
+          'autogen/cts2-parser.js': 'src/parser/cts2.jison'
         }
       }
     }

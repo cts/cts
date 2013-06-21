@@ -1,5 +1,5 @@
 var ForrestSpec = CTS.ForrestSpec = function() {
-  this.treeSpeecs = [];
+  this.treeSpecs = [];
   this.relationSpecs = [];
 };
 

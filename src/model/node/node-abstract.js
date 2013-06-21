@@ -1,14 +1,14 @@
-var AbstractNode = CTS.AbstractNode = function() {
+CTS.Node.Abstract = function() {
   this.initializeNodeBase();
   this.value = null;
 };
 
-CTS.Fn.extend(CTS.AbstractNode.prototype,
+CTS.Fn.extend(CTS.Node.Abstract.prototype,
     CTS.Events,
-    CTS.Node, {
+    CTS.Node.Base, {
 
    _subclass_beginClone: function() {
-     var n = new AbstractNode ();
+     var n = new CTS.Node.Abstract();
      n.setValue(this.getValue());
 
      for (var i = 0; i < this.children.length; i++) {
@@ -18,6 +18,8 @@ CTS.Fn.extend(CTS.AbstractNode.prototype,
 
      return n;
    }
+
+
 
 //   descendantOf: function(other) {
 //     var p = this.parentNode;
@@ -36,5 +38,5 @@ CTS.Fn.extend(CTS.AbstractNode.prototype,
 
 });
 
-CTS.NonExistantNode = new CTS.AbstractNode();
+CTS.NonExistantNode = new CTS.Node.Abstract();
 

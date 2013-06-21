@@ -13,6 +13,16 @@ CTS.Parser = {
     }
   },
 
+  parseForrestSpec: function(str, kind) {
+    if (kind == 'json') {
+      return CTS.Parser.Json.parseForrestSpec(str);
+    } else if (kind == 'string') {
+      return CTS.Parser.String.parseForrestSpec(str);
+    } else {
+      CTS.Log.Error("I don't understand the CTS Format", kind);
+    }
+  },
+
   /* Inline specs can take the form:
    *  1.  <syntax>:<cts string>
    *  2.  <cts string>
@@ -26,8 +36,8 @@ CTS.Parser = {
     if (res === null) {
       return ['string', str];
     } else {
-      console.log(res);
       return [res[1], res[2]];
     }
   }
+
 };

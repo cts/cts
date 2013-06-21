@@ -1,5 +1,5 @@
 // ### Constructor
-var DomNode = CTS.DomNode = function(node, tree, opts) {
+CTS.Node.Html = function(node, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
   this.kind = "HTML";
@@ -7,7 +7,7 @@ var DomNode = CTS.DomNode = function(node, tree, opts) {
 };
 
 // ### Instance Methods
-CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
+CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
 
   debugName: function() {
     return CTS.Fn.map(this.siblings, function(node) {
@@ -48,7 +48,7 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
     */
    _subclass_realizeChildren: function() {
      this.children = CTS.Fn.map(this.value.children(), function(child) {
-       var node = new DomNode(child, this.tree, this.opts);
+       var node = new CTS.Node.Html(child, this.tree, this.opts);
        node.parentNode = this;
        return node;
      }, this);
@@ -58,8 +58,18 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
     * Inserts this DOM node after the child at the specified index.
     */
    _subclass_insertChild: function(child, afterIndex) {
-     var leftSibling = this.getChildren()[afterIndex];
-     leftSibling.value.after(this.value);
+     if (afterIndex == -1) {
+       if (this.getChildren().length == 0) {
+         this.value.append(child.value);
+       } else {
+         this.value.prepend(child.value)
+       }
+     } else if (afterIndex > -1) {
+       var leftSibling = this.getChildren()[afterIndex];
+       leftSibling.value.after(child.value);
+     } else {
+       CTS.Log.Error("[HTML Node] Afer index shouldn't be ", afterIndex);
+     }
    },
 
    /* 
@@ -78,7 +88,7 @@ CTS.Fn.extend(CTS.DomNode.prototype, CTS.Node, CTS.Events, {
 
    _subclass_beginClone: function() {
      var c = this.value.clone();
-     var d = new DomNode(c, this.tree, this.opts);
+     var d = new CTS.Node.Html(c, this.tree, this.opts);
      d.realizeChildren();
      return d;
    },
