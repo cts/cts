@@ -6,7 +6,7 @@ CTS.Parser = {
     if (kind == 'json') {
       return CTS.Parser.Json.parseInlineSpecs(body, node, intoForrest, realize);
     } else if (kind == 'string') {
-      return CTS.Parser.String.parseInlineSpecs(body, node, intoForrest, realize);
+      return CTS.Parser.Cts.parseInlineSpecs(body, node, intoForrest, realize);
     } else {
       CTS.Log.Error("I don't understand the inline CTS format", kind);
       return null;
@@ -17,10 +17,17 @@ CTS.Parser = {
     if (kind == 'json') {
       return CTS.Parser.Json.parseForrestSpec(str);
     } else if (kind == 'string') {
-      return CTS.Parser.String.parseForrestSpec(str);
+      return CTS.Parser.Cts.parseForrestSpec(str);
     } else {
       CTS.Log.Error("I don't understand the CTS Format", kind);
     }
+  },
+
+  parse: function(obj, kind) {
+    if (typeof kind == 'undefined') {
+      kind = 'string';
+    }
+    return CTS.Parser.parseForrestSpec(obj, kind);
   },
 
   /* Inline specs can take the form:

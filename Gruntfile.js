@@ -69,9 +69,10 @@ module.exports = function(grunt) {
           /* Parser */
           "src/parser/parser.js",
           "src/parser/parser-json.js",
+          "src/parser/parser-cts.js",
           "src/parser/html.js",
           "autogen/cts2-parser.js",
-          "src/parser/postparser._js",
+          "src/fragments/postparser._js",
 
           "src/engine.js",
           "src/autoloader.js",

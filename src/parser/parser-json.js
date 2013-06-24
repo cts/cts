@@ -73,6 +73,13 @@ CTS.Parser.Json = {
       if (json.length > 0) {
         ruleName = json[0];
       }
+    } else if (Fn.isObject(json)) {
+      if (!Fn.isUndefined(json.name)) {
+        ruleName = json.name;
+      }
+      if (!Fn.isUndefined(json.props)) {
+        ruleProps = json.props;
+      }
     } else if (typeof json == 'string') {
       ruleName = json;
     }
@@ -108,7 +115,17 @@ CTS.Parser.Json = {
         selectorString = json[1];
         args = json[2];
       }
-    } else if (typeof json == 'string') {
+    } else if (Fn.isObject(json)) {
+      if (!Fn.isUndefined(json.treeName)) {
+        treeName = json.treeName;
+      }
+      if (!Fn.isUndefined(json.selectorString)) {
+        selectorString = json.selectorString;
+      }
+      if (!Fn.isUndefined(json.props)) {
+        args = json.props;
+      }
+    } if (typeof json == 'string') {
       selectorString = json;
     }
 

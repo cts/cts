@@ -30,15 +30,15 @@ var Utilities = CTS.Utilities = {
     var ret = [];
     CTS.Fn.each(CTS.$('style[type="text/cts"]'), function(elem) {
       var block = {
-        type: 'inline',
-        format: 'cts',
+        type: 'block',
+        format: 'string',
         content: $(elem).html()
       };
       ret.push(block);
     }, this);
     CTS.Fn.each(CTS.$('style[type="json/cts"]'), function(elem) {
       var block = {
-        type: 'inline',
+        type: 'block',
         format: 'json',
         content: $(elem).html()
       };
@@ -47,7 +47,7 @@ var Utilities = CTS.Utilities = {
     CTS.Fn.each(CTS.$('link[rel="treesheet"]'), function(elem) {
       var e = $(elem);
       var type = e.attr('type');
-      var format = 'cts';
+      var format = 'string';
       if (type == 'json/cts') {
         format = 'json';
       }

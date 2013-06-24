@@ -1,1 +1,1 @@
-CTS.Parser.CTS2Autogen = parser;
+CTS.Parser.CTS2 = parser;

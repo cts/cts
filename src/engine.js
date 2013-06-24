@@ -69,10 +69,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
     var promises = [];
     var self = this;
     Fn.each(Utilities.getTreesheetLinks(), function(block) {
-      if (block.type == 'inline') {
-        var spec = CTS.Parser.parseForrestSpec(block.content, block.format);
-        self.forrest.addSpec(spec);
-      } else if (block.type == 'link') {
+      if ((block.type == 'link') || (block.type == 'block')) {
         var deferred = Q.defer();
         CTS.Utilities.fetchString(block).then(
           function(content) { 

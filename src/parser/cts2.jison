@@ -6,76 +6,41 @@
 
 %lex
 
-h			[0-9a-fA-F]
+h    			[0-9a-fA-F]
 nonascii	[\200-\377]
 unicode		\\{h}{1,6}[ \t\r\n\f]?
 escape		{unicode}|\\[ -~\200-\377]
 nmstart		[a-zA-Z]|{nonascii}|{escape}
 nmchar		[a-zA-Z0-9-]|{nonascii}|{escape}
-string1		\"([\t !#$%&(-~]|\\{nl}|\'|{nonascii}|{escape})*\"
-string2		\'([\t !#$%&(-~]|\\{nl}|\"|{nonascii}|{escape})*\'
+safesym   [-_%$#\[\]\\.=~><]
 
-identchar	[_]|{nmchar}
-ident		[-]?{nmstart}{identchar}*
-name		{identchar}+
-num			([0-9]+(\.[0-9]+)?)|(\.[0-9]+)
-string		{string1}|{string2}
+identchar	{safesym}|{nmchar}
+ident		{identchar}+
 url			([!#$%&*-~]|{nonascii}|{escape})*
-w			[ \t\r\n\f]*
+w  			[ \t\r\n\f]*
 nl			\n|\r\n|\r|\f
-range		\?{1,6}|{h}(\?{0,5}|{h}(\?{0,4}|{h}(\?{0,3}|{h}(\?{0,2}|{h}(\??|{h})))))
 
-/*
-h                     [0-9a-fA-F]
-nonascii              [\200-\377]
-unicode               \\{h}{1,6}[ \t\r\n\f]?
-alpha                 [a-zA-Z_-]+
-escape                {unicode}|\\[ -~\200-\377]
-nl                    \n|\r\n|\r|\f
-string                {alpha}
-uri             
-*/
+az        [a-zA-Z]
+variable  [a-zA-Z][a-zA-Z0-9_]*
+cssClause (([#\.]?[a-zA-Z0-9-_][a-zA-Z0-9-_:\.]*){w}("["[^\]]+"]")?)|(>)
+cssSel    {cssClause}({w}+{cssClause})*
 
 %%
 
+\/\/.*                                           /* ignore comments */
+{w}*"/*"(.|\n|\r)*?"*/"{w}*                      /* ignore multiline comments */
+[ \t\r\n\f]+                 {return 'S';}       /* Whitespace */
 
-[ \t\r\n\f]+						{return 'S';}
-\/\*[^*]*\*+([^/][^*]*\*+)*\/		{}								/* ignore comment */
-
-"<!--"								{return 'CDO';}					/* comment delimiter open */
-"-->"								{return 'CDC';}					/* comment delimiter close */
-"~="								{return 'INCLUDES';}			/* includes */
-"|="								{return 'DASHMATCH';}			/* dash match */
-"^="								{return 'PREFIXMATCH';}			/* prefix match */
-"$="								{return 'SUFFIXMATCH';}			/* suffix match */
-"*="								{return 'SUBSTRINGMATCH';}		/* substring match */
-
-"!"{w}"important"					{return 'IMPORTANT_SYM';}
-
-"url("{w}{string}{w}")"				{return 'URI';}
-"url("{w}{url}{w}")"				{return 'URI';}
-{ident}"("							{return "FUNCTION";}
-{ident}{w}"|"           {return "TREE_VAR";}
-
-{keyframes}							{return 'KEYFRAMES';}
-
-{string}							{return 'STRING';}
-{ident}								{return 'IDENT';}
-
-"#"{name}							{return 'HASH';}
-
-"@import"							{return 'IMPORT_SYM';}
-"@page"								{return 'PAGE_SYM';}
-"@media"							{return 'MEDIA_SYM';}
-"@font-face"						{return 'FONT_FACE_SYM';}
-"@charset"							{return 'CHARSET_SYM';}
-"@namespace"						{return 'NAMESPACE_SYM';}
-"@tree"						{return 'TREE_SYM';}
-
-U\+{range}							{return 'UNICODERANGE';}
-U\+{h}{1,6}-{h}{1,6}				{return 'UNICODERANGE';}
-
-.									{return yytext;}
+"@tree"			    			       {return 'TREE_SYM';}
+"@css"	     					       {return 'CSS_SYM';}
+"@js"     						       {return 'JS_SYM';}
+"url("[^)]*")"               {return 'URI';}
+{w}+":"{az}+{w}+             {return "RELATION";}
+{variable}{w}"|"{w}          {return "TREE_VAR";}
+{variable}                   {return "VARIABLE";}
+{cssSel}                     {return "SELECTOR";}
+{ident}     	 							 {return 'IDENT';}
+.    								         {return yytext;}
 
 /lex
 
@@ -84,42 +49,69 @@ U\+{h}{1,6}-{h}{1,6}				{return 'UNICODERANGE';}
 %%
 
 treesheet
-  : tree_list relation_list
+  : header_list relation_list
     %{
-      $$ = {};
-      if ($1)
-        $$["trees"] = $1;
-      if ($2)
-        $$["relations"] = $2;
+      $$ = {
+        headers: $1,
+        relations: $2
+      };
+      return $$;
+    %}
+  | relation_list
+    %{
+      $$ = {
+        relations: $1
+      };
+      return $$;
+    %}
+  | header_list 
+    %{
+      $$ = {
+        headers: $1
+      };
       return $$;
     %}
   ;
 
-tree_list
-  : tree_item
+header_list
+  : header_item
     %{
       $$ = [];
       if ($1 !== null)
         $$.push($1);
     %}
-  | tree_list tree_item
+  | header_list header_item
     %{
       $$ = $1;
       if ($2 !== null)
         $$.push($2);
     %}
-  | -> null
+  ;
+
+header_item
+  : tree_item
+  | css_item
+  | js_item
   ;
 
 tree_item
-  : tree_ref -> $1
-  | space_cdata_list
+  : TREE_SYM S VARIABLE S VARIABLE S URI ';' wempty
+    %{
+      $$ = ['tree', $3, $5, $7];
+    %}
   ;
 
-tree_ref
-  : TREE_SYM wempty IDENT whitespace IDENT whitespace string_or_uri ';' wempty
+css_item
+  : CSS_SYM S URI ';' wempty
     %{
-      $$ = [$3, $5, $7];
+      $$ = ['css', $3];
+    %}
+  ;
+
+js_item
+  : JS_SYM S URI ';' wempty
+    %{
+      $$ = ['js', $3];
     %}
   ;
 
@@ -139,21 +131,34 @@ relation_list
   ;
 
 relation_item
-  : selector whitespace relator wempty selector wempty ';' wempty
+  : selector relator selector ';' wempty
     %{
-      $$ = [$1, $3, $5];
+      $$ = [$1, $2, $3];
     %}
   ;
 
 selector
-  : selectorstring wempty props 
+  : selectorstring
+    %{
+      $$ = {
+        selectorString: $1
+      };
+    %}
+  | treevar wempty selectorstring
+    %{
+      $$ = {
+        treeName: $1,
+        selectorString: $3
+      };
+    %}
+  | selectorstring props
     %{
       $$ = {
         selectorString: $1,
         props: $3
       };
     %}
-  | TREE_VAR wempty selectorstring wempty props
+  | treevar wempty selectorstring props
     %{
       $$ = {
         treeName: $1,
@@ -161,73 +166,52 @@ selector
         props: $5
       };
     %}
-  | selectorstring wempty
-    %{
-      $$ = {
-        selectorString: $1
-      };
-    %}
-  | TREE_VAR wempty selectorstring wempty
-    %{
-      $$ = {
-        treeName: $1,
-        selectorString: $3
-      };
-    %}
   ;
 
 treevar
-  : TREE_VAR wempty -> $1
-  | wempty -> ""
+  : TREE_VAR
+    %{
+      // Clip the | off the end.
+      $$ = $1.substring(0, $1.length - 1);
+    %}
   ;
 
 relator
-  : relatorstring wempty props
+  : RELATION props
     %{
       $$ = {
-        name: $1,
+        name: $1.substring(1).trim(),
         props: $3
       };
     %}
-  | relatorstring wempty
+  | RELATION 
     %{
       $$ = {
-        name: $1
+        name: $1.substring(1).trim()
       };
     %}
   ;
 
-maybetreeprefix
-  : TREE_VAR -> $1
-  | -> null
-  ;
-
 selectorstring
-  : IDENT -> $1
-  ;
-
-relatorstring
-  : IDENT -> $1
+  : IDENT wempty
+    %{
+      $$ = $1;
+    %}
+  | IDENT wempty selectorstring 
+    %{
+      $$ = $1;
+      if ($3 != null) {
+        $$ = $1 + " " + $3;
+      }
+    %}
   ;
 
 props
-  : '{' wempty proplist '}' -> $3
+  : '{' wempty proplist '}' wempty -> $3
   ;
 
 proplist
   : IDENT -> $1
-  ;
-
-space_cdata_list
-  : space_cdata                    -> null
-  | space_cdata_list space_cdata   -> null
-  |
-  ;
-
-space_cdata
-  : S       -> null
-  | CDO     -> null
-  | CDC     -> null
   ;
 
 whitespace
@@ -238,10 +222,5 @@ whitespace
 wempty
   : whitespace -> $1
   | -> ""
-  ;
-
-string_or_uri
-  : STRING wempty -> $1
-  | URI wempty -> $1
   ;
 
