@@ -30,5 +30,3 @@ mockup | #articlecontainer article section   :is      #articles article section;
  */
 
 body                                         :graft   mockup | #mag-wrap;
-
-

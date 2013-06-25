@@ -18,6 +18,3 @@ if (typeof exports !== 'undefined') {
 
 // Current version of the library. Keep in sync with `package.json`
 CTS.VERSION = '0.1.0';
-
-// For our purposes, jQuery owns the $ variable.
-CTS.$ = root.jQuery;

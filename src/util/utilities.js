@@ -28,11 +28,25 @@ var Utilities = CTS.Utilities = {
    */ 
   getTreesheetLinks: function() {
     var ret = [];
+    CTS.Fn.each(CTS.$('script[data-treesheet]'), function(elem) {
+      var str = CTS.$(elem).attr('data-treesheet');
+      if (str != null) {
+        var urls = str.split(";");
+        for (var i = 0; i < urls.length; i++) {
+          var block = {
+            type: 'link',
+            format: 'string',
+            url: urls[i]
+          };
+          ret.push(block);
+        }
+      }
+    }, this);
     CTS.Fn.each(CTS.$('style[type="text/cts"]'), function(elem) {
       var block = {
         type: 'block',
         format: 'string',
-        content: $(elem).html()
+        content: CTS.$(elem).html()
       };
       ret.push(block);
     }, this);
@@ -40,12 +54,12 @@ var Utilities = CTS.Utilities = {
       var block = {
         type: 'block',
         format: 'json',
-        content: $(elem).html()
+        content: CTS.$(elem).html()
       };
       ret.push(block);
     }, this);
     CTS.Fn.each(CTS.$('link[rel="treesheet"]'), function(elem) {
-      var e = $(elem);
+      var e = CTS.$(elem);
       var type = e.attr('type');
       var format = 'string';
       if (type == 'json/cts') {
@@ -53,7 +67,7 @@ var Utilities = CTS.Utilities = {
       }
       var block = {
         type: 'link',
-        url: $(elem).attr('href'),
+        url: CTS.$(elem).attr('href'),
         format: format
       };
       ret.push(block);
@@ -63,7 +77,7 @@ var Utilities = CTS.Utilities = {
 
   fetchString: function(params, successFn, errorFn) {
     var deferred = Q.defer();
-    var xhr = $.ajax({
+    var xhr = CTS.$.ajax({
       url: params.url,
       dataType: 'text',
       beforeSend: function(xhr, settings) {

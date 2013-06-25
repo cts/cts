@@ -21,9 +21,6 @@ if (typeof exports !== 'undefined') {
 // Current version of the library. Keep in sync with `package.json`
 CTS.VERSION = '0.1.0';
 
-// For our purposes, jQuery owns the $ variable.
-CTS.$ = root.jQuery;
-
 /*
  * Helper functions. Many of these are taken from Underscore.js
  */
@@ -2614,11 +2611,25 @@ var Utilities = CTS.Utilities = {
    */ 
   getTreesheetLinks: function() {
     var ret = [];
+    CTS.Fn.each(CTS.$('script[data-treesheet]'), function(elem) {
+      var str = CTS.$(elem).attr('data-treesheet');
+      if (str != null) {
+        var urls = str.split(";");
+        for (var i = 0; i < urls.length; i++) {
+          var block = {
+            type: 'link',
+            format: 'string',
+            url: urls[i]
+          };
+          ret.push(block);
+        }
+      }
+    }, this);
     CTS.Fn.each(CTS.$('style[type="text/cts"]'), function(elem) {
       var block = {
         type: 'block',
         format: 'string',
-        content: $(elem).html()
+        content: CTS.$(elem).html()
       };
       ret.push(block);
     }, this);
@@ -2626,12 +2637,12 @@ var Utilities = CTS.Utilities = {
       var block = {
         type: 'block',
         format: 'json',
-        content: $(elem).html()
+        content: CTS.$(elem).html()
       };
       ret.push(block);
     }, this);
     CTS.Fn.each(CTS.$('link[rel="treesheet"]'), function(elem) {
-      var e = $(elem);
+      var e = CTS.$(elem);
       var type = e.attr('type');
       var format = 'string';
       if (type == 'json/cts') {
@@ -2639,7 +2650,7 @@ var Utilities = CTS.Utilities = {
       }
       var block = {
         type: 'link',
-        url: $(elem).attr('href'),
+        url: CTS.$(elem).attr('href'),
         format: format
       };
       ret.push(block);
@@ -2649,7 +2660,7 @@ var Utilities = CTS.Utilities = {
 
   fetchString: function(params, successFn, errorFn) {
     var deferred = Q.defer();
-    var xhr = $.ajax({
+    var xhr = CTS.$.ajax({
       url: params.url,
       dataType: 'text',
       beforeSend: function(xhr, settings) {
@@ -3828,7 +3839,7 @@ CTS.Tree.Create = function(spec, forrest) {
   var deferred = Q.defer();
   // Special case
   if ((spec.url == null) && (spec.name = 'body')) {
-    var node = $('body');
+    var node = CTS.$('body');
     var tree = new CTS.Tree.Html(forrest, node, spec);
     deferred.resolve(tree);
   } else {
@@ -3842,7 +3853,7 @@ CTS.Tree.Create = function(spec, forrest) {
           //  CTS.Debugging.DumpStack();
           //  debugger;
           //}
-          var node = $(content);
+          var node = CTS.$(content);
           var tree = new CTS.Tree.Html(forrest, node, spec);
           deferred.resolve(tree);
         } else {
@@ -5163,7 +5174,7 @@ CTS.shouldAutoload = function() {
 
   // Search through <script> elements to find the CTS element.
   CTS.Fn.each(CTS.$('script'), function(elem) {
-    var url = $(elem).attr('src');
+    var url = CTS.$(elem).attr('src');
     if ((!CTS.Fn.isUndefined(url)) && (url != null) && (url.indexOf('cts.js') != 1)) {
       foundCtsElement = true;
       var param = CTS.Utilities.getUrlParameter('autoload', url);
@@ -5176,11 +5187,35 @@ CTS.shouldAutoload = function() {
   return (foundCtsElement && autoload);
 };
 
-if (CTS.shouldAutoload()) {
-  CTS.$(function() {
-    CTS.engine = new CTS.Engine();
-    CTS.engine.boot();
-  });
-}
+CTS.ensureJqueryThenMaybeAutoload = function() {
+  if (typeof root.jQuery != 'undefined') {
+    CTS.$ = root.jQuery;
+    CTS.maybeAutoload();
+  } else if ((typeof exports !== 'undefined') && (typeof require == 'function')) {
+    // This is only if we're operating inside node.js
+    CTS.$ = require('jquery');
+    CTS.maybeAutoload();
+  } else {
+    var s = document.createElement('script');
+    s.setAttribute('src', '//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js');
+    s.setAttribute('type', 'text/javascript');
+    s.onload = function() {
+      CTS.$ = jQuery.noConflict();
+      CTS.maybeAutoload();
+    };
+    document.getElementsByTagName('head')[0].appendChild(s);
+  }
+};
+
+CTS.maybeAutoload = function() {
+  if (CTS.shouldAutoload()) {
+    CTS.$(function() {
+      CTS.engine = new CTS.Engine();
+      CTS.engine.boot();
+    });
+  }
+};
+
+CTS.ensureJqueryThenMaybeAutoload();
 
 }).call(this);

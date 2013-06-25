@@ -18,7 +18,7 @@ CTS.Tree.Create = function(spec, forrest) {
   var deferred = Q.defer();
   // Special case
   if ((spec.url == null) && (spec.name = 'body')) {
-    var node = $('body');
+    var node = CTS.$('body');
     var tree = new CTS.Tree.Html(forrest, node, spec);
     deferred.resolve(tree);
   } else {
@@ -32,7 +32,7 @@ CTS.Tree.Create = function(spec, forrest) {
           //  CTS.Debugging.DumpStack();
           //  debugger;
           //}
-          var node = $(content);
+          var node = CTS.$(content);
           var tree = new CTS.Tree.Html(forrest, node, spec);
           deferred.resolve(tree);
         } else {
