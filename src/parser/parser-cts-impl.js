@@ -87,6 +87,7 @@ CTS.Parser.CtsImpl = {
     i = tup[0];
     var r = tup[1][0];
     var kv = tup[1][1];
+    console.log("KV SSSSSTILL", JSON.stringify(kv));
 
     var tup = CTS.Parser.CtsImpl.SELECTOR(str, i, true);
     i = tup[0];
@@ -107,7 +108,7 @@ CTS.Parser.CtsImpl = {
     var cont = true;
 
     while ((i < str.length) && cont) {
-      if ((!kv) && (str[i] == '{')) {
+      if ((kv === null) && (str[i] == '{')) {
         selector = str.substring(start, i).trim();
         var tup = CTS.Parser.CtsImpl.KV(str, i+1);
         i = tup[0];
@@ -116,7 +117,7 @@ CTS.Parser.CtsImpl = {
         bracket++;
       } else if (str[i] == ']') {
         bracket--;
-      } else if ((str[i] == '|') && (bracket == 0)) {
+      } else if ((str[i] == '|') && (bracket == 0) && (kv === null)) {
         treeName = str.substring(start, i).trim();
         start = i+1;
       } else if (((!second) && spaceLast && (str[i] == ':')) 
@@ -135,7 +136,7 @@ CTS.Parser.CtsImpl = {
   },
 
   KV: function(str, i) {
-    console.log("KV", str);
+    console.log("KV", str.substring(i));
     var ret = {};
     while ((i < str.length) && (str[i] != '}')) {
       var t1 = CTS.Parser.CtsImpl.KEY(str, i);
@@ -144,10 +145,11 @@ CTS.Parser.CtsImpl = {
       i = t2[0];
       ret[t1[1]] = t2[1];
     }
+    console.log("KV RES", JSON.stringify(ret));
     return [i+1, ret];
   },
 
-  KEY: function(str, i) {a
+  KEY: function(str, i) {
     console.log("KEY", str);
     var start = i;
     while ((i < str.length) && (str[i] != ':')) {

@@ -3237,11 +3237,19 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    ************************************************************************/
 
   getValue: function(opts) {
-    return this.value.html();
+    if (Fn.isUndefined(opts.attribute)) {
+      return this.value.html();
+    } else {
+      return this.value.attr(opts.attribute);
+    }
   },
 
   setValue: function(value, opts) {
-    this.value.html(value);
+    if (Fn.isUndefined(opts.attribute)) {
+      this.value.html(value);
+    } else {
+      this.value.attr(opts.attribute, value);
+    }
   },
 
   /************************************************************************
@@ -3518,16 +3526,13 @@ CTS.Relation.Base = {
   },
 
   optsFor: function(node) {
-    var toRet;
+    var toRet = {};
+    Fn.extend(toRet, this.defaultOpts);
     if (this.node1 === node) {
-      toRet = this.spec.opts1;
+      Fn.extend(toRet, this.spec.selectionSpec1.props);
     } else if (this.node2 == node) {
-      toRet = this.spec.opts2;
+      Fn.extend(toRet, this.spec.selectionSpec2.props);
     }
-    if (CTS.Fn.isUndefined(toRet)) {
-      toRet = {};
-    }
-    CTS.Fn.extend(toRet, this.defaultOpts);
     return toRet;
   },
 
@@ -4211,7 +4216,7 @@ CTS.Fn.extend(Forrest.prototype, {
 var SelectionSpec = CTS.SelectionSpec = function(treeName, selectorString, props) {
   this.treeName = treeName;
   this.selectorString = selectorString;
-  this.props = props;
+  this.props = props || {};
   this.inline = false;
   this.inlineObject = null;
 };
@@ -4704,6 +4709,7 @@ CTS.Parser.CtsImpl = {
     i = tup[0];
     var r = tup[1][0];
     var kv = tup[1][1];
+    console.log("KV SSSSSTILL", JSON.stringify(kv));
 
     var tup = CTS.Parser.CtsImpl.SELECTOR(str, i, true);
     i = tup[0];
@@ -4724,7 +4730,7 @@ CTS.Parser.CtsImpl = {
     var cont = true;
 
     while ((i < str.length) && cont) {
-      if ((!kv) && (str[i] == '{')) {
+      if ((kv === null) && (str[i] == '{')) {
         selector = str.substring(start, i).trim();
         var tup = CTS.Parser.CtsImpl.KV(str, i+1);
         i = tup[0];
@@ -4733,7 +4739,7 @@ CTS.Parser.CtsImpl = {
         bracket++;
       } else if (str[i] == ']') {
         bracket--;
-      } else if ((str[i] == '|') && (bracket == 0)) {
+      } else if ((str[i] == '|') && (bracket == 0) && (kv === null)) {
         treeName = str.substring(start, i).trim();
         start = i+1;
       } else if (((!second) && spaceLast && (str[i] == ':')) 
@@ -4752,7 +4758,7 @@ CTS.Parser.CtsImpl = {
   },
 
   KV: function(str, i) {
-    console.log("KV", str);
+    console.log("KV", str.substring(i));
     var ret = {};
     while ((i < str.length) && (str[i] != '}')) {
       var t1 = CTS.Parser.CtsImpl.KEY(str, i);
@@ -4761,10 +4767,11 @@ CTS.Parser.CtsImpl = {
       i = t2[0];
       ret[t1[1]] = t2[1];
     }
+    console.log("KV RES", JSON.stringify(ret));
     return [i+1, ret];
   },
 
-  KEY: function(str, i) {a
+  KEY: function(str, i) {
     console.log("KEY", str);
     var start = i;
     while ((i < str.length) && (str[i] != ':')) {

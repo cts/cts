@@ -81,16 +81,13 @@ CTS.Relation.Base = {
   },
 
   optsFor: function(node) {
-    var toRet;
+    var toRet = {};
+    Fn.extend(toRet, this.defaultOpts);
     if (this.node1 === node) {
-      toRet = this.spec.opts1;
+      Fn.extend(toRet, this.spec.selectionSpec1.props);
     } else if (this.node2 == node) {
-      toRet = this.spec.opts2;
+      Fn.extend(toRet, this.spec.selectionSpec2.props);
     }
-    if (CTS.Fn.isUndefined(toRet)) {
-      toRet = {};
-    }
-    CTS.Fn.extend(toRet, this.defaultOpts);
     return toRet;
   },
 

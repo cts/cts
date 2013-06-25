@@ -1,7 +1,7 @@
 var SelectionSpec = CTS.SelectionSpec = function(treeName, selectorString, props) {
   this.treeName = treeName;
   this.selectorString = selectorString;
-  this.props = props;
+  this.props = props || {};
   this.inline = false;
   this.inlineObject = null;
 };

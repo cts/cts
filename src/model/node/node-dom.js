@@ -100,11 +100,19 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    ************************************************************************/
 
   getValue: function(opts) {
-    return this.value.html();
+    if (Fn.isUndefined(opts.attribute)) {
+      return this.value.html();
+    } else {
+      return this.value.attr(opts.attribute);
+    }
   },
 
   setValue: function(value, opts) {
-    this.value.html(value);
+    if (Fn.isUndefined(opts.attribute)) {
+      this.value.html(value);
+    } else {
+      this.value.attr(opts.attribute, value);
+    }
   },
 
   /************************************************************************

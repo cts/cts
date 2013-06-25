@@ -137,6 +137,15 @@ test("Spec Parser", function() {
   equal(spec.relationSpecs[0].selectionSpec2.treeName, "body", "second is foo");
 });
 
+test("Attributes", function() {
+  cts = "madden | .headshot {attribute: href} :is  content | .headshot { attribute: href };";
+  spec = CTS.Parser.parse(cts);
+  equal(spec.relationSpecs.length, 1, "one relation spec");
+  equal(spec.relationSpecs[0].name, "is", "it is an is");
+  equal(spec.relationSpecs[0].selectionSpec1.treeName, "madden", "first is madden");
+  equal(spec.relationSpecs[0].selectionSpec2.treeName, "content", "second is content");
+});
+
 asyncTest("Complicated", function() {
   var hard = $.ajax("/test/assets/example0.cts");
   hard.done(function(cts) {
