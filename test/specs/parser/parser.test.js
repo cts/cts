@@ -126,7 +126,6 @@ test("Comments", function() {
   equal(spec.relations[0].selectionSpec1.selectorString, "a", "ss1");
   equal(spec.relations[0].selectionSpec2.selectorString, "b", "ss2");
   equal(spec.relations[0].name, "is", "name");
-
 });
 
 test("Spec Parser", function() {
@@ -145,6 +144,8 @@ asyncTest("Complicated", function() {
     spec = CTS.Parser.parse(cts);
     var t = Date.now();
     equal(spec.relationSpecs.length, 9, "9 relations");
+    equal(spec.relationSpecs[4].selectionSpec1.treeName, "mockup", "mockup");
+    equal(spec.relationSpecs[4].selectionSpec1.selectorString, "#articlecontainer", "ac");
     start();
   });
 });

@@ -65,6 +65,7 @@ module.exports = function(grunt) {
           "src/model/forrest.js",
           "src/model/selection-spec.js",
           "src/model/selection.js",
+          "src/model/dependency-spec.js",
 
           /* Parser */
           "src/parser/parser.js",

@@ -3935,6 +3935,7 @@ CTS.Fn.extend(CTS.Tree.Xpando, CTS.Tree.Base, {
 var ForrestSpec = CTS.ForrestSpec = function() {
   this.treeSpecs = [];
   this.relationSpecs = [];
+  this.dependencySpecs = [];
 };
 
 CTS.Fn.extend(ForrestSpec.prototype, {
@@ -4058,6 +4059,14 @@ CTS.Fn.extend(Forrest.prototype, {
       }
     }, this);
     return Q.all(promises);
+  },
+
+  realizeDependencies: function() {
+    Fn.each(this.forrestSpecs, function(fs) {
+      Fn.each(fs.dependencySpecs, function(ds) {
+        ds.load();
+      });
+    });
   },
 
   realizeTree: function(treeSpec) {
@@ -4304,6 +4313,37 @@ CTS.Fn.extend(Selection.prototype, {
 
 });
 
+var DependencySpec = CTS.DependencySpec = function(kind, url) {
+  this.kind = kind;
+  this.url = url;
+  this.loaded = false;
+};
+
+DependencySpec.prototype.load = function() {
+  if (this.loaded == false) {
+    if (this.kind == 'css') {
+      this.loaded = true;
+      var link = document.createElement('link')
+      link.setAttribute('rel', 'stylesheet');
+      link.setAttribute('type', 'text/css');
+      link.setAttribute('href', this.url);
+      document.getElementsByTagName('head')[0].appendChild(link);
+    } else if (this.kind == 'js') {
+      this.loaded = true;
+      var script = document.createElement('script')
+      script.setAttribute('type', 'text/javascript');
+      script.setAttribute('src', this.url);
+      document.getElementsByTagName('head')[0].appendChild(script);
+    } else {
+      CTS.Logging.Error("DependencySpec: Unsure how to load", this.kind, this.url);
+    }
+  } else {
+    CTS.Logging.Warn("DependencySpec: Not loading already loaded", this.kind, this.url);
+  }
+};
+
+
+
 CTS.Parser = {
   parseInlineSpecs: function(str, node, intoForrest, realize) {
     var tup = CTS.Parser._typeAndBodyForInline(str);
@@ -4528,7 +4568,9 @@ CTS.Parser.Cts = {
         if (kind == 'html') {
           f.treeSpecs.push(new TreeSpec('html', h[0], h[1]));
         } else if (kind == 'css') {
+          f.dependencySpecs.push(new DependencySpec('css', h[0]));
         } else if (kind == 'js') {
+          f.dependencySpecs.push(new DependencySpec('js', h[1]));
         } else {
           CTS.Log.Error("Don't know CTS header type:", kind);
         }
@@ -5064,6 +5106,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
     var ctsLoaded = this.loadCts();
     var treesLoaded = ctsLoaded.then(
       function() {
+        self.forrest.realizeDependencies();
         self.forrest.realizeTrees().then(
           function() {
             self.forrest.realizeRelations();

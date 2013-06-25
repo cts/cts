@@ -40,6 +40,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
     var ctsLoaded = this.loadCts();
     var treesLoaded = ctsLoaded.then(
       function() {
+        self.forrest.realizeDependencies();
         self.forrest.realizeTrees().then(
           function() {
             self.forrest.realizeRelations();

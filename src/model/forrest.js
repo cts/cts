@@ -89,6 +89,14 @@ CTS.Fn.extend(Forrest.prototype, {
     return Q.all(promises);
   },
 
+  realizeDependencies: function() {
+    Fn.each(this.forrestSpecs, function(fs) {
+      Fn.each(fs.dependencySpecs, function(ds) {
+        ds.load();
+      });
+    });
+  },
+
   realizeTree: function(treeSpec) {
     var deferred = Q.defer();
     var self = this;

@@ -1,8 +1,8 @@
-@tree html mockup url(mockup.html);
+@html mockup mockup.html;
 
-@css url(http://twitter.github.io/bootstrap/assets/css/bootstrap.css);
-@css url(http://twitter.github.io/bootstrap/assets/css/bootstrap-responsive.css);
-@css url(mockup.css);
+@css http://twitter.github.io/bootstrap/assets/css/bootstrap.css;
+@css http://twitter.github.io/bootstrap/assets/css/bootstrap-responsive.css;
+@css mockup.css;
 
 /* Map the page content onto the mockup  
  * 
@@ -13,14 +13,14 @@
  * ------------------------------------   ---------   ------------------
  */
 
-mockup | #catch h1                           is      body > h1 ; 
-mockup | #catch h2                           is      body > h2;
-mockup | #home_links                         are     #links;
-mockup | #home_links a                       is      #links a;
-mockup | #articlecontainer                   are     #articles;
-mockup | #articlecontainer article header h1 is      #articles article h1;
-mockup | #articlecontainer article header h2 is      #articles article h2;
-mockup | #articlecontainer article section   is      #articles article section;
+mockup | #catch h1                           :is      body > h1; 
+mockup | #catch h2                           :is      body > h2;
+mockup | #home_links                         :are     #links;
+mockup | #home_links a                       :is      #links a;
+mockup | #articlecontainer                   :are     #articles;
+mockup | #articlecontainer article header h1 :is      #articles article h1;
+mockup | #articlecontainer article header h2 :is      #articles article h2;
+mockup | #articlecontainer article section   :is      #articles article section;
 
 /* And then graft the mockup into the current page
  *
@@ -29,6 +29,6 @@ mockup | #articlecontainer article section   is      #articles article section;
  * ------------------------------------   ---------   ------------------
  */
 
-body                                         graft   mockup | mockup.html;
+body                                         :graft   mockup | #mag-wrap;
 
 

@@ -1,6 +1,7 @@
 var ForrestSpec = CTS.ForrestSpec = function() {
   this.treeSpecs = [];
   this.relationSpecs = [];
+  this.dependencySpecs = [];
 };
 
 CTS.Fn.extend(ForrestSpec.prototype, {
