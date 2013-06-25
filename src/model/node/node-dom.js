@@ -126,7 +126,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     var n = null;
     if (typeof node == 'object') {
       if (! CTS.Fn.isUndefined(node.jquery)) {
-        CTS.Debugging.DumpStack();
         n = node;
       } else if (node instanceof Array) {
         n = node[0];

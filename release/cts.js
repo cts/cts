@@ -3263,7 +3263,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     var n = null;
     if (typeof node == 'object') {
       if (! CTS.Fn.isUndefined(node.jquery)) {
-        CTS.Debugging.DumpStack();
         n = node;
       } else if (node instanceof Array) {
         n = node[0];
@@ -3612,11 +3611,6 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
 
   execute: function(toward) {
     this._Are_AlignCardinalities(toward);
-    console.log("Are Toward", toward.children.length, " from ", this.opposite(toward).children.length);
-    console.log("Dumping Toward");
-    CTS.Debugging.DumpTree(toward);
-    console.log("Dumping Opposite");
-    CTS.Debugging.DumpTree(this.opposite(toward));
   },
 
   clone: function(n1, n2) {
