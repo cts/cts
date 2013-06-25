@@ -2625,6 +2625,18 @@ var Utilities = CTS.Utilities = {
         }
       }
     }, this);
+    CTS.Fn.each(CTS.$('script[data-theme]'), function(elem) {
+      var str = CTS.$(elem).attr('data-treesheet');
+      if (str != null) {
+        var block = {
+          type: 'link',
+          format: 'string',
+          url: CTS.Utilities.themeUrl(str);
+        };
+        ret.push(block);
+      }
+    }, this);
+
     CTS.Fn.each(CTS.$('style[type="text/cts"]'), function(elem) {
       var block = {
         type: 'block',
@@ -2656,6 +2668,12 @@ var Utilities = CTS.Utilities = {
       ret.push(block);
     }, this);
     return ret;
+  },
+
+  themeUrl: function(str) {
+    // theme urls take the form TYPE/INSTANCE/PAGE 
+    // TODO(eob): create more flexible ecosystem
+    return "http://treesheets.csail.mit.edu/themes/" + str + ".cts";
   },
 
   fetchString: function(params, successFn, errorFn) {
