@@ -4733,7 +4733,7 @@ CTS.Parser.CtsImpl = {
       if ((kv === null) && (str[i] == '{')) {
         selector = str.substring(start, i).trim();
         var tup = CTS.Parser.CtsImpl.KV(str, i+1);
-        i = tup[0];
+        i = tup[0] - 1; // Necessary -1
         kv = tup[1];
       } else if (str[i] == '[') {
         bracket++;
@@ -4767,7 +4767,7 @@ CTS.Parser.CtsImpl = {
       i = t2[0];
       ret[t1[1]] = t2[1];
     }
-    console.log("KV RES", JSON.stringify(ret));
+    console.log("KV RES", JSON.stringify(ret), str.substring(i+1));
     return [i+1, ret];
   },
 
