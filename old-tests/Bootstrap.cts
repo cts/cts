@@ -1,4 +1,0 @@
-  #shouldBeBar {
-    value: bar;
-  }
-
