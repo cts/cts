@@ -2631,7 +2631,7 @@ var Utilities = CTS.Utilities = {
         var block = {
           type: 'link',
           format: 'string',
-          url: CTS.Utilities.themeUrl(str);
+          url: CTS.Utilities.themeUrl(str)
         };
         ret.push(block);
       }
@@ -2673,7 +2673,7 @@ var Utilities = CTS.Utilities = {
   themeUrl: function(str) {
     // theme urls take the form TYPE/INSTANCE/PAGE 
     // TODO(eob): create more flexible ecosystem
-    return "http://treesheets.csail.mit.edu/themes/" + str + ".cts";
+    return "http://treesheets.csail.mit.edu/mockups/" + str + ".cts";
   },
 
   fetchString: function(params, successFn, errorFn) {
