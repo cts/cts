@@ -75,6 +75,11 @@ CTS.Fn.extend(Engine.prototype, Events, {
         CTS.Utilities.fetchString(block).then(
           function(content) { 
             var spec = CTS.Parser.parseForrestSpec(content, block.format);
+            if (block.type == 'link') {
+              for (var i = 0; i < spec.treeSpecs.length; i++) {
+                spec.treeSpecs[i].loadedFrom = block.url;
+              }
+            }
             self.forrest.addSpec(spec);
             deferred.resolve(); 
           },

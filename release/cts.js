@@ -3868,10 +3868,14 @@ CTS.Tree.Create = function(spec, forrest) {
   return deferred.promise;
 };
 
-var TreeSpec = CTS.Tree.Spec = function(kind, name, url) {
+var TreeSpec = CTS.Tree.Spec = function(kind, name, url, loadedFrom) {
   this.kind = kind;
   this.name = name;
   this.url = url;
+  this.loadedFrom = null;
+  if (typeof loadedFrom != 'undefined') {
+    this.loadedFrom = loadedFrom;
+  }
 };
 
 // Constructor
@@ -4083,15 +4087,33 @@ CTS.Fn.extend(Forrest.prototype, {
   realizeTree: function(treeSpec) {
     var deferred = Q.defer();
     var self = this;
-    CTS.Tree.Create(treeSpec, this).then(
-      function(tree) {
-        self.trees[treeSpec.name] = tree;
+    if ((treeSpec.url !== null) && (treeSpec.url.indexOf("alias(") == 0) && (treeSpec.url[treeSpec.url.length - 1] == ")")) {
+      var alias = treeSpec.url.substring(6, treeSpec.url.length - 1);
+      if (typeof self.trees[alias] != 'undefined') {
+        self.trees[alias] = self.trees[alias];
         deferred.resolve();
-      },
-      function() {
+      } else {
         deferred.reject();
       }
-    );
+    } else {
+      if ((treeSpec.url !== null) && (treeSpec.url.indexOf("relative(") == 0) && (treeSpec.url[treeSpec.url.length - 1] == ")")) {
+        treeSpec.originalUrl = treeSpec.url;
+        var fragment = treeSpec.url.substring(9, treeSpec.url.length - 1);
+        var prefix = treeSpec.loadedFrom.split("/");
+        prefix.pop();
+        prefix = prefix.join("/");
+        treeSpec.url = prefix + "/" + fragment;
+      }
+      CTS.Tree.Create(treeSpec, this).then(
+        function(tree) {
+          self.trees[treeSpec.name] = tree;
+          deferred.resolve();
+        },
+        function() {
+          deferred.reject();
+        }
+      );
+    }
     return deferred.promise;
   },
 
@@ -5152,6 +5174,11 @@ CTS.Fn.extend(Engine.prototype, Events, {
         CTS.Utilities.fetchString(block).then(
           function(content) { 
             var spec = CTS.Parser.parseForrestSpec(content, block.format);
+            if (block.type == 'link') {
+              for (var i = 0; i < spec.treeSpecs.length; i++) {
+                spec.treeSpecs[i].loadedFrom = block.url;
+              }
+            }
             self.forrest.addSpec(spec);
             deferred.resolve(); 
           },
