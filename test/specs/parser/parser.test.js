@@ -101,6 +101,14 @@ test("Comments", function() {
   equal(spec.relations[0].selectionSpec2.selectorString, "b", "ss2");
   equal(spec.relations[0].name, "is", "name");
 
+  cts = "/* HAHAHA */a :is b;";
+  spec = CTS.Parser.CtsImpl.parse(cts);
+  equal(spec.relations.length, 1, "Has one relation (sp)");
+  equal(spec.relations[0].selectionSpec1.selectorString, "a", "ss1");
+  equal(spec.relations[0].selectionSpec2.selectorString, "b", "ss2");
+  equal(spec.relations[0].name, "is", "name");
+
+
   // Ignores newlines
   cts = "/* foo \n bar \n css */ foo|a /* this \n is \n */ :is b;";
   spec = CTS.Parser.CtsImpl.parse(cts);
@@ -109,6 +117,16 @@ test("Comments", function() {
   equal(spec.relations[0].selectionSpec1.selectorString, "a", "ss1");
   equal(spec.relations[0].selectionSpec2.selectorString, "b", "ss2");
   equal(spec.relations[0].name, "is", "name");
+
+  // Ignores newlines
+  cts = "/* foo \n bar \n css */foo|a/* this \n is \n */:is b;";
+  spec = CTS.Parser.CtsImpl.parse(cts);
+  equal(spec.relations.length, 1, "Has one relation (sp)");
+  equal(spec.relations[0].selectionSpec1.treeName, "foo", "tree1");
+  equal(spec.relations[0].selectionSpec1.selectorString, "a", "ss1");
+  equal(spec.relations[0].selectionSpec2.selectorString, "b", "ss2");
+  equal(spec.relations[0].name, "is", "name");
+
 });
 
 test("Spec Parser", function() {
@@ -120,13 +138,13 @@ test("Spec Parser", function() {
   equal(spec.relationSpecs[0].selectionSpec2.treeName, "body", "second is foo");
 });
 
-//asyncTest("Complicated", function() {
-//  var hard = $.ajax("/test/assets/example0.cts");
-//  hard.done(function(cts) {
-//    var s = Date.now();
-//    spec = CTS.Parser.parse(cts);
-//    var t = Date.now();
-//    equal(spec.relationSpecs.length, 9, "9 relations");
-//    start();
-//  });
-//});
+asyncTest("Complicated", function() {
+  var hard = $.ajax("/test/assets/example0.cts");
+  hard.done(function(cts) {
+    var s = Date.now();
+    spec = CTS.Parser.parse(cts);
+    var t = Date.now();
+    equal(spec.relationSpecs.length, 9, "9 relations");
+    start();
+  });
+});

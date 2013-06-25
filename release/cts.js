@@ -3857,7 +3857,7 @@ CTS.Tree.Create = function(spec, forrest) {
   return deferred.promise;
 };
 
-CTS.Tree.Spec = function(kind, name, url) {
+var TreeSpec = CTS.Tree.Spec = function(kind, name, url) {
   this.kind = kind;
   this.name = name;
   this.url = url;
@@ -4569,14 +4569,41 @@ CTS.Parser.CtsImpl = {
   },
 
   RemoveComments: function(str) {
-    var comments = /\/\*[^\*(?=\/)]*\*\//gm;
-    var wo = str.replace(comments, '');
-    if (wo != str) {
-      console.log("BEFORE", str);
-      console.log("AFTER", wo);
+    var inQuestion = str;
+    var lastChar = '';
+    var i = 0;
+    var inComment = false;
+    var commentOpen = null;
+    // no nesting allowed
+    while (i < inQuestion.length) {
+      if (! inComment) {
+        if ((inQuestion[i] == '*') && (lastChar == '/')) {
+          inComment = true;
+          commentOpen = i-1;
+        }
+        lastChar = inQuestion[i];
+      } else {
+        if ((inQuestion[i] == '/') && (lastChar == '*')) {
+          var prefix = inQuestion.substring(0, commentOpen);
+          inQuestion = prefix + " " + inQuestion.substring(i+1);
+          inComment = false;
+          i = i - (i - commentOpen) + 1;
+          commentOpen = null;
+          lastChar = '';
+        } else {
+          lastChar = inQuestion[i];
+        }
+      }
+      i++;
     }
-    return wo;
-
+    if (inComment) {
+      inQuestion = inQuestion.substring(0, commentOpen);
+    }
+    if (inQuestion != str) {
+      console.log("BEFORE", str);
+      console.log("AFTER", inQuestion);
+    }
+    return inQuestion;
   },
 
   AT: function(str, i) {
