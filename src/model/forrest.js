@@ -103,7 +103,7 @@ CTS.Fn.extend(Forrest.prototype, {
     if ((treeSpec.url !== null) && (treeSpec.url.indexOf("alias(") == 0) && (treeSpec.url[treeSpec.url.length - 1] == ")")) {
       var alias = treeSpec.url.substring(6, treeSpec.url.length - 1);
       if (typeof self.trees[alias] != 'undefined') {
-        self.trees[alias] = self.trees[alias];
+        self.trees[treeSpec.name] = self.trees[alias];
         deferred.resolve();
       } else {
         deferred.reject();

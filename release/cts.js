@@ -4090,7 +4090,7 @@ CTS.Fn.extend(Forrest.prototype, {
     if ((treeSpec.url !== null) && (treeSpec.url.indexOf("alias(") == 0) && (treeSpec.url[treeSpec.url.length - 1] == ")")) {
       var alias = treeSpec.url.substring(6, treeSpec.url.length - 1);
       if (typeof self.trees[alias] != 'undefined') {
-        self.trees[alias] = self.trees[alias];
+        self.trees[treeSpec.name] = self.trees[alias];
         deferred.resolve();
       } else {
         deferred.reject();
@@ -5169,15 +5169,13 @@ CTS.Fn.extend(Engine.prototype, Events, {
     var promises = [];
     var self = this;
     Fn.each(Utilities.getTreesheetLinks(), function(block) {
-      if ((block.type == 'link') || (block.type == 'block')) {
+      if (block.type == 'link') {
         var deferred = Q.defer();
         CTS.Utilities.fetchString(block).then(
           function(content) { 
             var spec = CTS.Parser.parseForrestSpec(content, block.format);
-            if (block.type == 'link') {
-              for (var i = 0; i < spec.treeSpecs.length; i++) {
-                spec.treeSpecs[i].loadedFrom = block.url;
-              }
+            for (var i = 0; i < spec.treeSpecs.length; i++) {
+              spec.treeSpecs[i].loadedFrom = block.url;
             }
             self.forrest.addSpec(spec);
             deferred.resolve(); 
@@ -5188,6 +5186,9 @@ CTS.Fn.extend(Engine.prototype, Events, {
           }
         );
         promises.push(deferred.promise);
+      } else if (block.type == 'block') {
+        var spec = CTS.Parser.parseForrestSpec(block.content, block.format);
+        self.forrest.addSpec(spec);
       }
     }, this);
     return Q.all(promises);
