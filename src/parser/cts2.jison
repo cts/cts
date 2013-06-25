@@ -34,10 +34,9 @@ cssSel    {cssClause}({w}+{cssClause})*
 "@tree"			    			       {return 'TREE_SYM';}
 "@css"	     					       {return 'CSS_SYM';}
 "@js"     						       {return 'JS_SYM';}
-"url("[^)]*")"               {return 'URI';}
+"url("[^\)]*")"              {return 'URI';}
 {w}+":"{az}+{w}+             {return "RELATION";}
 {variable}{w}"|"{w}          {return "TREE_VAR";}
-{variable}                   {return "VARIABLE";}
 {cssSel}                     {return "SELECTOR";}
 {ident}     	 							 {return 'IDENT';}
 .    								         {return yytext;}
@@ -95,7 +94,7 @@ header_item
   ;
 
 tree_item
-  : TREE_SYM S VARIABLE S VARIABLE S URI ';' wempty
+  : TREE_SYM S SELECTOR S SELECTOR S URI ';' wempty
     %{
       $$ = ['tree', $3, $5, $7];
     %}
@@ -138,41 +137,35 @@ relation_item
   ;
 
 selector
-  : selectorstring
+  : SELECTOR 
     %{
       $$ = {
         selectorString: $1
       };
     %}
-  | treevar wempty selectorstring
+  | TREE_VAR wempty SELECTOR 
     %{
+      $1 = $1.trim();
       $$ = {
-        treeName: $1,
+        treeName: $1.substring(0, $1.length - 1),
         selectorString: $3
       };
     %}
-  | selectorstring props
+  | SELECTOR props
     %{
       $$ = {
         selectorString: $1,
         props: $3
       };
     %}
-  | treevar wempty selectorstring props
+  | TREE_VAR wempty SELECTOR props
     %{
+      $1 = $1.trim();
       $$ = {
-        treeName: $1,
+        treeName: $1.substring(0, $1.length - 1),
         selectorString: $3,
         props: $5
       };
-    %}
-  ;
-
-treevar
-  : TREE_VAR
-    %{
-      // Clip the | off the end.
-      $$ = $1.substring(0, $1.length - 1);
     %}
   ;
 
@@ -191,7 +184,7 @@ relator
       };
     %}
   ;
-
+/*
 selectorstring
   : IDENT wempty
     %{
@@ -205,13 +198,14 @@ selectorstring
       }
     %}
   ;
+*/
 
 props
   : '{' wempty proplist '}' wempty -> $3
   ;
 
 proplist
-  : IDENT -> $1
+  : SELECTOR -> $1
   ;
 
 whitespace

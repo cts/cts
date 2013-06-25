@@ -70,9 +70,10 @@ module.exports = function(grunt) {
           "src/parser/parser.js",
           "src/parser/parser-json.js",
           "src/parser/parser-cts.js",
+          "src/parser/parser-cts-impl.js",
           "src/parser/html.js",
-          "autogen/cts2-parser.js",
-          "src/fragments/postparser._js",
+          //"autogen/cts2-parser.js",
+          //"src/fragments/postparser._js",
 
           "src/engine.js",
           "src/autoloader.js",
@@ -120,7 +121,10 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
 
-  require('./tasks/jison-task.js')(grunt);
+  //require('./tasks/jison-task.js')(grunt);
 
-  grunt.registerTask('default', ['jshint', 'jison', 'concat']);
+  grunt.registerTask('default', [
+    'jshint',
+    //'jison', -- too 
+    'concat']);
 };
