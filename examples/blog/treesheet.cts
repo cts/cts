@@ -9,13 +9,14 @@
  * Note that relations are performed in Target <--- Source direction.
  *
  * (Target)                                <----      (Source)
- * Mockup Selectors                       Relation    Content Selectors
+ * Mockup Selectors                       Relation    Content Selectors ;
  * ------------------------------------   ---------   ------------------
  */
 
 mockup | #catch h1                           :is      body > h1; 
 mockup | #catch h2                           :is      body > h2;
 mockup | #home_links                         :are     #links;
+mockup | #home_links a                       :is      #links a;
 mockup | #home_links a                       :is      #links a;
 mockup | #articlecontainer                   :are     #articles;
 mockup | #articlecontainer article header h1 :is      #articles article h1;

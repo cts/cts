@@ -27,6 +27,11 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
 
   execute: function(toward) {
     this._Are_AlignCardinalities(toward);
+    toward.trigger('received-are', {
+      target: toward,
+      source: this.opposite(toward),
+      relation: this
+    });
   },
 
   clone: function(n1, n2) {

@@ -42,7 +42,13 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
         replacements.push(child);
       }
       toward.replaceChildrenWith(replacements);
+      toward.setProvenance(opp.tree, opp);
     }
+    toward.trigger('received-bind', {
+      target: toward,
+      source: opp,
+      relation: this
+    });
   },
  
   clone: function(n1, n2) {
@@ -54,7 +60,6 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
     }
     return new CTS.Relation.Graft(n1, n2, this.spec);
   }
-
 
 });
 

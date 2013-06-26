@@ -2919,6 +2919,34 @@ CTS.Node.Base = {
     }
   },
 
+  trigger: function(eventName, eventData) {
+    this._subclass_trigger(eventName, eventData);
+  },
+
+  getProvenance: function() {
+    if (this.provenance == null) {
+      if (this.parentNode == null) {
+        // We're the root of a tree. This is an error: the root should always know where it
+        // came from.
+        CTS.Log.Error("Root of tree has no provenance information");
+        return null;
+      } else {
+        return this.parentNode.getProvenance();
+      }
+    } else {
+      return this.provenance;
+    }
+  },
+
+  setProvenance: function(tree, node) {
+    this.provenance = {
+      tree: tree
+    }
+    if (! Fn.isUndefined(node)) {
+      this.provenance.node = node;
+    }
+  },
+
   _processIncoming: function() {
     // Do incoming nodes except graft
     var r = this.getRelations();
@@ -2971,8 +2999,8 @@ CTS.Node.Base = {
   _subclass_insertChild: function(child, afterIndex) {},
   _subclass_destroy: function() {},
   _subclass_beginClone: function() {},
-  _subclass_getInlineRelationSpecString: function() { return null; }
-
+  _subclass_getInlineRelationSpecString: function() { return null; },
+  _subclass_trigger: function(eventName, eventData) { }
 
 };
 
@@ -3303,6 +3331,12 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     }
 
     return n;
+  },
+
+  _subclass_trigger: function(eventName, eventData) { 
+    if (this.value != null) {
+      this.value.trivver(eventName, eventData);
+    }
   }
 
 });
@@ -3584,6 +3618,12 @@ CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Base, {
     var from = this.opposite(toward);
     var content = from.getValue(this.optsFor(from));
     toward.setValue(content, this.optsFor(toward));
+    toward.trigger('received-is', {
+      target: toward,
+      source: from,
+      relation: this
+    });
+    toward.setProvenance(from.tree, from);
   },
 
   clone: function(n1, n2) {
@@ -3629,6 +3669,11 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
 
   execute: function(toward) {
     this._Are_AlignCardinalities(toward);
+    toward.trigger('received-are', {
+      target: toward,
+      source: this.opposite(toward),
+      relation: this
+    });
   },
 
   clone: function(n1, n2) {
@@ -3714,11 +3759,21 @@ CTS.Relation.IfExist = function(node1, node2, spec) {
 CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var other = this.opposite(toward);
+    var existed = false;
     if ((other == CTS.NonExistantNode) || (other == null) || (CTS.Fn.isUndefined(other))) {
       toward.destroy();
+      existed = false;
     } else {
       toward.undestroy();
+      existed = true;
     }
+    toward.trigger('received-if-exist', {
+      target: toward,
+      source: other,
+      relation: this,
+      existed: existed
+    });
+
   },
 
   clone: function(n1, n2) {
@@ -3755,11 +3810,21 @@ CTS.Relation.IfNexist = function(node1, node2, spec) {
 CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var other = this.opposite(toward);
+    var existed = false;
     if ((other == CTS.NonExistantNode) || (other == null) || (CTS.Fn.isUndefined(other))) {
+      existed = false;
       toward.undestroy();
     } else {
+      existed = true;
       toward.destroy();
     }
+    toward.trigger('received-if-exist', {
+      target: toward,
+      source: other,
+      relation: this,
+      existed: existed
+    });
+
   },
 
   clone: function(n1, n2) {
@@ -3819,7 +3884,13 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
         replacements.push(child);
       }
       toward.replaceChildrenWith(replacements);
+      toward.setProvenance(opp.tree, opp);
     }
+    toward.trigger('received-bind', {
+      target: toward,
+      source: opp,
+      relation: this
+    });
   },
  
   clone: function(n1, n2) {
@@ -3831,7 +3902,6 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
     }
     return new CTS.Relation.Graft(n1, n2, this.spec);
   }
-
 
 });
 
@@ -3900,6 +3970,7 @@ var TreeSpec = CTS.Tree.Spec = function(kind, name, url, loadedFrom) {
 CTS.Tree.Html = function(forrest, node, spec) {
   CTS.Log.Info("DomTree::Constructor", [forrest, node]);
   this.root = new CTS.Node.Html(node, this);
+  this.root.setProvenance(this);
   this.forrest = forrest;
   this.spec = spec;
   this.name = spec.name;
@@ -3931,6 +4002,7 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
 // -----------
 CTS.Tree.Json = function(forrest, root, spec) {
   this.root = new CTS.JsonNode(root, this);
+  this.root.setProvenance(this);
   this.forrest = forrest;
   this.spec = spec;
   this.name = spec.name;
@@ -5264,5 +5336,91 @@ CTS.maybeAutoload = function() {
 };
 
 CTS.ensureJqueryThenMaybeAutoload();
+
+CTS.Xtras = {};
+
+CTS.Xtras.Color = {
+  RainbowColors: [
+    "#FB0000",
+    "#2AFF00",
+    "#0000FF",
+    "#FFFF00",
+    "#FB0070",
+    "#FC6C00",
+    "#24FFFF",
+    "#6800FF",
+    "#76FF00",
+    "#0063FF",
+    "#F900FF",
+    "#29FF58"
+  ],
+
+  ColorTree: function(tree) {
+    var treeToColor = {};
+    CTS.Xtras.Color.ColorTreeNode(tree.root, treeToColor, CTS.Xtras.Color.RainbowColors, 0);
+  },
+
+  ColorTreeNode: function(node, treeToColor, colorSet) {
+    var p = node.getProvenance();
+    if (p != null) {
+      if (! Fn.isUndefined(p.tree)) {
+        if (p.tree.name != null) {
+          var color = "";
+          if (Fn.isUndefined(treeToColor[p.tree.name])) {
+            var nextColor = Fn.keys(treeToColor).length;
+            if (nextColor >= colorSet.length) {
+              CTS.Log.Error("Ran out of colors");
+              color = '#'+Math.floor(Math.random()*16777215).toString(16);
+            } else {
+              treeToColor[p.tree.name] = colorSet[nextColor];
+              color = treeToColor[p.tree.name];
+              nextColor++;
+            }
+          } else {
+            color = treeToColor[p.tree.name];
+          }
+          CTS.Xtras.Color.ColorNode(node, treeToColor[p.tree.name]);
+        } else {
+          CTS.Log.Error("ColorTreeNode: Tree name is null");
+        }
+      } else {
+        CTS.Log.Error("ColorTreeNode: Tree is undefined");
+      }
+    } else {
+        CTS.Log.Error("ColorTreeNode: Node has no provenance");
+    }
+  
+    // Now color all the children.
+    Fn.each(node.getChildren(), function(kid) {
+      treeToColor = CTS.Xtras.Color.ColorTreeNode(kid, treeToColor, colorSet);
+    });
+  
+    return treeToColor;
+  },
+
+  ColorNode: function(node, color) {
+    if (node.kind == "HTML") {
+      if (node.value == null) {
+        CTS.Log.Error("Can't color node with null value");
+      } else {
+        var toWrap = node.value;
+        if (toWrap.is("img")) {
+          toWrap = CTS.$("<div></div>");
+          node.value.wrap(toWrap);
+        }
+        toWrap.css('background-color', color);
+        toWrap.css('color', color);
+        toWrap.css('background-image', null);
+        node.value.css('border', 'none');
+        node.value.css('border-color', color);
+        node.value.css('background-image', "");
+        
+      }
+    } else {
+      CTS.Log.Error("Not sure how to color node of type", node.kind);
+    }
+  }
+};
+
 
 }).call(this);

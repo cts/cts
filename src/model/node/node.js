@@ -208,6 +208,34 @@ CTS.Node.Base = {
     }
   },
 
+  trigger: function(eventName, eventData) {
+    this._subclass_trigger(eventName, eventData);
+  },
+
+  getProvenance: function() {
+    if (this.provenance == null) {
+      if (this.parentNode == null) {
+        // We're the root of a tree. This is an error: the root should always know where it
+        // came from.
+        CTS.Log.Error("Root of tree has no provenance information");
+        return null;
+      } else {
+        return this.parentNode.getProvenance();
+      }
+    } else {
+      return this.provenance;
+    }
+  },
+
+  setProvenance: function(tree, node) {
+    this.provenance = {
+      tree: tree
+    }
+    if (! Fn.isUndefined(node)) {
+      this.provenance.node = node;
+    }
+  },
+
   _processIncoming: function() {
     // Do incoming nodes except graft
     var r = this.getRelations();
@@ -260,7 +288,7 @@ CTS.Node.Base = {
   _subclass_insertChild: function(child, afterIndex) {},
   _subclass_destroy: function() {},
   _subclass_beginClone: function() {},
-  _subclass_getInlineRelationSpecString: function() { return null; }
-
+  _subclass_getInlineRelationSpecString: function() { return null; },
+  _subclass_trigger: function(eventName, eventData) { }
 
 };

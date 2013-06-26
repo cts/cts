@@ -79,6 +79,10 @@ module.exports = function(grunt) {
           "src/engine.js",
           "src/autoloader.js",
 
+          /* Xtras */
+          "src/xtras/xtras.js",
+          "src/xtras/color-tree.js",
+
           "src/fragments/postfix._js"
         ],
         dest : "release/cts.js"

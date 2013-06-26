@@ -3,6 +3,7 @@
 CTS.Tree.Html = function(forrest, node, spec) {
   CTS.Log.Info("DomTree::Constructor", [forrest, node]);
   this.root = new CTS.Node.Html(node, this);
+  this.root.setProvenance(this);
   this.forrest = forrest;
   this.spec = spec;
   this.name = spec.name;

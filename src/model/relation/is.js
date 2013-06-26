@@ -20,6 +20,12 @@ CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Base, {
     var from = this.opposite(toward);
     var content = from.getValue(this.optsFor(from));
     toward.setValue(content, this.optsFor(toward));
+    toward.trigger('received-is', {
+      target: toward,
+      source: from,
+      relation: this
+    });
+    toward.setProvenance(from.tree, from);
   },
 
   clone: function(n1, n2) {

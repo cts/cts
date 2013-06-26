@@ -19,11 +19,21 @@ CTS.Relation.IfExist = function(node1, node2, spec) {
 CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var other = this.opposite(toward);
+    var existed = false;
     if ((other == CTS.NonExistantNode) || (other == null) || (CTS.Fn.isUndefined(other))) {
       toward.destroy();
+      existed = false;
     } else {
       toward.undestroy();
+      existed = true;
     }
+    toward.trigger('received-if-exist', {
+      target: toward,
+      source: other,
+      relation: this,
+      existed: existed
+    });
+
   },
 
   clone: function(n1, n2) {

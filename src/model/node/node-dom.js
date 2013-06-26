@@ -148,6 +148,12 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     }
 
     return n;
+  },
+
+  _subclass_trigger: function(eventName, eventData) { 
+    if (this.value != null) {
+      this.value.trivver(eventName, eventData);
+    }
   }
 
 });
