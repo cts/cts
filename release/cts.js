@@ -2626,7 +2626,7 @@ var Utilities = CTS.Utilities = {
       }
     }, this);
     CTS.Fn.each(CTS.$('script[data-theme]'), function(elem) {
-      var str = CTS.$(elem).attr('data-treesheet');
+      var str = CTS.$(elem).attr('data-theme');
       if (str != null) {
         var block = {
           type: 'link',
