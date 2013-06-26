@@ -10,7 +10,7 @@ CTS.Parser.CtsImpl = {
     var ats = [];
     while (i < str.length) {
       c = str[i];
-      if ((c == ' ') || (c == '\n') || (c == '\t')) {
+      if ((c == ' ') || (c == '\n') || (c == '\t') || (c == '\r')) {
         i++;
       } else if (c == "@") {
         tup = CTS.Parser.CtsImpl.AT(str, i+1);
