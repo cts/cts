@@ -5,6 +5,7 @@ var DependencySpec = CTS.DependencySpec = function(kind, url) {
 };
 
 DependencySpec.prototype.load = function() {
+  this.url = CTS.Utilities.fixRelativeUrl(this.url, this.loadedFrom);
   if (this.loaded == false) {
     if (this.kind == 'css') {
       this.loaded = true;

@@ -93,6 +93,26 @@ var Utilities = CTS.Utilities = {
     return "http://treesheets.csail.mit.edu/mockups/" + str + ".cts";
   },
 
+  fixRelativeUrl: function(url, loadedFrom) {
+    if ((url === null) || (typeof url == "undefined")) {
+      return null;
+    }
+    if (typeof loadedFrom == 'undefined') {
+      return url;
+    } else {
+      if ((url.indexOf("relative(") == 0) && (url[url.length - 1] == ")")) {
+        var fragment = url.substring(9, url.length - 1);
+        var prefix = loadedFrom.split("/");
+        prefix.pop();
+        prefix = prefix.join("/");
+        url = prefix + "/" + fragment;
+        return url;
+      } else {
+        return url;
+      }
+    }
+  },
+
   fetchString: function(params, successFn, errorFn) {
     var deferred = Q.defer();
     var xhr = CTS.$.ajax({

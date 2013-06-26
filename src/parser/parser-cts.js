@@ -27,7 +27,7 @@ CTS.Parser.Cts = {
         } else if (kind == 'css') {
           f.dependencySpecs.push(new DependencySpec('css', h[0]));
         } else if (kind == 'js') {
-          f.dependencySpecs.push(new DependencySpec('js', h[1]));
+          f.dependencySpecs.push(new DependencySpec('js', h[0]));
         } else {
           CTS.Log.Error("Don't know CTS header type:", kind);
         }

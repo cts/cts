@@ -75,8 +75,12 @@ CTS.Fn.extend(Engine.prototype, Events, {
         CTS.Utilities.fetchString(block).then(
           function(content) { 
             var spec = CTS.Parser.parseForrestSpec(content, block.format);
-            for (var i = 0; i < spec.treeSpecs.length; i++) {
+            var i;
+            for (i = 0; i < spec.treeSpecs.length; i++) {
               spec.treeSpecs[i].loadedFrom = block.url;
+            }
+            for (i = 0; i < spec.dependencySpecs.length; i++) {
+              spec.dependencySpecs[i].loadedFrom = block.url;
             }
             self.forrest.addSpec(spec);
             deferred.resolve(); 

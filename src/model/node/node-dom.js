@@ -115,6 +115,12 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     }
   },
 
+  _subclass_ensure_childless: function() { 
+    if (this.value !== null) {
+      this.value.html("");
+    }
+  },
+
   /************************************************************************
    **
    ** Utility Helpers

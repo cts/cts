@@ -110,6 +110,8 @@ CTS.Node.Base = {
     for (var i = 0; i < goodbye.length; i++) {
       goodbye[i]._subclass_destroy();
     }
+    // Now clean up anything left
+    this._subclass_ensure_childless();
 
     for (var j = 0; j < nodes.length; j++) {
       this.insertChild(nodes[j]);
@@ -289,6 +291,7 @@ CTS.Node.Base = {
   _subclass_destroy: function() {},
   _subclass_beginClone: function() {},
   _subclass_getInlineRelationSpecString: function() { return null; },
-  _subclass_trigger: function(eventName, eventData) { }
+  _subclass_trigger: function(eventName, eventData) { },
+  _subclass_ensure_childless: function() { }
 
 };

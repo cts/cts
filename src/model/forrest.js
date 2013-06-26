@@ -109,14 +109,7 @@ CTS.Fn.extend(Forrest.prototype, {
         deferred.reject();
       }
     } else {
-      if ((treeSpec.url !== null) && (treeSpec.url.indexOf("relative(") == 0) && (treeSpec.url[treeSpec.url.length - 1] == ")")) {
-        treeSpec.originalUrl = treeSpec.url;
-        var fragment = treeSpec.url.substring(9, treeSpec.url.length - 1);
-        var prefix = treeSpec.loadedFrom.split("/");
-        prefix.pop();
-        prefix = prefix.join("/");
-        treeSpec.url = prefix + "/" + fragment;
-      }
+      treeSpec.url = CTS.Utilities.fixRelativeUrl(treeSpec.url, treeSpec.loadedFrom);
       CTS.Tree.Create(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;

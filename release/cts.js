@@ -2676,6 +2676,26 @@ var Utilities = CTS.Utilities = {
     return "http://treesheets.csail.mit.edu/mockups/" + str + ".cts";
   },
 
+  fixRelativeUrl: function(url, loadedFrom) {
+    if ((url === null) || (typeof url == "undefined")) {
+      return null;
+    }
+    if (typeof loadedFrom == 'undefined') {
+      return url;
+    } else {
+      if ((url.indexOf("relative(") == 0) && (url[url.length - 1] == ")")) {
+        var fragment = url.substring(9, url.length - 1);
+        var prefix = loadedFrom.split("/");
+        prefix.pop();
+        prefix = prefix.join("/");
+        url = prefix + "/" + fragment;
+        return url;
+      } else {
+        return url;
+      }
+    }
+  },
+
   fetchString: function(params, successFn, errorFn) {
     var deferred = Q.defer();
     var xhr = CTS.$.ajax({
@@ -2821,6 +2841,8 @@ CTS.Node.Base = {
     for (var i = 0; i < goodbye.length; i++) {
       goodbye[i]._subclass_destroy();
     }
+    // Now clean up anything left
+    this._subclass_ensure_childless();
 
     for (var j = 0; j < nodes.length; j++) {
       this.insertChild(nodes[j]);
@@ -3000,7 +3022,8 @@ CTS.Node.Base = {
   _subclass_destroy: function() {},
   _subclass_beginClone: function() {},
   _subclass_getInlineRelationSpecString: function() { return null; },
-  _subclass_trigger: function(eventName, eventData) { }
+  _subclass_trigger: function(eventName, eventData) { },
+  _subclass_ensure_childless: function() { }
 
 };
 
@@ -3295,6 +3318,12 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
       this.value.html(value);
     } else {
       this.value.attr(opts.attribute, value);
+    }
+  },
+
+  _subclass_ensure_childless: function() { 
+    if (this.value !== null) {
+      this.value.html("");
     }
   },
 
@@ -4185,14 +4214,7 @@ CTS.Fn.extend(Forrest.prototype, {
         deferred.reject();
       }
     } else {
-      if ((treeSpec.url !== null) && (treeSpec.url.indexOf("relative(") == 0) && (treeSpec.url[treeSpec.url.length - 1] == ")")) {
-        treeSpec.originalUrl = treeSpec.url;
-        var fragment = treeSpec.url.substring(9, treeSpec.url.length - 1);
-        var prefix = treeSpec.loadedFrom.split("/");
-        prefix.pop();
-        prefix = prefix.join("/");
-        treeSpec.url = prefix + "/" + fragment;
-      }
+      treeSpec.url = CTS.Utilities.fixRelativeUrl(treeSpec.url, treeSpec.loadedFrom);
       CTS.Tree.Create(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;
@@ -4442,6 +4464,7 @@ var DependencySpec = CTS.DependencySpec = function(kind, url) {
 };
 
 DependencySpec.prototype.load = function() {
+  this.url = CTS.Utilities.fixRelativeUrl(this.url, this.loadedFrom);
   if (this.loaded == false) {
     if (this.kind == 'css') {
       this.loaded = true;
@@ -4692,7 +4715,7 @@ CTS.Parser.Cts = {
         } else if (kind == 'css') {
           f.dependencySpecs.push(new DependencySpec('css', h[0]));
         } else if (kind == 'js') {
-          f.dependencySpecs.push(new DependencySpec('js', h[1]));
+          f.dependencySpecs.push(new DependencySpec('js', h[0]));
         } else {
           CTS.Log.Error("Don't know CTS header type:", kind);
         }
@@ -4716,7 +4739,7 @@ CTS.Parser.CtsImpl = {
     var ats = [];
     while (i < str.length) {
       c = str[i];
-      if ((c == ' ') || (c == '\n') || (c == '\t')) {
+      if ((c == ' ') || (c == '\n') || (c == '\t') || (c == '\r')) {
         i++;
       } else if (c == "@") {
         tup = CTS.Parser.CtsImpl.AT(str, i+1);
@@ -4886,6 +4909,7 @@ CTS.Parser.CtsImpl = {
     while ((i < str.length) && (str[i] != ' ') && (str[i] != '\n') && (str[i] != '\t') && (str[i] != '\r')) {
       i++;
     }
+    var relator = str.substring(start, i).trim();
     while ((i < str.length) && ((str[i] == ' ') || (str[i] == '\n') || (str[i] == '\t') || (str[i] == '\r'))) {
       i++;
     }
@@ -4894,7 +4918,7 @@ CTS.Parser.CtsImpl = {
       i = tup[0];
       kv = tup[1];
     }
-    return [i, [str.substring(start, i).trim(), kv]];
+    return [i, [relator, kv]];
   }
 };
 
@@ -5265,8 +5289,12 @@ CTS.Fn.extend(Engine.prototype, Events, {
         CTS.Utilities.fetchString(block).then(
           function(content) { 
             var spec = CTS.Parser.parseForrestSpec(content, block.format);
-            for (var i = 0; i < spec.treeSpecs.length; i++) {
+            var i;
+            for (i = 0; i < spec.treeSpecs.length; i++) {
               spec.treeSpecs[i].loadedFrom = block.url;
+            }
+            for (i = 0; i < spec.dependencySpecs.length; i++) {
+              spec.dependencySpecs[i].loadedFrom = block.url;
             }
             self.forrest.addSpec(spec);
             deferred.resolve(); 

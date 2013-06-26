@@ -10,7 +10,7 @@ CTS.Parser.CtsImpl = {
     var ats = [];
     while (i < str.length) {
       c = str[i];
-      if ((c == ' ') || (c == '\n') || (c == '\t')) {
+      if ((c == ' ') || (c == '\n') || (c == '\t') || (c == '\r')) {
         i++;
       } else if (c == "@") {
         tup = CTS.Parser.CtsImpl.AT(str, i+1);
@@ -180,6 +180,7 @@ CTS.Parser.CtsImpl = {
     while ((i < str.length) && (str[i] != ' ') && (str[i] != '\n') && (str[i] != '\t') && (str[i] != '\r')) {
       i++;
     }
+    var relator = str.substring(start, i).trim();
     while ((i < str.length) && ((str[i] == ' ') || (str[i] == '\n') || (str[i] == '\t') || (str[i] == '\r'))) {
       i++;
     }
@@ -188,7 +189,7 @@ CTS.Parser.CtsImpl = {
       i = tup[0];
       kv = tup[1];
     }
-    return [i, [str.substring(start, i).trim(), kv]];
+    return [i, [relator, kv]];
   }
 };
 
