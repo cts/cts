@@ -2653,7 +2653,9 @@ var Utilities = CTS.Utilities = {
       };
       ret.push(block);
     }, this);
-    CTS.Fn.each(CTS.$('link[rel="treesheet"]'), function(elem) {
+    // TODO(eob): see if this causes it to get the smae element three times...
+    // XXX !important
+    CTS.Fn.each(CTS.$('link[rel="treesheet"],link[type="txt/cts"],link[type="json/cts"]'), function(elem) {
       var e = CTS.$(elem);
       var type = e.attr('type');
       var format = 'string';
