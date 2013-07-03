@@ -2627,13 +2627,17 @@ var Utilities = CTS.Utilities = {
     }, this);
     CTS.Fn.each(CTS.$('script[data-theme]'), function(elem) {
       var str = CTS.$(elem).attr('data-theme');
+      var sub = CTS.$(elem).attr('data-subtheme');
       if (str != null) {
-        var block = {
-          type: 'link',
-          format: 'string',
-          url: CTS.Utilities.themeUrl(str)
-        };
-        ret.push(block);
+        var urls = CTS.Utilities.themeUrls(str, sub);
+        for (var k = 0; k < urls.length; k++) {
+          var block = {
+            type: 'link',
+            format: 'string',
+            url: urls[k]
+          };
+          ret.push(block);
+        }
       }
     }, this);
 
@@ -2672,10 +2676,38 @@ var Utilities = CTS.Utilities = {
     return ret;
   },
 
-  themeUrl: function(str) {
+  themeUrls: function(themeRef, subthemeRef) {
     // theme urls take the form TYPE/INSTANCE/PAGE 
     // TODO(eob): create more flexible ecosystem
-    return "http://treesheets.csail.mit.edu/mockups/" + str + ".cts";
+
+    var parts = themeRef.split("/");
+    var kind = null;
+    var name = null;
+    var page = null;
+
+    if (parts.length == 2) {
+      kind = parts[0];
+      name = parts[1];
+    }
+
+    if (parts.length == 3) {
+      kind = parts[0];
+      name = parts[1];
+      page = parts[2];
+    }
+
+    if ((typeof subthemeRef != 'undefined') && (subthemeRef !== null)) {
+      page = subthemeRef;
+    }
+
+    if (page == null) {
+      return "http://treesheets.csail.mit.edu/mockups/" + kind + "/" + name + "/" + name + ".cts"
+    } else {
+      return [
+        "http://treesheets.csail.mit.edu/mockups/" + kind + "/" + page + ".cts",
+        "http://treesheets.csail.mit.edu/mockups/" + kind + "/" + name + "/" + page + ".cts"
+      ];
+    }
   },
 
   fixRelativeUrl: function(url, loadedFrom) {
