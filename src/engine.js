@@ -18,7 +18,7 @@ var Engine = CTS.Engine = function(opts, args) {
 CTS.Fn.extend(Engine.prototype, Events, {
 
   initialize: function() {
-    this.forrest = new CTS.Forrest();
+    this.forrest = new CTS.Forrest(this.opts.forrest);
   },
 
   /**
@@ -97,6 +97,9 @@ CTS.Fn.extend(Engine.prototype, Events, {
       }
     }, this);
     return Q.all(promises);
+  },
+
+  onDomNodeInserted: function {
   }
 
 });

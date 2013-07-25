@@ -38,7 +38,12 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   addAndRealizeDefaultTrees: function() {
-    var pageBody = new CTS.Tree.Spec('HTML', 'body', null);
+    var pageBody = null;
+    if (typeof this.opts.defaultTree != 'undefined') {
+      var pageBody = new CTS.Tree.Spec('HTML', 'body', this.opts.defaultTree);
+    } else {
+      var pageBody = new CTS.Tree.Spec('HTML', 'body', null);
+    }
     this.addTreeSpec(pageBody);
     this.realizeTree(pageBody);
   },
@@ -108,8 +113,19 @@ CTS.Fn.extend(Forrest.prototype, {
       } else {
         deferred.reject();
       }
-    } else {
+    } else if (typeof treeSpec.url == "string") {
       treeSpec.url = CTS.Utilities.fixRelativeUrl(treeSpec.url, treeSpec.loadedFrom);
+      CTS.Tree.Create(treeSpec, this).then(
+        function(tree) {
+          self.trees[treeSpec.name] = tree;
+          deferred.resolve();
+        },
+        function() {
+          deferred.reject();
+        }
+      );
+    } else {
+      // it's a jquery node
       CTS.Tree.Create(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;

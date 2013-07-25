@@ -21,7 +21,7 @@ CTS.Tree.Create = function(spec, forrest) {
     var node = CTS.$('body');
     var tree = new CTS.Tree.Html(forrest, node, spec);
     deferred.resolve(tree);
-  } else {
+  } else if (typeof spec.url == "string") {
     CTS.Utilities.fetchString(spec).then(
       function(content) {
         if ((spec.kind == 'HTML') || (spec.kind == 'html')) {
@@ -43,6 +43,11 @@ CTS.Tree.Create = function(spec, forrest) {
         deferred.reject();
       }
     );
+  } else {
+    // jquery node
+    var node = spec.url;
+    var tree = ne CTS.Tree.Html(forrest, node, spec);
+    deferred.resolve(tree);
   }
   return deferred.promise;
 };
