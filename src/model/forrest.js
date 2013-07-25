@@ -16,6 +16,8 @@ var Forrest = CTS.Forrest = function(opts) {
   this.relationSpecs = [];
   this.relations= [];
 
+  this.insertionListeners = {};
+
   this.opts = opts || {};
   this.initialize();
 };
@@ -38,6 +40,7 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   addAndRealizeDefaultTrees: function() {
+    var self = this;
     var pageBody = null;
     if (typeof this.opts.defaultTree != 'undefined') {
       var pageBody = new CTS.Tree.Spec('HTML', 'body', this.opts.defaultTree);
@@ -45,7 +48,20 @@ CTS.Fn.extend(Forrest.prototype, {
       var pageBody = new CTS.Tree.Spec('HTML', 'body', null);
     }
     this.addTreeSpec(pageBody);
-    this.realizeTree(pageBody);
+    this.realizeTree(pageBody).then(
+     function(tree) {
+       // Default tree was realized.
+       // Add callback for DOM change events.
+       var listener = function(evt) {
+         self._onDomNodeInserted(tree, CTS.$(evt.target), evt);
+       };
+       self.insertionListeners[tree.name] = listener;
+       tree.root.addListener("DOMNodeInserted", listener)
+     },
+     function() {
+       // Default tree was not realized
+     }
+    );
   },
 
   /*
@@ -109,7 +125,7 @@ CTS.Fn.extend(Forrest.prototype, {
       var alias = treeSpec.url.substring(6, treeSpec.url.length - 1);
       if (typeof self.trees[alias] != 'undefined') {
         self.trees[treeSpec.name] = self.trees[alias];
-        deferred.resolve();
+        deferred.resolve(self.trees[alias]);
       } else {
         deferred.reject();
       }
@@ -118,7 +134,7 @@ CTS.Fn.extend(Forrest.prototype, {
       CTS.Tree.Create(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;
-          deferred.resolve();
+          deferred.resolve(tree);
         },
         function() {
           deferred.reject();
@@ -129,7 +145,7 @@ CTS.Fn.extend(Forrest.prototype, {
       CTS.Tree.Create(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;
-          deferred.resolve();
+          deferred.resolve(tree);
         },
         function() {
           deferred.reject();
@@ -226,6 +242,14 @@ CTS.Fn.extend(Forrest.prototype, {
 
   getPrimaryTree: function() {
     return this.trees.body;
+  },
+
+  /*
+   * Event Handlers
+   *
+   * -------------------------------------------------------- */
+  _onDomNodeInserted: function(tree, node, evt) {
+    console.log("DOM Node Inserted", node);
   }
 
 });
