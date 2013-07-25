@@ -210,9 +210,9 @@ CTS.Node.Base = {
     }
   },
 
-  trigger: function(eventName, eventData) {
-    this._subclass_trigger(eventName, eventData);
-  },
+//  trigger: function(eventName, eventData) {
+//    this._subclass_trigger(eventName, eventData);
+//  },
 
   getProvenance: function() {
     if (this.provenance == null) {
@@ -291,7 +291,6 @@ CTS.Node.Base = {
   _subclass_destroy: function() {},
   _subclass_beginClone: function() {},
   _subclass_getInlineRelationSpecString: function() { return null; },
-  _subclass_trigger: function(eventName, eventData) { },
-  _subclass_ensure_childless: function() { }
-
+//  _subclass_trigger: function(eventName, eventData) { },
+  _subclass_ensure_childless: function() { },
 };

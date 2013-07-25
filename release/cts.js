@@ -2535,8 +2535,9 @@ var Events = CTS.Events = {
   trigger: function(name) {
     if (!this._events) return this;
     var args = [];
-    if (arguments.length > 1) {
-      args = arguments.slice(1, arguments.length);
+    var args = Array.prototype.slice.call(arguments);
+    if (args.length > 1) {
+      args = args.slice(1, args.length);
     }
     if (!eventsApi(this, 'trigger', name, args)) return this;
     var events = this._events[name];
@@ -2975,9 +2976,9 @@ CTS.Node.Base = {
     }
   },
 
-  trigger: function(eventName, eventData) {
-    this._subclass_trigger(eventName, eventData);
-  },
+//  trigger: function(eventName, eventData) {
+//    this._subclass_trigger(eventName, eventData);
+//  },
 
   getProvenance: function() {
     if (this.provenance == null) {
@@ -3056,9 +3057,8 @@ CTS.Node.Base = {
   _subclass_destroy: function() {},
   _subclass_beginClone: function() {},
   _subclass_getInlineRelationSpecString: function() { return null; },
-  _subclass_trigger: function(eventName, eventData) { },
-  _subclass_ensure_childless: function() { }
-
+//  _subclass_trigger: function(eventName, eventData) { },
+  _subclass_ensure_childless: function() { },
 };
 
 /*
@@ -3396,10 +3396,16 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     return n;
   },
 
-  _subclass_trigger: function(eventName, eventData) { 
-    if (this.value != null) {
-      this.value.trivver(eventName, eventData);
-    }
+//  _subclass_trigger: function(eventName, eventData, spreadToBaseLayer) { 
+//    if (spreadToBaseLayer && (this.value != null)) {
+//      this.value.trigger(eventName, eventData);
+//    }
+//  },
+
+  _subclass_on: function(evtName, handler) {
+    // TODO(eob): fix this..
+    console.log("adding listener for", evtName);
+    this.value.on(evtName, handler);
   }
 
 });
@@ -3992,7 +3998,7 @@ CTS.Tree.Create = function(spec, forrest) {
     var node = CTS.$('body');
     var tree = new CTS.Tree.Html(forrest, node, spec);
     deferred.resolve(tree);
-  } else {
+  } else if (typeof spec.url == "string") {
     CTS.Utilities.fetchString(spec).then(
       function(content) {
         if ((spec.kind == 'HTML') || (spec.kind == 'html')) {
@@ -4014,6 +4020,11 @@ CTS.Tree.Create = function(spec, forrest) {
         deferred.reject();
       }
     );
+  } else {
+    // jquery node
+    var node = spec.url;
+    var tree = new CTS.Tree.Html(forrest, node, spec);
+    deferred.resolve(tree);
   }
   return deferred.promise;
 };
@@ -4038,6 +4049,13 @@ CTS.Tree.Html = function(forrest, node, spec) {
   this.spec = spec;
   this.name = spec.name;
   this.root.realizeChildren();
+
+  // Listen for DOMNodeInserted events in the DOM tree, and spread
+  // propagation of that event into the CTS tree
+  var self = this;
+  this.root.value.on("DOMNodeInserted", function(evt) {
+    self.root.trigger("DOMNodeInserted", evt);
+  });
 };
 
 // Instance Methods
@@ -4155,6 +4173,8 @@ var Forrest = CTS.Forrest = function(opts) {
   this.relationSpecs = [];
   this.relations= [];
 
+  this.insertionListeners = {};
+
   this.opts = opts || {};
   this.initialize();
 };
@@ -4177,9 +4197,29 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   addAndRealizeDefaultTrees: function() {
-    var pageBody = new CTS.Tree.Spec('HTML', 'body', null);
+    var self = this;
+    var pageBody = null;
+    if (typeof this.opts.defaultTree != 'undefined') {
+      var pageBody = new CTS.Tree.Spec('HTML', 'body', this.opts.defaultTree);
+    } else {
+      var pageBody = new CTS.Tree.Spec('HTML', 'body', null);
+    }
     this.addTreeSpec(pageBody);
-    this.realizeTree(pageBody);
+    this.realizeTree(pageBody).then(
+     function(tree) {
+       // Default tree was realized.
+       // Add callback for DOM change events.
+       var listener = function(evt) {
+         self._onDomNodeInserted(tree, CTS.$(evt.target), evt);
+       };
+       self.insertionListeners[tree.name] = listener;
+       // jQuery Listener syntax.
+       tree.root.on("DOMNodeInserted", listener)
+     },
+     function() {
+       // Default tree was not realized
+     }
+    );
   },
 
   /*
@@ -4243,16 +4283,27 @@ CTS.Fn.extend(Forrest.prototype, {
       var alias = treeSpec.url.substring(6, treeSpec.url.length - 1);
       if (typeof self.trees[alias] != 'undefined') {
         self.trees[treeSpec.name] = self.trees[alias];
-        deferred.resolve();
+        deferred.resolve(self.trees[alias]);
       } else {
         deferred.reject();
       }
-    } else {
+    } else if (typeof treeSpec.url == "string") {
       treeSpec.url = CTS.Utilities.fixRelativeUrl(treeSpec.url, treeSpec.loadedFrom);
       CTS.Tree.Create(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;
-          deferred.resolve();
+          deferred.resolve(tree);
+        },
+        function() {
+          deferred.reject();
+        }
+      );
+    } else {
+      // it's a jquery node
+      CTS.Tree.Create(treeSpec, this).then(
+        function(tree) {
+          self.trees[treeSpec.name] = tree;
+          deferred.resolve(tree);
         },
         function() {
           deferred.reject();
@@ -4349,6 +4400,14 @@ CTS.Fn.extend(Forrest.prototype, {
 
   getPrimaryTree: function() {
     return this.trees.body;
+  },
+
+  /*
+   * Event Handlers
+   *
+   * -------------------------------------------------------- */
+  _onDomNodeInserted: function(tree, node, evt) {
+    console.log("DOM Node Inserted", node);
   }
 
 });
@@ -5266,7 +5325,7 @@ var Engine = CTS.Engine = function(opts, args) {
 CTS.Fn.extend(Engine.prototype, Events, {
 
   initialize: function() {
-    this.forrest = new CTS.Forrest();
+    this.forrest = new CTS.Forrest(this.opts.forrest);
   },
 
   /**

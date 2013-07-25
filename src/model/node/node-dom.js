@@ -156,10 +156,16 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     return n;
   },
 
-  _subclass_trigger: function(eventName, eventData) { 
-    if (this.value != null) {
-      this.value.trivver(eventName, eventData);
-    }
+//  _subclass_trigger: function(eventName, eventData, spreadToBaseLayer) { 
+//    if (spreadToBaseLayer && (this.value != null)) {
+//      this.value.trigger(eventName, eventData);
+//    }
+//  },
+
+  _subclass_on: function(evtName, handler) {
+    // TODO(eob): fix this..
+    console.log("adding listener for", evtName);
+    this.value.on(evtName, handler);
   }
 
 });

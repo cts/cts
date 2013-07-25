@@ -119,8 +119,9 @@ var Events = CTS.Events = {
   trigger: function(name) {
     if (!this._events) return this;
     var args = [];
-    if (arguments.length > 1) {
-      args = arguments.slice(1, arguments.length);
+    var args = Array.prototype.slice.call(arguments);
+    if (args.length > 1) {
+      args = args.slice(1, args.length);
     }
     if (!eventsApi(this, 'trigger', name, args)) return this;
     var events = this._events[name];

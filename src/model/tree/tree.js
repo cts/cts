@@ -46,7 +46,7 @@ CTS.Tree.Create = function(spec, forrest) {
   } else {
     // jquery node
     var node = spec.url;
-    var tree = ne CTS.Tree.Html(forrest, node, spec);
+    var tree = new CTS.Tree.Html(forrest, node, spec);
     deferred.resolve(tree);
   }
   return deferred.promise;

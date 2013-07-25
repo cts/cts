@@ -8,6 +8,13 @@ CTS.Tree.Html = function(forrest, node, spec) {
   this.spec = spec;
   this.name = spec.name;
   this.root.realizeChildren();
+
+  // Listen for DOMNodeInserted events in the DOM tree, and spread
+  // propagation of that event into the CTS tree
+  var self = this;
+  this.root.value.on("DOMNodeInserted", function(evt) {
+    self.root.trigger("DOMNodeInserted", evt);
+  });
 };
 
 // Instance Methods

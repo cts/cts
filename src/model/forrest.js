@@ -56,7 +56,8 @@ CTS.Fn.extend(Forrest.prototype, {
          self._onDomNodeInserted(tree, CTS.$(evt.target), evt);
        };
        self.insertionListeners[tree.name] = listener;
-       tree.root.addListener("DOMNodeInserted", listener)
+       // jQuery Listener syntax.
+       tree.root.on("DOMNodeInserted", listener)
      },
      function() {
        // Default tree was not realized
