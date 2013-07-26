@@ -57,7 +57,10 @@ CTS.Fn.extend(Forrest.prototype, {
        };
        self.insertionListeners[tree.name] = listener;
        // jQuery Listener syntax.
-       tree.root.on("DOMNodeInserted", listener)
+       tree.root.on("DOMNodeInserted", listener);
+
+       // NOW CTS IS READY AND LOADED
+       CTS.status._defaultTreeReady.resolve();
      },
      function() {
        // Default tree was not realized
