@@ -44,8 +44,8 @@ CTS.Node.Base = {
       console.log("registering my relations");
       this.registerInlineRelationSpecs().then(function() {
         deferred.resolve(self.relations);
-      }, function() {
-        deferred.reject();
+      }, function(reason) {
+        deferred.reject(reason);
       });
     } else {
       deferred.resolve(self.relations);
@@ -66,18 +66,18 @@ CTS.Node.Base = {
           var p = CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
           p.then(function() {
             deferred.resolve();
-          }, function() {
-            deferred.reject();
+          }, function(reason) {
+            deferred.reject(reason);
           });
 
         } else {
           this.addedMyInlineRelationsToForrest = false;
           if (Fn.isUndefined(this.tree) || (this.tree === null)) {
             CTS.Log.Error("[Node] Could not add inline relns to null tree");
-            deferred.reject();
+            deferred.reject("Could not add line relations to null tree");
           } else if (Fn.isUndefined(this.tree.forrest) || (this.tree.forrest === null)) {
             CTS.Log.Error("[Node] Could not add inline relns to null forrest");
-            deferred.reject();
+            deferred.reject("Could not add inline relations to null forrest");
           }
         }
       }
@@ -113,7 +113,7 @@ CTS.Node.Base = {
             } else {
               rejected = true;
               CTS.Log.Error(result.reason);
-              deferred.reject();
+              deferred.reject(result.reason);
             }
           });
           if (!rejected) {
@@ -122,8 +122,8 @@ CTS.Node.Base = {
           }
         });
       }
-    }, function() {
-      deferred.reject();
+    }, function(reason) {
+      deferred.reject(reason);
     });
 
     return deferred.promise;
@@ -305,8 +305,7 @@ CTS.Node.Base = {
         self._processIncomingRelations(r, 'is');
         self._processIncomingRelations(r, 'are');
     
-        // Do children
-        for (var i = 0; i < this.children.length; i++) {
+        for (var i = 0; i < self.children.length; i++) {
           self.children[i]._processIncoming();
         }
     

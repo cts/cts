@@ -32,15 +32,20 @@ CTS.Tree.Create = function(spec, forrest) {
           //  CTS.Debugging.DumpStack();
           //  debugger;
           //}
-          var node = CTS.$(content);
-          var tree = new CTS.Tree.Html(forrest, node, spec);
+          var div = CTS.$("<div></div>");
+          var nodes = CTS.$.parseHTML(content);
+          var jqNodes = Fn.map(nodes, function(n) {
+            return CTS.$(n);
+          });
+          div.append(jqNodes);
+          var tree = new CTS.Tree.Html(forrest, div, spec);
           deferred.resolve(tree);
         } else {
-          deferred.reject();
+          deferred.reject("Don't know how to make Tree of kind: " + spec.kind);
         }
       },
-      function() {
-        deferred.reject();
+      function(reason) {
+        deferred.reject(reason);
       }
     );
   } else {

@@ -85,9 +85,9 @@ CTS.Fn.extend(Engine.prototype, Events, {
             self.forrest.addSpec(spec);
             deferred.resolve(); 
           },
-          function() {
+          function(reason) {
             CTS.Log.Error("Couldn't fetch string.");
-            deferred.reject();
+            deferred.reject(reason);
           }
         );
         promises.push(deferred.promise);

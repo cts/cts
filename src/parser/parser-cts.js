@@ -48,7 +48,7 @@ CTS.Parser.Cts = {
     if (typeof json.headers != 'undefined') {
       for (i = 0; i < json.headers.length; i++) {
         var h = json.headers[i];
-        var kind = h.shift();
+        var kind = h.shift().trim();
         if (kind == 'html') {
           f.treeSpecs.push(new TreeSpec('html', h[0], h[1]));
         } else if (kind == 'css') {

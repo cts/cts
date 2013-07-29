@@ -39,7 +39,7 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
   },
 
   getCtsNode: function(jqNode) {
-    var ctsId = jqNode.attr('data-ctsId');
+    var ctsId = jqNode.attr('data-ctsid');
     if ((ctsId == null) || (typeof ctsId == 'undefined')) {
       return null;
     } else if ((typeof this._nodeLookup[ctsId] == 'undefined') ||

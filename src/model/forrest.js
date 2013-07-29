@@ -84,31 +84,43 @@ CTS.Fn.extend(Forrest.prototype, {
       realize = false;
     }
     this.forrestSpecs.push(forrestSpec);
-    var i;
     var initial = Q.defer();
     var last = initial.promise;
 
+    var i;
     for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
-      self.addTreeSpec(forrestSpec.treeSpecs[i]);
-      if (realize) {
-        var next = Q.defer();
-        last.then(function() {
-          var promise = self.realizeTree(forrestSpec.treeSpecs[i]);
-          promise.then(function() {next.resolve()});
-        });
-        last = next.promise;
-      }
+      (function(treeSpec) {
+        var treeSpec = forrestSpec.treeSpecs[i];
+        self.addTreeSpec(treeSpec);
+        if (realize) {
+          console.log("Realizing Tree", treeSpec);
+          var next = Q.defer();
+          last.then(function() {
+            var promise = self.realizeTree(treeSpec);
+            promise.then(function() {next.resolve()});
+          });
+          last = next.promise;
+        }
+      })(forrestSpec.treeSpecs[i])
     }
-    for (i = 0; i < forrestSpec.relationSpecs.length; i++) {
-      var spec = forrestSpec.relationSpecs[i];
-      self.addRelationSpec(spec);
-      if (realize) {
-        var next = Q.defer();
-        last.then(function() {
-          self.realizeRelation(spec);
-          next.resolve();
-        });
-        last = next.promise;
+    var j;
+    for (j = 0; j < forrestSpec.relationSpecs.length; j++) {
+      (function(spec) {
+        self.addRelationSpec(spec);
+        if (realize) {
+          var next = Q.defer();
+          last.then(function() {
+            self.realizeRelation(spec);
+            next.resolve();
+          });
+          last = next.promise;
+        }
+      })(forrestSpec.relationSpecs[j]);
+    }
+
+    if (realize) {
+      for (dep in forrestSpec.dependencySpecs) {
+        forrestSpec.dependencySpecs[dep].load();
       }
     }
 
@@ -150,36 +162,41 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   realizeTree: function(treeSpec) {
+    console.log("In realize", treeSpec);
     var deferred = Q.defer();
     var self = this;
     if ((treeSpec.url !== null) && (treeSpec.url.indexOf("alias(") == 0) && (treeSpec.url[treeSpec.url.length - 1] == ")")) {
+      console.log("Alias");
       var alias = treeSpec.url.substring(6, treeSpec.url.length - 1);
       if (typeof self.trees[alias] != 'undefined') {
         self.trees[treeSpec.name] = self.trees[alias];
         deferred.resolve(self.trees[alias]);
       } else {
-        deferred.reject();
+        deferred.reject("Trying to alias undefined tree");
       }
     } else if (typeof treeSpec.url == "string") {
+      console.log(treeSpec.url);
       treeSpec.url = CTS.Utilities.fixRelativeUrl(treeSpec.url, treeSpec.loadedFrom);
+      console.log(treeSpec.url);
       CTS.Tree.Create(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;
           deferred.resolve(tree);
         },
-        function() {
-          deferred.reject();
+        function(reason) {
+          deferred.reject(reason);
         }
       );
     } else {
+      console.log("last else");
       // it's a jquery node
       CTS.Tree.Create(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;
           deferred.resolve(tree);
         },
-        function() {
-          deferred.reject();
+        function(reason) {
+          deferred.reject(reason);
         }
       );
     }
@@ -281,21 +298,23 @@ CTS.Fn.extend(Forrest.prototype, {
    * -------------------------------------------------------- */
   _onDomNodeInserted: function(tree, node, evt) {
     // If the tree is the main tree, we want to possibly run any CTS
-    var ctsNode = tree.getCtsNode(node);
-    if (ctsNode == null) {
-      // Get the parent
-      var p = CTS.$(CTS.$(node).parent());
-      var ctsParent = tree.getCtsNode(p);
-      if (ctsParent == null) {
-        CTS.Log.Error("Node inserted into yet unmapped region of tree");
-      } else {
-        // Create the CTS tree for this region.
-        var ctsNode = ctsParent._onChildInserted(node);
-
-        //  Now run any rules.
-        console.log("Processing Incoming");
-        ctsNode._processIncoming();
+    if (typeof evt.ctsHandled == 'undefined') {
+      var ctsNode = tree.getCtsNode(node);
+      if (ctsNode == null) {
+        // Get the parent
+        var p = CTS.$(CTS.$(node).parent());
+        console.log("Parent is", p);
+        var ctsParent = tree.getCtsNode(p);
+        if (ctsParent == null) {
+          CTS.Log.Error("Node inserted into yet unmapped region of tree");
+        } else {
+          // Create the CTS tree for this region.
+          var ctsNode = ctsParent._onChildInserted(node);
+          //  Now run any rules.
+          ctsNode._processIncoming();
+        }
       }
+      evt.ctsHandled = true;
     }
   }
 
