@@ -4,6 +4,14 @@ CTS.Node.Html = function(node, tree, opts) {
   this.initializeNodeBase(tree, opts);
   this.kind = "HTML";
   this.value = this._createJqueryNode(node);
+  this.ctsId = Fn.uniqueId();
+
+  var currentAttr = this.value.attr('data-ctsId');
+  if ((typeof currentAttr != 'undefined') && (currentAttr != null)) {
+    CTS.Log.Warn("Warning: Creating Node.Html for element with ctsId");
+  }
+  this.value.attr('data-ctsId', this.ctsId);
+
 };
 
 // ### Instance Methods
@@ -49,6 +57,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    _subclass_realizeChildren: function() {
      this.children = CTS.Fn.map(this.value.children(), function(child) {
        var node = new CTS.Node.Html(child, this.tree, this.opts);
+       this.tree._nodeLookup[node.ctsId] = node;
        node.parentNode = this;
        return node;
      }, this);
@@ -58,6 +67,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     * Inserts this DOM node after the child at the specified index.
     */
    _subclass_insertChild: function(child, afterIndex) {
+     this.tree._nodeLookup[child.ctsId] = child;
      if (afterIndex == -1) {
        if (this.getChildren().length == 0) {
          this.value.append(child.value);
@@ -72,10 +82,39 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      }
    },
 
+   /*
+    *
+    * Args:
+    *   child: A jQuery node
+    *
+    * TODO(eob(): Implement some kind of locking here?
+    */
+   _onChildInserted: function(child) {
+     var ctsChild = new CTS.Node.Html(child, this.tree, this.opts);
+     ctsChild.parentNode = this;
+     // Need to get the right index of this child.
+
+     var idx = child.index();
+
+     this.children[this.children.length] = null;
+     for (var i = this.children.length - 1; i >= idx; i--) {
+       if (i == idx) {
+         this.children[i] = ctsChild;
+       } else {
+         this.children[i] = this.children[i - 1];
+       }
+     }
+
+     ctsChild.realizeChildren();
+
+     return ctsChild;
+   },
+
    /* 
     *  Removes this DOM node from the DOM tree it is in.
     */
    _subclass_destroy: function() {
+     delete this.tree._nodeLookup[this.ctsId];
      this.value.remove();
    },
 

@@ -78,15 +78,42 @@ CTS.Fn.extend(Forrest.prototype, {
    *
    * -------------------------------------------------------- */
 
-  addSpec: function(forrestSpec) {
+  addSpec: function(forrestSpec, realize) {
+    var self = this;
+    if (typeof realize == 'undefined') {
+      realize = false;
+    }
     this.forrestSpecs.push(forrestSpec);
     var i;
+    var initial = Q.defer();
+    var last = initial.promise;
+
     for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
-      this.addTreeSpec(forrestSpec.treeSpecs[i]);
+      self.addTreeSpec(forrestSpec.treeSpecs[i]);
+      if (realize) {
+        var next = Q.defer();
+        last.then(function() {
+          var promise = self.realizeTree(forrestSpec.treeSpecs[i]);
+          promise.then(function() {next.resolve()});
+        });
+        last = next.promise;
+      }
     }
     for (i = 0; i < forrestSpec.relationSpecs.length; i++) {
-      this.addRelationSpec(forrestSpec.relationSpecs[i]);
+      var spec = forrestSpec.relationSpecs[i];
+      self.addRelationSpec(spec);
+      if (realize) {
+        var next = Q.defer();
+        last.then(function() {
+          self.realizeRelation(spec);
+          next.resolve();
+        });
+        last = next.promise;
+      }
     }
+
+    initial.resolve();
+    return last;
   },
 
   addTreeSpec: function(treeSpec) {
@@ -253,7 +280,23 @@ CTS.Fn.extend(Forrest.prototype, {
    *
    * -------------------------------------------------------- */
   _onDomNodeInserted: function(tree, node, evt) {
-    console.log("DOM Node Inserted", node);
+    // If the tree is the main tree, we want to possibly run any CTS
+    var ctsNode = tree.getCtsNode(node);
+    if (ctsNode == null) {
+      // Get the parent
+      var p = CTS.$(CTS.$(node).parent());
+      var ctsParent = tree.getCtsNode(p);
+      if (ctsParent == null) {
+        CTS.Log.Error("Node inserted into yet unmapped region of tree");
+      } else {
+        // Create the CTS tree for this region.
+        var ctsNode = ctsParent._onChildInserted(node);
+
+        //  Now run any rules.
+        console.log("Processing Incoming");
+        ctsNode._processIncoming();
+      }
+    }
   }
 
 });

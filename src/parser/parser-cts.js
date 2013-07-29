@@ -1,7 +1,34 @@
 CTS.Parser.Cts = {
 
   parseInlineSpecs: function(str, node, intoForrest, realize) {
-    return null;
+    var deferred = Q.defer();
+    // First parse out the spec. The user should be using "this" to refer
+    // to the current node.
+    var spec = CTS.Parser.Cts.parseForrestSpec(str);
+    // We have to zip through here to find any instances of 'this' and replace
+    // it with the tree that we're working with.
+    if (typeof spec.relationSpecs != "undefined") {
+      for (var i = 0; i < spec.relationSpecs.length; i++) {
+        var rs = spec.relationSpecs[i];
+        var s1 = rs.selectionSpec1;
+        var s2 = rs.selectionSpec2;
+        console.log(rs);
+        if (s1.selectorString.trim() == "this") {
+          s1.inline = true;
+          s1.inlineObject = node;
+        }
+        if (s2.selectorString.trim() == "this") {
+          s2.inline = true;
+          s2.inlineObject = node;
+        }
+      }
+    }
+    intoForrest.addSpec(spec, realize).then(function() {
+      deferred.resolve(spec);
+    }, function() {
+      deferred.reject();
+    });
+    return deferred.promise;
   },
 
   parseForrestSpec: function(str) {

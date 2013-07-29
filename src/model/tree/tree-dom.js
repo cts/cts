@@ -2,7 +2,9 @@
 // -----------
 CTS.Tree.Html = function(forrest, node, spec) {
   CTS.Log.Info("DomTree::Constructor", [forrest, node]);
+  this._nodeLookup = {};
   this.root = new CTS.Node.Html(node, this);
+  this._nodeLookup[root.ctsId] = root;
   this.root.setProvenance(this);
   this.forrest = forrest;
   this.spec = spec;
@@ -33,6 +35,18 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
         console.log(this.root.value.html());
       }
       return results;
+    }
+  },
+
+  getCtsNode: function(jqNode) {
+    var ctsId = jqNode.attr('data-ctsId');
+    if ((ctsId == null) || (typeof ctsId == 'undefined')) {
+      return null;
+    } else if ((typeof this._nodeLookup[ctsId] == 'undefined') ||
+               (this._nodeLookup[ctsId] == null)) {
+      return null;
+    } else {
+      return this._nodeLookup[ctsId];
     }
   }
 

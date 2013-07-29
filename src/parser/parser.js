@@ -3,6 +3,7 @@ CTS.Parser = {
     var tup = CTS.Parser._typeAndBodyForInline(str);
     var kind = tup[0];
     var body = tup[1];
+    var spec = null;
     if (kind == 'json') {
       return CTS.Parser.Json.parseInlineSpecs(body, node, intoForrest, realize);
     } else if (kind == 'string') {

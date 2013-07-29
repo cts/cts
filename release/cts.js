@@ -2804,39 +2804,95 @@ CTS.Node.Base = {
   },
 
   getRelations: function() {
+    var deferred = Q.defer();
+    var self = this;
     if (! this.addedMyInlineRelationsToForrest) {
-      this.registerInlineRelationSpecs();
+      console.log("registering my relations");
+      this.registerInlineRelationSpecs().then(function() {
+        deferred.resolve(self.relations);
+      }, function() {
+        deferred.reject();
+      });
+    } else {
+      deferred.resolve(self.relations);
     }
-    return this.relations;
+    return deferred.promise;
   },
 
   registerInlineRelationSpecs: function() {
+    var deferred = Q.defer();
     if (this.addedMyInlineRelationsToForrest) {
       CTS.Log.Warn("Not registering inline relations: have already done so.");
+      deferred.resolve();
     } else {
       var specStr = this._subclass_getInlineRelationSpecString();
       this.addedMyInlineRelationsToForrest = true;
       if (specStr) {
         if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-          CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
+          var p = CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
+          p.then(function() {
+            deferred.resolve();
+          }, function() {
+            deferred.reject();
+          });
+
         } else {
           this.addedMyInlineRelationsToForrest = false;
           if (Fn.isUndefined(this.tree) || (this.tree === null)) {
             CTS.Log.Error("[Node] Could not add inline relns to null tree");
+            deferred.reject();
           } else if (Fn.isUndefined(this.tree.forrest) || (this.tree.forrest === null)) {
             CTS.Log.Error("[Node] Could not add inline relns to null forrest");
+            deferred.reject();
           }
         }
       }
     }
+    return deferred.promise;
   },
 
   getSubtreeRelations: function() {
-    return CTS.Fn.union(this.getRelations(), CTS.Fn.flatten(
-      CTS.Fn.map(this.getChildren(), function(kid) {
+    /*
+     * The following code returns an asynchronously computed version of this:
+     *
+     *  return CTS.Fn.union(this.getRelations(), CTS.Fn.flatten(
+     *    CTS.Fn.map(this.getChildren(), function(kid) {
+     *      return kid.getSubtreeRelations();
+     *    }))
+     *  );
+     */
+    var deferred = Q.defer();
+
+    this.getRelations().then(function(relations) {
+      var kidPromises = CTS.Fn.map(this.getChildren(), function(kid) {
         return kid.getSubtreeRelations();
-      }))
-    );
+      });
+      if (kidPromises.length == 0) {
+        deferred.resolve(relations);
+      } else {
+        Q.allSettled(kidPromises).then(function(results) {
+          var rejected = false
+          var kidRelations = [];
+          results.forEach(function(result) {
+            if (result.state == "fulfilled") {
+              kidRelations.push(result.value);
+            } else {
+              rejected = true;
+              CTS.Log.Error(result.reason);
+              deferred.reject();
+            }
+          });
+          if (!rejected) {
+            var allR = CTS.Fn.union(relations, CTS.Fn.flatten(kidRelations));
+            deferred.resolve(allR);
+          }
+        });
+      }
+    }, function() {
+      deferred.reject();
+    });
+
+    return deferred.promise;
   },
   
   insertChild: function(node, afterIndex, log) {
@@ -3006,19 +3062,27 @@ CTS.Node.Base = {
 
   _processIncoming: function() {
     // Do incoming nodes except graft
-    var r = this.getRelations();
-    this._processIncomingRelations(r, 'if-exist');
-    this._processIncomingRelations(r, 'if-nexist');
-    this._processIncomingRelations(r, 'is');
-    this._processIncomingRelations(r, 'are');
-
-    // Do children
-    for (var i = 0; i < this.children.length; i++) {
-      this.children[i]._processIncoming();
-    }
-
-    // Do graft
-    this._processIncomingRelations(r, 'graft', true);
+    var self = this;
+    this.getRelations().then(
+      function(r) {
+        console.log("Got my relations", r);
+        self._processIncomingRelations(r, 'if-exist');
+        self._processIncomingRelations(r, 'if-nexist');
+        self._processIncomingRelations(r, 'is');
+        self._processIncomingRelations(r, 'are');
+    
+        // Do children
+        for (var i = 0; i < this.children.length; i++) {
+          self.children[i]._processIncoming();
+        }
+    
+        // Do graft
+        self._processIncomingRelations(r, 'graft', true);
+      },
+      function() {
+        CTS.Log.Error("Couldn't get relations.");
+      }
+    );
   },
 
   _processIncomingRelations: function(relations, name, once) {
@@ -3244,6 +3308,14 @@ CTS.Node.Html = function(node, tree, opts) {
   this.initializeNodeBase(tree, opts);
   this.kind = "HTML";
   this.value = this._createJqueryNode(node);
+  this.ctsId = Fn.uniqueId();
+
+  var currentAttr = this.value.attr('data-ctsId');
+  if ((typeof currentAttr != 'undefined') && (currentAttr != null)) {
+    CTS.Log.Warn("Warning: Creating Node.Html for element with ctsId");
+  }
+  this.value.attr('data-ctsId', this.ctsId);
+
 };
 
 // ### Instance Methods
@@ -3289,6 +3361,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    _subclass_realizeChildren: function() {
      this.children = CTS.Fn.map(this.value.children(), function(child) {
        var node = new CTS.Node.Html(child, this.tree, this.opts);
+       this.tree._nodeLookup[node.ctsId] = node;
        node.parentNode = this;
        return node;
      }, this);
@@ -3298,6 +3371,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     * Inserts this DOM node after the child at the specified index.
     */
    _subclass_insertChild: function(child, afterIndex) {
+     this.tree._nodeLookup[child.ctsId] = child;
      if (afterIndex == -1) {
        if (this.getChildren().length == 0) {
          this.value.append(child.value);
@@ -3312,10 +3386,39 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      }
    },
 
+   /*
+    *
+    * Args:
+    *   child: A jQuery node
+    *
+    * TODO(eob(): Implement some kind of locking here?
+    */
+   _onChildInserted: function(child) {
+     var ctsChild = new CTS.Node.Html(child, this.tree, this.opts);
+     ctsChild.parentNode = this;
+     // Need to get the right index of this child.
+
+     var idx = child.index();
+
+     this.children[this.children.length] = null;
+     for (var i = this.children.length - 1; i >= idx; i--) {
+       if (i == idx) {
+         this.children[i] = ctsChild;
+       } else {
+         this.children[i] = this.children[i - 1];
+       }
+     }
+
+     ctsChild.realizeChildren();
+
+     return ctsChild;
+   },
+
    /* 
     *  Removes this DOM node from the DOM tree it is in.
     */
    _subclass_destroy: function() {
+     delete this.tree._nodeLookup[this.ctsId];
      this.value.remove();
    },
 
@@ -4043,7 +4146,9 @@ var TreeSpec = CTS.Tree.Spec = function(kind, name, url, loadedFrom) {
 // -----------
 CTS.Tree.Html = function(forrest, node, spec) {
   CTS.Log.Info("DomTree::Constructor", [forrest, node]);
+  this._nodeLookup = {};
   this.root = new CTS.Node.Html(node, this);
+  this._nodeLookup[root.ctsId] = root;
   this.root.setProvenance(this);
   this.forrest = forrest;
   this.spec = spec;
@@ -4074,6 +4179,18 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
         console.log(this.root.value.html());
       }
       return results;
+    }
+  },
+
+  getCtsNode: function(jqNode) {
+    var ctsId = jqNode.attr('data-ctsId');
+    if ((ctsId == null) || (typeof ctsId == 'undefined')) {
+      return null;
+    } else if ((typeof this._nodeLookup[ctsId] == 'undefined') ||
+               (this._nodeLookup[ctsId] == null)) {
+      return null;
+    } else {
+      return this._nodeLookup[ctsId];
     }
   }
 
@@ -4235,15 +4352,42 @@ CTS.Fn.extend(Forrest.prototype, {
    *
    * -------------------------------------------------------- */
 
-  addSpec: function(forrestSpec) {
+  addSpec: function(forrestSpec, realize) {
+    var self = this;
+    if (typeof realize == 'undefined') {
+      realize = false;
+    }
     this.forrestSpecs.push(forrestSpec);
     var i;
+    var initial = Q.defer();
+    var last = initial.promise;
+
     for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
-      this.addTreeSpec(forrestSpec.treeSpecs[i]);
+      self.addTreeSpec(forrestSpec.treeSpecs[i]);
+      if (realize) {
+        var next = Q.defer();
+        last.then(function() {
+          var promise = self.realizeTree(forrestSpec.treeSpecs[i]);
+          promise.then(function() {next.resolve()});
+        });
+        last = next.promise;
+      }
     }
     for (i = 0; i < forrestSpec.relationSpecs.length; i++) {
-      this.addRelationSpec(forrestSpec.relationSpecs[i]);
+      var spec = forrestSpec.relationSpecs[i];
+      self.addRelationSpec(spec);
+      if (realize) {
+        var next = Q.defer();
+        last.then(function() {
+          self.realizeRelation(spec);
+          next.resolve();
+        });
+        last = next.promise;
+      }
     }
+
+    initial.resolve();
+    return last;
   },
 
   addTreeSpec: function(treeSpec) {
@@ -4410,7 +4554,23 @@ CTS.Fn.extend(Forrest.prototype, {
    *
    * -------------------------------------------------------- */
   _onDomNodeInserted: function(tree, node, evt) {
-    console.log("DOM Node Inserted", node);
+    // If the tree is the main tree, we want to possibly run any CTS
+    var ctsNode = tree.getCtsNode(node);
+    if (ctsNode == null) {
+      // Get the parent
+      var p = CTS.$(CTS.$(node).parent());
+      var ctsParent = tree.getCtsNode(p);
+      if (ctsParent == null) {
+        CTS.Log.Error("Node inserted into yet unmapped region of tree");
+      } else {
+        // Create the CTS tree for this region.
+        var ctsNode = ctsParent._onChildInserted(node);
+
+        //  Now run any rules.
+        console.log("Processing Incoming");
+        ctsNode._processIncoming();
+      }
+    }
   }
 
 });
@@ -4590,6 +4750,7 @@ CTS.Parser = {
     var tup = CTS.Parser._typeAndBodyForInline(str);
     var kind = tup[0];
     var body = tup[1];
+    var spec = null;
     if (kind == 'json') {
       return CTS.Parser.Json.parseInlineSpecs(body, node, intoForrest, realize);
     } else if (kind == 'string') {
@@ -4785,7 +4946,34 @@ CTS.Parser.Json = {
 CTS.Parser.Cts = {
 
   parseInlineSpecs: function(str, node, intoForrest, realize) {
-    return null;
+    var deferred = Q.defer();
+    // First parse out the spec. The user should be using "this" to refer
+    // to the current node.
+    var spec = CTS.Parser.Cts.parseForrestSpec(str);
+    // We have to zip through here to find any instances of 'this' and replace
+    // it with the tree that we're working with.
+    if (typeof spec.relationSpecs != "undefined") {
+      for (var i = 0; i < spec.relationSpecs.length; i++) {
+        var rs = spec.relationSpecs[i];
+        var s1 = rs.selectionSpec1;
+        var s2 = rs.selectionSpec2;
+        console.log(rs);
+        if (s1.selectorString.trim() == "this") {
+          s1.inline = true;
+          s1.inlineObject = node;
+        }
+        if (s2.selectorString.trim() == "this") {
+          s2.inline = true;
+          s2.inlineObject = node;
+        }
+      }
+    }
+    intoForrest.addSpec(spec, realize).then(function() {
+      deferred.resolve(spec);
+    }, function() {
+      deferred.reject();
+    });
+    return deferred.promise;
   },
 
   parseForrestSpec: function(str) {
