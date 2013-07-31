@@ -97,6 +97,11 @@ CTS.Fn.extend(Engine.prototype, Events, {
       }
     }, this);
     return Q.all(promises);
+  },
+
+  // Stops all event listeners
+  shutdown: function() {
+    this.forrest.stopListening();
   }
 
 });

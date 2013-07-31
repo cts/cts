@@ -4349,6 +4349,20 @@ CTS.Fn.extend(Forrest.prototype, {
     );
   },
 
+  stopListening: function() {
+    for (var i = 0; i < this.insertionListeners.lenth; i++) {
+      tree.root.off("DOMNodeInserted", this.insertionListeners[i]);
+    }
+  },
+
+  // Removes all dependency specs from the root tree
+  removeDependencies: function() {
+    for (var i = 0; i < this.dependencySpecs.length; i++) {
+      var ds = this.dependencySpecs[i];
+      ds.unload();
+    }
+  },
+
   /*
    * Adding Specs
    *
@@ -4587,7 +4601,7 @@ CTS.Fn.extend(Forrest.prototype, {
         console.log("Parent is", p);
         var ctsParent = tree.getCtsNode(p);
         if (ctsParent == null) {
-          CTS.Log.Error("Node inserted into yet unmapped region of tree");
+          CTS.Log.Error("Node inserted into yet unmapped region of tree", p);
         } else {
           // Create the CTS tree for this region.
           var ctsNode = ctsParent._onChildInserted(node);
@@ -4769,8 +4783,30 @@ DependencySpec.prototype.load = function() {
   }
 };
 
+DependencySpec.prototype.unload = function() {
+  if (this.loaded) {
+    this.url = CTS.Utilities.fixRelativeUrl(this.url, this.loadedFrom);
+    if (this.kind == 'css') {
+      var links = document.getElementsByTagName('link');
+      for (var i = 0; i < links.length; i++) {
+        var link = links[i];
+        if (typeof link.attributes != "undefined") {
+          if (typeof link.attributes["href"] != "undefined") {
+            if (link.attributes["href"].value == this.url) {
+              link.parentNode.removeChild(link);
+              this.loaded = false;
+            }
+          }
+        }
+      }
 
-
+    } else if (this.kind == 'js') {
+      // Can't unload a JS link.
+    }
+  } else {
+    CTS.Log.Warn("Tried to unload DependencySpec that wasn't loaded", this);
+  }
+};
 CTS.Parser = {
   parseInlineSpecs: function(str, node, intoForrest, realize) {
     var tup = CTS.Parser._typeAndBodyForInline(str);
@@ -5621,6 +5657,11 @@ CTS.Fn.extend(Engine.prototype, Events, {
       }
     }, this);
     return Q.all(promises);
+  },
+
+  // Stops all event listeners
+  shutdown: function() {
+    this.forrest.stopListening();
   }
 
 });

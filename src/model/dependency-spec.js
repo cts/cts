@@ -28,4 +28,27 @@ DependencySpec.prototype.load = function() {
   }
 };
 
+DependencySpec.prototype.unload = function() {
+  if (this.loaded) {
+    this.url = CTS.Utilities.fixRelativeUrl(this.url, this.loadedFrom);
+    if (this.kind == 'css') {
+      var links = document.getElementsByTagName('link');
+      for (var i = 0; i < links.length; i++) {
+        var link = links[i];
+        if (typeof link.attributes != "undefined") {
+          if (typeof link.attributes["href"] != "undefined") {
+            if (link.attributes["href"].value == this.url) {
+              link.parentNode.removeChild(link);
+              this.loaded = false;
+            }
+          }
+        }
+      }
 
+    } else if (this.kind == 'js') {
+      // Can't unload a JS link.
+    }
+  } else {
+    CTS.Log.Warn("Tried to unload DependencySpec that wasn't loaded", this);
+  }
+};

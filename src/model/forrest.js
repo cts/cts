@@ -68,6 +68,20 @@ CTS.Fn.extend(Forrest.prototype, {
     );
   },
 
+  stopListening: function() {
+    for (var i = 0; i < this.insertionListeners.lenth; i++) {
+      tree.root.off("DOMNodeInserted", this.insertionListeners[i]);
+    }
+  },
+
+  // Removes all dependency specs from the root tree
+  removeDependencies: function() {
+    for (var i = 0; i < this.dependencySpecs.length; i++) {
+      var ds = this.dependencySpecs[i];
+      ds.unload();
+    }
+  },
+
   /*
    * Adding Specs
    *
@@ -306,7 +320,7 @@ CTS.Fn.extend(Forrest.prototype, {
         console.log("Parent is", p);
         var ctsParent = tree.getCtsNode(p);
         if (ctsParent == null) {
-          CTS.Log.Error("Node inserted into yet unmapped region of tree");
+          CTS.Log.Error("Node inserted into yet unmapped region of tree", p);
         } else {
           // Create the CTS tree for this region.
           var ctsNode = ctsParent._onChildInserted(node);
