@@ -4357,9 +4357,11 @@ CTS.Fn.extend(Forrest.prototype, {
 
   // Removes all dependency specs from the root tree
   removeDependencies: function() {
-    for (var i = 0; i < this.dependencySpecs.length; i++) {
-      var ds = this.dependencySpecs[i];
-      ds.unload();
+    for (var j = 0; j < this.forrestSpecs.length; j++) {
+      for (var i = 0; i < this.forrestSpecs[j].dependencySpecs.length; i++) {
+        var ds = this.forrestSpecs[j].dependencySpecs[i];
+        ds.unload();
+      }
     }
   },
 
