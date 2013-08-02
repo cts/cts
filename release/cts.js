@@ -2583,6 +2583,39 @@ Events.unbind = Events.off;
 
 
 var Utilities = CTS.Utilities = {
+
+  getUrlBase: function(url) {
+    var temp = document.createElement('a');
+    temp.href = url;
+
+    var base = temp.protocol + "//" + temp.hostname;
+    if (temp.port) {
+      base += ":" + temp.port;
+    }
+    return base;
+  },
+
+  getUrlBaseAndPath: function(url) {
+    var temp = document.createElement('a');
+    temp.href = url;
+
+    var base = temp.protocol + "//" + temp.hostname;
+    if (temp.port) {
+      base += ":" + temp.port;
+    }
+    var parts = temp.pathname.split("/");
+    if (parts.length > 0) {
+      parts.pop(); // The filename
+    }
+    var newPath = parts.join("/");
+    if (newPath.length == 0) {
+      newPath = "/";
+    }
+    base += newPath;
+    return base;
+  },
+
+
   getUrlParameter: function(param, url) {
     if (typeof url == 'undefined') {
       url = window.location.search;
@@ -4093,6 +4126,7 @@ CTS.Tree.Base = {
   }
 };
 
+
 /*
  * Returns a promise
  */
@@ -4120,6 +4154,41 @@ CTS.Tree.Create = function(spec, forrest) {
             return CTS.$(n);
           });
           div.append(jqNodes);
+          
+          if (spec.fixLinks) {
+            var base = CTS.Utilities.getUrlBase(spec.url);
+            var basePath = CTS.Utilities.getUrlBaseAndPath(spec.url);
+            var pat = /^https?:\/\//i;
+            var fixElemAttr = function(elem, attr) {
+              var a = elem.attr(attr);
+              if ((typeof a != 'undefined') && 
+                  (a !== null) &&
+                  (a.length > 0)) {
+                if (! pat.test(a)) {
+                  if (a[0] == "/") {
+                    a = base + a;
+                  } else {
+                    a = basePath + "/" + a;
+                  }
+                  elem.attr(attr, a); 
+                }
+              }
+            };
+            var fixElem = function(elem) {
+              if (elem.is('img')) {
+                fixElemAttr(elem, 'src');
+              } else if (elem.is('a')) {
+                fixElemAttr(elem, 'href');
+              } else {
+                console.log("NOT FIXING THIS", elem);
+              }
+              Fn.each(elem.children(), function(c) {
+                fixElem(CTS.$(c));
+              }, this);
+            }
+            fixElem(div);
+          }
+
           var tree = new CTS.Tree.Html(forrest, div, spec);
           deferred.resolve(tree);
         } else {
@@ -4139,10 +4208,12 @@ CTS.Tree.Create = function(spec, forrest) {
   return deferred.promise;
 };
 
+
 var TreeSpec = CTS.Tree.Spec = function(kind, name, url, loadedFrom) {
   this.kind = kind;
   this.name = name;
   this.url = url;
+  this.fixLinks = true;
   this.loadedFrom = null;
   if (typeof loadedFrom != 'undefined') {
     this.loadedFrom = loadedFrom;

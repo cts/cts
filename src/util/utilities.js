@@ -1,4 +1,37 @@
 var Utilities = CTS.Utilities = {
+
+  getUrlBase: function(url) {
+    var temp = document.createElement('a');
+    temp.href = url;
+
+    var base = temp.protocol + "//" + temp.hostname;
+    if (temp.port) {
+      base += ":" + temp.port;
+    }
+    return base;
+  },
+
+  getUrlBaseAndPath: function(url) {
+    var temp = document.createElement('a');
+    temp.href = url;
+
+    var base = temp.protocol + "//" + temp.hostname;
+    if (temp.port) {
+      base += ":" + temp.port;
+    }
+    var parts = temp.pathname.split("/");
+    if (parts.length > 0) {
+      parts.pop(); // The filename
+    }
+    var newPath = parts.join("/");
+    if (newPath.length == 0) {
+      newPath = "/";
+    }
+    base += newPath;
+    return base;
+  },
+
+
   getUrlParameter: function(param, url) {
     if (typeof url == 'undefined') {
       url = window.location.search;
