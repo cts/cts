@@ -65,7 +65,7 @@ CTS.Tree.Create = function(spec, forrest) {
               } else if (elem.is('a')) {
                 fixElemAttr(elem, 'href');
               } else {
-                console.log("NOT FIXING THIS", elem);
+                // Do nothing
               }
               Fn.each(elem.children(), function(c) {
                 fixElem(CTS.$(c));

@@ -8,6 +8,22 @@
 // different types of trees (JSON, HTML, etc) are concealed at this level.
 CTS.Node = {};
 
+CTS.Node.Factory = {
+  Html: function(node, tree, opts) {
+    var node = new CTS.Node.Html(node, tree, opts);
+    var deferred = Q.defer();
+    node.registerInlineRelationSpecs().then(
+      function() {
+        deferred.resolve(node);
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+    return deferred.promise;
+  }
+}
+
 CTS.Node.Base = {
 
   initializeNodeBase: function(tree, opts) {
@@ -18,8 +34,7 @@ CTS.Node.Base = {
     this.parentNode = null;
     this.relations = [];
     this.value = null;
-    this.addedMyInlineRelationsToForrest = false;
-    //this.initializeStateMachine();
+    this.inlineRelationSpecs = []; // TODO(eob): put a realized field to check
   },
 
   getChildren: function() {
@@ -38,19 +53,16 @@ CTS.Node.Base = {
   },
 
   getRelations: function() {
-    var deferred = Q.defer();
-    var self = this;
-    if (! this.addedMyInlineRelationsToForrest) {
-      console.log("registering my relations");
-      this.registerInlineRelationSpecs().then(function() {
-        deferred.resolve(self.relations);
-      }, function(reason) {
-        deferred.reject(reason);
-      });
-    } else {
-      deferred.resolve(self.relations);
+    if (! this.checkedForInlineRealization) {
+      for (var i = 0; i < this.inlineRelationSpecs.length; i++) {
+        var spec = this.inlineRelationSpecs[i];
+        if (! spec.realized) {
+          spec.realize();
+        }
+      }
+      this.checkedForInlineRealization = true;
     }
-    return deferred.promise;
+    return this.relations;
   },
 
   registerInlineRelationSpecs: function() {
@@ -59,8 +71,8 @@ CTS.Node.Base = {
       CTS.Log.Warn("Not registering inline relations: have already done so.");
       deferred.resolve();
     } else {
-      var specStr = this._subclass_getInlineRelationSpecString();
       this.addedMyInlineRelationsToForrest = true;
+      var specStr = this._subclass_getInlineRelationSpecString();
       if (specStr) {
         if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
           var p = CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
@@ -69,7 +81,6 @@ CTS.Node.Base = {
           }, function(reason) {
             deferred.reject(reason);
           });
-
         } else {
           this.addedMyInlineRelationsToForrest = false;
           if (Fn.isUndefined(this.tree) || (this.tree === null)) {
@@ -80,22 +91,22 @@ CTS.Node.Base = {
             deferred.reject("Could not add inline relations to null forrest");
           }
         }
+      } else {
+        // There was no inline spec string
+        deferred.resolve();
       }
     }
     return deferred.promise;
   },
 
   getSubtreeRelations: function() {
+    return CTS.Fn.union(this.getRelations(), CTS.Fn.flatten(
+      CTS.Fn.map(this.getChildren(), function(kid) {
+        return kid.getSubtreeRelations();
+      }))
+    );
     /*
-     * The following code returns an asynchronously computed version of this:
-     *
-     *  return CTS.Fn.union(this.getRelations(), CTS.Fn.flatten(
-     *    CTS.Fn.map(this.getChildren(), function(kid) {
-     *      return kid.getSubtreeRelations();
-     *    }))
-     *  );
-     */
-    var deferred = Q.defer();
+       var deferred = Q.defer();
 
     this.getRelations().then(function(relations) {
       var kidPromises = CTS.Fn.map(this.getChildren(), function(kid) {
@@ -127,6 +138,7 @@ CTS.Node.Base = {
     });
 
     return deferred.promise;
+    */
   },
   
   insertChild: function(node, afterIndex, log) {
@@ -297,25 +309,18 @@ CTS.Node.Base = {
   _processIncoming: function() {
     // Do incoming nodes except graft
     var self = this;
-    this.getRelations().then(
-      function(r) {
-        console.log("Got my relations", r);
-        self._processIncomingRelations(r, 'if-exist');
-        self._processIncomingRelations(r, 'if-nexist');
-        self._processIncomingRelations(r, 'is');
-        self._processIncomingRelations(r, 'are');
+    var r = this.getRelations();
+    self._processIncomingRelations(r, 'if-exist');
+    self._processIncomingRelations(r, 'if-nexist');
+    self._processIncomingRelations(r, 'is');
+    self._processIncomingRelations(r, 'are');
     
-        for (var i = 0; i < self.children.length; i++) {
-          self.children[i]._processIncoming();
-        }
+    for (var i = 0; i < self.children.length; i++) {
+      self.children[i]._processIncoming();
+    }
     
-        // Do graft
-        self._processIncomingRelations(r, 'graft', true);
-      },
-      function() {
-        CTS.Log.Error("Couldn't get relations.");
-      }
-    );
+    // Do graft
+    self._processIncomingRelations(r, 'graft', true);
   },
 
   _processIncomingRelations: function(relations, name, once) {

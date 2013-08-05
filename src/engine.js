@@ -9,7 +9,6 @@ var Engine = CTS.Engine = function(opts, args) {
 
   // The main tree.
   this.forrest = null;
-
   this.initialize.apply(this, args);
 };
 
@@ -29,7 +28,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
    */
   render: function(opts) {
     var pt = this.forrest.getPrimaryTree();
-    console.log("rendering primary tree", pt);
+    CTS.Log.Info("CTS::Engine::render called on Primary Tree", pt);
     var options = CTS.Fn.extend({}, opts);
     pt.root._processIncoming();
     //pt.render(options);
@@ -70,8 +69,8 @@ CTS.Fn.extend(Engine.prototype, Events, {
     var promises = [];
     var self = this;
     Fn.each(Utilities.getTreesheetLinks(), function(block) {
+      var deferred = Q.defer();
       if (block.type == 'link') {
-        var deferred = Q.defer();
         CTS.Utilities.fetchString(block).then(
           function(content) { 
             var spec = CTS.Parser.parseForrestSpec(content, block.format);
@@ -82,19 +81,32 @@ CTS.Fn.extend(Engine.prototype, Events, {
             for (i = 0; i < spec.dependencySpecs.length; i++) {
               spec.dependencySpecs[i].loadedFrom = block.url;
             }
-            self.forrest.addSpec(spec);
-            deferred.resolve(); 
+            self.forrest.addSpec(spec).then(
+              function() {
+                deferred.resolve(); 
+              },
+              function(reason) {
+                deferred.reject(reason);
+              }
+            );
           },
           function(reason) {
             CTS.Log.Error("Couldn't fetch string.");
             deferred.reject(reason);
           }
         );
-        promises.push(deferred.promise);
       } else if (block.type == 'block') {
         var spec = CTS.Parser.parseForrestSpec(block.content, block.format);
-        self.forrest.addSpec(spec);
+        self.forrest.addSpec(spec).then(
+          function() {
+            deferred.resolve();
+          },
+          function(reason) {
+            deferred.reject(reason);
+          }
+        );
       }
+      promises.push(deferred.promise);
     }, this);
     return Q.all(promises);
   },

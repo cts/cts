@@ -1,6 +1,6 @@
 CTS.Parser.Cts = {
 
-  parseInlineSpecs: function(str, node, intoForrest, realize) {
+  parseInlineSpecs: function(str, node, intoForrest) {
     var deferred = Q.defer();
     // First parse out the spec. The user should be using "this" to refer
     // to the current node.
@@ -12,7 +12,6 @@ CTS.Parser.Cts = {
         var rs = spec.relationSpecs[i];
         var s1 = rs.selectionSpec1;
         var s2 = rs.selectionSpec2;
-        console.log(rs);
         if (s1.selectorString.trim() == "this") {
           s1.inline = true;
           s1.inlineObject = node;
@@ -23,7 +22,7 @@ CTS.Parser.Cts = {
         }
       }
     }
-    intoForrest.addSpec(spec, realize).then(function() {
+    intoForrest.addSpec(spec).then(function() {
       deferred.resolve(spec);
     }, function() {
       deferred.reject();
@@ -39,7 +38,6 @@ CTS.Parser.Cts = {
       CTS.Log.Error("Parser error: couldn't parse string", str, e);
       return null;
     }
-    console.log(json);
     json.trees = [];
     json.css = [];
     json.js = [];

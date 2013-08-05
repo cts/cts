@@ -1,24 +1,15 @@
 CTS.Parser.Json = {
 
-  parseInlineSpecs: function(json, node, intoForrest, realize) {
+  parseInlineSpecs: function(json, node, intoForrest) {
     if (typeof json == 'string') {
       json = JSON.parse(json);
     }
-    console.log("parse inline specs for", node);
 
     // Now we build a proper spec document around it.
     var relations = intoForrest.incorporateInlineJson(json, node);
-    
-    if (realize) {
-      for (var i = 0; i < relations.length; i++) {
-        console.log("realize", relations[i]);
-        intoForrest.realizeRelationSpec(relations[i]);
-      }
-    }
   },
 
   parseForrestSpec: function(json) {
-    console.log(json);
     if (typeof json == 'string') {
       json = JSON.parse(json);
     }
@@ -63,7 +54,6 @@ CTS.Parser.Json = {
   },
 
   parseRelationSpec: function(json, selectorSpec1, selectorSpec2) {
-    console.log("j2r", json);
     var ruleName = null;
     var ruleProps = {};
     if (CTS.Fn.isArray(json)) {
@@ -84,7 +74,6 @@ CTS.Parser.Json = {
       ruleName = json;
     }
     var r = new CTS.RelationSpec(selectorSpec1, selectorSpec2, ruleName, ruleProps);
-    console.log("parsed new relation spec", r);
     return r;
   },
 
@@ -97,7 +86,6 @@ CTS.Parser.Json = {
   },
 
   parseSelectorSpec: function(json, inlineNode) {
-    console.log("json to selec", json);
     var treeName = null;
     var selectorString = null;
     var args = {};
@@ -135,7 +123,6 @@ CTS.Parser.Json = {
 
     var s = new CTS.SelectionSpec(treeName, selectorString, args);
     if ((json === null) && (inlineNode)) {
-      console.log("setting inline", inlineNode);
       s.inline = true;
       s.inlineObject = inlineNode;
     }

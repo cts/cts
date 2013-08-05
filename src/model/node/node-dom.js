@@ -58,12 +58,45 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     * Realizes all children.
     */
    _subclass_realizeChildren: function() {
-     this.children = CTS.Fn.map(this.value.children(), function(child) {
+     // promise
+     var deferred = Q.defer();
+     var last = deferred.promise;
+
+     var promises = [];
+     this.children = [];
+     Fn.each(this.value.children(), function(child) {
+       var promise = Q.defer();
+
+       CTS.Node.Factory.Html(child, this.tree, this.opts).then(
+         function(node) {
+
+
+ // NOTE: Neeed to do a linear chain! The kids have to be realized in proper order!
+
+
+
+           self.children.push(node);
+         },
+         function(reason) {
+           promise.reject(reason);
+         }
+       );
+
+
+       promises.push(promise.promise);
+
        var node = new CTS.Node.Html(child, this.tree, this.opts);
+
+     }, this);
+
+
+     this.children = CTS.Fn.map(this.value.children(), function(child) {
        this.tree._nodeLookup[node.ctsId] = node;
        node.parentNode = this;
        return node;
      }, this);
+
+     return deferred.promise;
    },
 
    /* 
@@ -130,6 +163,10 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
 
    _subclass_beginClone: function() {
      var c = this.value.clone();
+
+     // NOTE: beginClone is allowed to directly create a Node
+     // without going through the factory because we already can be
+     // sure that all this node's trees have been realized
      var d = new CTS.Node.Html(c, this.tree, this.opts);
      d.realizeChildren();
      return d;
@@ -183,7 +220,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
         n = null;
       }
     } else if (typeof node == 'string') {
-      //console.log("SIBLINGS E", node);
       n = $(node);
     } else {
       n = null;

@@ -24,7 +24,9 @@ CTS.Relation.Graft = function(node1, node2, spec) {
 
 CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
   execute: function(toward) {
+
     var opp = this.opposite(toward);
+    CTS.Log.Info("Graft from", opp, "to", toward);
     if (opp != null) {
 
       //console.log("GRAFT THE FOLLOWING");
@@ -37,7 +39,7 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
         var child = opp.children[i].clone();
         // TODO(eob): This is a subtle bug. It means that you can't graft-map anything outside
         // the toward node that is being grafted.
-        child.pruneRelations(toward);
+        child.pruneRelations(toward)
         child._processIncoming();
         replacements.push(child);
       }

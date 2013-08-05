@@ -2840,7 +2840,6 @@ CTS.Node.Base = {
     var deferred = Q.defer();
     var self = this;
     if (! this.addedMyInlineRelationsToForrest) {
-      console.log("registering my relations");
       this.registerInlineRelationSpecs().then(function() {
         deferred.resolve(self.relations);
       }, function(reason) {
@@ -2868,7 +2867,6 @@ CTS.Node.Base = {
           }, function(reason) {
             deferred.reject(reason);
           });
-
         } else {
           this.addedMyInlineRelationsToForrest = false;
           if (Fn.isUndefined(this.tree) || (this.tree === null)) {
@@ -2879,6 +2877,9 @@ CTS.Node.Base = {
             deferred.reject("Could not add inline relations to null forrest");
           }
         }
+      } else {
+        // There was no inline spec string
+        deferred.resolve();
       }
     }
     return deferred.promise;
@@ -3098,7 +3099,6 @@ CTS.Node.Base = {
     var self = this;
     this.getRelations().then(
       function(r) {
-        console.log("Got my relations", r);
         self._processIncomingRelations(r, 'if-exist');
         self._processIncomingRelations(r, 'if-nexist');
         self._processIncomingRelations(r, 'is');
@@ -4073,7 +4073,9 @@ CTS.Relation.Graft = function(node1, node2, spec) {
 
 CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
   execute: function(toward) {
+
     var opp = this.opposite(toward);
+    CTS.Log.Info("Graft from", opp, "to", toward);
     if (opp != null) {
 
       //console.log("GRAFT THE FOLLOWING");
@@ -4180,7 +4182,7 @@ CTS.Tree.Create = function(spec, forrest) {
               } else if (elem.is('a')) {
                 fixElemAttr(elem, 'href');
               } else {
-                console.log("NOT FIXING THIS", elem);
+                // Do nothing
               }
               Fn.each(elem.children(), function(c) {
                 fixElem(CTS.$(c));
@@ -4245,17 +4247,10 @@ CTS.Tree.Html = function(forrest, node, spec) {
 // ----------------
 CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
   nodesForSelectionSpec: function(spec) {
-    console.log("nodes for: " + spec.selectorString);
     if (spec.inline) {
-      console.log("Nodes for inline spec", this.inlineObject);
       return [spec.inlineObject];
     } else {
-      console.log("nodes for selector string spec");
       var results = this.root.find(spec.selectorString);
-      if (results.length == 0) {
-        console.log(this.name, spec.selectorString);
-        console.log(this.root.value.html());
-      }
       return results;
     }
   },
@@ -4461,7 +4456,6 @@ CTS.Fn.extend(Forrest.prototype, {
         var treeSpec = forrestSpec.treeSpecs[i];
         self.addTreeSpec(treeSpec);
         if (realize) {
-          console.log("Realizing Tree", treeSpec);
           var next = Q.defer();
           last.then(function() {
             var promise = self.realizeTree(treeSpec);
@@ -4530,11 +4524,9 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   realizeTree: function(treeSpec) {
-    console.log("In realize", treeSpec);
     var deferred = Q.defer();
     var self = this;
     if ((treeSpec.url !== null) && (treeSpec.url.indexOf("alias(") == 0) && (treeSpec.url[treeSpec.url.length - 1] == ")")) {
-      console.log("Alias");
       var alias = treeSpec.url.substring(6, treeSpec.url.length - 1);
       if (typeof self.trees[alias] != 'undefined') {
         self.trees[treeSpec.name] = self.trees[alias];
@@ -4543,9 +4535,7 @@ CTS.Fn.extend(Forrest.prototype, {
         deferred.reject("Trying to alias undefined tree");
       }
     } else if (typeof treeSpec.url == "string") {
-      console.log(treeSpec.url);
       treeSpec.url = CTS.Utilities.fixRelativeUrl(treeSpec.url, treeSpec.loadedFrom);
-      console.log(treeSpec.url);
       CTS.Tree.Create(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;
@@ -4556,7 +4546,6 @@ CTS.Fn.extend(Forrest.prototype, {
         }
       );
     } else {
-      console.log("last else");
       // it's a jquery node
       CTS.Tree.Create(treeSpec, this).then(
         function(tree) {
@@ -4636,7 +4625,6 @@ CTS.Fn.extend(Forrest.prototype, {
         // Realize a relation between i and j. Creating the relation adds
         // a pointer back to the nodes.
         var relation = new CTS.Relation.CreateFromSpec(nodes1[i], nodes2[j], spec);
-        console.log("Did a relation between", relation, relation.name, nodes1[i], nodes2[j]);
         // Add the relation to the forrest
         this.relations.push(relation);
       }
@@ -4671,7 +4659,6 @@ CTS.Fn.extend(Forrest.prototype, {
       if (ctsNode == null) {
         // Get the parent
         var p = CTS.$(CTS.$(node).parent());
-        console.log("Parent is", p);
         var ctsParent = tree.getCtsNode(p);
         if (ctsParent == null) {
           CTS.Log.Error("Node inserted into yet unmapped region of tree", p);
@@ -4938,21 +4925,18 @@ CTS.Parser.Json = {
     if (typeof json == 'string') {
       json = JSON.parse(json);
     }
-    console.log("parse inline specs for", node);
 
     // Now we build a proper spec document around it.
     var relations = intoForrest.incorporateInlineJson(json, node);
     
     if (realize) {
       for (var i = 0; i < relations.length; i++) {
-        console.log("realize", relations[i]);
         intoForrest.realizeRelationSpec(relations[i]);
       }
     }
   },
 
   parseForrestSpec: function(json) {
-    console.log(json);
     if (typeof json == 'string') {
       json = JSON.parse(json);
     }
@@ -4997,7 +4981,6 @@ CTS.Parser.Json = {
   },
 
   parseRelationSpec: function(json, selectorSpec1, selectorSpec2) {
-    console.log("j2r", json);
     var ruleName = null;
     var ruleProps = {};
     if (CTS.Fn.isArray(json)) {
@@ -5018,7 +5001,6 @@ CTS.Parser.Json = {
       ruleName = json;
     }
     var r = new CTS.RelationSpec(selectorSpec1, selectorSpec2, ruleName, ruleProps);
-    console.log("parsed new relation spec", r);
     return r;
   },
 
@@ -5031,7 +5013,6 @@ CTS.Parser.Json = {
   },
 
   parseSelectorSpec: function(json, inlineNode) {
-    console.log("json to selec", json);
     var treeName = null;
     var selectorString = null;
     var args = {};
@@ -5069,7 +5050,6 @@ CTS.Parser.Json = {
 
     var s = new CTS.SelectionSpec(treeName, selectorString, args);
     if ((json === null) && (inlineNode)) {
-      console.log("setting inline", inlineNode);
       s.inline = true;
       s.inlineObject = inlineNode;
     }
@@ -5092,7 +5072,6 @@ CTS.Parser.Cts = {
         var rs = spec.relationSpecs[i];
         var s1 = rs.selectionSpec1;
         var s2 = rs.selectionSpec2;
-        console.log(rs);
         if (s1.selectorString.trim() == "this") {
           s1.inline = true;
           s1.inlineObject = node;
@@ -5119,7 +5098,6 @@ CTS.Parser.Cts = {
       CTS.Log.Error("Parser error: couldn't parse string", str, e);
       return null;
     }
-    console.log(json);
     json.trees = [];
     json.css = [];
     json.js = [];
@@ -5162,7 +5140,6 @@ CTS.Parser.CtsImpl = {
         i++;
       } else if (c == "@") {
         tup = CTS.Parser.CtsImpl.AT(str, i+1);
-        console.log(tup);
         i = tup[0];
         ats.push(tup[1]);
       } else {
@@ -5205,10 +5182,6 @@ CTS.Parser.CtsImpl = {
     if (inComment) {
       inQuestion = inQuestion.substring(0, commentOpen);
     }
-    if (inQuestion != str) {
-      console.log("BEFORE", str);
-      console.log("AFTER", inQuestion);
-    }
     return inQuestion;
   },
 
@@ -5227,7 +5200,6 @@ CTS.Parser.CtsImpl = {
 
   RELATION: function(str, i) {
     var tup = CTS.Parser.CtsImpl.SELECTOR(str, i, false);
-    console.log("RS1", tup);
     i = tup[0];
     var s1 = tup[1];
 
@@ -5235,7 +5207,6 @@ CTS.Parser.CtsImpl = {
     i = tup[0];
     var r = tup[1][0];
     var kv = tup[1][1];
-    console.log("KV SSSSSTILL", JSON.stringify(kv));
 
     var tup = CTS.Parser.CtsImpl.SELECTOR(str, i, true);
     i = tup[0];
@@ -5245,7 +5216,6 @@ CTS.Parser.CtsImpl = {
   },
 
   SELECTOR: function(str, i, second) {
-    console.log("Selector ", second ? "two" : "one", str.substring(i));
     var spaceLast = false;
     var spaceThis = false;
     var bracket = 0;
@@ -5284,7 +5254,6 @@ CTS.Parser.CtsImpl = {
   },
 
   KV: function(str, i) {
-    console.log("KV", str.substring(i));
     var ret = {};
     while ((i < str.length) && (str[i] != '}')) {
       var t1 = CTS.Parser.CtsImpl.KEY(str, i);
@@ -5293,12 +5262,10 @@ CTS.Parser.CtsImpl = {
       i = t2[0];
       ret[t1[1]] = t2[1];
     }
-    console.log("KV RES", JSON.stringify(ret), str.substring(i+1));
     return [i+1, ret];
   },
 
   KEY: function(str, i) {
-    console.log("KEY", str);
     var start = i;
     while ((i < str.length) && (str[i] != ':')) {
       i++;
@@ -5307,7 +5274,6 @@ CTS.Parser.CtsImpl = {
   },
 
   VALUE: function(str, i) {
-    console.log("VAL", str);
     var start = i;
     while ((i < str.length) && (str[i] != ",") && (str[i] != "}")) {
       i++;
@@ -5321,7 +5287,6 @@ CTS.Parser.CtsImpl = {
   },
 
   RELATOR: function(str, i) {
-    console.log("relator ", str.substring(i));
     var kv = {};
     var start = i;
     var cont = true;
@@ -5662,7 +5627,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
    */
   render: function(opts) {
     var pt = this.forrest.getPrimaryTree();
-    console.log("rendering primary tree", pt);
+    CTS.Log.Info("CTS::Engine::render called on Primary Tree", pt);
     var options = CTS.Fn.extend({}, opts);
     pt.root._processIncoming();
     //pt.render(options);

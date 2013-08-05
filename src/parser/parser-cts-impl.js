@@ -14,7 +14,6 @@ CTS.Parser.CtsImpl = {
         i++;
       } else if (c == "@") {
         tup = CTS.Parser.CtsImpl.AT(str, i+1);
-        console.log(tup);
         i = tup[0];
         ats.push(tup[1]);
       } else {
@@ -57,10 +56,6 @@ CTS.Parser.CtsImpl = {
     if (inComment) {
       inQuestion = inQuestion.substring(0, commentOpen);
     }
-    if (inQuestion != str) {
-      console.log("BEFORE", str);
-      console.log("AFTER", inQuestion);
-    }
     return inQuestion;
   },
 
@@ -79,7 +74,6 @@ CTS.Parser.CtsImpl = {
 
   RELATION: function(str, i) {
     var tup = CTS.Parser.CtsImpl.SELECTOR(str, i, false);
-    console.log("RS1", tup);
     i = tup[0];
     var s1 = tup[1];
 
@@ -87,7 +81,6 @@ CTS.Parser.CtsImpl = {
     i = tup[0];
     var r = tup[1][0];
     var kv = tup[1][1];
-    console.log("KV SSSSSTILL", JSON.stringify(kv));
 
     var tup = CTS.Parser.CtsImpl.SELECTOR(str, i, true);
     i = tup[0];
@@ -97,7 +90,6 @@ CTS.Parser.CtsImpl = {
   },
 
   SELECTOR: function(str, i, second) {
-    console.log("Selector ", second ? "two" : "one", str.substring(i));
     var spaceLast = false;
     var spaceThis = false;
     var bracket = 0;
@@ -136,7 +128,6 @@ CTS.Parser.CtsImpl = {
   },
 
   KV: function(str, i) {
-    console.log("KV", str.substring(i));
     var ret = {};
     while ((i < str.length) && (str[i] != '}')) {
       var t1 = CTS.Parser.CtsImpl.KEY(str, i);
@@ -145,12 +136,10 @@ CTS.Parser.CtsImpl = {
       i = t2[0];
       ret[t1[1]] = t2[1];
     }
-    console.log("KV RES", JSON.stringify(ret), str.substring(i+1));
     return [i+1, ret];
   },
 
   KEY: function(str, i) {
-    console.log("KEY", str);
     var start = i;
     while ((i < str.length) && (str[i] != ':')) {
       i++;
@@ -159,7 +148,6 @@ CTS.Parser.CtsImpl = {
   },
 
   VALUE: function(str, i) {
-    console.log("VAL", str);
     var start = i;
     while ((i < str.length) && (str[i] != ",") && (str[i] != "}")) {
       i++;
@@ -173,7 +161,6 @@ CTS.Parser.CtsImpl = {
   },
 
   RELATOR: function(str, i) {
-    console.log("relator ", str.substring(i));
     var kv = {};
     var start = i;
     var cont = true;

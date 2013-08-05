@@ -3,7 +3,7 @@
 CTS.Tree.Html = function(forrest, node, spec) {
   CTS.Log.Info("DomTree::Constructor", [forrest, node]);
   this._nodeLookup = {};
-  this.root = new CTS.Node.Html(node, this);
+  this.root = node;
   this._nodeLookup[root.ctsId] = root;
   this.root.setProvenance(this);
   this.forrest = forrest;
@@ -23,17 +23,10 @@ CTS.Tree.Html = function(forrest, node, spec) {
 // ----------------
 CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
   nodesForSelectionSpec: function(spec) {
-    console.log("nodes for: " + spec.selectorString);
     if (spec.inline) {
-      console.log("Nodes for inline spec", this.inlineObject);
       return [spec.inlineObject];
     } else {
-      console.log("nodes for selector string spec");
       var results = this.root.find(spec.selectorString);
-      if (results.length == 0) {
-        console.log(this.name, spec.selectorString);
-        console.log(this.root.value.html());
-      }
       return results;
     }
   },
