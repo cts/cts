@@ -197,7 +197,7 @@ CTS.Fn.extend(CTS.Utilities, {
     }
   },
 
-  fetchString: function(params, successFn, errorFn) {
+  fetchString: function(params) {
     var deferred = Q.defer();
     var xhr = CTS.$.ajax({
       url: params.url,
