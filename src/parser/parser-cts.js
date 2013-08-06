@@ -31,7 +31,9 @@ CTS.Parser.Cts = {
   },
 
   parseForrestSpec: function(str) {
+    var deferred = Q.defer();
     var json = null;
+    var remoteLoads = [];
     try {
       json = CTS.Parser.CtsImpl.parse(str.trim());
     } catch (e) {
@@ -42,6 +44,7 @@ CTS.Parser.Cts = {
     json.css = [];
     json.js = [];
     var i;
+    var forrestSpecs = [];
     var f = new ForrestSpec();
     if (typeof json.headers != 'undefined') {
       for (i = 0; i < json.headers.length; i++) {
@@ -51,6 +54,9 @@ CTS.Parser.Cts = {
           f.treeSpecs.push(new TreeSpec('html', h[0], h[1]));
         } else if (kind == 'css') {
           f.dependencySpecs.push(new DependencySpec('css', h[0]));
+        } else if (kind == 'cts') {
+          f.dependencySpecs.push(new DependencySpec('cts', h[0]));
+          remoteLoads.push(CTS.Utilities.fetchString({url: h[0]}));
         } else if (kind == 'js') {
           f.dependencySpecs.push(new DependencySpec('js', h[0]));
         } else {
@@ -59,7 +65,36 @@ CTS.Parser.Cts = {
       }
     }
     f.relationSpecs = json.relations;
-    return f;
+    forrestSpecs.push(f);
+    
+    // If there are any other linked specs, we'll load them here.
+    deferred.resolve(forrestSpecs);
+
+    Q.all(remoteLoads).then(
+      function(results) {
+        // Results here contains MORE cts strings
+        var parsePromises = Fn.map(results, function(result) {
+          return self.parseForrestSpec(result);
+        });
+        Q.all(parsePromises).then(
+          function(moreSpecs) {
+            for (var i = 0; i < moreSpecs.length; i++) {
+              for (var j = 0; j < moreSpecs[i].length; j++) {
+                forrestSpecs.push(moreSpecs[i][j]);
+              }
+            }
+            deferred.resolve(forrestSpecs);
+          },
+          function(reason) {
+            deferred.reject(reason);
+          }
+        );
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+    return deferred.promise;
   }
 
 };

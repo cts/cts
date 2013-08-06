@@ -3076,7 +3076,7 @@ CTS.Fn.extend(CTS.Utilities, {
     }
   },
 
-  fetchString: function(params, successFn, errorFn) {
+  fetchString: function(params) {
     var deferred = Q.defer();
     var xhr = CTS.$.ajax({
       url: params.url,
@@ -5564,6 +5564,7 @@ CTS.Parser.Cts = {
   },
 
   parseForrestSpec: function(str) {
+    var deferred = Q.defer();
     var json = null;
     try {
       json = CTS.Parser.CtsImpl.parse(str.trim());
@@ -5575,6 +5576,7 @@ CTS.Parser.Cts = {
     json.css = [];
     json.js = [];
     var i;
+    var forrestSpecs = [];
     var f = new ForrestSpec();
     if (typeof json.headers != 'undefined') {
       for (i = 0; i < json.headers.length; i++) {
@@ -5584,6 +5586,8 @@ CTS.Parser.Cts = {
           f.treeSpecs.push(new TreeSpec('html', h[0], h[1]));
         } else if (kind == 'css') {
           f.dependencySpecs.push(new DependencySpec('css', h[0]));
+        } else if (kind == 'cts') {
+          f.dependencySpecs.push(new DependencySpec('cts', h[0]));
         } else if (kind == 'js') {
           f.dependencySpecs.push(new DependencySpec('js', h[0]));
         } else {
@@ -5592,7 +5596,9 @@ CTS.Parser.Cts = {
       }
     }
     f.relationSpecs = json.relations;
-    return f;
+    forrestSpecs.push(f);
+    deferred.resolve(forrestSpecs);
+    return deferred.promise;
   }
 
 };
@@ -6072,11 +6078,23 @@ CTS.Parser.Html = new (function(){
 // Engine
 // ==========================================================================
 
-// Constructor
-// -----------
+/*
+ * Available options:
+ * 
+ * - autoLoadSpecs (default: true) - Should we autload specs from
+ *   script and link elements
+ * - forrestSpecs - optional array of forrest specs to load
+ *
+ */
+
+
 var Engine = CTS.Engine = function(opts, args) {
   var defaults;
   this.opts = opts || {};
+
+  if (typeof this.opts.autoLoadSpecs == 'undefined') {
+    this.opts.autoLoadSpecs = true;
+  }
 
   this._booted = Q.defer();
   this.booted = this._booted.promise;
@@ -6165,49 +6183,82 @@ CTS.Fn.extend(Engine.prototype, Events, {
   loadCts: function() {
     var promises = [];
     var self = this;
-    Fn.each(CTS.Utilities.getTreesheetLinks(), function(block) {
+
+    function addSpecs(specs) {
+      var promises = Fn.map(specs, function(spec) {
+        return self.forrest.addSpec(spec);
+      });
+      return Q.all(promises);
+    };
+
+    // tuple = [raw, kind]
+    function parseAndAddSpec(rawData, kind, fromUrl) {
       var deferred = Q.defer();
-      if (block.type == 'link') {
-        CTS.Utilities.fetchString(block).then(
-          function(content) { 
-            var spec = CTS.Parser.parseForrestSpec(content, block.format);
-            var i;
-            for (i = 0; i < spec.treeSpecs.length; i++) {
-              spec.treeSpecs[i].loadedFrom = block.url;
-            }
-            for (i = 0; i < spec.dependencySpecs.length; i++) {
-              spec.dependencySpecs[i].loadedFrom = block.url;
-            }
-            self.forrest.addSpec(spec).then(
-              function() {
-                deferred.resolve(); 
-              },
-              function(reason) {
-                deferred.reject(reason);
+
+      CTS.Parser.parseForrestSpec(rawData, kind).then(
+        function(specs) {
+          if (fromUrl != 'undefined') {
+            Fn.each(specs, function(spec) {
+              for (i = 0; i < spec.treeSpecs.length; i++) {
+                spec.treeSpecs[i].loadedFrom = fromUrl;
               }
-            );
-          },
-          function(reason) {
-            CTS.Log.Error("Couldn't fetch string.");
-            deferred.reject(reason);
+              for (i = 0; i < spec.dependencySpecs.length; i++) {
+                spec.dependencySpecs[i].loadedFrom = fromUrl;
+              }
+            });
           }
-        );
-      } else if (block.type == 'block') {
-        var spec = CTS.Parser.parseForrestSpec(block.content, block.format);
-        self.forrest.addSpec(spec).then(
-          function() {
-            deferred.resolve();
-          },
-          function(reason) {
-            deferred.reject(reason);
-          }
-        );
-      }
-      if (typeof promises =='undefined') {
-        CTS.Log.Error("PUSH UNDEF");
-      }
-      promises.push(deferred.promise);
-    }, this);
+          addSpecs(specs).then(
+            function() {
+              deferred.resolve();
+            },
+            function(reason) {
+              deferred.reject(reason);
+            }
+          );
+        },
+        function(reason) {
+          deferred.reject(reason);
+        }
+      );
+      return deferred.promise;
+    };
+
+    // Possibly add specs from the OPTS hash passed to Engine.
+    if ((typeof self.opts.forrestSpecs != 'undefined') && (self.opts.forrestSpecs.length > 0)) {
+      promises.push(addSpecs(self.opts.forrestSpecs));
+    }
+
+    if ((typeof self.autoLoadSpecs != 'undefined') && (self.autoLoadSpecs === true)) {
+      Fn.each(CTS.Utilities.getTreesheetLinks(), function(block) {
+        var deferred = Q.defer();
+        if ((block.type == 'link') || (block.type == 'block')) {
+          CTS.Utilities.fetchString(block).then(
+            function(content) {
+              var url = undefined;
+              if (block.type == 'link') {
+                url = block.url;
+              }
+              parseAndAddSpec(content, block.format, url).then(
+                function() {
+                  deferred.resolve();
+                },
+                function(reason) {
+                  CTS.Log.Error("Could not parse and add spec", content, block);
+                  deferred.resolve();
+                }
+              );
+            },
+            function(reason) {
+              CTS.Log.Error("Could not fetch CTS link:", block);
+              deferred.resolve();
+            });
+        } else {
+          CTS.Log.Error("Could not load CTS: did not understand block type", block.block, block);
+          deferred.resolve();
+        }
+        promises.push(deferred.promise);
+      });
+    }
     return Q.all(promises);
   },
 

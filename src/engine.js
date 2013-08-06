@@ -107,11 +107,30 @@ CTS.Fn.extend(Engine.prototype, Events, {
     var promises = [];
     var self = this;
 
-    if ((typeof self.forrestSpecs != 'undefined') && (self.forrestSpecs.length > 0)) {
-      for (var i = 0; i < self.forrestSpecs.length; i++) {
-        (function(spec) {
-          var deferred = Q.defer();
-          self.forrest.addSpec(spec).then(
+    function addSpecs(specs) {
+      var promises = Fn.map(specs, function(spec) {
+        return self.forrest.addSpec(spec);
+      });
+      return Q.all(promises);
+    };
+
+    // tuple = [raw, kind]
+    function parseAndAddSpec(rawData, kind, fromUrl) {
+      var deferred = Q.defer();
+
+      CTS.Parser.parseForrestSpec(rawData, kind).then(
+        function(specs) {
+          if (fromUrl != 'undefined') {
+            Fn.each(specs, function(spec) {
+              for (i = 0; i < spec.treeSpecs.length; i++) {
+                spec.treeSpecs[i].loadedFrom = fromUrl;
+              }
+              for (i = 0; i < spec.dependencySpecs.length; i++) {
+                spec.dependencySpecs[i].loadedFrom = fromUrl;
+              }
+            });
+          }
+          addSpecs(specs).then(
             function() {
               deferred.resolve();
             },
@@ -119,55 +138,49 @@ CTS.Fn.extend(Engine.prototype, Events, {
               deferred.reject(reason);
             }
           );
-          promises.push(deferred.promise);
-        })(self.forrestSpecs[i]);
-      }
+        },
+        function(reason) {
+          deferred.reject(reason);
+        }
+      );
+      return deferred.promise;
+    };
+
+    // Possibly add specs from the OPTS hash passed to Engine.
+    if ((typeof self.opts.forrestSpecs != 'undefined') && (self.opts.forrestSpecs.length > 0)) {
+      promises.push(addSpecs(self.opts.forrestSpecs));
     }
 
     if ((typeof self.autoLoadSpecs != 'undefined') && (self.autoLoadSpecs === true)) {
       Fn.each(CTS.Utilities.getTreesheetLinks(), function(block) {
         var deferred = Q.defer();
-        if (block.type == 'link') {
+        if ((block.type == 'link') || (block.type == 'block')) {
           CTS.Utilities.fetchString(block).then(
-            function(content) { 
-              var spec = CTS.Parser.parseForrestSpec(content, block.format);
-              var i;
-              for (i = 0; i < spec.treeSpecs.length; i++) {
-                spec.treeSpecs[i].loadedFrom = block.url;
+            function(content) {
+              var url = undefined;
+              if (block.type == 'link') {
+                url = block.url;
               }
-              for (i = 0; i < spec.dependencySpecs.length; i++) {
-                spec.dependencySpecs[i].loadedFrom = block.url;
-              }
-              self.forrest.addSpec(spec).then(
+              parseAndAddSpec(content, block.format, url).then(
                 function() {
-                  deferred.resolve(); 
+                  deferred.resolve();
                 },
                 function(reason) {
-                  deferred.reject(reason);
+                  CTS.Log.Error("Could not parse and add spec", content, block);
+                  deferred.resolve();
                 }
               );
             },
             function(reason) {
-              CTS.Log.Error("Couldn't fetch string.");
-              deferred.reject(reason);
-            }
-          );
-        } else if (block.type == 'block') {
-          var spec = CTS.Parser.parseForrestSpec(block.content, block.format);
-          self.forrest.addSpec(spec).then(
-            function() {
+              CTS.Log.Error("Could not fetch CTS link:", block);
               deferred.resolve();
-            },
-            function(reason) {
-              deferred.reject(reason);
-            }
-          );
-        }
-        if (typeof promises =='undefined') {
-          CTS.Log.Error("PUSH UNDEF");
+            });
+        } else {
+          CTS.Log.Error("Could not load CTS: did not understand block type", block.block, block);
+          deferred.resolve();
         }
         promises.push(deferred.promise);
-      }, this);
+      });
     }
     return Q.all(promises);
   },
