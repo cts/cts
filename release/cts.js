@@ -1,3 +1,70 @@
+// Save a reference to the global object. `this` is `window` in a browser.
+var root = this;
+
+var CTS;
+
+if (typeof exports !== 'undefined') {
+  CTS = exports;
+} else {
+  CTS = root.CTS = {};
+}
+
+CTS.Utilities = {
+  getUrlParameter: function(param, url) {
+    if (typeof url == 'undefined') {
+      url = window.location.search;
+    }
+    var p = param.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+    var regexS = "[\\?&]" + p + "=([^&#]*)";
+    var regex = new RegExp(regexS);
+    var results = regex.exec(url)
+    if (results == null) {
+      return null;
+    } else {
+      return decodeURIComponent(results[1].replace(/\+/g, " "));
+    }
+  }
+};
+
+CTS.autoloadCheck = function() {
+  if (typeof document == 'undefined') {
+    return false;
+  }
+  var scripts = document.getElementsByTagName('script');
+  // Do it backwards because this should be the LAST script
+  // since we're executing, and scripts are loaded sequentially
+  for (var i = scripts.length - 1; i >= 0; i++) {
+    var script = scripts[i];
+    if ((typeof script.src != 'undefined') &&
+        (script.src != null) && 
+        ((script.src.indexOf('cts.js') != -1) ||
+         (script.src.indexOf('cts.min.js') != -1))) {
+      var param = CTS.Utilities.getUrlParameter('autoload', script.src)
+      if (param == 'false') {
+        return false;
+      } else {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+if (CTS.autoloadCheck()) {
+  CTS.shouldAutoload = true;
+
+  var css = 'body { display: none; }';
+  var head = document.getElementsByTagName('head')[0];
+  var style = document.createElement('style');
+  style.type = 'text/css';
+  if (style.styleSheet){
+    style.styleSheet.cssText = css;
+  } else {
+    style.appendChild(document.createTextNode(css));
+  }
+  head.appendChild(style);
+}
+
 (function() {
 
 // Initial Setup
@@ -8,18 +75,10 @@
 // Save a reference to the global object. `this` is `window` in a browser.
 var root = this;
 
-// The top-level namespace.
-// All CTS classes and modules will be attached to this.
-// Exported for both CommonJS and the browser.
-var CTS;
-if (typeof exports !== 'undefined') {
-  CTS = exports;
-} else {
-  CTS = root.CTS = {};
-}
-
 // Current version of the library. Keep in sync with `package.json`
 CTS.VERSION = '0.1.0';
+
+
 
 /*
  * Helper functions. Many of these are taken from Underscore.js
@@ -304,8 +363,13 @@ CTS.Debugging = {
     indentSp += "  ";
 
     for (i = 0; i < node.relations.length; i++) {
-      console.log(indentSp + "- " + node.relations[i].name + " " +
-        node.relations[i].opposite(node).getValue());
+      var opp = node.relations[i].opposite(node);
+      if (opp != null) {
+        opp = opp.getValue();
+      } else {
+        opp = "null";
+      }
+      console.log(indentSp + "- " + node.relations[i].name + " " + opp);
     }
     for (i = 0; i < node.children.length; i++) {
       CTS.Debugging.DumpTree(node.children[i], indent + 2);
@@ -575,6 +639,231 @@ CTS.Debugging = {
   }
 
 };
+
+(function (definition) {
+
+    // This file will function properly as a <script> tag, or a module
+    // using CommonJS and NodeJS or RequireJS module formats.  In
+    // Common/Node/RequireJS, the module exports the Q API and when
+    // executed as a simple <script>, it creates a Q global instead.
+
+    // RequireJS
+    if (typeof define === "function") {
+        define(definition);
+    // CommonJS
+    } else if (typeof exports === "object") {
+        definition(require, exports);
+    // <script>
+    } else {
+        window.Cause = definition(void 0, {});
+    }
+
+})(function (serverSideRequire, exports) {
+"use strict";
+
+function removeCommonSegments(baseSegments, segments) {
+  if (segments[0] !== baseSegments[0]) {
+    return segments; // nothing in common
+  }
+  for(var i = 1; i < segments.length; i++) {
+    if (segments[i] !== baseSegments[i]) {
+      return segments.slice(i);
+    }    
+  }
+  // everything in common
+  return [segments[segments.length - 1]];
+}
+
+
+
+function description(callsite) {
+  var text = "";
+  if (callsite.getThis()) {
+    text += callsite.getTypeName() + '.';
+  }
+  text += callsite.getFunctionName();
+  return text;
+}
+
+function FileFilter() {
+  this.inQ = false;
+}
+ 
+FileFilter.showSystem = false;
+FileFilter.reQ = /q\/q\.js$/;
+FileFilter.reNative = /^native\s/;
+
+FileFilter.prototype.isSystem  = function(file) {
+  if (FileFilter.showSystem) {
+    return false;
+  }
+  if (FileFilter.reQ.test(file)) {
+    this.inQ = true;
+    return true;
+  } else if (this.inQ && FileFilter.reNative.test(file)) {
+    return true;
+  } else {
+    this.inQ = false;
+  }
+}
+
+
+function filterAndCount(error, arrayOfCallSite) {
+  error.fileNameColumns = 0;
+  error.largestLineNumber = 0;
+  var baseSegments = window.location.toString().split('/');
+  
+  var filteredStack = [];
+  var fileFilter = new FileFilter();
+  for (var i = 0; i < arrayOfCallSite.length; i++) {
+    var callsite = arrayOfCallSite[i];
+    var file = callsite.getFileName();
+    if (!fileFilter.isSystem(file)) {
+      file = removeCommonSegments(baseSegments, file.split('/')).join('/');
+
+      if (file.length > error.fileNameColumns) {
+        error.fileNameColumns = file.length;
+      }
+      var line = callsite.getLineNumber();
+      if (line > error.largestLineNumber) {
+        error.largestLineNumber = line;
+      }
+      filteredStack.push({file: file, line: line, description: description(callsite)});
+    }
+  }
+  error.lineNumberColumns = (error.largestLineNumber+'').length;
+  return filteredStack;
+}
+
+function formatStack(error, stackArray) {
+  var lineNumberColumns = error.lineNumberColumns || 0;
+  var fileNameColumns = error.fileNameColumns || 0;
+  
+  var textArray = stackArray.map(function toString(callsite, index) {
+    // https://gist.github.com/312a55532fac0296f2ab P. Mueller
+    //WeinreTargetCommands.coffee  21 - WeinreTargetCommands.registerTarget()
+    var text = "";
+    var file = callsite.file;
+    var line = callsite.line;
+    if (!file) {
+      console.log("file undefined: ", callsite);
+    }
+    var blanks = fileNameColumns - file.length;
+    if (blanks < 0) {
+      console.log("toString blanks negative for "+file);
+    }
+    while (blanks-- > 0) {
+      text += " ";
+    };
+    text += file;
+    blanks = lineNumberColumns - (line+'').length + 1;
+    while (blanks-- > 0) {
+      text += " ";
+    };
+    text += line + ' - ';
+    
+    text += callsite.description;
+    return text;
+  });
+  return textArray.join('\n');
+}
+
+var reMueller = /(\s*[^\s]*)\s(\s*[0-9]*)\s-\s/;  // abcd 1234 -
+// I would much rather work on the stack before its turned to a string!
+function reformatStack(error, stack) {
+  var fileNameShift = 0;
+  var lineNumberShift = 0;
+  var frameStrings = stack.split('\n');
+  var m = reMueller.exec(frameStrings[0]);
+  if (m) {
+    var fileNameFormatted = m[1];
+    if (fileNameFormatted.length > error.fileNameColumns) {
+      // the other stack will need to step up
+      error.fileNameColumns = fileNameFormatted.length;
+    } else {
+      // We need to move this one over
+      fileNameShift = error.fileNameColumns - fileNameFormatted.length;
+    }
+    var lineNumberFormatted = m[2];
+    if (lineNumberFormatted.length > error.lineNumberColumns) {
+      error.lineNumberColumns = lineNumberFormatted.length;
+    } else {
+      lineNumberShift = error.lineNumberColumns - lineNumberFormatted.length;
+    }
+  
+    if (lineNumberShift || fileNameShift) {
+      var fileNamePadding = "";
+      while (fileNameShift--) {
+        fileNamePadding += ' ';
+      }
+      var lineNumberPadding = "";
+      while (lineNumberShift--) {
+        lineNumberPadding += ' ';
+      }
+      
+      var oldFileNameColumns = fileNameFormatted.length;
+      var frames = frameStrings.map(function splitter(frameString) {
+        var fileName = frameString.substr(0, oldFileNameColumns);
+        var rest = frameString.substr(oldFileNameColumns);
+        return fileNamePadding + fileName + lineNumberPadding + rest;
+      });
+      return frames.join('\n');
+    } else {
+      return stack;
+    }
+  } else {
+    console.error("reformatStack fails ", frameStrings);
+  }
+}
+
+Error.stackTraceLimit = 20;  // cause ten of them are Q
+Error.causeStackDepth = 0;
+
+// Triggered by Cause.stack access
+Error.prepareStackTrace = function(error, structuredStackTrace) {
+
+  var filteredStack = filterAndCount(error, structuredStackTrace);
+
+  var reformattedCauseStack = ""; 
+  if (error instanceof Cause || (error.prev && error.prev.cause)) {
+    if (error.prev && error.prev.cause) {
+      var cause = error.prev.cause;
+      Error.causeStackDepth++;
+      var causeStack = cause.stack;  // recurse
+      Error.causeStackDepth--;
+      reformattedCauseStack = reformatStack(error, causeStack);
+    } //  else hit bottom
+  }
+  // don't move this up, the reformat may change the error.fileNameColumns values
+  var formattedStack = formatStack(error, filteredStack);
+  if (formattedStack) {
+    if (reformattedCauseStack) {  
+      formattedStack = formattedStack + '\n' + reformattedCauseStack;
+    }  
+  } else { //  all got filtered
+    formattedStack = reformattedCauseStack;
+  }
+  return formattedStack;
+}
+
+// An Error constructor used as a Cause constructor
+function Cause(head) {
+  Error.captureStackTrace(this, Cause);  // sets this.stack, lazy
+  this.prev = head;
+  this.message = 'cause';
+  this.fileName = 'q.js'
+  this.lineNumber = 1;
+}
+
+Cause.externalCause = null;
+Cause.setExternalCause  = function(message) {
+  Cause.externalCause = message;
+}
+exports = Cause;
+
+return Cause;
+
+});
 
 var TreeViz = CTS.Debugging.TreeViz = function(forrest) {
   this.forrest = forrest;
@@ -1272,6 +1561,7 @@ function Promise(descriptor, fallback, inspect) {
                 result = fallback.call(promise, op, args);
             }
         } catch (exception) {
+          CTS.Debugging.DumpStack();
             result = reject(exception);
         }
         if (resolve) {
@@ -1311,6 +1601,8 @@ Promise.prototype.then = function (fulfilled, rejected, progressed) {
         try {
             return typeof fulfilled === "function" ? fulfilled(value) : value;
         } catch (exception) {
+          console.log(exception);
+          CTS.Debugging.DumpStack();
             return reject(exception);
         }
     }
@@ -1497,6 +1789,7 @@ function displayUnhandledReasons() {
         !window.Touch &&
         window.console
     ) {
+      CTS.Debugging.DumpStack();
         console.warn("[Q] Unhandled rejection reasons (should be empty):",
                      unhandledReasons);
     }
@@ -2355,6 +2648,8 @@ function nodeify(promise, nodeback) {
 // All code before this point will be filtered from stack traces.
 var qEndingLine = captureLine();
 
+Q.longStackSupport = true;
+
 return Q;
 
 })();
@@ -2582,7 +2877,7 @@ Events.bind   = Events.on;
 Events.unbind = Events.off;
 
 
-var Utilities = CTS.Utilities = {
+CTS.Fn.extend(CTS.Utilities, {
 
   getUrlBase: function(url) {
     var temp = document.createElement('a');
@@ -2616,21 +2911,38 @@ var Utilities = CTS.Utilities = {
   },
 
 
-  getUrlParameter: function(param, url) {
-    if (typeof url == 'undefined') {
-      url = window.location.search;
+  rewriteRelativeLinks: function(jqNode, sourceUrl) {
+    var base = CTS.Utilities.getUrlBase(sourceUrl);
+    var basePath = CTS.Utilities.getUrlBaseAndPath(sourceUrl);
+    var pat = /^https?:\/\//i;
+    var fixElemAttr = function(elem, attr) {
+      var a = elem.attr(attr);
+      if ((typeof a != 'undefined') && 
+          (a !== null) &&
+          (a.length > 0)) {
+        if (! pat.test(a)) {
+          if (a[0] == "/") {
+            a = base + a;
+          } else {
+            a = basePath + "/" + a;
+          }
+          elem.attr(attr, a); 
+        }
+      }
+    };
+    var fixElem = function(elem) {
+      if (elem.is('img')) {
+        fixElemAttr(elem, 'src');
+      } else if (elem.is('a')) {
+        fixElemAttr(elem, 'href');
+      } else {
+        // Do nothing
+      }
+      Fn.each(elem.children(), function(c) {
+        fixElem(CTS.$(c));
+      }, this);
     }
-
-    var p = param.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
-    var regexS = "[\\?&]" + p + "=([^&#]*)";
-    var regex = new RegExp(regexS);
-
-    var results = regex.exec(url)
-    if (results == null) {
-      return null;
-    } else {
-      return decodeURIComponent(results[1].replace(/\+/g, " "));
-    }
+    fixElem(jqNode);
   },
 
   /**
@@ -2794,8 +3106,7 @@ var Utilities = CTS.Utilities = {
     }
   }
 
-};
- 
+});
 
 // Node
 // --------------------------------------------------------------------------
@@ -2807,6 +3118,22 @@ var Utilities = CTS.Utilities = {
 // different types of trees (JSON, HTML, etc) are concealed at this level.
 CTS.Node = {};
 
+CTS.Node.Factory = {
+  Html: function(node, tree, opts) {
+    var deferred = Q.defer();
+    var node = new CTS.Node.Html(node, tree, opts);
+    node.registerInlineRelationSpecs().then(
+      function() {
+        deferred.resolve(node);
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+    return deferred.promise;
+  }
+};
+
 CTS.Node.Base = {
 
   initializeNodeBase: function(tree, opts) {
@@ -2817,8 +3144,7 @@ CTS.Node.Base = {
     this.parentNode = null;
     this.relations = [];
     this.value = null;
-    this.addedMyInlineRelationsToForrest = false;
-    //this.initializeStateMachine();
+    this.inlineRelationSpecs = []; // TODO(eob): put a realized field to check
   },
 
   getChildren: function() {
@@ -2826,6 +3152,9 @@ CTS.Node.Base = {
   },
 
   registerRelation: function(relation) {
+    if (typeof this.relations == 'undefined') {
+      CTS.Log.Error("PUSHHHH");
+    }
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
     }
@@ -2837,65 +3166,71 @@ CTS.Node.Base = {
   },
 
   getRelations: function() {
-    var deferred = Q.defer();
-    var self = this;
-    if (! this.addedMyInlineRelationsToForrest) {
-      this.registerInlineRelationSpecs().then(function() {
-        deferred.resolve(self.relations);
-      }, function(reason) {
-        deferred.reject(reason);
-      });
-    } else {
-      deferred.resolve(self.relations);
+    if (! this.checkedForInlineRealization) {
+      CTS.Log.Info("Checking for inline relizations");
+      for (var i = 0; i < this.inlineRelationSpecs.length; i++) {
+        var spec = this.inlineRelationSpecs[i];
+        console.log("Found spec", spec);
+        this.tree.forrest.realizeRelation(spec);
+      }
+      this.checkedForInlineRealization = true;
     }
-    return deferred.promise;
+    return this.relations;
   },
 
   registerInlineRelationSpecs: function() {
     var deferred = Q.defer();
-    if (this.addedMyInlineRelationsToForrest) {
+
+    // Already added
+    if (this.addedMyInlineRelationsToForrest === true) {
       CTS.Log.Warn("Not registering inline relations: have already done so.");
       deferred.resolve();
-    } else {
-      var specStr = this._subclass_getInlineRelationSpecString();
-      this.addedMyInlineRelationsToForrest = true;
-      if (specStr) {
-        if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-          var p = CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
-          p.then(function() {
-            deferred.resolve();
-          }, function(reason) {
-            deferred.reject(reason);
-          });
-        } else {
-          this.addedMyInlineRelationsToForrest = false;
-          if (Fn.isUndefined(this.tree) || (this.tree === null)) {
-            CTS.Log.Error("[Node] Could not add inline relns to null tree");
-            deferred.reject("Could not add line relations to null tree");
-          } else if (Fn.isUndefined(this.tree.forrest) || (this.tree.forrest === null)) {
-            CTS.Log.Error("[Node] Could not add inline relns to null forrest");
-            deferred.reject("Could not add inline relations to null forrest");
-          }
-        }
-      } else {
-        // There was no inline spec string
-        deferred.resolve();
-      }
+      return deferred.promise;
     }
+    
+    var specStr = this._subclass_getInlineRelationSpecString();
+
+    // No inline spec
+    if (! specStr) {
+      deferred.resolve();
+      return deferred.promise;
+    }
+
+    if (typeof this.tree == 'undefined') {
+      deferred.reject("Undefined tree");
+      return deferred.promise;
+    }
+
+
+    if (typeof this.tree.forrest == 'undefined') {
+      deferred.reject("Undefined forrest");
+      return deferred.promise;
+    }
+
+    var self = this;
+
+    CTS.Parser.parseInlineSpecs(specStr, self, self.tree.forrest, true).then(
+      function(forrestSpec) {
+        self.addedMyInlineRelationsToForrest = true;
+        self.inlineRelationSpecs = forrestSpec.relationSpecs;
+        deferred.resolve();
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+
     return deferred.promise;
   },
 
   getSubtreeRelations: function() {
+    return CTS.Fn.union(this.getRelations(), CTS.Fn.flatten(
+      CTS.Fn.map(this.getChildren(), function(kid) {
+        return kid.getSubtreeRelations();
+      }))
+    );
     /*
-     * The following code returns an asynchronously computed version of this:
-     *
-     *  return CTS.Fn.union(this.getRelations(), CTS.Fn.flatten(
-     *    CTS.Fn.map(this.getChildren(), function(kid) {
-     *      return kid.getSubtreeRelations();
-     *    }))
-     *  );
-     */
-    var deferred = Q.defer();
+       var deferred = Q.defer();
 
     this.getRelations().then(function(relations) {
       var kidPromises = CTS.Fn.map(this.getChildren(), function(kid) {
@@ -2927,6 +3262,7 @@ CTS.Node.Base = {
     });
 
     return deferred.promise;
+    */
   },
   
   insertChild: function(node, afterIndex, log) {
@@ -2999,20 +3335,43 @@ CTS.Node.Base = {
   },
 
   realizeChildren: function() {
+    var deferred = Q.defer();
+
     if (this.children.length != 0) {
       CTS.Log.Fatal("Trying to realize children when already have some.");
+      deferred.reject("Trying to realize when children > 0");
     }
-    this._subclass_realizeChildren();
-    CTS.Fn.each(this.children, function(child) {
-      child.realizeChildren();
-    });
+
+    var self = this;
+    var sc = this._subclass_realizeChildren();
+
+    sc.then(
+      function() {
+        var promises = CTS.Fn.map(self.children, function(child) {
+          return child.realizeChildren();
+        });
+        Q.all(promises).then(
+          function() {
+            deferred.resolve();
+          }, 
+          function(reason) {
+            deferred.reject(reason);
+          }
+        );
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+
+    return deferred.promise;
   },
 
   clone: function() {
     var c = this._subclass_beginClone();
-    // Note: because the subclass constructs it's own subtree,
-    // that means it is also responsible for cloning downstream nodes.
-    // But we DO need to clone downstream relations.
+    if (c.relations.length > 0) {
+      CTS.Log.Error("Clone shouldn't have relations yet");
+    }
     this.recursivelyCloneRelations(c);
     // Note that we DON'T wire up any parent-child relationships
     // because that would result in more than just cloning the node
@@ -3022,9 +3381,15 @@ CTS.Node.Base = {
   },
 
   recursivelyCloneRelations: function(to) {
-    var i;
     var r = this.getRelations();
-    for (i = 0; i < r.length; i++) {
+    if (to.relations.length > 0) {
+      CTS.Log.Error("Clone relations to non-empty relation container. Blowing away");
+      while (to.relations.length > 0) {
+        to.relations[0].destroy();
+      }
+    }
+
+    for (var i = 0; i < r.length; i++) {
       var n1 = r[i].node1;
       var n2 = r[i].node2;
       if (n1 == this) {
@@ -3032,14 +3397,14 @@ CTS.Node.Base = {
       } else if (n2 == this) {
         n2 = to;
       } else {
-        CTS.Fatal("Clone failed");
+        CTS.Log.Fatal("Clone failed");
       }
       var relationClone = r[i].clone(n1, n2);
     };
 
-    for (i = 0; i < this.getChildren().length; i++) {
-      var myKid = this.children[i];
-      var otherKid = to.children[i];
+    for (var j = 0; j < this.getChildren().length; j++) {
+      var myKid = this.children[j];
+      var otherKid = to.children[j];
       myKid.recursivelyCloneRelations(otherKid);
     }
   },
@@ -3097,24 +3462,18 @@ CTS.Node.Base = {
   _processIncoming: function() {
     // Do incoming nodes except graft
     var self = this;
-    this.getRelations().then(
-      function(r) {
-        self._processIncomingRelations(r, 'if-exist');
-        self._processIncomingRelations(r, 'if-nexist');
-        self._processIncomingRelations(r, 'is');
-        self._processIncomingRelations(r, 'are');
+    var r = this.getRelations();
+    self._processIncomingRelations(r, 'if-exist');
+    self._processIncomingRelations(r, 'if-nexist');
+    self._processIncomingRelations(r, 'is');
+    self._processIncomingRelations(r, 'are');
     
-        for (var i = 0; i < self.children.length; i++) {
-          self.children[i]._processIncoming();
-        }
+    for (var i = 0; i < self.children.length; i++) {
+      self.children[i]._processIncoming();
+    }
     
-        // Do graft
-        self._processIncomingRelations(r, 'graft', true);
-      },
-      function() {
-        CTS.Log.Error("Couldn't get relations.");
-      }
-    );
+    // Do graft
+    self._processIncomingRelations(r, 'graft', true);
   },
 
   _processIncomingRelations: function(relations, name, once) {
@@ -3312,23 +3671,6 @@ CTS.Fn.extend(CTS.Node.Abstract.prototype,
      return n;
    }
 
-
-
-//   descendantOf: function(other) {
-//     var p = this.parentNode;
-//     var foundIt = false;
-//     if (this == other) {
-//       return true;
-//     }
-//     while ((!foundIt) && (p != null)) {
-//       if (p == other) {
-//         foundIt = true;
-//       }
-//       p = p.parentNode;
-//     }
-//     return foundIt;
-//   }
-
 });
 
 CTS.NonExistantNode = new CTS.Node.Abstract();
@@ -3368,6 +3710,9 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
       ret = [];
     }
     if (this.value.is(selector)) {
+      if (typeof ret == 'undefined') {
+        CTS.Log.Error("push");
+      }
       ret.push(this);
     }
     for (var i = 0; i < this.children.length; i++) {
@@ -3394,12 +3739,37 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     * Realizes all children.
     */
    _subclass_realizeChildren: function() {
-     this.children = CTS.Fn.map(this.value.children(), function(child) {
-       var node = new CTS.Node.Html(child, this.tree, this.opts);
-       this.tree._nodeLookup[node.ctsId] = node;
-       node.parentNode = this;
-       return node;
-     }, this);
+     // promise
+     var deferred = Q.defer();
+     var last = deferred.promise;
+
+     this.children = [];
+
+     // Map each child
+    
+     var self = this;
+     var promises = CTS.Fn.map(this.value.children(), function(child) {
+       var promise = CTS.Node.Factory.Html(child, self.tree, self.opts);
+       return promise;
+     });
+
+
+     Q.all(promises).then(
+       function(results) {
+         self.children = results;
+         for (var i = 0; i < self.children.length; i++) {
+           var node = self.children[i];
+           node.parentNode = self;
+           self.tree._nodeLookup[node.ctsId] = node;
+         }
+         deferred.resolve();
+       },
+       function(reason) {
+         deferred.reject(reason);
+       }
+     );
+
+     return deferred.promise;
    },
 
    /* 
@@ -3429,24 +3799,36 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     * TODO(eob(): Implement some kind of locking here?
     */
    _onChildInserted: function(child) {
-     var ctsChild = new CTS.Node.Html(child, this.tree, this.opts);
-     ctsChild.parentNode = this;
-     // Need to get the right index of this child.
+     var self = this;
+     CTS.Node.Factory.Html(child, this.tree, this.opts).then(
+       function(ctsChild) {
+         ctsChild.parentNode = self;
+         var idx = child.index();
+         self.children[self.children.length] = null;
+         // TODO: need locking on kids
+         for (var i = self.children.length - 1; i >= idx; i--) {
+           if (i == idx) {
+             self.children[i] = ctsChild;
+           } else {
+             self.children[i] = self.children[i - 1];
+           }
+         }
 
-     var idx = child.index();
-
-     this.children[this.children.length] = null;
-     for (var i = this.children.length - 1; i >= idx; i--) {
-       if (i == idx) {
-         this.children[i] = ctsChild;
-       } else {
-         this.children[i] = this.children[i - 1];
+         ctsChild.realizeChildren().then(
+           function() {
+             //  Now run any rules.
+             CTS.Log.Info("Running CTS Rules on new node");
+             ctsChild._processIncoming();
+           },
+           function(reason) {
+             CTS.Log.Error("Could not realize children of new CTS node", ctsChild);
+           }
+         );
+       },
+       function(reason) {
+         CTS.Log.Error("Could not convert new node to CTS node", child, reason);
        }
-     }
-
-     ctsChild.realizeChildren();
-
-     return ctsChild;
+     );
    },
 
    /* 
@@ -3464,11 +3846,46 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      }
    },
 
-   _subclass_beginClone: function() {
-     var c = this.value.clone();
-     var d = new CTS.Node.Html(c, this.tree, this.opts);
-     d.realizeChildren();
-     return d;
+   _subclass_beginClone: function(node) {
+     var value = null;
+     if (typeof node == "undefined") {
+       value = this.value.clone();
+     } else {
+       value = CTS.$(node);
+     }
+
+     // NOTE: beginClone is allowed to directly create a Node
+     // without going through the factory because we already can be
+     // sure that all this node's trees have been realized
+     var clone = new CTS.Node.Html(value, this.tree, this.opts);
+
+     // Handled by superclass
+     //for (var i = 0; i < this.relations.length; i++) {
+     //  var r = this.relations[i].clone();
+     //  r.rebind(this, clone);
+     //  clone.relations.push(r);
+     //}
+
+     if (this.children.length != clone.value.children().length) {
+       CTS.Log.Error("Trying to clone CTS node that is out of sync with dom");
+     }
+     // We use THIS to set i
+     for (var i = 0; i < this.children.length; i++) {
+       var childNode = clone.value.children()[i];
+       var child = this.children[i]._subclass_beginClone(childNode);
+       child.parentNode = clone;
+       this.tree._nodeLookup[child.ctsId] = child;
+       if (typeof child.children  == 'undefined') {
+         CTS.Log.Error("Kids undefined");
+       }
+       clone.children.push(child);
+     }
+
+     if (clone.relations.length > 0) {
+       CTS.Log.Error("After subclass clone, relations shouldn't be > 0");
+     }
+
+     return clone;
    },
 
   /************************************************************************
@@ -3478,7 +3895,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    ************************************************************************/
 
   getValue: function(opts) {
-    if (Fn.isUndefined(opts.attribute)) {
+    if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
       return this.value.html();
     } else {
       return this.value.attr(opts.attribute);
@@ -3486,9 +3903,9 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   setValue: function(value, opts) {
-    if (Fn.isUndefined(opts.attribute)) {
+    if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
       this.value.html(value);
-    } else {
+      CTS.Log.Info("Just set myself to", this.tree.name, value); } else {
       this.value.attr(opts.attribute, value);
     }
   },
@@ -3519,7 +3936,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
         n = null;
       }
     } else if (typeof node == 'string') {
-      //console.log("SIBLINGS E", node);
       n = $(node);
     } else {
       n = null;
@@ -3564,7 +3980,6 @@ CTS.Node.Json = function(node, tree, opts) {
   }
 };
  
-// ### Instance Methods
 CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
 
   updateDataType: function() {
@@ -3787,15 +4202,25 @@ CTS.Relation.Base = {
     var toRet = {};
     Fn.extend(toRet, this.defaultOpts);
     if (this.node1 === node) {
-      Fn.extend(toRet, this.spec.selectionSpec1.props);
+      if (this.spec && this.spec.selectionSpec1) {
+        Fn.extend(toRet, this.spec.selectionSpec1.props);
+      }
     } else if (this.node2 == node) {
-      Fn.extend(toRet, this.spec.selectionSpec2.props);
+      if (this.spec && this.spec.selectionSpec1) {
+        Fn.extend(toRet, this.spec.selectionSpec2.props);
+      }
     }
     return toRet;
   },
 
-  clone: function() {
-    return new CTS.Relation.Relation(this.node1, this.node2, this.spec);
+  clone: function(from, to) {
+    if (typeof from == 'undefined') {
+      from = this.node1;
+    }
+    if (typeof to == 'undefined') {
+      to = this.node2;
+    }
+    return new CTS.Relation.Relation(from, to, this.spec);
   },
 
   signature: function() {
@@ -3824,6 +4249,7 @@ CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var from = this.opposite(toward);
     var content = from.getValue(this.optsFor(from));
+    CTS.Log.Info("From", from.tree.name, from.getValue(), "Overwriting", toward.tree.name, toward.getValue());
     toward.setValue(content, this.optsFor(toward));
     toward.trigger('received-is', {
       target: toward,
@@ -4075,7 +4501,9 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
   execute: function(toward) {
 
     var opp = this.opposite(toward);
-    CTS.Log.Info("Graft from", opp, "to", toward);
+
+    CTS.Log.Info("Graft from", opp.tree.name, "to", toward.tree.name);
+
     if (opp != null) {
 
       //console.log("GRAFT THE FOLLOWING");
@@ -4088,10 +4516,13 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
         var child = opp.children[i].clone();
         // TODO(eob): This is a subtle bug. It means that you can't graft-map anything outside
         // the toward node that is being grafted.
-        child.pruneRelations(toward);
+        child.pruneRelations(toward)
         child._processIncoming();
         replacements.push(child);
       }
+      Fn.map(replacements, function(r) {
+        console.log("replacement", r.value.html());
+      });
       toward.replaceChildrenWith(replacements);
       toward.setProvenance(opp.tree, opp);
     }
@@ -4129,86 +4560,6 @@ CTS.Tree.Base = {
 };
 
 
-/*
- * Returns a promise
- */
-CTS.Tree.Create = function(spec, forrest) {
-  var deferred = Q.defer();
-  // Special case
-  if ((spec.url == null) && (spec.name = 'body')) {
-    var node = CTS.$('body');
-    var tree = new CTS.Tree.Html(forrest, node, spec);
-    deferred.resolve(tree);
-  } else if (typeof spec.url == "string") {
-    CTS.Utilities.fetchString(spec).then(
-      function(content) {
-        if ((spec.kind == 'HTML') || (spec.kind == 'html')) {
-          //try {
-          //  var domNodes = CTS.Parser.Html.HTMLtoDOM(content); 
-          //} catch (e) {
-          //  console.log(e);
-          //  CTS.Debugging.DumpStack();
-          //  debugger;
-          //}
-          var div = CTS.$("<div></div>");
-          var nodes = CTS.$.parseHTML(content);
-          var jqNodes = Fn.map(nodes, function(n) {
-            return CTS.$(n);
-          });
-          div.append(jqNodes);
-          
-          if (spec.fixLinks) {
-            var base = CTS.Utilities.getUrlBase(spec.url);
-            var basePath = CTS.Utilities.getUrlBaseAndPath(spec.url);
-            var pat = /^https?:\/\//i;
-            var fixElemAttr = function(elem, attr) {
-              var a = elem.attr(attr);
-              if ((typeof a != 'undefined') && 
-                  (a !== null) &&
-                  (a.length > 0)) {
-                if (! pat.test(a)) {
-                  if (a[0] == "/") {
-                    a = base + a;
-                  } else {
-                    a = basePath + "/" + a;
-                  }
-                  elem.attr(attr, a); 
-                }
-              }
-            };
-            var fixElem = function(elem) {
-              if (elem.is('img')) {
-                fixElemAttr(elem, 'src');
-              } else if (elem.is('a')) {
-                fixElemAttr(elem, 'href');
-              } else {
-                // Do nothing
-              }
-              Fn.each(elem.children(), function(c) {
-                fixElem(CTS.$(c));
-              }, this);
-            }
-            fixElem(div);
-          }
-
-          var tree = new CTS.Tree.Html(forrest, div, spec);
-          deferred.resolve(tree);
-        } else {
-          deferred.reject("Don't know how to make Tree of kind: " + spec.kind);
-        }
-      },
-      function(reason) {
-        deferred.reject(reason);
-      }
-    );
-  } else {
-    // jquery node
-    var node = spec.url;
-    var tree = new CTS.Tree.Html(forrest, node, spec);
-    deferred.resolve(tree);
-  }
-  return deferred.promise;
-};
 
 
 var TreeSpec = CTS.Tree.Spec = function(kind, name, url, loadedFrom) {
@@ -4224,28 +4575,29 @@ var TreeSpec = CTS.Tree.Spec = function(kind, name, url, loadedFrom) {
 
 // Constructor
 // -----------
-CTS.Tree.Html = function(forrest, node, spec) {
-  CTS.Log.Info("DomTree::Constructor", [forrest, node]);
+CTS.Tree.Html = function(forrest, spec) {
   this._nodeLookup = {};
-  this.root = new CTS.Node.Html(node, this);
-  this._nodeLookup[root.ctsId] = root;
-  this.root.setProvenance(this);
   this.forrest = forrest;
   this.spec = spec;
   this.name = spec.name;
-  this.root.realizeChildren();
-
-  // Listen for DOMNodeInserted events in the DOM tree, and spread
-  // propagation of that event into the CTS tree
-  var self = this;
-  this.root.value.on("DOMNodeInserted", function(evt) {
-    self.root.trigger("DOMNodeInserted", evt);
-  });
+  this.root = null;
 };
 
 // Instance Methods
 // ----------------
 CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
+  setRoot: function(node) {
+    this.root = node;
+    this._nodeLookup[root.ctsId] = root;
+    this.root.setProvenance(this);
+    // Listen for DOMNodeInserted events in the DOM tree, and spread
+    // propagation of that event into the CTS tree
+    var self = this;
+    this.root.value.on("DOMNodeInserted", function(evt) {
+      self.root.trigger("DOMNodeInserted", evt);
+    });
+  },
+
   nodesForSelectionSpec: function(spec) {
     if (spec.inline) {
       return [spec.inlineObject];
@@ -4379,14 +4731,14 @@ CTS.Fn.extend(Forrest.prototype, {
    * -------------------------------------------------------- */
 
   initialize: function() {
-    this.addAndRealizeDefaultTrees();
-    // If there is a forrest spec in the opts, we'll use it
-    if (typeof this.opts.spec != 'undefined') {
-      this.addSpec(this.opts.spec);
-    }
+  },
+
+  initializeAsync: function() {
+    return this.addAndRealizeDefaultTrees();
   },
 
   addAndRealizeDefaultTrees: function() {
+    var deferred = Q.defer();
     var self = this;
     var pageBody = null;
     if (typeof this.opts.defaultTree != 'undefined') {
@@ -4408,11 +4760,13 @@ CTS.Fn.extend(Forrest.prototype, {
 
        // NOW CTS IS READY AND LOADED
        CTS.status._defaultTreeReady.resolve();
+       deferred.resolve();
      },
-     function() {
-       // Default tree was not realized
+     function(reason) {
+       deferred.reject(reason);
      }
     );
+    return deferred.promise;
   },
 
   stopListening: function() {
@@ -4440,50 +4794,50 @@ CTS.Fn.extend(Forrest.prototype, {
    * TreeSpec, rather than a Tree, and so on.
    *
    * -------------------------------------------------------- */
-
-  addSpec: function(forrestSpec, realize) {
+  addSpec: function(forrestSpec) {
     var self = this;
-    if (typeof realize == 'undefined') {
-      realize = false;
+    if (typeof this.forrestSpecs == 'undefined') {
+      CTS.Log.Error("forrest spec undef");
     }
     this.forrestSpecs.push(forrestSpec);
+
     var initial = Q.defer();
     var last = initial.promise;
 
-    var i;
+    var i, j;
+
+    // Load all the relation specs
+    for (j = 0; j < forrestSpec.relationSpecs.length; j++) {
+      self.addRelationSpec(forrestSpec.relationSpecs[j]);
+    }
+    // Load all the dependency specs
+    for (dep in forrestSpec.dependencySpecs) {
+      forrestSpec.dependencySpecs[dep].load();
+    }
+
+    // Load AND REALIZE all the tree specs
     for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
       (function(treeSpec) {
         var treeSpec = forrestSpec.treeSpecs[i];
         self.addTreeSpec(treeSpec);
-        if (realize) {
-          var next = Q.defer();
-          last.then(function() {
-            var promise = self.realizeTree(treeSpec);
-            promise.then(function() {next.resolve()});
-          });
-          last = next.promise;
-        }
+        var next = Q.defer();
+        last.then(
+          function() {
+            self.realizeTree(treeSpec).then(
+              function() {
+                next.resolve();
+              },
+              function(reason) {
+                next.reject(reason);
+              }
+            );
+          },
+          function(reason) {
+            next.reject(reason);
+          }
+        );
+        last = next.promise;
       })(forrestSpec.treeSpecs[i])
-    }
-    var j;
-    for (j = 0; j < forrestSpec.relationSpecs.length; j++) {
-      (function(spec) {
-        self.addRelationSpec(spec);
-        if (realize) {
-          var next = Q.defer();
-          last.then(function() {
-            self.realizeRelation(spec);
-            next.resolve();
-          });
-          last = next.promise;
-        }
-      })(forrestSpec.relationSpecs[j]);
-    }
-
-    if (realize) {
-      for (dep in forrestSpec.dependencySpecs) {
-        forrestSpec.dependencySpecs[dep].load();
-      }
     }
 
     initial.resolve();
@@ -4495,12 +4849,19 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   addRelationSpec: function(relationSpec) {
+    if (typeof this.relationSpecs == 'undefined') {
+      CTS.Log.Error("rel spc undef");
+    }
     this.relationSpecs.push(relationSpec);
   },
 
   addRelationSpecs: function(someRelationSpecs) {
     for (var i = 0; i < someRelationSpecs.length; i++) {
       // Faster than .push()
+       if (typeof this.relationSpecs == 'undefined') {
+         CTS.Log.Error("relation undefined");
+       }
+
       this.relationSpecs.push(someRelationSpecs[i]);
     }
   },
@@ -4516,11 +4877,17 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   realizeDependencies: function() {
+    var deferred = Q.defer();
+    deferred.resolve();
+
     Fn.each(this.forrestSpecs, function(fs) {
       Fn.each(fs.dependencySpecs, function(ds) {
         ds.load();
       });
     });
+
+    // A no-op, just to fit in with boot and later potential deps.
+    return deferred.promise;
   },
 
   realizeTree: function(treeSpec) {
@@ -4536,7 +4903,7 @@ CTS.Fn.extend(Forrest.prototype, {
       }
     } else if (typeof treeSpec.url == "string") {
       treeSpec.url = CTS.Utilities.fixRelativeUrl(treeSpec.url, treeSpec.loadedFrom);
-      CTS.Tree.Create(treeSpec, this).then(
+      CTS.Factory.Tree(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;
           deferred.resolve(tree);
@@ -4547,7 +4914,7 @@ CTS.Fn.extend(Forrest.prototype, {
       );
     } else {
       // it's a jquery node
-      CTS.Tree.Create(treeSpec, this).then(
+      CTS.Factory.Tree(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;
           deferred.resolve(tree);
@@ -4561,9 +4928,12 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   realizeRelations: function() {
+    var deferred = Q.defer();
+    deferred.resolve();
     for (var i = 0; i < this.relationSpecs.length; i++) {
       this.realizeRelation(this.relationSpecs[i]);
     }
+    return deferred.promise;
   },
 
   /* The JSON should be of the form:
@@ -4576,39 +4946,45 @@ CTS.Fn.extend(Forrest.prototype, {
    * The outer array (lines 1 and 5) are optional if you only have a single rule.
    *
    */
-  incorporateInlineJson: function(json, node) {
-    if (json.length == 0) {
-      return [];
-    }
-    if (! CTS.Fn.isArray(json[0])) {
-      json = [json];
-    }
-    var ret = [];
-    for (var i = 0; i < json.length; i++) {
-      var s1 = CTS.Parser.Json.parseSelectorSpec(json[i][0], node);
-      var s2 = CTS.Parser.Json.parseSelectorSpec(json[i][2], node);
-      var rule = CTS.Parser.Json.parseRelationSpec(json[i][1], s1, s2);
-      this.relationSpecs.push(rule);
-      ret.push(rule);
-    }
-    return ret;
-  },
+
+  //incorporateInlineJson: function(json, node) {
+  //  if (json.length == 0) {
+  //    return [];
+  //  }
+  //  if (! CTS.Fn.isArray(json[0])) {
+  //    json = [json];
+  //  }
+  //  var ret = [];
+  //  for (var i = 0; i < json.length; i++) {
+  //    var s1 = CTS.Parser.Json.parseSelectorSpec(json[i][0], node);
+  //    var s2 = CTS.Parser.Json.parseSelectorSpec(json[i][2], node);
+  //    var rule = CTS.Parser.Json.parseRelationSpec(json[i][1], s1, s2);
+  //    this.relationSpecs.push(rule);
+  //    ret.push(rule);
+  //  }
+  //  return ret;
+  //},
 
   realizeRelation: function(spec) {
     var s1 = spec.selectionSpec1;
     var s2 = spec.selectionSpec2;
 
-    // Realizing a relation spec has a dependency on the realization of
-    // the realization of the treespecs.
-    // TODO(eob): One day, having a nice dependency DAG would be nice.
-    // For now, we'll error if deps aren't met.
-    if (! (this.containsTree(s1.treeName) && this.containsTree(s2.treeName))) {
-      if (! this.containsTree(s1.treeName)) {
-        CTS.Log.Error("Can not realize RelationSpec becasue one or more trees are not available", s1.treeName);
-      }
-      if (! this.containsTree(s2.treeName)) {
-        CTS.Log.Error("Can not realize RelationSpec becasue one or more trees are not available", s2.treeName);
-      }
+    if (typeof s1 == 'undefined') {
+      CTS.Log.Error("S1 is undefined", spec);
+      return;
+    }
+    if (typeof s2 == 'undefined') {
+      CTS.Log.Error("S2 is undefined", spec);
+      return;
+    }
+
+    // Note: at this point we assume that all trees are loaded.
+    if (! this.containsTree(s1.treeName)) {
+      CTS.Log.Error("Can not realize RelationSpec becasue one or more trees are not available", s1.treeName);
+      return;
+    }
+    if (! this.containsTree(s2.treeName)) {
+      CTS.Log.Error("Can not realize RelationSpec becasue one or more trees are not available", s2.treeName);
       return;
     }
 
@@ -4626,6 +5002,11 @@ CTS.Fn.extend(Forrest.prototype, {
         // a pointer back to the nodes.
         var relation = new CTS.Relation.CreateFromSpec(nodes1[i], nodes2[j], spec);
         // Add the relation to the forrest
+       if (typeof this.relations == 'undefined') {
+         CTS.Log.Error("relations undefined");
+       }
+
+
         this.relations.push(relation);
       }
     }
@@ -4663,10 +5044,9 @@ CTS.Fn.extend(Forrest.prototype, {
         if (ctsParent == null) {
           CTS.Log.Error("Node inserted into yet unmapped region of tree", p);
         } else {
+          CTS.Log.Info("Responding to new DOM node insertion");
           // Create the CTS tree for this region.
           var ctsNode = ctsParent._onChildInserted(node);
-          //  Now run any rules.
-          ctsNode._processIncoming();
         }
       }
       evt.ctsHandled = true;
@@ -4836,10 +5216,10 @@ DependencySpec.prototype.load = function() {
       script.setAttribute('src', this.url);
       document.getElementsByTagName('head')[0].appendChild(script);
     } else {
-      CTS.Logging.Error("DependencySpec: Unsure how to load", this.kind, this.url);
+      CTS.Log.Error("DependencySpec: Unsure how to load", this.kind, this.url);
     }
   } else {
-    CTS.Logging.Warn("DependencySpec: Not loading already loaded", this.kind, this.url);
+    CTS.Log.Warn("DependencySpec: Not loading already loaded", this.kind, this.url);
   }
 };
 
@@ -4867,19 +5247,98 @@ DependencySpec.prototype.unload = function() {
     CTS.Log.Warn("Tried to unload DependencySpec that wasn't loaded", this);
   }
 };
+
+CTS.Factory = {
+  Forrest: function(opts) {
+    var deferred = Q.defer();
+    var forrest = new CTS.Forrest(opts);
+    forrest.initializeAsync().then(
+      function() {
+        deferred.resolve(forrest);
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+    return deferred.promise;
+  },
+
+  Tree: function(spec, forrest) {
+    if ((spec.url == null) && (spec.name = 'body')) {
+      return CTS.Factory.TreeWithJquery(CTS.$('body'), forrest, spec);
+    } else if (typeof spec.url == "string") {
+      var deferred = Q.defer();
+      CTS.Utilities.fetchString(spec).then(
+        function(content) {
+          if ((spec.kind == 'HTML') || (spec.kind == 'html')) {
+            var div = CTS.$("<div></div>");
+            var nodes = CTS.$.parseHTML(content);
+            var jqNodes = Fn.map(nodes, function(n) {
+              return CTS.$(n);
+            });
+            div.append(jqNodes);
+            if (spec.fixLinks) {
+              CTS.Utilities.rewriteRelativeLinks(div, spec.url);
+            }
+            CTS.Factory.TreeWithJquery(div, forrest, spec).then(
+              function(tree) {
+                deferred.resolve(tree);
+              },
+              function(reason) {
+                deferred.reject(reason);
+              }
+            );
+          } else {
+            deferred.reject("Don't know how to make Tree of kind: " + spec.kind);
+          }
+        },
+        function(reason) {
+          deferred.reject(reason);
+        }
+      );
+      return deferred.promise;
+    } else {
+      return CTS.Factory.TreeWithJquery(node, forrest, spec);
+    }
+  },
+
+  TreeWithJquery: function(node, forrest, spec) {
+    var deferred = Q.defer();
+    var tree = new CTS.Tree.Html(forrest, spec);
+    CTS.Node.Factory.Html(node, tree).then(
+      function(ctsNode) {
+        ctsNode.realizeChildren().then(
+          function() {
+            tree.setRoot(ctsNode);
+            deferred.resolve(tree);
+          },
+          function(reason) {
+            deferred.reject(reason);
+          }
+        );
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+    return deferred.promise;
+  }
+}
+
 CTS.Parser = {
-  parseInlineSpecs: function(str, node, intoForrest, realize) {
+  parseInlineSpecs: function(str, node, intoForrest, realizeTrees) {
     var tup = CTS.Parser._typeAndBodyForInline(str);
     var kind = tup[0];
     var body = tup[1];
     var spec = null;
     if (kind == 'json') {
-      return CTS.Parser.Json.parseInlineSpecs(body, node, intoForrest, realize);
+      return CTS.Parser.Json.parseInlineSpecs(body, node, intoForrest, realizeTrees);
     } else if (kind == 'string') {
-      return CTS.Parser.Cts.parseInlineSpecs(body, node, intoForrest, realize);
+      return CTS.Parser.Cts.parseInlineSpecs(body, node, intoForrest, realizeTrees);
     } else {
-      CTS.Log.Error("I don't understand the inline CTS format", kind);
-      return null;
+      var deferred = Q.defer();
+      deferred.reject("I don't understand the CTS Format:" + kind);
+      return deferred.promise;
     }
   },
 
@@ -4889,7 +5348,9 @@ CTS.Parser = {
     } else if (kind == 'string') {
       return CTS.Parser.Cts.parseForrestSpec(str);
     } else {
-      CTS.Log.Error("I don't understand the CTS Format", kind);
+      var deferred = Q.defer();
+      deferred.reject("I don't understand the CTS Format:" + kind);
+      return deferred.promise;
     }
   },
 
@@ -4921,19 +5382,17 @@ CTS.Parser = {
 
 CTS.Parser.Json = {
 
-  parseInlineSpecs: function(json, node, intoForrest, realize) {
+  parseInlineSpecs: function(json, node, intoForrest) {
+    var deferred = Q.defer();
+
     if (typeof json == 'string') {
       json = JSON.parse(json);
     }
 
     // Now we build a proper spec document around it.
     var relations = intoForrest.incorporateInlineJson(json, node);
-    
-    if (realize) {
-      for (var i = 0; i < relations.length; i++) {
-        intoForrest.realizeRelationSpec(relations[i]);
-      }
-    }
+
+    return deferred.promise;
   },
 
   parseForrestSpec: function(json) {
@@ -5060,7 +5519,7 @@ CTS.Parser.Json = {
 
 CTS.Parser.Cts = {
 
-  parseInlineSpecs: function(str, node, intoForrest, realize) {
+  parseInlineSpecs: function(str, node, intoForrest) {
     var deferred = Q.defer();
     // First parse out the spec. The user should be using "this" to refer
     // to the current node.
@@ -5082,10 +5541,10 @@ CTS.Parser.Cts = {
         }
       }
     }
-    intoForrest.addSpec(spec, realize).then(function() {
+    intoForrest.addSpec(spec).then(function() {
       deferred.resolve(spec);
-    }, function() {
-      deferred.reject();
+    }, function(reason) {
+      deferred.reject(reason);
     });
     return deferred.promise;
   },
@@ -5605,9 +6064,11 @@ var Engine = CTS.Engine = function(opts, args) {
   var defaults;
   this.opts = opts || {};
 
+  this._booted = Q.defer();
+  this.booted = this._booted.promise;
+
   // The main tree.
   this.forrest = null;
-
   this.initialize.apply(this, args);
 };
 
@@ -5616,7 +6077,6 @@ var Engine = CTS.Engine = function(opts, args) {
 CTS.Fn.extend(Engine.prototype, Events, {
 
   initialize: function() {
-    this.forrest = new CTS.Forrest(this.opts.forrest);
   },
 
   /**
@@ -5630,46 +6090,66 @@ CTS.Fn.extend(Engine.prototype, Events, {
     CTS.Log.Info("CTS::Engine::render called on Primary Tree", pt);
     var options = CTS.Fn.extend({}, opts);
     pt.root._processIncoming();
-    //pt.render(options);
   },
 
   boot: function() {
     var self = this;
-    var ctsLoaded = this.loadCts();
-    var treesLoaded = ctsLoaded.then(
-      function() {
-        self.forrest.realizeDependencies();
-        self.forrest.realizeTrees().then(
-          function() {
-            self.forrest.realizeRelations();
-            self.render();
-          },
-          function(err) {
-            CTS.Log.Error("Couldn't load trees", err);
-          }
-        ).done();
-      },
-      function(err) {
-        CTS.Log.Error("Couldn't load CTS.", err);
-      }
-    ).done();
+    if (typeof self.booting != 'undefined') {
+      CTS.Error("Already booted / booting");
+    } else {
+      self.booting = true;
+    }
+    var uhoh = function(reason) {
+      deferred.reject(uhoh);
+    }
 
-    //    self.loadCts()
-//      .then(function() {
-//        self.forrest.realizeTrees().then(function() {
-//          alert("realized " + this.forrest.trees.length);
-//          self.forrest.realizeRelations();
-//          self.render();
-//        });
-//      });
+    self.loadForrest().then(
+      function() {
+        self.loadCts().then(
+          function() {
+            self.forrest.realizeDependencies().then(
+              function() {
+                self.forrest.realizeTrees().then(
+                  function() {
+                    self.forrest.realizeRelations().then(
+                      function() {
+                        self.render.call(self);
+                        self._booted.resolve();
+                      }, uhoh
+                    );
+                  }, uhoh
+                );
+              }, uhoh
+            );
+          }, uhoh
+        );
+      }, uhoh
+    );
+
+    return self.booted;
+  },
+
+  loadForrest: function() {
+    var deferred = Q.defer();
+    var self = this;
+    CTS.Factory.Forrest(this.opts.forrest).then(
+      function(forrest) {
+        self.forrest = forrest;
+        deferred.resolve();
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+    return deferred.promise;
   },
 
   loadCts: function() {
     var promises = [];
     var self = this;
-    Fn.each(Utilities.getTreesheetLinks(), function(block) {
+    Fn.each(CTS.Utilities.getTreesheetLinks(), function(block) {
+      var deferred = Q.defer();
       if (block.type == 'link') {
-        var deferred = Q.defer();
         CTS.Utilities.fetchString(block).then(
           function(content) { 
             var spec = CTS.Parser.parseForrestSpec(content, block.format);
@@ -5680,19 +6160,35 @@ CTS.Fn.extend(Engine.prototype, Events, {
             for (i = 0; i < spec.dependencySpecs.length; i++) {
               spec.dependencySpecs[i].loadedFrom = block.url;
             }
-            self.forrest.addSpec(spec);
-            deferred.resolve(); 
+            self.forrest.addSpec(spec).then(
+              function() {
+                deferred.resolve(); 
+              },
+              function(reason) {
+                deferred.reject(reason);
+              }
+            );
           },
           function(reason) {
             CTS.Log.Error("Couldn't fetch string.");
             deferred.reject(reason);
           }
         );
-        promises.push(deferred.promise);
       } else if (block.type == 'block') {
         var spec = CTS.Parser.parseForrestSpec(block.content, block.format);
-        self.forrest.addSpec(spec);
+        self.forrest.addSpec(spec).then(
+          function() {
+            deferred.resolve();
+          },
+          function(reason) {
+            deferred.reject(reason);
+          }
+        );
       }
+      if (typeof promises =='undefined') {
+        CTS.Log.Error("PUSH UNDEF");
+      }
+      promises.push(deferred.promise);
     }, this);
     return Q.all(promises);
   },
@@ -5716,25 +6212,6 @@ CTS.status = {
 
 CTS.status.libraryLoaded = CTS.status._libraryLoaded.promise;
 CTS.status.defaultTreeReady = CTS.status._defaultTreeReady.promise;
-
-CTS.shouldAutoload = function() {
-  var foundCtsElement = false;
-  var autoload = true;
-
-  // Search through <script> elements to find the CTS element.
-  CTS.Fn.each(CTS.$('script'), function(elem) {
-    var url = CTS.$(elem).attr('src');
-    if ((!CTS.Fn.isUndefined(url)) && (url != null) && (url.indexOf('cts.js') != 1)) {
-      foundCtsElement = true;
-      var param = CTS.Utilities.getUrlParameter('autoload', url);
-      if (param == 'false') {
-        autoload = false;
-      }
-    }
-  }, this);
-
-  return (foundCtsElement && autoload);
-};
 
 CTS.ensureJqueryThenMaybeAutoload = function() {
   if (typeof root.jQuery != 'undefined') {
@@ -5760,10 +6237,18 @@ CTS.ensureJqueryThenMaybeAutoload = function() {
 };
 
 CTS.maybeAutoload = function() {
-  if (CTS.shouldAutoload()) {
+  if (typeof CTS.shouldAutoload == 'undefined') {
+    CTS.shouldAutoload = CTS.autoloadCheck();
+  }
+  if (CTS.shouldAutoload) {
+    CTS.$('body').css('display', 'none');
     CTS.$(function() {
       CTS.engine = new CTS.Engine();
-      CTS.engine.boot();
+      CTS.engine.boot().then(
+        function() {
+          CTS.$('body').fadeIn();
+        }
+      );
     });
   }
 };

@@ -7,6 +7,9 @@ var Engine = CTS.Engine = function(opts, args) {
   var defaults;
   this.opts = opts || {};
 
+  this._booted = Q.defer();
+  this.booted = this._booted.promise;
+
   // The main tree.
   this.forrest = null;
   this.initialize.apply(this, args);
@@ -17,7 +20,6 @@ var Engine = CTS.Engine = function(opts, args) {
 CTS.Fn.extend(Engine.prototype, Events, {
 
   initialize: function() {
-    this.forrest = new CTS.Forrest(this.opts.forrest);
   },
 
   /**
@@ -31,44 +33,64 @@ CTS.Fn.extend(Engine.prototype, Events, {
     CTS.Log.Info("CTS::Engine::render called on Primary Tree", pt);
     var options = CTS.Fn.extend({}, opts);
     pt.root._processIncoming();
-    //pt.render(options);
   },
 
   boot: function() {
     var self = this;
-    var ctsLoaded = this.loadCts();
-    var treesLoaded = ctsLoaded.then(
-      function() {
-        self.forrest.realizeDependencies();
-        self.forrest.realizeTrees().then(
-          function() {
-            self.forrest.realizeRelations();
-            self.render();
-          },
-          function(err) {
-            CTS.Log.Error("Couldn't load trees", err);
-          }
-        ).done();
-      },
-      function(err) {
-        CTS.Log.Error("Couldn't load CTS.", err);
-      }
-    ).done();
+    if (typeof self.booting != 'undefined') {
+      CTS.Error("Already booted / booting");
+    } else {
+      self.booting = true;
+    }
+    var uhoh = function(reason) {
+      deferred.reject(uhoh);
+    }
 
-    //    self.loadCts()
-//      .then(function() {
-//        self.forrest.realizeTrees().then(function() {
-//          alert("realized " + this.forrest.trees.length);
-//          self.forrest.realizeRelations();
-//          self.render();
-//        });
-//      });
+    self.loadForrest().then(
+      function() {
+        self.loadCts().then(
+          function() {
+            self.forrest.realizeDependencies().then(
+              function() {
+                self.forrest.realizeTrees().then(
+                  function() {
+                    self.forrest.realizeRelations().then(
+                      function() {
+                        self.render.call(self);
+                        self._booted.resolve();
+                      }, uhoh
+                    );
+                  }, uhoh
+                );
+              }, uhoh
+            );
+          }, uhoh
+        );
+      }, uhoh
+    );
+
+    return self.booted;
+  },
+
+  loadForrest: function() {
+    var deferred = Q.defer();
+    var self = this;
+    CTS.Factory.Forrest(this.opts.forrest).then(
+      function(forrest) {
+        self.forrest = forrest;
+        deferred.resolve();
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+    return deferred.promise;
   },
 
   loadCts: function() {
     var promises = [];
     var self = this;
-    Fn.each(Utilities.getTreesheetLinks(), function(block) {
+    Fn.each(CTS.Utilities.getTreesheetLinks(), function(block) {
       var deferred = Q.defer();
       if (block.type == 'link') {
         CTS.Utilities.fetchString(block).then(
@@ -105,6 +127,9 @@ CTS.Fn.extend(Engine.prototype, Events, {
             deferred.reject(reason);
           }
         );
+      }
+      if (typeof promises =='undefined') {
+        CTS.Log.Error("PUSH UNDEF");
       }
       promises.push(deferred.promise);
     }, this);

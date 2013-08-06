@@ -26,7 +26,9 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
   execute: function(toward) {
 
     var opp = this.opposite(toward);
-    CTS.Log.Info("Graft from", opp, "to", toward);
+
+    CTS.Log.Info("Graft from", opp.tree.name, "to", toward.tree.name);
+
     if (opp != null) {
 
       //console.log("GRAFT THE FOLLOWING");
@@ -43,6 +45,9 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
         child._processIncoming();
         replacements.push(child);
       }
+      Fn.map(replacements, function(r) {
+        console.log("replacement", r.value.html());
+      });
       toward.replaceChildrenWith(replacements);
       toward.setProvenance(opp.tree, opp);
     }

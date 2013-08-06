@@ -14,7 +14,6 @@ CTS.Node.Json = function(node, tree, opts) {
   }
 };
  
-// ### Instance Methods
 CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
 
   updateDataType: function() {

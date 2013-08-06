@@ -84,15 +84,25 @@ CTS.Relation.Base = {
     var toRet = {};
     Fn.extend(toRet, this.defaultOpts);
     if (this.node1 === node) {
-      Fn.extend(toRet, this.spec.selectionSpec1.props);
+      if (this.spec && this.spec.selectionSpec1) {
+        Fn.extend(toRet, this.spec.selectionSpec1.props);
+      }
     } else if (this.node2 == node) {
-      Fn.extend(toRet, this.spec.selectionSpec2.props);
+      if (this.spec && this.spec.selectionSpec1) {
+        Fn.extend(toRet, this.spec.selectionSpec2.props);
+      }
     }
     return toRet;
   },
 
-  clone: function() {
-    return new CTS.Relation.Relation(this.node1, this.node2, this.spec);
+  clone: function(from, to) {
+    if (typeof from == 'undefined') {
+      from = this.node1;
+    }
+    if (typeof to == 'undefined') {
+      to = this.node2;
+    }
+    return new CTS.Relation.Relation(from, to, this.spec);
   },
 
   signature: function() {

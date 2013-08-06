@@ -9,8 +9,9 @@ CTS.Parser = {
     } else if (kind == 'string') {
       return CTS.Parser.Cts.parseInlineSpecs(body, node, intoForrest, realizeTrees);
     } else {
-      CTS.Log.Error("I don't understand the inline CTS format", kind);
-      return null;
+      var deferred = Q.defer();
+      deferred.reject("I don't understand the CTS Format:" + kind);
+      return deferred.promise;
     }
   },
 
@@ -20,7 +21,9 @@ CTS.Parser = {
     } else if (kind == 'string') {
       return CTS.Parser.Cts.parseForrestSpec(str);
     } else {
-      CTS.Log.Error("I don't understand the CTS Format", kind);
+      var deferred = Q.defer();
+      deferred.reject("I don't understand the CTS Format:" + kind);
+      return deferred.promise;
     }
   },
 

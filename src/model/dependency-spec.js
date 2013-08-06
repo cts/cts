@@ -21,10 +21,10 @@ DependencySpec.prototype.load = function() {
       script.setAttribute('src', this.url);
       document.getElementsByTagName('head')[0].appendChild(script);
     } else {
-      CTS.Logging.Error("DependencySpec: Unsure how to load", this.kind, this.url);
+      CTS.Log.Error("DependencySpec: Unsure how to load", this.kind, this.url);
     }
   } else {
-    CTS.Logging.Warn("DependencySpec: Not loading already loaded", this.kind, this.url);
+    CTS.Log.Warn("DependencySpec: Not loading already loaded", this.kind, this.url);
   }
 };
 

@@ -24,8 +24,8 @@ CTS.Parser.Cts = {
     }
     intoForrest.addSpec(spec).then(function() {
       deferred.resolve(spec);
-    }, function() {
-      deferred.reject();
+    }, function(reason) {
+      deferred.reject(reason);
     });
     return deferred.promise;
   },

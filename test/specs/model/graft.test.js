@@ -160,5 +160,5 @@ test("GRAFT with wrapping", function() {
     ),
     "section(div(wrapper(block(name1)) wrapper2(block2(name2)) wrapper3(block3(name3))))",
     "More complex mapping");
-
 });
+

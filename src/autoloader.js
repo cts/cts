@@ -11,25 +11,6 @@ CTS.status = {
 CTS.status.libraryLoaded = CTS.status._libraryLoaded.promise;
 CTS.status.defaultTreeReady = CTS.status._defaultTreeReady.promise;
 
-CTS.shouldAutoload = function() {
-  var foundCtsElement = false;
-  var autoload = true;
-
-  // Search through <script> elements to find the CTS element.
-  CTS.Fn.each(CTS.$('script'), function(elem) {
-    var url = CTS.$(elem).attr('src');
-    if ((!CTS.Fn.isUndefined(url)) && (url != null) && (url.indexOf('cts.js') != 1)) {
-      foundCtsElement = true;
-      var param = CTS.Utilities.getUrlParameter('autoload', url);
-      if (param == 'false') {
-        autoload = false;
-      }
-    }
-  }, this);
-
-  return (foundCtsElement && autoload);
-};
-
 CTS.ensureJqueryThenMaybeAutoload = function() {
   if (typeof root.jQuery != 'undefined') {
     CTS.$ = root.jQuery;
@@ -54,10 +35,18 @@ CTS.ensureJqueryThenMaybeAutoload = function() {
 };
 
 CTS.maybeAutoload = function() {
-  if (CTS.shouldAutoload()) {
+  if (typeof CTS.shouldAutoload == 'undefined') {
+    CTS.shouldAutoload = CTS.autoloadCheck();
+  }
+  if (CTS.shouldAutoload) {
+    CTS.$('body').css('display', 'none');
     CTS.$(function() {
       CTS.engine = new CTS.Engine();
-      CTS.engine.boot();
+      CTS.engine.boot().then(
+        function() {
+          CTS.$('body').fadeIn();
+        }
+      );
     });
   }
 };

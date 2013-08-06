@@ -32,6 +32,9 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
       ret = [];
     }
     if (this.value.is(selector)) {
+      if (typeof ret == 'undefined') {
+        CTS.Log.Error("push");
+      }
       ret.push(this);
     }
     for (var i = 0; i < this.children.length; i++) {
@@ -62,39 +65,31 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      var deferred = Q.defer();
      var last = deferred.promise;
 
-     var promises = [];
      this.children = [];
-     Fn.each(this.value.children(), function(child) {
-       var promise = Q.defer();
 
-       CTS.Node.Factory.Html(child, this.tree, this.opts).then(
-         function(node) {
+     // Map each child
+    
+     var self = this;
+     var promises = CTS.Fn.map(this.value.children(), function(child) {
+       var promise = CTS.Node.Factory.Html(child, self.tree, self.opts);
+       return promise;
+     });
 
 
- // NOTE: Neeed to do a linear chain! The kids have to be realized in proper order!
-
-
-
-           self.children.push(node);
-         },
-         function(reason) {
-           promise.reject(reason);
+     Q.all(promises).then(
+       function(results) {
+         self.children = results;
+         for (var i = 0; i < self.children.length; i++) {
+           var node = self.children[i];
+           node.parentNode = self;
+           self.tree._nodeLookup[node.ctsId] = node;
          }
-       );
-
-
-       promises.push(promise.promise);
-
-       var node = new CTS.Node.Html(child, this.tree, this.opts);
-
-     }, this);
-
-
-     this.children = CTS.Fn.map(this.value.children(), function(child) {
-       this.tree._nodeLookup[node.ctsId] = node;
-       node.parentNode = this;
-       return node;
-     }, this);
+         deferred.resolve();
+       },
+       function(reason) {
+         deferred.reject(reason);
+       }
+     );
 
      return deferred.promise;
    },
@@ -126,24 +121,36 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     * TODO(eob(): Implement some kind of locking here?
     */
    _onChildInserted: function(child) {
-     var ctsChild = new CTS.Node.Html(child, this.tree, this.opts);
-     ctsChild.parentNode = this;
-     // Need to get the right index of this child.
+     var self = this;
+     CTS.Node.Factory.Html(child, this.tree, this.opts).then(
+       function(ctsChild) {
+         ctsChild.parentNode = self;
+         var idx = child.index();
+         self.children[self.children.length] = null;
+         // TODO: need locking on kids
+         for (var i = self.children.length - 1; i >= idx; i--) {
+           if (i == idx) {
+             self.children[i] = ctsChild;
+           } else {
+             self.children[i] = self.children[i - 1];
+           }
+         }
 
-     var idx = child.index();
-
-     this.children[this.children.length] = null;
-     for (var i = this.children.length - 1; i >= idx; i--) {
-       if (i == idx) {
-         this.children[i] = ctsChild;
-       } else {
-         this.children[i] = this.children[i - 1];
+         ctsChild.realizeChildren().then(
+           function() {
+             //  Now run any rules.
+             CTS.Log.Info("Running CTS Rules on new node");
+             ctsChild._processIncoming();
+           },
+           function(reason) {
+             CTS.Log.Error("Could not realize children of new CTS node", ctsChild);
+           }
+         );
+       },
+       function(reason) {
+         CTS.Log.Error("Could not convert new node to CTS node", child, reason);
        }
-     }
-
-     ctsChild.realizeChildren();
-
-     return ctsChild;
+     );
    },
 
    /* 
@@ -161,15 +168,46 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      }
    },
 
-   _subclass_beginClone: function() {
-     var c = this.value.clone();
+   _subclass_beginClone: function(node) {
+     var value = null;
+     if (typeof node == "undefined") {
+       value = this.value.clone();
+     } else {
+       value = CTS.$(node);
+     }
 
      // NOTE: beginClone is allowed to directly create a Node
      // without going through the factory because we already can be
      // sure that all this node's trees have been realized
-     var d = new CTS.Node.Html(c, this.tree, this.opts);
-     d.realizeChildren();
-     return d;
+     var clone = new CTS.Node.Html(value, this.tree, this.opts);
+
+     // Handled by superclass
+     //for (var i = 0; i < this.relations.length; i++) {
+     //  var r = this.relations[i].clone();
+     //  r.rebind(this, clone);
+     //  clone.relations.push(r);
+     //}
+
+     if (this.children.length != clone.value.children().length) {
+       CTS.Log.Error("Trying to clone CTS node that is out of sync with dom");
+     }
+     // We use THIS to set i
+     for (var i = 0; i < this.children.length; i++) {
+       var childNode = clone.value.children()[i];
+       var child = this.children[i]._subclass_beginClone(childNode);
+       child.parentNode = clone;
+       this.tree._nodeLookup[child.ctsId] = child;
+       if (typeof child.children  == 'undefined') {
+         CTS.Log.Error("Kids undefined");
+       }
+       clone.children.push(child);
+     }
+
+     if (clone.relations.length > 0) {
+       CTS.Log.Error("After subclass clone, relations shouldn't be > 0");
+     }
+
+     return clone;
    },
 
   /************************************************************************
@@ -179,7 +217,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    ************************************************************************/
 
   getValue: function(opts) {
-    if (Fn.isUndefined(opts.attribute)) {
+    if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
       return this.value.html();
     } else {
       return this.value.attr(opts.attribute);
@@ -187,9 +225,9 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   setValue: function(value, opts) {
-    if (Fn.isUndefined(opts.attribute)) {
+    if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
       this.value.html(value);
-    } else {
+      CTS.Log.Info("Just set myself to", this.tree.name, value); } else {
       this.value.attr(opts.attribute, value);
     }
   },

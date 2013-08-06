@@ -24,7 +24,7 @@ test("Two trees present by default", function() {
 
 
 asyncTest("Properly sized content DOM is constructed", function () {
-  this.a.attr('data-cts', 'is: #b;');
+  this.a.attr('data-cts', 'this :is #b;');
   this.a.html('a');
   this.b.html('b');
   var engine = new CTS.Engine();
@@ -41,7 +41,7 @@ asyncTest("Properly sized content DOM is constructed", function () {
 });
 
 asyncTest("A rule is turned into a relation", function () {
-  this.a.attr('data-cts', 'is: #b;');
+  this.a.attr('data-cts', 'this :is #b;');
   this.a.html('a');
   this.b.html('b');
   var engine = new CTS.Engine();
@@ -71,7 +71,7 @@ asyncTest("getSubtreeRelations", function() {
 });
 
 test("ARE results in a depth-two tree", function () {
-  this.a.attr('data-cts', 'are: #b;');
+  this.a.attr('data-cts', 'this :are #b;');
   this.a.html('<li>Foo</li><li>Bar</li><li>Baz</li>');
   this.b.html("<div>Foo</div>");
   var A = new CTS.DomNode(this.a);

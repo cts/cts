@@ -1,4 +1,4 @@
-var Utilities = CTS.Utilities = {
+CTS.Fn.extend(CTS.Utilities, {
 
   getUrlBase: function(url) {
     var temp = document.createElement('a');
@@ -32,21 +32,38 @@ var Utilities = CTS.Utilities = {
   },
 
 
-  getUrlParameter: function(param, url) {
-    if (typeof url == 'undefined') {
-      url = window.location.search;
+  rewriteRelativeLinks: function(jqNode, sourceUrl) {
+    var base = CTS.Utilities.getUrlBase(sourceUrl);
+    var basePath = CTS.Utilities.getUrlBaseAndPath(sourceUrl);
+    var pat = /^https?:\/\//i;
+    var fixElemAttr = function(elem, attr) {
+      var a = elem.attr(attr);
+      if ((typeof a != 'undefined') && 
+          (a !== null) &&
+          (a.length > 0)) {
+        if (! pat.test(a)) {
+          if (a[0] == "/") {
+            a = base + a;
+          } else {
+            a = basePath + "/" + a;
+          }
+          elem.attr(attr, a); 
+        }
+      }
+    };
+    var fixElem = function(elem) {
+      if (elem.is('img')) {
+        fixElemAttr(elem, 'src');
+      } else if (elem.is('a')) {
+        fixElemAttr(elem, 'href');
+      } else {
+        // Do nothing
+      }
+      Fn.each(elem.children(), function(c) {
+        fixElem(CTS.$(c));
+      }, this);
     }
-
-    var p = param.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
-    var regexS = "[\\?&]" + p + "=([^&#]*)";
-    var regex = new RegExp(regexS);
-
-    var results = regex.exec(url)
-    if (results == null) {
-      return null;
-    } else {
-      return decodeURIComponent(results[1].replace(/\+/g, " "));
-    }
+    fixElem(jqNode);
   },
 
   /**
@@ -210,5 +227,4 @@ var Utilities = CTS.Utilities = {
     }
   }
 
-};
- 
+});

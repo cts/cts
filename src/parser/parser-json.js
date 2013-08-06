@@ -1,12 +1,16 @@
 CTS.Parser.Json = {
 
   parseInlineSpecs: function(json, node, intoForrest) {
+    var deferred = Q.defer();
+
     if (typeof json == 'string') {
       json = JSON.parse(json);
     }
 
     // Now we build a proper spec document around it.
     var relations = intoForrest.incorporateInlineJson(json, node);
+
+    return deferred.promise;
   },
 
   parseForrestSpec: function(json) {

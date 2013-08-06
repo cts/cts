@@ -10,8 +10,8 @@ CTS.Node = {};
 
 CTS.Node.Factory = {
   Html: function(node, tree, opts) {
-    var node = new CTS.Node.Html(node, tree, opts);
     var deferred = Q.defer();
+    var node = new CTS.Node.Html(node, tree, opts);
     node.registerInlineRelationSpecs().then(
       function() {
         deferred.resolve(node);
@@ -22,7 +22,7 @@ CTS.Node.Factory = {
     );
     return deferred.promise;
   }
-}
+};
 
 CTS.Node.Base = {
 
@@ -42,6 +42,9 @@ CTS.Node.Base = {
   },
 
   registerRelation: function(relation) {
+    if (typeof this.relations == 'undefined') {
+      CTS.Log.Error("PUSHHHH");
+    }
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
     }
@@ -54,11 +57,11 @@ CTS.Node.Base = {
 
   getRelations: function() {
     if (! this.checkedForInlineRealization) {
+      CTS.Log.Info("Checking for inline relizations");
       for (var i = 0; i < this.inlineRelationSpecs.length; i++) {
         var spec = this.inlineRelationSpecs[i];
-        if (! spec.realized) {
-          spec.realize();
-        }
+        console.log("Found spec", spec);
+        this.tree.forrest.realizeRelation(spec);
       }
       this.checkedForInlineRealization = true;
     }
@@ -67,35 +70,46 @@ CTS.Node.Base = {
 
   registerInlineRelationSpecs: function() {
     var deferred = Q.defer();
-    if (this.addedMyInlineRelationsToForrest) {
+
+    // Already added
+    if (this.addedMyInlineRelationsToForrest === true) {
       CTS.Log.Warn("Not registering inline relations: have already done so.");
       deferred.resolve();
-    } else {
-      this.addedMyInlineRelationsToForrest = true;
-      var specStr = this._subclass_getInlineRelationSpecString();
-      if (specStr) {
-        if ((typeof this.tree != 'undefined') && (typeof this.tree.forrest != 'undefined')) {
-          var p = CTS.Parser.parseInlineSpecs(specStr, this, this.tree.forrest, true);
-          p.then(function() {
-            deferred.resolve();
-          }, function(reason) {
-            deferred.reject(reason);
-          });
-        } else {
-          this.addedMyInlineRelationsToForrest = false;
-          if (Fn.isUndefined(this.tree) || (this.tree === null)) {
-            CTS.Log.Error("[Node] Could not add inline relns to null tree");
-            deferred.reject("Could not add line relations to null tree");
-          } else if (Fn.isUndefined(this.tree.forrest) || (this.tree.forrest === null)) {
-            CTS.Log.Error("[Node] Could not add inline relns to null forrest");
-            deferred.reject("Could not add inline relations to null forrest");
-          }
-        }
-      } else {
-        // There was no inline spec string
-        deferred.resolve();
-      }
+      return deferred.promise;
     }
+    
+    var specStr = this._subclass_getInlineRelationSpecString();
+
+    // No inline spec
+    if (! specStr) {
+      deferred.resolve();
+      return deferred.promise;
+    }
+
+    if (typeof this.tree == 'undefined') {
+      deferred.reject("Undefined tree");
+      return deferred.promise;
+    }
+
+
+    if (typeof this.tree.forrest == 'undefined') {
+      deferred.reject("Undefined forrest");
+      return deferred.promise;
+    }
+
+    var self = this;
+
+    CTS.Parser.parseInlineSpecs(specStr, self, self.tree.forrest, true).then(
+      function(forrestSpec) {
+        self.addedMyInlineRelationsToForrest = true;
+        self.inlineRelationSpecs = forrestSpec.relationSpecs;
+        deferred.resolve();
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+
     return deferred.promise;
   },
 
@@ -211,20 +225,43 @@ CTS.Node.Base = {
   },
 
   realizeChildren: function() {
+    var deferred = Q.defer();
+
     if (this.children.length != 0) {
       CTS.Log.Fatal("Trying to realize children when already have some.");
+      deferred.reject("Trying to realize when children > 0");
     }
-    this._subclass_realizeChildren();
-    CTS.Fn.each(this.children, function(child) {
-      child.realizeChildren();
-    });
+
+    var self = this;
+    var sc = this._subclass_realizeChildren();
+
+    sc.then(
+      function() {
+        var promises = CTS.Fn.map(self.children, function(child) {
+          return child.realizeChildren();
+        });
+        Q.all(promises).then(
+          function() {
+            deferred.resolve();
+          }, 
+          function(reason) {
+            deferred.reject(reason);
+          }
+        );
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+
+    return deferred.promise;
   },
 
   clone: function() {
     var c = this._subclass_beginClone();
-    // Note: because the subclass constructs it's own subtree,
-    // that means it is also responsible for cloning downstream nodes.
-    // But we DO need to clone downstream relations.
+    if (c.relations.length > 0) {
+      CTS.Log.Error("Clone shouldn't have relations yet");
+    }
     this.recursivelyCloneRelations(c);
     // Note that we DON'T wire up any parent-child relationships
     // because that would result in more than just cloning the node
@@ -234,9 +271,15 @@ CTS.Node.Base = {
   },
 
   recursivelyCloneRelations: function(to) {
-    var i;
     var r = this.getRelations();
-    for (i = 0; i < r.length; i++) {
+    if (to.relations.length > 0) {
+      CTS.Log.Error("Clone relations to non-empty relation container. Blowing away");
+      while (to.relations.length > 0) {
+        to.relations[0].destroy();
+      }
+    }
+
+    for (var i = 0; i < r.length; i++) {
       var n1 = r[i].node1;
       var n2 = r[i].node2;
       if (n1 == this) {
@@ -244,14 +287,14 @@ CTS.Node.Base = {
       } else if (n2 == this) {
         n2 = to;
       } else {
-        CTS.Fatal("Clone failed");
+        CTS.Log.Fatal("Clone failed");
       }
       var relationClone = r[i].clone(n1, n2);
     };
 
-    for (i = 0; i < this.getChildren().length; i++) {
-      var myKid = this.children[i];
-      var otherKid = to.children[i];
+    for (var j = 0; j < this.getChildren().length; j++) {
+      var myKid = this.children[j];
+      var otherKid = to.children[j];
       myKid.recursivelyCloneRelations(otherKid);
     }
   },

@@ -633,6 +633,7 @@ function Promise(descriptor, fallback, inspect) {
                 result = fallback.call(promise, op, args);
             }
         } catch (exception) {
+          CTS.Debugging.DumpStack();
             result = reject(exception);
         }
         if (resolve) {
@@ -672,6 +673,8 @@ Promise.prototype.then = function (fulfilled, rejected, progressed) {
         try {
             return typeof fulfilled === "function" ? fulfilled(value) : value;
         } catch (exception) {
+          console.log(exception);
+          CTS.Debugging.DumpStack();
             return reject(exception);
         }
     }
@@ -858,6 +861,7 @@ function displayUnhandledReasons() {
         !window.Touch &&
         window.console
     ) {
+      CTS.Debugging.DumpStack();
         console.warn("[Q] Unhandled rejection reasons (should be empty):",
                      unhandledReasons);
     }
@@ -1715,6 +1719,8 @@ function nodeify(promise, nodeback) {
 
 // All code before this point will be filtered from stack traces.
 var qEndingLine = captureLine();
+
+Q.longStackSupport = true;
 
 return Q;
 

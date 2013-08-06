@@ -86,16 +86,16 @@ test("Are manual test", function() {
     equal(t1.children[0].children[0].children[0].relations.length, 3);
     
     t1._processIncoming();
-    CTS.Debugging.DumpTree(t1);
    
     equal(t1.children[0].children.length, 3);
 
+    console.log("FOOO");
+    CTS.Debugging.DumpTree(t1);
     equal(t1.children[0].children[0].children[0].relations.length, 1, "span1 one child");
     equal(t1.children[0].children[1].children[0].relations.length, 1, "span2 one child");
     equal(t1.children[0].children[2].children[0].relations.length, 1, "span3 one child");
     
     equal(t1.children[0].children[0].children[0].getValue(), "name1");
-
 
 //  equal(
 //    CTS.Debugging.ForrestTest(

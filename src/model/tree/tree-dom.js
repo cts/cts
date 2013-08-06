@@ -1,27 +1,28 @@
 // Constructor
 // -----------
-CTS.Tree.Html = function(forrest, node, spec) {
-  CTS.Log.Info("DomTree::Constructor", [forrest, node]);
+CTS.Tree.Html = function(forrest, spec) {
   this._nodeLookup = {};
-  this.root = node;
-  this._nodeLookup[root.ctsId] = root;
-  this.root.setProvenance(this);
   this.forrest = forrest;
   this.spec = spec;
   this.name = spec.name;
-  this.root.realizeChildren();
-
-  // Listen for DOMNodeInserted events in the DOM tree, and spread
-  // propagation of that event into the CTS tree
-  var self = this;
-  this.root.value.on("DOMNodeInserted", function(evt) {
-    self.root.trigger("DOMNodeInserted", evt);
-  });
+  this.root = null;
 };
 
 // Instance Methods
 // ----------------
 CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
+  setRoot: function(node) {
+    this.root = node;
+    this._nodeLookup[root.ctsId] = root;
+    this.root.setProvenance(this);
+    // Listen for DOMNodeInserted events in the DOM tree, and spread
+    // propagation of that event into the CTS tree
+    var self = this;
+    this.root.value.on("DOMNodeInserted", function(evt) {
+      self.root.trigger("DOMNodeInserted", evt);
+    });
+  },
+
   nodesForSelectionSpec: function(spec) {
     if (spec.inline) {
       return [spec.inlineObject];

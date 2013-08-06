@@ -66,6 +66,9 @@ module.exports = function(grunt) {
           "src/model/selection-spec.js",
           "src/model/selection.js",
           "src/model/dependency-spec.js",
+         
+          /* For creating async stuff */
+          "src/model/factory.js",
 
           /* Parser */
           "src/parser/parser.js",
