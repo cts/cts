@@ -151,7 +151,8 @@ CTS.Fn.extend(Engine.prototype, Events, {
       promises.push(addSpecs(self.opts.forrestSpecs));
     }
 
-    if ((typeof self.autoLoadSpecs != 'undefined') && (self.autoLoadSpecs === true)) {
+    if ((typeof self.opts.autoLoadSpecs != 'undefined') && (self.opts.autoLoadSpecs === true)) {
+      alert("loading forrest specs from page");
       Fn.each(CTS.Utilities.getTreesheetLinks(), function(block) {
         var deferred = Q.defer();
         if ((block.type == 'link') || (block.type == 'block')) {
