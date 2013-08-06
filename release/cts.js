@@ -4593,9 +4593,9 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
     // Listen for DOMNodeInserted events in the DOM tree, and spread
     // propagation of that event into the CTS tree
     var self = this;
-    this.root.value.on("DOMNodeInserted", function(evt) {
-      self.root.trigger("DOMNodeInserted", evt);
-    });
+//    this.root.value.on("DOMNodeInserted", function(evt) {
+//      self.root.trigger("DOMNodeInserted", evt);
+//    });
   },
 
   nodesForSelectionSpec: function(spec) {
