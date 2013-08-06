@@ -19,6 +19,22 @@ var Forrest = CTS.Forrest = function(opts) {
   this.insertionListeners = {};
 
   this.opts = opts || {};
+
+  if (typeof opts.engine != 'undefined') {
+    this.engine = opts.engine;
+    // Default tree was realized.
+    // Add callback for DOM change events.
+    var self = this;
+    this.engine.booted.then(function() {
+      var listener = function(evt) {
+        self._onDomNodeInserted(self.trees.body, CTS.$(evt.target), evt);
+      };
+      self.insertionListeners[self.trees.body.name] = listener;
+      // jQuery Listener syntax.
+      self.trees.body.root.on("DOMNodeInserted", listener);
+    });
+  }
+
   this.initialize();
 };
 
@@ -50,14 +66,6 @@ CTS.Fn.extend(Forrest.prototype, {
     this.addTreeSpec(pageBody);
     this.realizeTree(pageBody).then(
      function(tree) {
-       // Default tree was realized.
-       // Add callback for DOM change events.
-       var listener = function(evt) {
-         self._onDomNodeInserted(tree, CTS.$(evt.target), evt);
-       };
-       self.insertionListeners[tree.name] = listener;
-       // jQuery Listener syntax.
-       tree.root.on("DOMNodeInserted", listener);
 
        // NOW CTS IS READY AND LOADED
        CTS.status._defaultTreeReady.resolve();
@@ -345,7 +353,7 @@ CTS.Fn.extend(Forrest.prototype, {
         if (ctsParent == null) {
           CTS.Log.Error("Node inserted into yet unmapped region of tree", p);
         } else {
-          CTS.Log.Info("Responding to new DOM node insertion");
+          CTS.Log.Info("Responding to new DOM node insertion", CTS.$(node).html());
           // Create the CTS tree for this region.
           var ctsNode = ctsParent._onChildInserted(node);
         }

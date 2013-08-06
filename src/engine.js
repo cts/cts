@@ -75,6 +75,10 @@ CTS.Fn.extend(Engine.prototype, Events, {
   loadForrest: function() {
     var deferred = Q.defer();
     var self = this;
+    if (typeof this.opts.forrest == 'undefined') {
+      this.opts.forrest = {};
+    }
+    this.opts.forrest.engine = this;
     CTS.Factory.Forrest(this.opts.forrest).then(
       function(forrest) {
         self.forrest = forrest;
