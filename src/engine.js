@@ -107,7 +107,8 @@ CTS.Fn.extend(Engine.prototype, Events, {
     var promises = [];
     var self = this;
 
-    if ((typeof self.forrestSpecs != 'undefined') && (self.forrestSpecs.length > 0)) {
+    if ((typeof self.opts.forrestSpecs != 'undefined') && (self.opts.forrestSpecs.length > 0)) {
+      alert("loading forrest specs from opts");
       for (var i = 0; i < self.forrestSpecs.length; i++) {
         (function(spec) {
           var deferred = Q.defer();
@@ -124,7 +125,8 @@ CTS.Fn.extend(Engine.prototype, Events, {
       }
     }
 
-    if ((typeof self.autoLoadSpecs != 'undefined') && (self.autoLoadSpecs === true)) {
+    if ((typeof self.opts.autoLoadSpecs != 'undefined') && (self.opts.autoLoadSpecs === true)) {
+      alert("loading forrest specs from page");
       Fn.each(CTS.Utilities.getTreesheetLinks(), function(block) {
         var deferred = Q.defer();
         if (block.type == 'link') {
