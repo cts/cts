@@ -1,11 +1,23 @@
 // Engine
 // ==========================================================================
 
-// Constructor
-// -----------
+/*
+ * Available options:
+ * 
+ * - autoLoadSpecs (default: true) - Should we autload specs from
+ *   script and link elements
+ * - forrestSpecs - optional array of forrest specs to load
+ *
+ */
+
+
 var Engine = CTS.Engine = function(opts, args) {
   var defaults;
   this.opts = opts || {};
+
+  if (typeof this.opts.autoLoadSpecs == 'undefined') {
+    this.opts.autoLoadSpecs = true;
+  }
 
   this._booted = Q.defer();
   this.booted = this._booted.promise;
@@ -75,6 +87,10 @@ CTS.Fn.extend(Engine.prototype, Events, {
   loadForrest: function() {
     var deferred = Q.defer();
     var self = this;
+    if (typeof this.opts.forrest == 'undefined') {
+      this.opts.forrest = {};
+    }
+    this.opts.forrest.engine = this;
     CTS.Factory.Forrest(this.opts.forrest).then(
       function(forrest) {
         self.forrest = forrest;
@@ -90,49 +106,69 @@ CTS.Fn.extend(Engine.prototype, Events, {
   loadCts: function() {
     var promises = [];
     var self = this;
-    Fn.each(CTS.Utilities.getTreesheetLinks(), function(block) {
-      var deferred = Q.defer();
-      if (block.type == 'link') {
-        CTS.Utilities.fetchString(block).then(
-          function(content) { 
-            var spec = CTS.Parser.parseForrestSpec(content, block.format);
-            var i;
-            for (i = 0; i < spec.treeSpecs.length; i++) {
-              spec.treeSpecs[i].loadedFrom = block.url;
+
+    if ((typeof self.forrestSpecs != 'undefined') && (self.forrestSpecs.length > 0)) {
+      for (var i = 0; i < self.forrestSpecs.length; i++) {
+        (function(spec) {
+          var deferred = Q.defer();
+          self.forrest.addSpec(spec).then(
+            function() {
+              deferred.resolve();
+            },
+            function(reason) {
+              deferred.reject(reason);
             }
-            for (i = 0; i < spec.dependencySpecs.length; i++) {
-              spec.dependencySpecs[i].loadedFrom = block.url;
-            }
-            self.forrest.addSpec(spec).then(
-              function() {
-                deferred.resolve(); 
-              },
-              function(reason) {
-                deferred.reject(reason);
+          );
+          promises.push(deferred.promise);
+        })(self.forrestSpecs[i]);
+      }
+    }
+
+    if ((typeof self.autoLoadSpecs != 'undefined') && (self.autoLoadSpecs === true)) {
+      Fn.each(CTS.Utilities.getTreesheetLinks(), function(block) {
+        var deferred = Q.defer();
+        if (block.type == 'link') {
+          CTS.Utilities.fetchString(block).then(
+            function(content) { 
+              var spec = CTS.Parser.parseForrestSpec(content, block.format);
+              var i;
+              for (i = 0; i < spec.treeSpecs.length; i++) {
+                spec.treeSpecs[i].loadedFrom = block.url;
               }
-            );
-          },
-          function(reason) {
-            CTS.Log.Error("Couldn't fetch string.");
-            deferred.reject(reason);
-          }
-        );
-      } else if (block.type == 'block') {
-        var spec = CTS.Parser.parseForrestSpec(block.content, block.format);
-        self.forrest.addSpec(spec).then(
-          function() {
-            deferred.resolve();
-          },
-          function(reason) {
-            deferred.reject(reason);
-          }
-        );
-      }
-      if (typeof promises =='undefined') {
-        CTS.Log.Error("PUSH UNDEF");
-      }
-      promises.push(deferred.promise);
-    }, this);
+              for (i = 0; i < spec.dependencySpecs.length; i++) {
+                spec.dependencySpecs[i].loadedFrom = block.url;
+              }
+              self.forrest.addSpec(spec).then(
+                function() {
+                  deferred.resolve(); 
+                },
+                function(reason) {
+                  deferred.reject(reason);
+                }
+              );
+            },
+            function(reason) {
+              CTS.Log.Error("Couldn't fetch string.");
+              deferred.reject(reason);
+            }
+          );
+        } else if (block.type == 'block') {
+          var spec = CTS.Parser.parseForrestSpec(block.content, block.format);
+          self.forrest.addSpec(spec).then(
+            function() {
+              deferred.resolve();
+            },
+            function(reason) {
+              deferred.reject(reason);
+            }
+          );
+        }
+        if (typeof promises =='undefined') {
+          CTS.Log.Error("PUSH UNDEF");
+        }
+        promises.push(deferred.promise);
+      }, this);
+    }
     return Q.all(promises);
   },
 

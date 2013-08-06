@@ -38,6 +38,9 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
       ret.push(this);
     }
     for (var i = 0; i < this.children.length; i++) {
+      if (typeof this.children[i] == 'undefined') {
+        debugger;
+      }
       this.children[i].find(selector, ret);
     }
     return ret;
@@ -81,6 +84,9 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
          self.children = results;
          for (var i = 0; i < self.children.length; i++) {
            var node = self.children[i];
+           if (typeof node == "undefined") {
+             CTS.Log.Error("Child is undefined");
+           }
            node.parentNode = self;
            self.tree._nodeLookup[node.ctsId] = node;
          }
