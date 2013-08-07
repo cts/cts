@@ -152,16 +152,12 @@ CTS.Fn.extend(Engine.prototype, Events, {
     }
 
     if ((typeof self.opts.autoLoadSpecs != 'undefined') && (self.opts.autoLoadSpecs === true)) {
-      alert("loading forrest specs from page");
       Fn.each(CTS.Utilities.getTreesheetLinks(), function(block) {
         var deferred = Q.defer();
-        if ((block.type == 'link') || (block.type == 'block')) {
+        if (block.type == 'link') {
           CTS.Utilities.fetchString(block).then(
             function(content) {
-              var url = undefined;
-              if (block.type == 'link') {
-                url = block.url;
-              }
+              var url = block.url;
               parseAndAddSpec(content, block.format, url).then(
                 function() {
                   deferred.resolve();
@@ -176,6 +172,17 @@ CTS.Fn.extend(Engine.prototype, Events, {
               CTS.Log.Error("Could not fetch CTS link:", block);
               deferred.resolve();
             });
+        } else if (block.type == 'block') {
+          var url = window.location;
+          parseAndAddSpec(block.content, block.format, url).then(
+            function() {
+              deferred.resolve();
+            },
+            function(reason) {
+              CTS.Log.Error("Could not parse and add spec", content, block);
+              deferred.resolve();
+            }
+          );
         } else {
           CTS.Log.Error("Could not load CTS: did not understand block type", block.block, block);
           deferred.resolve();
