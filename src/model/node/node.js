@@ -99,11 +99,16 @@ CTS.Node.Base = {
     var self = this;
 
     CTS.Parser.parseInlineSpecs(specStr, self, self.tree.forrest, true).then(
-      function(forrestSpec) {
-        self.addedMyInlineRelationsToForrest = true;
-        if (typeof forrestSpec.relationSpecs != 'undefined') {
-          self.inlineRelationSpecs = forrestSpec.relationSpecs;
-        }
+      function(forrestSpecs) {
+        console.log("Just got forrestSpecs", forrestSpecs);
+        Fn.each(forrestSpecs, function(forrestSpec) {
+          CTS.Log.Info("Parsed forrest spec", forrestSpec);
+          self.addedMyInlineRelationsToForrest = true;
+          if (typeof forrestSpec.relationSpecs != 'undefined') {
+            self.inlineRelationSpecs = forrestSpec.relationSpecs;
+            CTS.Log.Info("adding inline relation specs", self.inlineRelationSpecs);
+          }
+        });
         deferred.resolve();
       },
       function(reason) {

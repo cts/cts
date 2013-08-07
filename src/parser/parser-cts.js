@@ -4,29 +4,45 @@ CTS.Parser.Cts = {
     var deferred = Q.defer();
     // First parse out the spec. The user should be using "this" to refer
     // to the current node.
-    var spec = CTS.Parser.Cts.parseForrestSpec(str);
-    // We have to zip through here to find any instances of 'this' and replace
-    // it with the tree that we're working with.
-    if (typeof spec.relationSpecs != "undefined") {
-      for (var i = 0; i < spec.relationSpecs.length; i++) {
-        var rs = spec.relationSpecs[i];
-        var s1 = rs.selectionSpec1;
-        var s2 = rs.selectionSpec2;
-        if (s1.selectorString.trim() == "this") {
-          s1.inline = true;
-          s1.inlineObject = node;
-        }
-        if (s2.selectorString.trim() == "this") {
-          s2.inline = true;
-          s2.inlineObject = node;
-        }
+
+    CTS.Parser.Cts.parseForrestSpec(str).then(
+      function(specs) {
+        // We have to zip through here to find any instances of 'this' and replace
+        // it with the tree that we're working with.
+        var promises = Fn.map(specs, function(spec) {
+          if (typeof spec.relationSpecs != "undefined") {
+            for (var i = 0; i < spec.relationSpecs.length; i++) {
+              var rs = spec.relationSpecs[i];
+              var s1 = rs.selectionSpec1;
+              var s2 = rs.selectionSpec2;
+              if (s1.selectorString.trim() == "this") {
+                s1.inline = true;
+                s1.inlineObject = node;
+              }
+              if (s2.selectorString.trim() == "this") {
+                s2.inline = true;
+                s2.inlineObject = node;
+              }
+            }
+          }
+          return intoForrest.addSpec(spec);
+        });
+    
+        Q.all(promises).then(
+          // Specs here is ref to result from parseForrestSpec
+          function() {
+            deferred.resolve(specs);
+          },
+          function(reason) {
+            deferred.reject(reason);
+          }
+        );
+      },
+      function(reason) {
+        deferred.reject(reason);
       }
-    }
-    intoForrest.addSpec(spec).then(function() {
-      deferred.resolve(spec);
-    }, function(reason) {
-      deferred.reject(reason);
-    });
+    );
+
     return deferred.promise;
   },
 
