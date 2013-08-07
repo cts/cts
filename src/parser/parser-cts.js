@@ -85,9 +85,6 @@ CTS.Parser.Cts = {
     f.relationSpecs = json.relations;
     forrestSpecs.push(f);
     
-    // If there are any other linked specs, we'll load them here.
-    deferred.resolve(forrestSpecs);
-
     Q.all(remoteLoads).then(
       function(results) {
         // Results here contains MORE cts strings

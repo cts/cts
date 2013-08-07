@@ -7,9 +7,6 @@
  * - autoLoadSpecs (default: true) - Should we autload specs from
  *   script and link elements
  * - forrestSpecs - optional array of forrest specs to load
- * forrest {
- *   - body: - optional jQuery node which represents the body
- * }
  *
  */
 
@@ -123,6 +120,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
 
       CTS.Parser.parseForrestSpec(rawData, kind).then(
         function(specs) {
+          console.log("Got specs", specs);
           if (fromUrl != 'undefined') {
             Fn.each(specs, function(spec) {
               for (i = 0; i < spec.treeSpecs.length; i++) {
