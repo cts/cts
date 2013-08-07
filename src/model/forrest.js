@@ -116,12 +116,16 @@ CTS.Fn.extend(Forrest.prototype, {
     var i, j;
 
     // Load all the relation specs
-    for (j = 0; j < forrestSpec.relationSpecs.length; j++) {
-      self.addRelationSpec(forrestSpec.relationSpecs[j]);
+    if (typeof forrestSpec.relationSpecs != 'undefined') {
+      for (j = 0; j < forrestSpec.relationSpecs.length; j++) {
+        self.addRelationSpec(forrestSpec.relationSpecs[j]);
+      }
     }
     // Load all the dependency specs
-    for (dep in forrestSpec.dependencySpecs) {
-      forrestSpec.dependencySpecs[dep].load();
+    if (typeof forrestSpec.dependencySpecs != 'undefined') {
+      for (dep in forrestSpec.dependencySpecs) {
+        forrestSpec.dependencySpecs[dep].load();
+      }
     }
 
     // Load AND REALIZE all the tree specs
