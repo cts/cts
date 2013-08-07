@@ -57,7 +57,6 @@ CTS.Node.Base = {
 
   getRelations: function() {
     if (! this.checkedForInlineRealization) {
-      CTS.Log.Info("Checking for inline relizations");
       for (var i = 0; i < this.inlineRelationSpecs.length; i++) {
         var spec = this.inlineRelationSpecs[i];
         console.log("Found spec", spec);
@@ -102,7 +101,9 @@ CTS.Node.Base = {
     CTS.Parser.parseInlineSpecs(specStr, self, self.tree.forrest, true).then(
       function(forrestSpec) {
         self.addedMyInlineRelationsToForrest = true;
-        self.inlineRelationSpecs = forrestSpec.relationSpecs;
+        if (typeof forrestSpec.relationSpecs != 'undefined') {
+          self.inlineRelationSpecs = forrestSpec.relationSpecs;
+        }
         deferred.resolve();
       },
       function(reason) {
