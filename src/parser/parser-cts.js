@@ -50,6 +50,8 @@ CTS.Parser.Cts = {
     var deferred = Q.defer();
     var json = null;
     var remoteLoads = [];
+    var self = this;
+
     try {
       json = CTS.Parser.CtsImpl.parse(str.trim());
     } catch (e) {

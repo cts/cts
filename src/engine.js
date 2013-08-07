@@ -7,6 +7,9 @@
  * - autoLoadSpecs (default: true) - Should we autload specs from
  *   script and link elements
  * - forrestSpecs - optional array of forrest specs to load
+ * forrest {
+ *   - body: - optional jQuery node which represents the body
+ * }
  *
  */
 
