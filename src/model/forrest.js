@@ -129,28 +129,30 @@ CTS.Fn.extend(Forrest.prototype, {
     }
 
     // Load AND REALIZE all the tree specs
-    for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
-      (function(treeSpec) {
-        var treeSpec = forrestSpec.treeSpecs[i];
-        self.addTreeSpec(treeSpec);
-        var next = Q.defer();
-        last.then(
-          function() {
-            self.realizeTree(treeSpec).then(
-              function() {
-                next.resolve();
-              },
-              function(reason) {
-                next.reject(reason);
-              }
-            );
-          },
-          function(reason) {
-            next.reject(reason);
-          }
-        );
-        last = next.promise;
-      })(forrestSpec.treeSpecs[i])
+    if (typeof forrestSpec.treeSpecs != 'undefined') {
+      for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
+        (function(treeSpec) {
+          var treeSpec = forrestSpec.treeSpecs[i];
+          self.addTreeSpec(treeSpec);
+          var next = Q.defer();
+          last.then(
+            function() {
+              self.realizeTree(treeSpec).then(
+                function() {
+                  next.resolve();
+                },
+                function(reason) {
+                  next.reject(reason);
+                }
+              );
+            },
+            function(reason) {
+              next.reject(reason);
+            }
+          );
+          last = next.promise;
+        })(forrestSpec.treeSpecs[i])
+      }
     }
 
     initial.resolve();
