@@ -48,7 +48,7 @@ CTS.Factory = {
       );
       return deferred.promise;
     } else {
-      return CTS.Factory.TreeWithJquery(node, forrest, spec);
+      return CTS.Factory.TreeWithJquery(spec.url, forrest, spec);
     }
   },
 

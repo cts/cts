@@ -208,7 +208,7 @@ CTS.Fn.extend(Forrest.prototype, {
   realizeTree: function(treeSpec) {
     var deferred = Q.defer();
     var self = this;
-    if ((treeSpec.url !== null) && (treeSpec.url.indexOf("alias(") == 0) && (treeSpec.url[treeSpec.url.length - 1] == ")")) {
+    if ((treeSpec.url !== null) && (typeof treeSpec.url == "string") && (treeSpec.url.indexOf("alias(") == 0) && (treeSpec.url[treeSpec.url.length - 1] == ")")) {
       var alias = treeSpec.url.substring(6, treeSpec.url.length - 1);
       if (typeof self.trees[alias] != 'undefined') {
         self.trees[treeSpec.name] = self.trees[alias];
