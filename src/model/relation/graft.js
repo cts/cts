@@ -28,6 +28,8 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
     var opp = this.opposite(toward);
 
     CTS.Log.Info("Graft from", opp.tree.name, "to", toward.tree.name);
+    CTS.Log.Info("Opp", opp.value.html());
+    CTS.Log.Info("To", toward.value.html());
 
     if (opp != null) {
 
@@ -39,9 +41,16 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
       var replacements = [];
       for (var i = 0; i < opp.children.length; i++) {
         var child = opp.children[i].clone();
+
         // TODO(eob): This is a subtle bug. It means that you can't graft-map anything outside
         // the toward node that is being grafted.
-        child.pruneRelations(toward)
+        //child.pruneRelations(toward)
+        // TODO(eob): We were pruning before because of geometric duplication of relations
+        // when graft happened multiple times, and took out the pruneRelations above because it
+        // also removed relations from grafts of grafts (i.e., when one theme includes components of
+        // a common libray). So.. need to make sure that the fix to _subclass_begin_clone in Node (where
+        // nonzero starting .relations[] is cleared) fixes the original reason we were pruning)
+
         child._processIncoming();
         replacements.push(child);
       }
