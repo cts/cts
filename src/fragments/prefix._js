@@ -35,15 +35,17 @@ CTS.autoloadCheck = function() {
   // since we're executing, and scripts are loaded sequentially
   for (var i = scripts.length - 1; i >= 0; i++) {
     var script = scripts[i];
-    if ((typeof script.src != 'undefined') &&
-        (script.src != null) && 
-        ((script.src.indexOf('cts.js') != -1) ||
-         (script.src.indexOf('cts.min.js') != -1))) {
-      var param = CTS.Utilities.getUrlParameter('autoload', script.src)
-      if (param == 'false') {
-        return false;
-      } else {
-        return true;
+    if (typeof script != 'undefined') {
+      if ((typeof script.src != 'undefined') &&
+          (script.src != null) && 
+          ((script.src.indexOf('cts.js') != -1) ||
+           (script.src.indexOf('cts.min.js') != -1))) {
+        var param = CTS.Utilities.getUrlParameter('autoload', script.src)
+        if (param == 'false') {
+          return false;
+        } else {
+          return true;
+        }
       }
     }
   }

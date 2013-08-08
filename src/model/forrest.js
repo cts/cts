@@ -20,6 +20,9 @@ var Forrest = CTS.Forrest = function(opts) {
 
   this.opts = opts || {};
 
+  this._defaultTreeReady = Q.defer();
+  this.defaultTreeReady = this._defaultTreeReady.promise;
+
   if (typeof opts.engine != 'undefined') {
     this.engine = opts.engine;
     // Default tree was realized.
@@ -66,8 +69,7 @@ CTS.Fn.extend(Forrest.prototype, {
     this.addTreeSpec(pageBody);
     this.realizeTree(pageBody).then(
      function(tree) {
-
-       // NOW CTS IS READY AND LOADED
+       self._defaultTreeReady.resolve();
        CTS.status._defaultTreeReady.resolve();
        deferred.resolve();
      },
@@ -310,6 +312,18 @@ CTS.Fn.extend(Forrest.prototype, {
 
     var nodes1 = this.trees[s1.treeName].nodesForSelectionSpec(s1);
     var nodes2 = this.trees[s2.treeName].nodesForSelectionSpec(s2);
+
+    if (nodes1.length == 0) {
+      CTS.Log.Warn("Can not realize RelationSpec because selection is empty", s1);
+      debugger;
+      return;
+    }
+    if (nodes2.length == 0) {
+      CTS.Log.Warn("Can not realize RelationSpec because selection is empty", s2);
+      debugger;
+      return;
+    }
+
 
     for (var i = 0; i < nodes1.length; i++) {
       for (var j = 0; j < nodes2.length; j++) {
