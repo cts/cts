@@ -46,7 +46,7 @@ CTS.Parser.Cts = {
     return deferred.promise;
   },
 
-  parseForrestSpec: function(str) {
+  parseForrestSpec: function(str, fromLocation) {
     var deferred = Q.defer();
     var json = null;
     var remoteLoads = [];
@@ -74,7 +74,17 @@ CTS.Parser.Cts = {
           f.dependencySpecs.push(new DependencySpec('css', h[0]));
         } else if (kind == 'cts') {
           f.dependencySpecs.push(new DependencySpec('cts', h[0]));
-          remoteLoads.push(CTS.Utilities.fetchString({url: h[0]}));
+          var url = h[0];
+          if (typeof fromLocation != 'undefined') {
+            url = CTS.Utilities.fixRelativeUrl(url, fromLocation);
+          }
+          remoteLoads.push(
+            CTS.Utilities.fetchString({url: url}).then(
+              function(str) {
+                return self.parseForrestSpec(str, url);
+              }
+            )
+          );
         } else if (kind == 'js') {
           f.dependencySpecs.push(new DependencySpec('js', h[0]));
         } else {
@@ -86,24 +96,24 @@ CTS.Parser.Cts = {
     forrestSpecs.push(f);
     
     Q.all(remoteLoads).then(
-      function(results) {
+      function(moreSpecs) {
         // Results here contains MORE cts strings
-        var parsePromises = Fn.map(results, function(result) {
-          return self.parseForrestSpec(result);
-        });
-        Q.all(parsePromises).then(
-          function(moreSpecs) {
+        //var parsePromises = Fn.map(results, function(result) {
+        //  return self.parseForrestSpec(result);
+        //});
+//        Q.all(parsePromises).then(
+//          function(moreSpecs) {
             for (var i = 0; i < moreSpecs.length; i++) {
               for (var j = 0; j < moreSpecs[i].length; j++) {
                 forrestSpecs.push(moreSpecs[i][j]);
               }
             }
             deferred.resolve(forrestSpecs);
-          },
-          function(reason) {
-            deferred.reject(reason);
-          }
-        );
+//          },
+//          function(reason) {
+//            deferred.reject(reason);
+//          }
+//        );
       },
       function(reason) {
         deferred.reject(reason);

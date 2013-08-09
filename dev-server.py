@@ -42,7 +42,10 @@ class CORSHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(fs[6]))
         self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, HEAD, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "x-requested-with")
         self.end_headers()
+        print "Sending 200 OK: %s" % path
         return f
  
  

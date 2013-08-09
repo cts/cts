@@ -315,12 +315,10 @@ CTS.Fn.extend(Forrest.prototype, {
 
     if (nodes1.length == 0) {
       CTS.Log.Warn("Can not realize RelationSpec because selection is empty", s1);
-      debugger;
       return;
     }
     if (nodes2.length == 0) {
       CTS.Log.Warn("Can not realize RelationSpec because selection is empty", s2);
-      debugger;
       return;
     }
 

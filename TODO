@@ -1,5 +1,4 @@
 
-
 Test that each rule should only be run once.
 
 Fix the rule duplication problem with ARE. It geometriaclly multiplies rules
@@ -9,3 +8,7 @@ and we're clearing them out by resetting array in clone subcl.
 Even though rewriting happens with in coming HTML, the browser still tries to proactively load the resources in the backgroiund, producing error messages. To reduce clutter in the console, suppress it.
 
 Catch exceptions on CTS bootup and REMOVE the display:none from body if CTS never gets a change to finish.
+
+When a CTS URL is bad, it throws an exception. Better to handle as Error to log and get on with life.
+
+When a linked CTS file contains a relative URL without preceeding slash, the URL corrector doesn't add the remote CTS-source path, causing it to default to the path of the HTML file which originated it. Instaed, it should default to the CTS file that originated it.

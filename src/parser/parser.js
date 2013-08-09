@@ -15,11 +15,11 @@ CTS.Parser = {
     }
   },
 
-  parseForrestSpec: function(str, kind) {
+  parseForrestSpec: function(str, kind, fromUrl) {
     if (kind == 'json') {
-      return CTS.Parser.Json.parseForrestSpec(str);
+      return CTS.Parser.Json.parseForrestSpec(str, fromUrl);
     } else if (kind == 'string') {
-      return CTS.Parser.Cts.parseForrestSpec(str);
+      return CTS.Parser.Cts.parseForrestSpec(str, fromUrl);
     } else {
       var deferred = Q.defer();
       deferred.reject("I don't understand the CTS Format:" + kind);
@@ -27,11 +27,11 @@ CTS.Parser = {
     }
   },
 
-  parse: function(obj, kind) {
+  parse: function(obj, kind, fromUrl) {
     if (typeof kind == 'undefined') {
       kind = 'string';
     }
-    return CTS.Parser.parseForrestSpec(obj, kind);
+    return CTS.Parser.parseForrestSpec(obj, kind, fromUrl);
   },
 
   /* Inline specs can take the form:

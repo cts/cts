@@ -39,7 +39,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     }
     for (var i = 0; i < this.children.length; i++) {
       if (typeof this.children[i] == 'undefined') {
-        debugger;
+        CTS.Log.Error("Undefined child");
       }
       this.children[i].find(selector, ret);
     }
