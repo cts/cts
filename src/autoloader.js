@@ -27,7 +27,7 @@ CTS.ensureJqueryThenMaybeAutoload = function() {
     var proto = '';
     if ((typeof window != 'undefined') && 
         (typeof window.location != 'undefined') &&
-        (window.location.indexOf('file://') == 0)) {
+        (window.location.protocol == 'file:') {
       proto = 'http:';
     }
     s.setAttribute('src', proto + jquery);
