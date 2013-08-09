@@ -7,3 +7,5 @@ and we're clearing them out by resetting array in clone subcl.
 
 
 Even though rewriting happens with in coming HTML, the browser still tries to proactively load the resources in the backgroiund, producing error messages. To reduce clutter in the console, suppress it.
+
+Catch exceptions on CTS bootup and REMOVE the display:none from body if CTS never gets a change to finish.

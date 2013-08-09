@@ -23,7 +23,14 @@ CTS.ensureJqueryThenMaybeAutoload = function() {
     CTS.status._libraryLoaded.resolve();
   } else {
     var s = document.createElement('script');
-    s.setAttribute('src', '//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js');
+    var jquery = '//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js';
+    var proto = '';
+    if ((typeof window != 'undefined') && 
+        (typeof window.location != 'undefined') &&
+        (window.location.indexOf('file://') == 0)) {
+      proto = 'http:';
+    }
+    s.setAttribute('src', proto + jquery);
     s.setAttribute('type', 'text/javascript');
     s.onload = function() {
       CTS.$ = jQuery.noConflict();
