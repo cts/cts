@@ -1,6 +1,5 @@
 // Save a reference to the global object. `this` is `window` in a browser.
 var root = this;
-
 var CTS;
 
 if (typeof exports !== 'undefined') {
@@ -33,7 +32,7 @@ CTS.autoloadCheck = function() {
   var scripts = document.getElementsByTagName('script');
   // Do it backwards because this should be the LAST script
   // since we're executing, and scripts are loaded sequentially
-  for (var i = scripts.length - 1; i >= 0; i++) {
+  for (var i = scripts.length - 1; i >= 0; i--) {
     var script = scripts[i];
     if (typeof script != 'undefined') {
       if ((typeof script.src != 'undefined') &&

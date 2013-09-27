@@ -26,6 +26,7 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
   },
 
   execute: function(toward) {
+    CTS.Debugging.DumpStack();
     this._Are_AlignCardinalities(toward);
     toward.trigger('received-are', {
       target: toward,
@@ -49,7 +50,9 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
     var other = this.opposite(toward);
     var otherIterables = this._Are_GetIterables(other);
     var myIterables = this._Are_GetIterables(toward);
- 
+    CTS.Log.Info("Before Align");
+    CTS.Debugging.DumpTree(toward);
+
     if (myIterables.length > 0) {
       while (myIterables.length > 1) {
         var bye = myIterables.pop();
@@ -73,6 +76,8 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
         myIterables[0].pruneRelations(otherIterables[0], other);
       }
     }
+    CTS.Log.Info("After Align");
+    CTS.Debugging.DumpTree(toward);
   },
 
   _Are_GetIterables: function(node) {

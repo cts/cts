@@ -159,13 +159,13 @@ module("Parser", {
 //  });
 //});
 //
-asyncTest("Complicated 2", function() {
-  var hard = $.ajax("/test/assets/example1.cts");
-  hard.done(function(cts) {
-    var s = Date.now();
-    spec = CTS.Parser.parse(cts);
-    var t = Date.now();
-    equal(spec.relationSpecs.length, 6, "6 relations");
-    start();
-  });
-});
+//asyncTest("Complicated 2", function() {
+//  var hard = $.ajax("/test/assets/example1.cts");
+//  hard.done(function(cts) {
+//    var s = Date.now();
+//    spec = CTS.Parser.parse(cts);
+//    var t = Date.now();
+//    equal(spec.relationSpecs.length, 6, "6 relations");
+//    start();
+//  });
+//});

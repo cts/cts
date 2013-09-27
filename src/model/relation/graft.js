@@ -27,9 +27,9 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
 
     var opp = this.opposite(toward);
 
-    CTS.Log.Info("Graft from", opp.tree.name, "to", toward.tree.name);
-    CTS.Log.Info("Opp", opp.value.html());
-    CTS.Log.Info("To", toward.value.html());
+    //CTS.Log.Info("Graft from", opp.tree.name, "to", toward.tree.name);
+    //CTS.Log.Info("Opp", opp.value.html());
+    // CTS.Log.Info("To", toward.value.html());
 
     if (opp != null) {
 

@@ -62,7 +62,6 @@ CTS.Fn.extend(SelectionSpec.prototype, {
       selector = new DomSelector(parts[2]);
     } 
 
-    console.log("s", selector);
     if (selector !== null) {
       selector.treeName = parts[0];
       selector.treeType = parts[1];

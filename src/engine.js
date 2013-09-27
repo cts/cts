@@ -48,6 +48,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
   },
 
   boot: function() {
+    console.log("CTS engine booting...");
     var self = this;
     if (typeof self.booting != 'undefined') {
       CTS.Error("Already booted / booting");

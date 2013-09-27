@@ -22,6 +22,7 @@ CTS.ensureJqueryThenMaybeAutoload = function() {
     CTS.maybeAutoload();
     CTS.status._libraryLoaded.resolve();
   } else {
+    console.log("CTS Loading jQuery...");
     var s = document.createElement('script');
     var jquery = '//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js';
     var proto = '';
@@ -42,6 +43,7 @@ CTS.ensureJqueryThenMaybeAutoload = function() {
 };
 
 CTS.maybeAutoload = function() {
+  console.log("CTS Autoload check...");
   if (typeof CTS.shouldAutoload == 'undefined') {
     CTS.shouldAutoload = CTS.autoloadCheck();
   }
@@ -59,5 +61,4 @@ CTS.maybeAutoload = function() {
 };
 
 CTS.ensureJqueryThenMaybeAutoload();
-
 

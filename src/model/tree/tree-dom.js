@@ -15,8 +15,8 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
     this.root = node;
     this._nodeLookup[root.ctsId] = root;
     this.root.setProvenance(this);
-    // Listen for DOMNodeInserted events in the DOM tree, and spread
-    // propagation of that event into the CTS tree
+    
+    // Propagate insertion events from HTML -> CTS Node
     var self = this;
     this.root.value.on("DOMNodeInserted", function(evt) {
       self.root.trigger("DOMNodeInserted", evt);

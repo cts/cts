@@ -25,6 +25,7 @@
     "grunt-contrib-qunit": "*",
     "grunt-contrib-concat": "*",
     "grunt-contrib-watch": "*",
+    "url": "*",
     "jison": "*"
   },
   "engines": { "node": ">= 0.8.14" }
