@@ -373,9 +373,6 @@ CTS.Node.Base = {
   },
 
   _processIncomingRelations: function(relations, name, once) {
-    if (relations.length > 0) {
-      alert("Node has " + relations.length + " incoming");
-    }
     for (var i = 0; i < relations.length; i++) {
       if (relations[i].name == name) {
         if (relations[i].node1.equals(this)) {
