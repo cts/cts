@@ -10,6 +10,10 @@ CTS.status = {
 
 CTS.status.libraryLoaded = CTS.status._libraryLoaded.promise;
 CTS.status.defaultTreeReady = CTS.status._defaultTreeReady.promise;
+CTS.status.defaultTreeReady.then(
+  function() { CTS._ready.resolve() },
+  function(reason) { CTS._ready.reject(reason); }
+);
 
 CTS.ensureJqueryThenMaybeAutoload = function() {
   if (typeof root.jQuery != 'undefined') {
