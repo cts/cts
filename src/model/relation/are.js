@@ -26,7 +26,6 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
   },
 
   execute: function(toward) {
-    CTS.Debugging.DumpStack();
     this._Are_AlignCardinalities(toward);
     toward.trigger('received-are', {
       target: toward,

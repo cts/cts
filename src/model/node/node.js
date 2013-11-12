@@ -399,6 +399,35 @@ CTS.Node.Base = {
     this.value = v;
   },
 
+  hasRule: function(name) {
+    for (var i = 0; i < this.relations.length; i++) {
+      if (this.relations[i].name == name) {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  /* Parent needs to have an ARE and we also need to be within
+   * the scope.
+   */
+  isEnumerated: function() {
+    if (this.parentNode != null) {
+      var p = this.parentNode;
+      for (var i = 0; i < p.relations.length; i++) {
+        if (p.relations[i].name == 'are') {
+          var r = p.relations[i];
+          var opts = r.optsFor(p);
+          var iterables = node.getChildren().slice(opts.prefix, kids.length - opts.suffix);
+          if (iterables.indexOf(this) > -1) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  },
+
   descendantOf: function(other) {
     return false;
   },

@@ -97,6 +97,7 @@ CTS.Fn.extend(CTS.Utilities, {
       var sub = CTS.$(elem).attr('data-subtheme');
       if (str != null) {
         var urls = CTS.Utilities.themeUrls(str, sub);
+        console.log("Loading theme", urls);
         for (var k = 0; k < urls.length; k++) {
           var block = {
             type: 'link',
@@ -166,15 +167,15 @@ CTS.Fn.extend(CTS.Utilities, {
     if ((typeof subthemeRef != 'undefined') && (subthemeRef !== null)) {
       page = subthemeRef;
     }
-
+    var base = CTS.Constants.mockupBase;
     if (page == null) {
-      return "http://treesheets.csail.mit.edu/mockups/" + kind + "/" + name + "/" + name + ".cts"
-    } else {
-      return [
-        "http://treesheets.csail.mit.edu/mockups/" + kind + "/" + page + ".cts",
-        "http://treesheets.csail.mit.edu/mockups/" + kind + "/" + name + "/" + page + ".cts"
-      ];
+      page = 'index';
     }
+
+    return [
+      (base + kind + "/" + page + ".cts"),
+      (base + kind + "/" + name + "/" + page + ".cts")
+    ];
   },
 
   fixRelativeUrl: function(url, loadedFrom) {

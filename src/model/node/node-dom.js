@@ -285,7 +285,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
 //  },
 
   _subclass_on: function(evtName, handler) {
-    // TODO(eob): fix this..
     console.log("adding listener for", evtName);
     this.value.on(evtName, handler);
   }

@@ -11,8 +11,8 @@ CTS.Tree.Html = function(forrest, spec) {
 // Instance Methods
 // ----------------
 CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
-  setRoot: function(node) {
-    this.root = node;
+  setRoot: function($$node) {
+    this.root = $$node;
     this._nodeLookup[root.ctsId] = root;
     this.root.setProvenance(this);
     
@@ -31,9 +31,9 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
       return results;
     }
   },
-
-  getCtsNode: function(jqNode) {
-    var ctsId = jqNode.attr('data-ctsid');
+  
+  getCtsNode: function($node) {
+    var ctsId = $node.attr('data-ctsid');
     if ((ctsId == null) || (typeof ctsId == 'undefined')) {
       return null;
     } else if ((typeof this._nodeLookup[ctsId] == 'undefined') ||

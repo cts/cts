@@ -8,6 +8,9 @@ if (typeof exports !== 'undefined') {
   CTS = root.CTS = {};
 }
 
+CTS.Constants = {
+};
+
 CTS.Utilities = {
   getUrlParameter: function(param, url) {
     if (typeof url == 'undefined') {
@@ -38,7 +41,8 @@ CTS.autoloadCheck = function() {
       if ((typeof script.src != 'undefined') &&
           (script.src != null) && 
           ((script.src.indexOf('cts.js') != -1) ||
-           (script.src.indexOf('cts.min.js') != -1))) {
+           (script.src.indexOf('cts.min.js') != -1) ||
+           (script.src.indexOf('cts.dev.js') != -1))) {
         var param = CTS.Utilities.getUrlParameter('autoload', script.src)
         if (param == 'false') {
           return false;

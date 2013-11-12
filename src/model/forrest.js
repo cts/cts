@@ -365,15 +365,18 @@ CTS.Fn.extend(Forrest.prototype, {
     if (typeof evt.ctsHandled == 'undefined') {
       var ctsNode = tree.getCtsNode(node);
       if (ctsNode == null) {
-        // Get the parent
-        var p = CTS.$(CTS.$(node).parent());
-        var ctsParent = tree.getCtsNode(p);
-        if (ctsParent == null) {
-          CTS.Log.Error("Node inserted into yet unmapped region of tree", p);
-        } else {
-          CTS.Log.Info("Responding to new DOM node insertion", CTS.$(node).html());
-          // Create the CTS tree for this region.
-          var ctsNode = ctsParent._onChildInserted(node);
+        var $node = CTS.$(node);
+        if (! $node.hasClass("cts-ignore")) {
+          // Get the parent
+          var p = CTS.$(CTS.$(node).parent());
+          var ctsParent = tree.getCtsNode(p);
+          if (ctsParent == null) {
+            CTS.Log.Error("Node inserted into yet unmapped region of tree", p);
+          } else {
+            CTS.Log.Info("Responding to new DOM node insertion", CTS.$(node).html());
+            // Create the CTS tree for this region.
+            var ctsNode = ctsParent._onChildInserted(node);
+          }
         }
       }
       evt.ctsHandled = true;

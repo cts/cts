@@ -105,6 +105,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
   },
 
   loadCts: function() {
+    console.log("HI");
     var promises = [];
     var self = this;
 
