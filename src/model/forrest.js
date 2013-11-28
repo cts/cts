@@ -21,6 +21,7 @@ var Forrest = CTS.Forrest = function(opts) {
   this.opts = opts || {};
 
   this._defaultTreeReady = Q.defer();
+
   this.defaultTreeReady = this._defaultTreeReady.promise;
 
   if (typeof opts.engine != 'undefined') {
@@ -29,12 +30,7 @@ var Forrest = CTS.Forrest = function(opts) {
     // Add callback for DOM change events.
     var self = this;
     this.engine.booted.then(function() {
-      var listener = function(evt) {
-        self._onDomNodeInserted(self.trees.body, CTS.$(evt.target), evt);
-      };
-      self.insertionListeners[self.trees.body.name] = listener;
-      // jQuery Listener syntax.
-      self.trees.body.root.on("DOMNodeInserted", listener);
+      self.listenForNodeInsertionOnTree('root', true);
     });
   }
 
@@ -360,6 +356,40 @@ CTS.Fn.extend(Forrest.prototype, {
    * Event Handlers
    *
    * -------------------------------------------------------- */
+
+  listenForNodeInsertionsOnTree: function(treeName, new_val) {
+    var listening = (treeName in this.insertionListeners);
+    var tree = self.trees[treeName];
+
+    if (typeof tree == 'undefined'){ 
+      CTS.Log.Error("listenForNodeInsertion (" + new_val + "):" +
+          "Tree " + treeName + " not present.");
+      return false;
+    }
+
+    if (typeof new_val == 'undefined') {
+      // Get the current status.
+      return listening;
+    } else {
+      // Set
+      if (listening == new_val) {
+        return listening;
+      } else if (new_val == true) {
+        var listener = function(evt) {
+          self._onDomNodeInserted(tree, CTS.$(evt.target), evt);
+        };
+        tree.root.on("DOMNodeInserted", listener);
+        self.insertionListeners[treeName] = listener;
+        return true;
+      } else if (new_val == false) {
+        var listener = self.insertionListeners[treeName];
+        tree.root.off("DOMNodeInserted", listener);
+        delete self.insertionListeners[treeName];
+        return false;
+      }
+    }
+  },
+
   _onDomNodeInserted: function(tree, node, evt) {
     // If the tree is the main tree, we want to possibly run any CTS
     if (typeof evt.ctsHandled == 'undefined') {
