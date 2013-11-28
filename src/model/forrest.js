@@ -18,7 +18,7 @@ var Forrest = CTS.Forrest = function(opts) {
 
   this.insertionListeners = {};
 
-  this.opts = opts || {};
+  this.opts = CTS.Fn.buildOptions(CTS.Forrest.defaultOptions, opts);
 
   this._defaultTreeReady = Q.defer();
 
@@ -30,11 +30,15 @@ var Forrest = CTS.Forrest = function(opts) {
     // Add callback for DOM change events.
     var self = this;
     this.engine.booted.then(function() {
-      self.listenForNodeInsertionOnTree('root', true);
+      self.listenForNodeInsertionOnTree('body', true);
     });
   }
 
   this.initialize();
+};
+
+CTS.Forrest.defaultOptions = {
+  listenForNodeInsertionOnBody: true
 };
 
 // Instance Methods

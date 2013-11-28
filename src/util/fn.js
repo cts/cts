@@ -70,6 +70,28 @@ var Fn = CTS.Fn = {
     return obj;
   },
 
+  /*
+   * Like Underscore's extend but recurses.
+   */
+  deepExtend: function(destination, source) {
+    for (var property in source) {
+      if (source[property] && source[property].constructor &&
+       source[property].constructor === Object) {
+        destination[property] = destination[property] || {};
+        arguments.callee(destination[property], source[property]);
+      } else {
+        destination[property] = source[property];
+      }
+    }
+    return destination;
+  },
+
+  buildOptions: function(defaults, overrides) {
+    var ret = CTS.Fn.deepExtend({}, defaults);
+    CTS.Fn.deepExtend(ret, overrides);
+    return ret;
+  },
+
   isObject: function(obj) {
     return obj === Object(obj);
   },
