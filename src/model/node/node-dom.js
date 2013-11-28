@@ -4,13 +4,14 @@ CTS.Node.Html = function(node, tree, opts) {
   this.initializeNodeBase(tree, opts);
   this.kind = "HTML";
   this.value = this._createJqueryNode(node);
-  var currentAttr = this.value.attr('data-ctsid');
-//  if ((typeof currentAttr != 'undefined') && (currentAttr != null)) {
-//    CTS.Log.Warn("Warning: Creating Node.Html for element with ctsId", this);
-//  }
   this.ctsId = Fn.uniqueId().toString();
   this.tree._nodeLookup[this.ctsId] = this;
-  this.value.attr('data-ctsid', this.ctsId);
+  this.value.data('ctsid', this.ctsId);
+
+  //var currentAttr = this.value.attr('data-ctsid');
+  //  if ((typeof currentAttr != 'undefined') && (currentAttr != null)) {
+  //    CTS.Log.Warn("Warning: Creating Node.Html for element with ctsId", this);
+  //  }
 
   this.on('received-is', function() {
     this.value.trigger('cts-received-is');

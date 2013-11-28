@@ -34,8 +34,8 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
   },
   
   getCtsNode: function($node) {
-    var ctsId = $node.attr('data-ctsid');
-    if ((ctsId == null) || (typeof ctsId == 'undefined')) {
+    var ctsId = $node.data('ctsid');
+    if ((ctsId == null) || (typeof ctsId == 'undefined') || (ctsId == '')) {
       return null;
     } else if ((typeof this._nodeLookup[ctsId] == 'undefined') ||
                (this._nodeLookup[ctsId] == null)) {
@@ -55,7 +55,7 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
       } else if (new_val == true) {
         // Turn on.
         this.insertionListener = function(evt) {
-          this.root.trigger("DOMNodeInserted", evt);
+          self.root.trigger("DOMNodeInserted", evt);
         };
         this.root.value.on("DOMNodeInserted", this.insertionListener);
       } else if (new_val == false) {
