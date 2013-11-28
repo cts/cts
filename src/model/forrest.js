@@ -8,6 +8,7 @@
 // Constructor
 // -----------
 var Forrest = CTS.Forrest = function(opts) {
+  var self = this;
   this.forrestSpecs = [];
 
   this.treeSpecs = {};
@@ -28,9 +29,10 @@ var Forrest = CTS.Forrest = function(opts) {
     this.engine = opts.engine;
     // Default tree was realized.
     // Add callback for DOM change events.
-    var self = this;
     this.engine.booted.then(function() {
-      self.listenForNodeInsertionOnTree('body', true);
+      if (self.opts.listenForNodeInsertionOnBody) {
+        self.listenForNodeInsertionsOnTree('body', true);
+      }
     });
   }
 
@@ -363,7 +365,8 @@ CTS.Fn.extend(Forrest.prototype, {
 
   listenForNodeInsertionsOnTree: function(treeName, new_val) {
     var listening = (treeName in this.insertionListeners);
-    var tree = self.trees[treeName];
+    var tree = this.trees[treeName];
+    var self = this;
 
     if (typeof tree == 'undefined'){ 
       CTS.Log.Error("listenForNodeInsertion (" + new_val + "):" +
@@ -384,13 +387,13 @@ CTS.Fn.extend(Forrest.prototype, {
         };
         tree.root.on("DOMNodeInserted", listener); // Starts CTS node
         tree.listenForNodeInsertions(new_val); // Starts jqnode
-        self.insertionListeners[treeName] = listener;
+        this.insertionListeners[treeName] = listener;
         return true;
       } else if (new_val == false) {
-        var listener = self.insertionListeners[treeName];
+        var listener = this.insertionListeners[treeName];
         tree.root.off("DOMNodeInserted", listener); // Stops CTS Node
         tree.listenForNodeInsertions(new_val); // Stops jqnode
-        delete self.insertionListeners[treeName];
+        delete this.insertionListeners[treeName];
         return false;
       }
     }

@@ -55,7 +55,7 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
       } else if (new_val == true) {
         // Turn on.
         this.insertionListener = function(evt) {
-          self.root.trigger("DOMNodeInserted", evt);
+          this.root.trigger("DOMNodeInserted", evt);
         };
         this.root.value.on("DOMNodeInserted", this.insertionListener);
       } else if (new_val == false) {
