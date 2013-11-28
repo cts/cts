@@ -382,12 +382,14 @@ CTS.Fn.extend(Forrest.prototype, {
         var listener = function(evt) {
           self._onDomNodeInserted(tree, CTS.$(evt.target), evt);
         };
-        tree.root.on("DOMNodeInserted", listener);
+        tree.root.on("DOMNodeInserted", listener); // Starts CTS node
+        tree.listenForNodeInsertions(new_val); // Starts jqnode
         self.insertionListeners[treeName] = listener;
         return true;
       } else if (new_val == false) {
         var listener = self.insertionListeners[treeName];
-        tree.root.off("DOMNodeInserted", listener);
+        tree.root.off("DOMNodeInserted", listener); // Stops CTS Node
+        tree.listenForNodeInsertions(new_val); // Stops jqnode
         delete self.insertionListeners[treeName];
         return false;
       }

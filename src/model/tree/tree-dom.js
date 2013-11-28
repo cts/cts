@@ -6,6 +6,7 @@ CTS.Tree.Html = function(forrest, spec) {
   this.spec = spec;
   this.name = spec.name;
   this.root = null;
+  this.insertionListener = null;
 };
 
 // Instance Methods
@@ -41,6 +42,28 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
       return null;
     } else {
       return this._nodeLookup[ctsId];
+    }
+  },
+
+  listenForNodeInsertions: function(new_val) {
+    var listening = (this.insertionListener != null);
+    if (typeof new_val == 'undefined') {
+      return listening;
+    } else {
+      if (new_val == listening) {
+        return new_val;
+      } else if (new_val == true) {
+        // Turn on.
+        this.insertionListener = function(evt) {
+          self.root.trigger("DOMNodeInserted", evt);
+        };
+        this.root.value.on("DOMNodeInserted", this.insertionListener);
+      } else if (new_val == false) {
+        this.root.value.off("DOMNodeInserted", this.insertionListener);
+        this.insertionListener = null;
+      } else {
+        CTS.Log.Error("Invalid value passed to listenForNodeInsertions");
+      }
     }
   }
 
