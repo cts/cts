@@ -8,6 +8,7 @@
 // Constructor
 // -----------
 var Forrest = CTS.Forrest = function(opts) {
+  var self = this;
   this.forrestSpecs = [];
 
   this.treeSpecs = {};
@@ -18,27 +19,28 @@ var Forrest = CTS.Forrest = function(opts) {
 
   this.insertionListeners = {};
 
-  this.opts = opts || {};
+  this.opts = CTS.Fn.buildOptions(CTS.Forrest.defaultOptions, opts);
 
   this._defaultTreeReady = Q.defer();
+
   this.defaultTreeReady = this._defaultTreeReady.promise;
 
   if (typeof opts.engine != 'undefined') {
     this.engine = opts.engine;
     // Default tree was realized.
     // Add callback for DOM change events.
-    var self = this;
     this.engine.booted.then(function() {
-      var listener = function(evt) {
-        self._onDomNodeInserted(self.trees.body, CTS.$(evt.target), evt);
-      };
-      self.insertionListeners[self.trees.body.name] = listener;
-      // jQuery Listener syntax.
-      self.trees.body.root.on("DOMNodeInserted", listener);
+      if (self.opts.listenForNodeInsertionOnBody) {
+        self.listenForNodeInsertionsOnTree('body', true);
+      }
     });
   }
 
   this.initialize();
+};
+
+CTS.Forrest.defaultOptions = {
+  listenForNodeInsertionOnBody: true
 };
 
 // Instance Methods
@@ -360,6 +362,43 @@ CTS.Fn.extend(Forrest.prototype, {
    * Event Handlers
    *
    * -------------------------------------------------------- */
+
+  listenForNodeInsertionsOnTree: function(treeName, new_val) {
+    var listening = (treeName in this.insertionListeners);
+    var tree = this.trees[treeName];
+    var self = this;
+
+    if (typeof tree == 'undefined'){ 
+      CTS.Log.Error("listenForNodeInsertion (" + new_val + "):" +
+          "Tree " + treeName + " not present.");
+      return false;
+    }
+
+    if (typeof new_val == 'undefined') {
+      // Get the current status.
+      return listening;
+    } else {
+      // Set
+      if (listening == new_val) {
+        return listening;
+      } else if (new_val == true) {
+        var listener = function(evt) {
+          self._onDomNodeInserted(tree, CTS.$(evt.target), evt);
+        };
+        tree.root.on("DOMNodeInserted", listener); // Starts CTS node
+        tree.listenForNodeInsertions(new_val); // Starts jqnode
+        this.insertionListeners[treeName] = listener;
+        return true;
+      } else if (new_val == false) {
+        var listener = this.insertionListeners[treeName];
+        tree.root.off("DOMNodeInserted", listener); // Stops CTS Node
+        tree.listenForNodeInsertions(new_val); // Stops jqnode
+        delete this.insertionListeners[treeName];
+        return false;
+      }
+    }
+  },
+
   _onDomNodeInserted: function(tree, node, evt) {
     // If the tree is the main tree, we want to possibly run any CTS
     if (typeof evt.ctsHandled == 'undefined') {
