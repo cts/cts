@@ -4,13 +4,10 @@ CTS.Node.Html = function(node, tree, opts) {
   this.initializeNodeBase(tree, opts);
   this.kind = "HTML";
   this.value = this._createJqueryNode(node);
-  var currentAttr = this.value.attr('data-ctsid');
-//  if ((typeof currentAttr != 'undefined') && (currentAttr != null)) {
-//    CTS.Log.Warn("Warning: Creating Node.Html for element with ctsId", this);
-//  }
   this.ctsId = Fn.uniqueId().toString();
-  this.tree._nodeLookup[this.ctsId] = this;
-  this.value.attr('data-ctsid', this.ctsId);
+  
+  this.value.data('ctsid', this.ctsId);
+  this.value.data('ctsnode', this);
 
   this.on('received-is', function() {
     this.value.trigger('cts-received-is');
@@ -88,7 +85,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
              CTS.Log.Error("Child is undefined");
            }
            node.parentNode = self;
-           self.tree._nodeLookup[node.ctsId] = node;
          }
          deferred.resolve();
        },
@@ -104,7 +100,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     * Inserts this DOM node after the child at the specified index.
     */
    _subclass_insertChild: function(child, afterIndex) {
-     this.tree._nodeLookup[child.ctsId] = child;
      if (afterIndex == -1) {
        if (this.getChildren().length == 0) {
          this.value.append(child.value);
@@ -163,7 +158,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     *  Removes this DOM node from the DOM tree it is in.
     */
    _subclass_destroy: function() {
-     delete this.tree._nodeLookup[this.ctsId];
      this.value.remove();
    },
 
@@ -202,7 +196,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
        var childNode = clone.value.children()[i];
        var child = this.children[i]._subclass_beginClone(childNode);
        child.parentNode = clone;
-       this.tree._nodeLookup[child.ctsId] = child;
        if (typeof child.children  == 'undefined') {
          CTS.Log.Error("Kids undefined");
        }
@@ -278,19 +271,17 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     return n;
   },
 
-//  _subclass_trigger: function(eventName, eventData, spreadToBaseLayer) { 
-//    if (spreadToBaseLayer && (this.value != null)) {
-//      this.value.trigger(eventName, eventData);
-//    }
-//  },
-
-  _subclass_on: function(evtName, handler) {
-    this.value.on(evtName, handler);
+  _subclass_onDataEvent: function(eventName, handler) {
+    if (eventName == "NodeInserted") {
+      console.log(this, "listening with handler", handler);
+      this.value.on("DOMNodeInserted", handler);
+    }
   },
 
-  _subclass_off: function(evtName, handler) {
-    this.value.off(evtName, handler);
+  _subclass_offDataEvent: function(eventName, handler) {
+    if (eventName == "NodeInserted") {
+      this.value.off("DOMNodeInserted", handler);
+    }
   }
-
 
 });

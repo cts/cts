@@ -327,9 +327,9 @@ CTS.Node.Base = {
     }
   },
 
-//  trigger: function(eventName, eventData) {
-//    this._subclass_trigger(eventName, eventData);
-//  },
+  trigger: function(eventName, eventData) {
+    this._subclass_trigger(eventName, eventData);
+  },
 
   getProvenance: function() {
     if (this.provenance == null) {
@@ -432,6 +432,16 @@ CTS.Node.Base = {
     return false;
   },
 
+  onDataEvent: function(eventName, callback) {
+    this._subclass_onDataEvent(eventName, callback);
+  },
+
+  offDataEvent: function(eventName, callback) {
+    this._subclass_offDataEvent(eventName, callback);
+  },
+
+  _subclass_onDataEvent: function() {},
+  _subclass_offDataEvent: function() {},
   _subclass_realizeChildren: function() {},
   _subclass_insertChild: function(child, afterIndex) {},
   _subclass_destroy: function() {},
