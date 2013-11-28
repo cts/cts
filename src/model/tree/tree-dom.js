@@ -1,7 +1,6 @@
 // Constructor
 // -----------
 CTS.Tree.Html = function(forrest, spec) {
-  this._nodeLookup = {};
   this.forrest = forrest;
   this.spec = spec;
   this.name = spec.name;
@@ -14,14 +13,7 @@ CTS.Tree.Html = function(forrest, spec) {
 CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
   setRoot: function($$node) {
     this.root = $$node;
-    this._nodeLookup[root.ctsId] = root;
     this.root.setProvenance(this);
-    
-    // Propagate insertion events from HTML -> CTS Node
-    var self = this;
-    this.root.value.on("DOMNodeInserted", function(evt) {
-      self.root.trigger("DOMNodeInserted", evt);
-    });
   },
 
   nodesForSelectionSpec: function(spec) {
@@ -34,14 +26,11 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
   },
   
   getCtsNode: function($node) {
-    var ctsId = $node.data('ctsid');
-    if ((ctsId == null) || (typeof ctsId == 'undefined') || (ctsId == '')) {
-      return null;
-    } else if ((typeof this._nodeLookup[ctsId] == 'undefined') ||
-               (this._nodeLookup[ctsId] == null)) {
+    var ctsnode = $node.data('ctsnode');
+    if ((ctsnode == null) || (typeof ctsnode == 'undefined') || (ctsnode == '')) {
       return null;
     } else {
-      return this._nodeLookup[ctsId];
+      return ctsnode;
     }
   },
 

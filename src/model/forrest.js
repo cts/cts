@@ -367,7 +367,6 @@ CTS.Fn.extend(Forrest.prototype, {
     var listening = (treeName in this.insertionListeners);
     var tree = this.trees[treeName];
     var self = this;
-
     if (typeof tree == 'undefined'){ 
       CTS.Log.Error("listenForNodeInsertion (" + new_val + "):" +
           "Tree " + treeName + " not present.");
@@ -385,36 +384,33 @@ CTS.Fn.extend(Forrest.prototype, {
         var listener = function(evt) {
           self._onDomNodeInserted(tree, CTS.$(evt.target), evt);
         };
-        tree.root.on("DOMNodeInserted", listener); // Starts CTS node
-        tree.listenForNodeInsertions(new_val); // Starts jqnode
+        tree.root.onDataEvent("NodeInserted", listener); // At CTS Node level
         this.insertionListeners[treeName] = listener;
         return true;
       } else if (new_val == false) {
         var listener = this.insertionListeners[treeName];
-        tree.root.off("DOMNodeInserted", listener); // Stops CTS Node
-        tree.listenForNodeInsertions(new_val); // Stops jqnode
+        tree.root.offDataEvent("NodeInserted", listener); // At CTS Node level
         delete this.insertionListeners[treeName];
         return false;
       }
     }
   },
 
-  _onDomNodeInserted: function(tree, node, evt) {
+  _onDomNodeInserted: function(tree, $node, evt) {
     // If the tree is the main tree, we want to possibly run any CTS
     if (typeof evt.ctsHandled == 'undefined') {
-      var ctsNode = tree.getCtsNode(node);
-      if (ctsNode == null) {
-        var $node = CTS.$(node);
+      var node = tree.getCtsNode($node);
+      if (node == null) {
         if (! $node.hasClass("cts-ignore")) {
           // Get the parent
-          var p = CTS.$(CTS.$(node).parent());
-          var ctsParent = tree.getCtsNode(p);
-          if (ctsParent == null) {
-            CTS.Log.Error("Node inserted into yet unmapped region of tree", p);
+          var $prnt = CTS.$($node.parent());
+          var prnt = tree.getCtsNode($prnt);
+          if (prnt == null) {
+            CTS.Log.Error("Node inserted into yet unmapped region of tree", prnt);
           } else {
-            CTS.Log.Info("Responding to new DOM node insertion", CTS.$(node).html());
+            CTS.Log.Info("Responding to new DOM node insertion", $node.html());
             // Create the CTS tree for this region.
-            var ctsNode = ctsParent._onChildInserted(node);
+            var node = prnt._onChildInserted($node);
           }
         }
       }
