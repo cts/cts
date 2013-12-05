@@ -14,6 +14,7 @@
 var Engine = CTS.Engine = function(opts, args) {
   var defaults;
   this.opts = opts || {};
+  this.bootStage = "PreBoot";
 
   if (typeof this.opts.autoLoadSpecs == 'undefined') {
     this.opts.autoLoadSpecs = true;
@@ -49,6 +50,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
 
   boot: function() {
     console.log("CTS engine booting...");
+    this.bootStage = "Booting";
     var self = this;
     if (typeof self.booting != 'undefined') {
       CTS.Error("Already booted / booting");
@@ -56,20 +58,28 @@ CTS.Fn.extend(Engine.prototype, Events, {
       self.booting = true;
     }
     var uhoh = function(reason) {
+      CTS.Error(uhoh);
       deferred.reject(uhoh);
     }
 
+    this.bootStage = "Loading Forrest";
     self.loadForrest().then(
       function() {
+        this.bootStage = "Loading CTS";
         self.loadCts().then(
           function() {
+            this.bootStage = "Realizing Dependencies";
             self.forrest.realizeDependencies().then(
               function() {
+                this.bootStage = "Realize Trees";
                 self.forrest.realizeTrees().then(
                   function() {
+                    this.bootStage = "Realize Relations";
                     self.forrest.realizeRelations().then(
                       function() {
+                        this.bootStage = "Render";
                         self.render.call(self);
+                        this.bootStage = "Finalizing Boot";
                         self._booted.resolve();
                       }, uhoh
                     );

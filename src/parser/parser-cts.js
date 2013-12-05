@@ -10,22 +10,36 @@ CTS.Parser.Cts = {
         // We have to zip through here to find any instances of 'this' and replace
         // it with the tree that we're working with.
         var promises = Fn.map(specs, function(spec) {
+          var nullSelector = false;
           if (typeof spec.relationSpecs != "undefined") {
             for (var i = 0; i < spec.relationSpecs.length; i++) {
               var rs = spec.relationSpecs[i];
               var s1 = rs.selectionSpec1;
               var s2 = rs.selectionSpec2;
-              if (s1.selectorString.trim() == "this") {
-                s1.inline = true;
-                s1.inlineObject = node;
-              }
-              if (s2.selectorString.trim() == "this") {
-                s2.inline = true;
-                s2.inlineObject = node;
+              if ((s1.selectorString != null) && (s2.selectorString != null)) {
+                if (s1.selectorString.trim() == "this") {
+                  s1.inline = true;
+                  s1.inlineObject = node;
+                }
+                if (s2.selectorString.trim() == "this") {
+                  s2.inline = true;
+                  s2.inlineObject = node;
+                }
+              } else {
+                nullSelector = true;
               }
             }
           }
-          return intoForrest.addSpec(spec);
+          if (nullSelector) {
+            var deferred = new Q.defer();
+            var error = "Null selector. Can not parseForrestSpec";
+            CTS.Log.Error(error);
+            defer.reject(error);
+            return deferred.promise;
+
+          } else {
+            return intoForrest.addSpec(spec);
+          }
         });
     
         Q.all(promises).then(
