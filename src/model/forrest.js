@@ -88,6 +88,10 @@ CTS.Fn.extend(Forrest.prototype, {
     }
   },
 
+  startListening: function() {
+    self.listenForNodeInsertionsOnTree('body', true);
+  },
+
   // Removes all dependency specs from the root tree
   removeDependencies: function() {
     for (var j = 0; j < this.forrestSpecs.length; j++) {
