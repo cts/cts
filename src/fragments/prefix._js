@@ -55,9 +55,7 @@ CTS.autoloadCheck = function() {
   return false;
 };
 
-if (CTS.autoloadCheck()) {
-  CTS.shouldAutoload = true;
-
+CTS.hideForLoading = function() {
   var css = 'body { display: none; }';
   var head = document.getElementsByTagName('head')[0];
   var style = document.createElement('style');
@@ -68,6 +66,15 @@ if (CTS.autoloadCheck()) {
     style.appendChild(document.createTextNode(css));
   }
   head.appendChild(style);
+};
+
+CTS.showForLoading = function($e) {
+  CTS.$('body').show();
+};
+
+if (CTS.autoloadCheck()) {
+  CTS.shouldAutoload = true;
+  //hideForLoading();
 }
 
 (function() {

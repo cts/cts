@@ -62,24 +62,24 @@ CTS.Fn.extend(Engine.prototype, Events, {
       deferred.reject(uhoh);
     }
 
-    this.bootStage = "Loading Forrest";
+    self.bootStage = "Loading Forrest";
     self.loadForrest().then(
       function() {
-        this.bootStage = "Loading CTS";
+        self.bootStage = "Loading CTS";
         self.loadCts().then(
           function() {
-            this.bootStage = "Realizing Dependencies";
+            self.bootStage = "Realizing Dependencies";
             self.forrest.realizeDependencies().then(
               function() {
-                this.bootStage = "Realize Trees";
+                self.bootStage = "Realize Trees";
                 self.forrest.realizeTrees().then(
                   function() {
-                    this.bootStage = "Realize Relations";
+                    self.bootStage = "Realize Relations";
                     self.forrest.realizeRelations().then(
                       function() {
-                        this.bootStage = "Render";
+                        self.bootStage = "Render";
                         self.render.call(self);
-                        this.bootStage = "Finalizing Boot";
+                        self.bootStage = "Finalizing Boot";
                         self._booted.resolve();
                       }, uhoh
                     );
@@ -105,9 +105,11 @@ CTS.Fn.extend(Engine.prototype, Events, {
     CTS.Factory.Forrest(this.opts.forrest).then(
       function(forrest) {
         self.forrest = forrest;
+        console.log("Resolved forrest");
         deferred.resolve();
       },
       function(reason) {
+        CTS.Log.Error(reason);
         deferred.reject(reason);
       }
     );

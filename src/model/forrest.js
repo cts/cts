@@ -408,6 +408,7 @@ CTS.Fn.extend(Forrest.prototype, {
       var node = tree.getCtsNode($node);
       if (node == null) {
         if (! $node.hasClass("cts-ignore")) {
+          console.log("Insertion", $node);
           // Get the parent
           var $prnt = CTS.$($node.parent());
           var prnt = tree.getCtsNode($prnt);

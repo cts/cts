@@ -45,18 +45,18 @@ CTS.ensureJqueryThenMaybeAutoload = function() {
   }
 };
 
+
 CTS.maybeAutoload = function() {
   console.log("CTS Autoload check...");
   if (typeof CTS.shouldAutoload == 'undefined') {
     CTS.shouldAutoload = CTS.autoloadCheck();
   }
   if (CTS.shouldAutoload) {
-    CTS.$('body').css('display', 'none');
     CTS.$(function() {
       CTS.engine = new CTS.Engine();
       CTS.engine.boot().then(
         function() {
-          CTS.$('body').fadeIn();
+          CTS.showForLoading();
         }
       );
     });
