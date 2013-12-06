@@ -26,7 +26,6 @@ CTS.ensureJqueryThenMaybeAutoload = function() {
     CTS.maybeAutoload();
     CTS.status._libraryLoaded.resolve();
   } else {
-    console.log("CTS Loading jQuery...");
     var s = document.createElement('script');
     var jquery = '//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js';
     var proto = '';

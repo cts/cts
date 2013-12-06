@@ -5,6 +5,7 @@ CTS.Tree.Html = function(forrest, spec) {
   this.spec = spec;
   this.name = spec.name;
   this.root = null;
+  this.nodeStash = [];
   this.insertionListener = null;
 };
 
@@ -28,7 +29,12 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
   getCtsNode: function($node) {
     var ctsnode = $node.data('ctsnode');
     if ((ctsnode == null) || (typeof ctsnode == 'undefined') || (ctsnode == '')) {
-      return null;
+      // Last resort: look for an attr
+      var attr = $node.attr('data-ctsid');
+      if ((attr == null) || (typeof attr == 'undefined') || (attr == '')) {
+        return null;
+      }
+      return this.nodeStash[attr];
     } else {
       return ctsnode;
     }

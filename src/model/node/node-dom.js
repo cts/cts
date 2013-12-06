@@ -23,6 +23,11 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     ).join(', ');
   },
 
+  stash: function() {
+    this.value.attr('data-ctsid', this.ctsId);
+    this.tree.nodeStash[this.ctsId] = this;
+  },
+
   // Horrendously inefficient.
   find: function(selector, ret) {
     if (typeof ret == 'undefined') {
@@ -226,7 +231,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
   setValue: function(value, opts) {
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
       this.value.html(value);
-      CTS.Log.Info("Just set myself to", this.tree.name, value); } else {
       this.value.attr(opts.attribute, value);
     }
   },
@@ -273,7 +277,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
 
   _subclass_onDataEvent: function(eventName, handler) {
     if (eventName == "NodeInserted") {
-      console.log(this, "listening with handler", handler);
       this.value.on("DOMNodeInserted", handler);
     }
   },

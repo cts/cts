@@ -115,7 +115,6 @@ CTS.Fn.extend(Engine.prototype, Events, {
   },
 
   loadCts: function() {
-    console.log("HI");
     var promises = [];
     var self = this;
 
@@ -132,7 +131,6 @@ CTS.Fn.extend(Engine.prototype, Events, {
 
       CTS.Parser.parseForrestSpec(rawData, kind, fromUrl).then(
         function(specs) {
-          console.log("Got specs", specs);
           if (fromUrl != 'undefined') {
             Fn.each(specs, function(spec) {
               for (i = 0; i < spec.treeSpecs.length; i++) {

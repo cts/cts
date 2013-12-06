@@ -83,12 +83,14 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   stopListening: function() {
-    for (var i = 0; i < this.insertionListeners.lenth; i++) {
-      tree.root.off("DOMNodeInserted", this.insertionListeners[i]);
+    console.log("Stop Listening");
+    for (var treeName in this.insertionListeners) {
+      this.listenForNodeInsertionsOnTree(treeName, false);
     }
   },
 
   startListening: function() {
+    console.log("Start Listening");
     this.listenForNodeInsertionsOnTree('body', true);
   },
 
@@ -410,9 +412,9 @@ CTS.Fn.extend(Forrest.prototype, {
           var $prnt = CTS.$($node.parent());
           var prnt = tree.getCtsNode($prnt);
           if (prnt == null) {
-            CTS.Log.Error("Node inserted into yet unmapped region of tree", prnt);
+            // CTS.Log.Error("Node inserted into yet unmapped region of tree", prnt);
           } else {
-            CTS.Log.Info("Responding to new DOM node insertion", $node.html());
+            // CTS.Log.Info("Responding to new DOM node insertion", $node.html());
             // Create the CTS tree for this region.
             var node = prnt._onChildInserted($node);
           }
