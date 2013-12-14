@@ -45,7 +45,6 @@ CTS.ensureJqueryThenMaybeAutoload = function() {
   }
 };
 
-
 CTS.maybeAutoload = function() {
   console.log("CTS Autoload check...");
   if (typeof CTS.shouldAutoload == 'undefined') {
