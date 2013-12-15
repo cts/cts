@@ -103,7 +103,7 @@ CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
       Q.all(promises).then(function(results) {
         self.children = results;
         andFinish();
-      });
+      }, orFail);
     } else if (this.dataType == 'array') {
       var promises = CTS.Fn.map(this.value), function(child) {
         var promise = CTS.Node.Factory.Json(child, self.tree, self.opts);
@@ -112,7 +112,7 @@ CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
       Q.all(promises).then(function(results) {
         self.children = results;
         andFinish();
-      });
+      }, orFail);
     } else {
       this.children = null;
     }
