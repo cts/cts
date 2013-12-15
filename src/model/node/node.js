@@ -43,7 +43,7 @@ CTS.Node.Base = {
 
   registerRelation: function(relation) {
     if (typeof this.relations == 'undefined') {
-      CTS.Log.Error("PUSHHHH");
+      this.relations = [];
     }
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
