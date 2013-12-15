@@ -460,6 +460,9 @@ CTS.Node.Base = {
 
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
     if (this.shouldReceiveEvents) {
+      if (evt.type == "ValueChanged") {
+        _subclass_setValue(evt.newValue);
+      }
     }
   },
 
@@ -472,6 +475,9 @@ CTS.Node.Base = {
       other.handleEventFromRelation(evt, relation, this);
     }
   },
+
+  // TODO: How to supress events
+  _subclasss_setValue: function(newValue);
 
   /***************************************************************************
    * STUBS FOR SUBCLASS

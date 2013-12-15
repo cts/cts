@@ -1,0 +1,22 @@
+<html>
+  <head>
+    <script src="/release/cts.dev.js"></script>
+    <style type="text/css">
+      #container {
+        padding: 50px;
+      }
+      .foo {
+        margin-top: 50px;
+      }
+    </style>
+    <style type="text/cts">
+      #thing1 :is #thing2;
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="thing1" class="foo">Thing 1</div>
+      <div id="thing2" class="foo">Thing 2</div>
+    </div>
+  </body>
+</html>

@@ -287,4 +287,14 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     }
   }
 
+  /***************************************************************************
+   * EVENTS
+   **************************************************************************/
+
+  _subclasss_setValue: function(newValue) {
+    // TODO: Figure out how to handle endless
+    // pingpong of change-notify
+    this.value.html(newValue);
+  }
+
 });
