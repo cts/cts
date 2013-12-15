@@ -34,6 +34,8 @@ CTS.Node.Base = {
     this.parentNode = null;
     this.relations = [];
     this.value = null;
+    this.shouldThrowEvents = false;
+    this.shouldReceiveEvents = false;
     this.inlineRelationSpecs = []; // TODO(eob): put a realized field to check
   },
 
@@ -439,17 +441,26 @@ CTS.Node.Base = {
   /***************************************************************************
    * EVENTS
    *
+   * Two modes:
+   *   - shouldThrowEvents
+   *   - shouldReceiveEvents (and modify)
+   *
    * Events are dicts. The `type` field contains the type.
    *
    * ValueChanged:
    *   newValue -- contains the new value
    *
    **************************************************************************/
+
   handleEventFromData: function(evt) {
-    this.passEventToRelations(evt);
+    if (this.shouldThrowEvents) {
+      this.passEventToRelations(evt);
+    }
   },
 
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
+    if (this.shouldReceiveEvents) {
+    }
   },
 
   passEventToRelations: function(evt) {
