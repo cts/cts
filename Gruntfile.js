@@ -23,7 +23,6 @@ sourcelist = [
 
   /* Node Containers */
   "src/model/node/node.js",
-  "src/model/node/node-state-machine.js",
   "src/model/node/node-abstract.js",
   "src/model/node/node-dom.js",
   "src/model/node/node-json.js",
