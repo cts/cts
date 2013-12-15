@@ -436,6 +436,36 @@ CTS.Node.Base = {
     this._subclass_offDataEvent(eventName, callback);
   },
 
+  /***************************************************************************
+   * EVENTS
+   *
+   * Events are dicts. The `type` field contains the type.
+   *
+   * ValueChanged:
+   *   newValue -- contains the new value
+   *
+   **************************************************************************/
+  handleEventFromData: function(evt) {
+    this.passEventToRelations(evt);
+  },
+
+  handleEventFromRelation: function(evt, fromRelation, fromNode) {
+  },
+
+  passEventToRelations: function(evt) {
+    if (! this.relations) {
+      return;
+    }
+    for (relation in this.relations) {
+      var other = relation.opposite(this);
+      other.handleEventFromRelation(evt, relation, this);
+    }
+  },
+
+  /***************************************************************************
+   * STUBS FOR SUBCLASS
+   **************************************************************************/
+  
   _subclass_onDataEvent: function() {},
   _subclass_offDataEvent: function() {},
   _subclass_realizeChildren: function() {},
