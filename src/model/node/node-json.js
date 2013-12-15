@@ -1,17 +1,21 @@
-// ### Constructor
+/* JSON Node
+ * @author Ted Benson <eob@csail.mit.edu>
+ */
 CTS.Node.Json = function(node, tree, opts) {
-  opts = opts || {};
-  this.initializeNodeBase(tree, opts);
+  this.opts = CTS.Fn.buildOptions(CTS.Node.Json.defaultOptions, opts);
+  this.initializeNodeBase(tree, opts); // Required by base class.
   this.kind = "JSON";
   this.value = null;
   this.dataType = null;
+  this.value = node;
   if (opts.property) {
-    this.value = opts.property;
-    this.dataType = 'property'
+    his.dataType = 'property'
   } else {
-    this.value = node;
     this.updateDataType();
   }
+};
+
+CTS.Node.Json.defaultOptions = {
 };
  
 CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
@@ -71,7 +75,48 @@ CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
    * Realizes all children.
    */
   _subclass_realizeChildren: function() {
-    this.children = [];
+    var deferred = Q.defer();
+    var self = this;
+    var orFail = function() { deferred.reject; }
+    var andFinish = function() {
+      for (var i = 0; i < self.children.length; i++) {
+        self.children[i].parentNode = self;
+      }
+      deferred.resolve;
+    }
+
+    if (this.dataType == 'property') {
+      // Create a new node with the property value
+      var childValue = this.value[opts.property];
+      CTS.Node.Factory.Json(childValue, self.tree, self.opts)
+        .then(function(node) {
+          self.children = [node];
+          andFinish();
+      }, orFail);
+    } else if (this.dataType == 'object') {
+      var promises = [];
+      for (prop in this.value) {
+        if (this.value.hasOwnProperty(prop)) {
+          promises.push(CTS.Node.Factory.Json(this.value[prop], self.tree, self.opts));
+        }
+      }
+      Q.all(promises).then(function(results) {
+        self.children = results;
+        andFinish();
+      });
+    } else if (this.dataType == 'array') {
+      var promises = CTS.Fn.map(this.value), function(child) {
+        var promise = CTS.Node.Factory.Json(child, self.tree, self.opts);
+        return promise;
+      });
+      Q.all(promises).then(function(results) {
+        self.children = results;
+        andFinish();
+      });
+    } else {
+      this.children = null;
+    }
+    return deferred.promise;
   },
 
   /* 
