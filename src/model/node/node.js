@@ -455,18 +455,18 @@ CTS.Node.Base = {
    **************************************************************************/
 
   toggleThrowDataEvents: function(bool) {
-    if (typeof this._nodeInsertedListenerProxy == 'undefined') {
-      this._nodeInsertedListenerProxy = CTS.$.proxy(this._subclass_nodeInsertedListener, this);
+    if (typeof this._valueChangedListenerProxy == 'undefined') {
+      this._valueChangedListenerProxy = CTS.$.proxy(this._subclass_valueChangedListener, this);
     }
 
     if (bool == this.shouldThrowEvents) {
       return;
     } else if (bool) {
       this.shouldThrowEvents = true;
-      this._subclass_onDataEvent("ValueChanged", this._nodeInsertedListenerProxy);
+      this._subclass_onDataEvent("ValueChanged", this._valueChangedListenerProxy);
     } else {
       this.shouldThrowEvents = false;
-      this._subclass_offDataEvent("ValueChanged", this._nodeInsertedListenerProxy);
+      this._subclass_offDataEvent("ValueChanged", this._valueChangedListenerProxy);
     }
   },
 

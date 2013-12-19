@@ -289,7 +289,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     }
   },
 
-  _subclass_nodeInsertedListener: function(evt) {
+  _subclass_valueChangedListener: function(evt) {
     // Don't fire the event if we just changed the node because of an 
     // event from a related node.
     var newValue = this.value.html();
