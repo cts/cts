@@ -27,7 +27,7 @@ CTS.ensureJqueryThenMaybeAutoload = function() {
     CTS.status._libraryLoaded.resolve();
   } else {
     var s = document.createElement('script');
-    var jquery = '//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js';
+    var jquery = CTS.Constants.jQuery;
     var proto = '';
     if ((typeof window != 'undefined') && 
         (typeof window.location != 'undefined') &&

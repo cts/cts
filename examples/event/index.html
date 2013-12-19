@@ -1,0 +1,36 @@
+<html>
+  <head>
+    <script src="/release/cts.dev.js"></script>
+    <style type="text/cts">
+      #sink :is #source ;
+    </style>
+  </head>
+  <body>
+    <table width="100%">
+      <tr>
+        <td id="source">
+          Source Val
+        </td>
+        <td id="sink">
+          Sink Val
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <input id="new-source" value="<b>foo</b>" />
+          <button id="new-source-btn">Change</button>
+        </td>
+        <td>
+        </td>
+      </tr>
+    </table>
+  </body>
+  <script>
+    CTS.ready.then(function() {
+      CTS.$('#new-source-btn').on('click', function() {
+        var newVal = CTS.$('#new-source').val();
+        CTS.$('#source').html(newVal);
+      });
+    });
+  </script>
+</html>  

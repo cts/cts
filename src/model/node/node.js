@@ -49,6 +49,8 @@ CTS.Node.Base = {
     }
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
+      this.toggleThrowDataEvents(true);
+      this.toggleReceiveRelationEvents(true);
     }
   },
 
@@ -445,23 +447,53 @@ CTS.Node.Base = {
    *   - shouldThrowEvents
    *   - shouldReceiveEvents (and modify)
    *
-   * Events are dicts. The `type` field contains the type.
+   * Events are dicts. The `name` field contains the type.
    *
    * ValueChanged:
    *   newValue -- contains the new value
    *
    **************************************************************************/
 
+  toggleThrowDataEvents: function(bool) {
+    if (typeof this._nodeInsertedListenerProxy == 'undefined') {
+      this._nodeInsertedListenerProxy = CTS.$.proxy(this._subclass_nodeInsertedListener, this);
+    }
+
+    if (bool == this.shouldThrowEvents) {
+      return;
+    } else if (bool) {
+      this.shouldThrowEvents = true;
+      this._subclass_onDataEvent("ValueChanged", this._nodeInsertedListenerProxy);
+    } else {
+      this.shouldThrowEvents = false;
+      this._subclass_offDataEvent("ValueChanged", this._nodeInsertedListenerProxy);
+    }
+  },
+
+  toggleReceiveRelationEvents: function(bool) {
+    if (bool == this.shouldReceiveEvents) {
+      return;
+    } else if (bool) {
+      this.shouldReceiveEvents = true;
+    } else {
+      this.shouldReceiveEvents = true;
+    }
+  },
+
   handleEventFromData: function(evt) {
+    console.log("Event from data", evt);
     if (this.shouldThrowEvents) {
       this.passEventToRelations(evt);
     }
   },
 
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
+    console.log("Event from relation", evt);
     if (this.shouldReceiveEvents) {
-      if (evt.type == "ValueChanged") {
-        _subclass_setValue(evt.newValue);
+      if (evt.name == "ValueChanged") {
+        if (fromRelation.name == "is") {
+          this._subclass_setValue(evt.newValue);
+        }
       }
     }
   },
@@ -470,14 +502,15 @@ CTS.Node.Base = {
     if (! this.relations) {
       return;
     }
-    for (relation in this.relations) {
+    for (var i = 0; i < this.relations.length; i++) {
+      var relation = this.relations[i];
       var other = relation.opposite(this);
       other.handleEventFromRelation(evt, relation, this);
     }
   },
 
   // TODO: How to supress events
-  _subclasss_setValue: function(newValue);
+  _subclass_setValue: function(newValue) {},
 
   /***************************************************************************
    * STUBS FOR SUBCLASS

@@ -276,24 +276,45 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_onDataEvent: function(eventName, handler) {
-    if (eventName == "NodeInserted") {
+    if (eventName == "ValueChanged") {
+      // TODO: This is the wrong event.
       this.value.on("DOMNodeInserted", handler);
     }
   },
 
   _subclass_offDataEvent: function(eventName, handler) {
-    if (eventName == "NodeInserted") {
+    if (eventName == "ValueChanged") {
+      // TODO: This is the wrong event.
       this.value.off("DOMNodeInserted", handler);
     }
-  }
+  },
+
+  _subclass_nodeInsertedListener: function(evt) {
+    // Don't fire the event if we just changed the node because of an 
+    // event from a related node.
+    var newValue = this.value.html();
+    if (this.value.data('ValueChanged') == newValue) {
+      // Don't fire an event. Otherwise we'll end up in an endless event loop
+      // back and forth across the relation boundary.
+      this.value.data('ValueChanged', null);
+    } else {
+      var ctsEvent = {
+        name: "ValueChanged",
+        newValue: this.value.html()
+      };
+      this.handleEventFromData(ctsEvent);
+    }
+  },
 
   /***************************************************************************
    * EVENTS
    **************************************************************************/
 
-  _subclasss_setValue: function(newValue) {
-    // TODO: Figure out how to handle endless
-    // pingpong of change-notify
+  _subclass_setValue: function(newValue) {
+    console.log("Instructed to set value to", newValue);
+    // To suppress throwing a data event without worrying about event firing
+    // timing. The event listener will look for this.
+    this.value.data('ValueChanged', newValue); 
     this.value.html(newValue);
   }
 
