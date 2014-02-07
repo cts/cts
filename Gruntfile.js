@@ -89,6 +89,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-web-server');
+  grunt.loadNpmTasks('grunt-newer');
 
   // Project configuration.
   grunt.initConfig({
@@ -138,7 +139,7 @@ module.exports = function(grunt) {
     },
     watch: {
       scripts: {
-        files: "<config:lint.files>",
+        files: "src/**/*.js",
         tasks: "default"
       }
     },

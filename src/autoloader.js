@@ -8,6 +8,7 @@ CTS.status = {
   _defaultTreeReady: Q.defer()
 };
 
+
 CTS.status.libraryLoaded = CTS.status._libraryLoaded.promise;
 CTS.status.defaultTreeReady = CTS.status._defaultTreeReady.promise;
 CTS.status.defaultTreeReady.then(
