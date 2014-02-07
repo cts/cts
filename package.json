@@ -25,7 +25,6 @@
     "grunt-contrib-qunit": "*",
     "grunt-contrib-concat": "*",
     "grunt-contrib-watch": "*",
-    "grunt-newer": "*",
     "grunt-web-server": "*",
     "url": "*",
     "jison": "*"

@@ -89,7 +89,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-web-server');
-  grunt.loadNpmTasks('grunt-newer');
 
   // Project configuration.
   grunt.initConfig({
@@ -140,7 +139,7 @@ module.exports = function(grunt) {
     watch: {
       scripts: {
         files: "src/**/*.js",
-        tasks: "default"
+        tasks: ["default"]
       }
     },
     jshint: {
@@ -151,5 +150,14 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('default', ['jshint', 'concat']);
+
+  grunt.task.registerTask('background_server', 'Host AND Watch for changes.', function(arg1, arg2) {
+    var child_process = require('child_process');
+    var child = child_process.exec('grunt web_server');
+    child.stdout.pipe(process.stdout);
+    child.stderr.pipe(process.stderr);
+  });
+
+  grunt.registerTask('server', ['default', 'jshint', 'concat', 'background_server', 'watch']);
 
 };
