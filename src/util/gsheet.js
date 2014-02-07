@@ -1,5 +1,9 @@
 var GSheet = CTS.GSheet = {
 
+  _ctsApiClientId: '459454183971.apps.googleusercontent.com',
+  _ctsApiKey: 'AIzaSyBpNbbqKrk21n6rI8Nw2R6JSz6faN7OiWc',
+  _ctsApiClientScopes: 'https://www.googleapis.com/auth/plus.me',
+
   /*
    * Args:
    *   feed: list (objects) | cells (table)
@@ -11,7 +15,7 @@ var GSheet = CTS.GSheet = {
    *
    *  "od6" is the worksheet id for the default.
    */
-  _gSheetUrl: function(feed, key, worksheet, security, mode, jsonCallback) {
+  _gSheetUrl: function(feed, key, worksheet, security, mode, jsonCallback, accessToken) {
     var url = "http://spreadsheets.google.com/feeds/" +
                 feed + "/" +
                 key + "/";
@@ -22,7 +26,41 @@ var GSheet = CTS.GSheet = {
     if (jsonCallback) {
       url += "?alt=json-in-script&callback=?";
     }
+    if (accessToken) {
+      if (jsonCallback) {
+        url += "&";
+      } else {
+        url += "?";
+      }
+      url += "access_token=" + accessToken;
+    }
     return url;
+  },
+
+  _registerCtsCredentials: function() {
+    gapi.client.setApiKey(CTS.GSheet._ctsApiKey);
+  },
+
+  _authenticate: function() {
+    gapi.auth.authorize({
+      client_id: CTS.GSheet._ctsApiClientId,
+      scope: CTS.GSheet._ctsApiClientScopes,
+      immediate: true},
+    CTS.GSheet._authenticationResult);
+  },
+
+  _authenticationResult: function() {
+   var authorizeButton = document.getElementById('authorize-button');
+   if (authResult && !authResult.error) {
+     authorizeButton.style.visibility = 'hidden';
+     alert("success");
+   } else {
+     authorizeButton.style.visibility = '';
+     alert("faile");
+   }
+  },
+
+  getWorksheets: function(key) {
   },
 
   getWorksheets: function(key) {
@@ -65,10 +103,10 @@ var GSheet = CTS.GSheet = {
     return item['$t'];
   },
 
-  getWorksheetItems: function(spreadsheetKey, worksheetKey) {
+  getWorksheetItems: function(spreadsheetKey, worksheetKey, accessToken) {
     console.log("Getting workshee", spreadsheetKey, worksheetKey);
     var deferred = Q.defer();
-    var url = CTS.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'public', 'values', true);
+    var url = CTS.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'public', 'values', true, accessToken);
     console.log("URL", url);
 
     var request = CTS.$.getJSON(url);
