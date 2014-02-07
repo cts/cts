@@ -10,7 +10,7 @@ var CTS = {};
 <script>
 CTS.$ = $;
 
-var promise = CTS.GSheet.getWorksheets('1oiyHWhINK7rcRqHeLI4ZheR1yTLpXyGGaWgbuHYfVG0');
+var promise = CTS.GSheet.getWorksheets('o13394135408524254648.240766968415752635');
 
 promise.then(function(resp) {
   console.log(resp);
@@ -25,8 +25,24 @@ promise.then(function(resp) {
 }, function(reason, reason2) {
   console.log(reason, reason2);
 });
+
+var cts = "1oiyHWhINK7rcRqHeLI4ZheR1yTLpXyGGaWgbuHYfVG0";
+
+$.ajax('http://spreadsheets.google.com/feeds/worksheets/private/full/' + cts).done(
+  function(json) {
+    console.log(json)
+  }
+);
+
+$(function() {
+  $('#authorize-button').click(CTS.GSheet._authenticate);
+
+});
 </script>
 </head>
 <body>
+Hi.
+<button id="authorize-button">Authorize</button>
+<script src="gapi.js"></script>
 </body>
 </html>
