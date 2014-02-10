@@ -10,39 +10,41 @@ var CTS = {};
 <script>
 CTS.$ = $;
 
-var promise = CTS.GSheet.getWorksheets('o13394135408524254648.240766968415752635');
-
-promise.then(function(resp) {
-  console.log(resp);
-}, function(reason, reason2) {
-  console.log(reason, reason2);
-});
-
-promise = CTS.GSheet.getWorksheetItems('o13394135408524254648.240766968415752635', 'od6');
-
-promise.then(function(resp) {
-  console.log(resp);
-}, function(reason, reason2) {
-  console.log(reason, reason2);
-});
-
-var cts = "1oiyHWhINK7rcRqHeLI4ZheR1yTLpXyGGaWgbuHYfVG0";
-
-$.ajax('http://spreadsheets.google.com/feeds/worksheets/private/full/' + cts).done(
-  function(json) {
-    console.log(json)
-  }
-);
+//var promise = CTS.GSheet.getWorksheets('o13394135408524254648.240766968415752635');
+//
+//promise.then(function(resp) {
+//  console.log(resp);
+//}, function(reason, reason2) {
+//  console.log(reason, reason2);
+//});
+//
+//promise = CTS.GSheet.getWorksheetItems('o13394135408524254648.240766968415752635', 'od6');
+//
+//promise.then(function(resp) {
+//  console.log(resp);
+//}, function(reason, reason2) {
+//  console.log(reason, reason2);
+//});
+//
+//var cts = "1oiyHWhINK7rcRqHeLI4ZheR1yTLpXyGGaWgbuHYfVG0";
+//
+//$.ajax('http://spreadsheets.google.com/feeds/worksheets/private/full/' + cts).done(
+//  function(json) {
+//    console.log(json)
+//  }
+//);
 
 $(function() {
-  $('#authorize-button').click(CTS.GSheet._authenticate);
-
+  CTS.GSheet._$loginButton = $('#authorize-button');
+  CTS.GSheet._$loginButton.click(CTS.GSheet._loginButtonClicked);
+  $('#getsheets').click(CTS.GSheet.getSpreadsheets);
 });
 </script>
 </head>
 <body>
 Hi.
-<button id="authorize-button">Authorize</button>
+<button id="authorize-button">Login</button>
+<button id="getsheets">GetSheets</button>
 <script src="gapi.js"></script>
 </body>
 </html>
