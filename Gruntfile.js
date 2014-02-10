@@ -20,6 +20,8 @@ sourcelist = [
   "src/util/state-machine.js",
   "src/util/events.js",
   "src/util/utilities.js",
+  "src/util/gapi.js",
+  "src/util/gsheet.js",
 
   /* Node Containers */
   "src/model/node/node.js",
