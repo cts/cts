@@ -1,8 +1,10 @@
 var GSheet = CTS.GSheet = {
-
-  _ctsApiClientId: '459454183971.apps.googleusercontent.com',
+  // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiauthauthorize
+  _ctsApiClientId: '459454183971-3rhp3qnfrdane1hnoa23eom28qoo146f.apps.googleusercontent.com',
   _ctsApiKey: 'AIzaSyBpNbbqKrk21n6rI8Nw2R6JSz6faN7OiWc',
-  _ctsApiClientScopes: 'https://www.googleapis.com/auth/plus.me',
+  _ctsApiClientScopes: 'https://www.googleapis.com/auth/plus.me http://spreadsheets.google.com/feeds/',
+  _$loginButton: null,
+  _currentToken: null,
 
   /*
    * Args:
@@ -12,13 +14,18 @@ var GSheet = CTS.GSheet = {
    *   security: public | private
    *   mode: full | basic
    *   json: false | true
+   *   accessToken: false | true
    *
    *  "od6" is the worksheet id for the default.
    */
   _gSheetUrl: function(feed, key, worksheet, security, mode, jsonCallback, accessToken) {
-    var url = "http://spreadsheets.google.com/feeds/" +
-                feed + "/" +
-                key + "/";
+    var url = "http://spreadsheets.google.com/feeds/";
+    if (feed != null) {
+      url = (url + feed + "/");
+    }
+    if (key != null) {
+      url = (url + key + "/");
+    }
     if (worksheet != null) {
       url += (worksheet + "/")
     }
@@ -32,35 +39,84 @@ var GSheet = CTS.GSheet = {
       } else {
         url += "?";
       }
-      url += "access_token=" + accessToken;
+      if (CTS.GSheet._currentToken != null) {
+        console.log("token", CTS.GSheet._currentToken);
+        url += "access_token=" + CTS.GSheet._currentToken.access_token;
+      } else {
+        console.error("Asked for auth but current token null");
+      }
     }
     return url;
+  },
+
+  _refreshLoginButtonState: function() {
+    if (CTS.GSheet._$loginButton != null) {
+      if (CTS.GSheet._currentToken == null) {
+        // Not logged in.
+        CTS.GSheet._$loginButton.html('Login');
+      } else {
+        CTS.GSheet._$loginButton.html('Log Out');
+      }
+    }
+  },
+
+  _loginButtonClicked: function() {
+    if (CTS.GSheet._$loginButton.html() == 'Login') {
+      CTS.GSheet.login();
+    } else {
+      CTS.GSheet._currentToken == null;
+      CTS.GSheet._refreshLoginButtonState();
+    }
   },
 
   _registerCtsCredentials: function() {
     gapi.client.setApiKey(CTS.GSheet._ctsApiKey);
   },
 
-  _authenticate: function() {
-    gapi.auth.authorize({
-      client_id: CTS.GSheet._ctsApiClientId,
-      scope: CTS.GSheet._ctsApiClientScopes,
-      immediate: true},
-    CTS.GSheet._authenticationResult);
-  },
-
-  _authenticationResult: function() {
+  _authenticationResult: function(authResult) {
    var authorizeButton = document.getElementById('authorize-button');
    if (authResult && !authResult.error) {
      authorizeButton.style.visibility = 'hidden';
-     alert("success");
+     CTS.GSheet._currentToken = gapi.auth.getToken();
+     console.log("Token", CTS.GSheet._currentToken);
+     CTS.GSheet._refreshLoginButtonState();
    } else {
-     authorizeButton.style.visibility = '';
-     alert("faile");
+     CTS.GSheet._currentToken = null;
+     console.log("Token", CTS.GSheet._currentToken);
+     CTS.GSheet._refreshLoginButtonState();
    }
   },
 
-  getWorksheets: function(key) {
+  login: function() {
+    gapi.auth.authorize({
+      client_id: CTS.GSheet._ctsApiClientId,
+      scope: CTS.GSheet._ctsApiClientScopes},
+    CTS.GSheet._authenticationResult);
+  },
+
+  isLoggedIn: function() {
+    return (CTS.GSheet._currentToken != null);
+  },
+
+  getSpreadsheets: function() {
+    var deferred = Q.defer();
+    var url = CTS.GSheet._gSheetUrl(
+        'spreadsheets', null, null, 'private', 'full', true, true);
+    var request = CTS.$.getJSON(url);
+
+    request.done(function(json) {
+      // TODO: Parse into a spec object.
+      console.log("GetSpreadsheets");
+      console.log(json);
+      deferred.resolve(json);
+    });
+    request.fail(function(jqxhr, textStatus) {
+      console.log("GetSpreadsheets");
+      console.log(jqxhr, textStatus);
+      deferred.reject(textStatus);
+    });
+
+    return deferred.promise;
   },
 
   getWorksheets: function(key) {
@@ -141,8 +197,5 @@ var GSheet = CTS.GSheet = {
     });
 
     return deferred.promise;
-
-
-  }
-
+  },
 };
