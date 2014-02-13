@@ -2,7 +2,7 @@ var GSheet = CTS.GSheet = {
   // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiauthauthorize
   _ctsApiClientId: '459454183971-3rhp3qnfrdane1hnoa23eom28qoo146f.apps.googleusercontent.com',
   _ctsApiKey: 'AIzaSyBpNbbqKrk21n6rI8Nw2R6JSz6faN7OiWc',
-  _ctsApiClientScopes: 'https://www.googleapis.com/auth/plus.me http://spreadsheets.google.com/feeds/',
+  _ctsApiClientScopes: 'https://www.googleapis.com/auth/plus.me http://spreadsheets.google.com/feeds/ https://www.googleapis.com/auth/drive',
   _$loginButton: null,
   _currentToken: null,
 
@@ -96,6 +96,50 @@ var GSheet = CTS.GSheet = {
 
   isLoggedIn: function() {
     return (CTS.GSheet._currentToken != null);
+  },
+
+  createSpreadsheet: function() {
+    var url = "https://www.googleapis.com/drive/v2/files";
+    var deferred = Q.defer();
+    var boundary = '-------314159265358979323846';
+    var delimiter = "\r\n--" + boundary + "\r\n";
+    var close_delim = "\r\n--" + boundary + "--";
+    var contentType = 'application/vnd.google-apps.spreadsheet';// 'text/csv';
+    var metadata = {
+      'title': 'TED TEST FILE',
+      'mimeType': contentType
+    };
+    var csvBody = '';
+    var base64Data = btoa(csvBody);
+    var multipartRequestBody =
+      delimiter +
+      'Content-Type: application/json\r\n\r\n' +
+      JSON.stringify(metadata) +
+      delimiter +
+      'Content-Type: ' + contentType + '\r\n' +
+      'Content-Transfer-Encoding: base64\r\n' +
+      '\r\n' +
+      base64Data +
+      close_delim;
+
+    var request = gapi.client.request({
+      'path': '/upload/drive/v2/files',
+      'method': 'POST',
+      'params': {'uploadType': 'multipart'},
+      'headers': {
+        'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
+      },
+      'body': multipartRequestBody});
+    request.execute(function(resp) {
+      if (typeof resp.error != 'undefined') {
+        console.log('create error', resp.error);
+        deferred.reject(resp.error);
+      } else {
+        console.log("create success", resp);
+        deferred.resolve(resp);
+      }
+    });
+    return deferred.promise;
   },
 
   getSpreadsheets: function() {
