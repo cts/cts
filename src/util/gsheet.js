@@ -98,15 +98,15 @@ var GSheet = CTS.GSheet = {
     return (CTS.GSheet._currentToken != null);
   },
 
-  createSpreadsheet: function() {
+  createSpreadsheet: function(title) {
     var url = "https://www.googleapis.com/drive/v2/files";
     var deferred = Q.defer();
     var boundary = '-------314159265358979323846';
     var delimiter = "\r\n--" + boundary + "\r\n";
     var close_delim = "\r\n--" + boundary + "--";
-    var contentType = 'application/vnd.google-apps.spreadsheet';// 'text/csv';
+    var contentType = 'application/vnd.google-apps.spreadsheet';
     var metadata = {
-      'title': 'TED TEST FILE',
+      'title': title,
       'mimeType': contentType
     };
     var csvBody = '';
