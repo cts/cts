@@ -68,7 +68,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    _subclass_realizeChildren: function() {
      // promise
      var deferred = Q.defer();
-     var last = deferred.promise;
 
      this.children = [];
 
