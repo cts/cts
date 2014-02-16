@@ -55,8 +55,8 @@ $(function() {
           var s = '<table>';
           for (var i = 0; i < sheets.length; i++) {
             var sheet = sheets[i];
-            s += "<tr><th>" + sheet.title + "</th></tr>";
-            s += "<tr><td>" + sheet.id + "</td></tr>";
+            s += "<tr><th>" + sheet.key + "</th>";
+            s += "<td>" + sheet.title + "</td></tr>";
           }
           s += "</table>";
           $('#res').html(s);
@@ -69,17 +69,40 @@ $(function() {
   );
     
   $('#create').click(CTS.GSheet.createSpreadsheet);
+
   $('#getworksheets').click(function() {
-    var key = $('#w').val();
+    var key = $('#spreadsheetid').val();
     CTS.GSheet.getWorksheets(key).then(
-      function(worksheets) {
-        console.log(worksheets);
+      function(sheets) {
+        var s = '<table>';
+        for (var i = 0; i < sheets.length; i++) {
+          var sheet = sheets[i];
+          s += "<tr><th>" + sheet.key + "</th>";
+          s += "<td>" + sheet.title + "</td></tr>";
+        }
+        s += "</table>";
+        $('#res').html(s);
       },
       function(err) {
         console.err(err);
       }
     );
   });
+
+  $('#getdata').click(function() {
+    var ss = $('#spreadsheetid').val();
+    var ws = $('#worksheetid').val();
+    CTS.GSheet.getWorksheetItems(ss, ws).then(
+      function(sheets) {
+        console.log(sheets);
+      },
+      function(err) {
+        console.err(err);
+      }
+    );
+  });
+
+
 
   var testCollab = function(key) {
     gapi.load("auth:client,drive-realtime,drive-share", function() {
@@ -102,22 +125,24 @@ $(function() {
     <td><button id="authorize-button">Login</button></td>
   </tr>
   <tr>
-    <th>Get All Sheets</th>
+    <th>Drive:</th>
     <td>
       <button id="getsheets">Get Spreadsheets</button>
     </td>
   </tr>
   <tr>
-    <th>For a particular sheet..</th>
+    <th>Sheet:</th>
     <td>
-     <input style="width:400px" type='text' id='w' placeholder='worksheetid' value='tJUOU1bbAqtT86aWxszcsjw'>
-    <button id="getworksheets">Get Worksheets</button>
+     <input id='spreadsheetid' style="width:400px" type='text' placeholder='worksheetid' value='tJUOU1bbAqtT86aWxszcsjw'>
+     <button id="getworksheets">Get Worksheets</button>
+     <button id="create">Create New</button>
   </td>
 </tr>
 <tr>
-  <th>Create</th>
+  <th>Worksheet</th>
   <td>
-    <button id="create">Create</button>
+     <input id='worksheetid' style="width:400px" type='text' id='w' placeholder='od' value='od7'>
+     <button id="getdata">Table</button>
   </td>
 </tr>
 </table>
