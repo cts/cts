@@ -1,3 +1,7 @@
+if (typeof CTS.Utilities == 'undefined') {
+  CTS.Utilities = {};
+}
+
 CTS.Fn.extend(CTS.Utilities, {
 
   getUrlBase: function(url) {
@@ -30,7 +34,6 @@ CTS.Fn.extend(CTS.Utilities, {
     base += newPath;
     return base;
   },
-
 
   rewriteRelativeLinks: function(jqNode, sourceUrl) {
     var base = CTS.Utilities.getUrlBase(sourceUrl);

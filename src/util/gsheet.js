@@ -149,10 +149,17 @@ var GSheet = CTS.GSheet = {
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
-      // TODO: Parse into a spec object.
-      console.log("GetSpreadsheets");
-      console.log(json);
-      deferred.resolve(json);
+      var ret = [];
+      for (var i = 0; i < json.feed.entry.length; i++) {
+        var sheet = json.feed.entry[i];
+        var title = sheet.title['$t'];
+        var id = sheet.id['$t'];
+        ret.push({
+          title: title,
+          id: id
+        });
+      }
+      deferred.resolve(ret);
     });
     request.fail(function(jqxhr, textStatus) {
       console.log("GetSpreadsheets");
@@ -164,39 +171,33 @@ var GSheet = CTS.GSheet = {
   },
 
   getWorksheets: function(key) {
-    console.log("Getting worksheets for", key);
     var deferred = Q.defer();
-    var url = CTS.GSheet._gSheetUrl('worksheets', key, null, 'private', 'full', true);
-    console.log("The URL", url);
+    var url = CTS.GSheet._gSheetUrl('worksheets', key, null, 'private', 'full', true, true);
     var request = CTS.$.getJSON(url);
-
     request.done(function(json) {
-      // TODO: Parse into a spec object.
-      console.log(json);
-      deferred.resolve(json);
+      var ret = [];
+      for (var i = 0; i < json.feed.entry.length; i++) {
+        var worksheet = json.feed.entry[i];
+        var spec = {
+          kind: 'worksheet',
+          title: worksheet.title['$t'],
+          id: worksheet.id['$t'],
+          colCount: parseInt(worksheet['gs$colCount']['$t']),
+          rowCount: parseInt(worksheet['gs$rowCount']['$t']),
+          updated: worksheet.updated['$t']
+        };
+        var parts = spec.id.split('/');
+        spec['key'] = parts[parts.length - 1];
+        ret.push(spec);
+      }
+      deferred.resolve(ret);
     });
 
     request.fail(function(jqxhr, textStatus) {
-      console.log(jqxhr, textStatus);
-      deferred.reject(textStatus);
+      deferred.reject([jqxhr, textStatus]);
     });
 
     return deferred.promise;
-
-    var worksheetSpec = {
-      spreadSheetTitle: null,
-      listFeed: null,
-      cellFeed: null,
-      editUrl: null,
-      rowCount: 0,
-      colCount: 0,
-      title: null,
-      updated: null,
-      id: null
-    };
-    var listFeedUrl = null;
-
-    return deferred.promise();
   },
 
   _parseGItem: function(item) {

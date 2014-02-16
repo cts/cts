@@ -14,7 +14,7 @@ CTS.Node.GWorksheet = function(spec, tree, opts) {
 };
 
 // ### Instance Methods
-CTS.Fn.extend(CTS.Node.GWorkbook.prototype, CTS.Node.Base, CTS.Events, {
+CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
 
   debugName: function() {
     return "GWorkbook";

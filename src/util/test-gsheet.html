@@ -6,6 +6,16 @@ var CTS = {};
 
 <script src="http://code.jquery.com/jquery-2.1.0.js"></script>
 <script src="gsheet.js"></script>
+<script src="fn.js"></script>
+<script src="utilities.js"></script>
+<script src="../model/node/node.js"></script>
+<script src="../model/node/node-dom.js"></script>
+<script src="../model/node/node-gsheet.js"></script>
+<script src="../model/node/node-gworksheet.js"></script>
+<script src="../model/tree/tree.js"></script>
+<script src="../model/tree/tree-spec.js"></script>
+<script src="../model/tree/tree-dom.js"></script>
+<script src="../model/tree/tree-gsheet.js"></script>
 <script src="q.js"></script>
 <script>
 CTS.$ = $;
@@ -37,16 +47,82 @@ CTS.$ = $;
 $(function() {
   CTS.GSheet._$loginButton = $('#authorize-button');
   CTS.GSheet._$loginButton.click(CTS.GSheet._loginButtonClicked);
-  $('#getsheets').click(CTS.GSheet.getSpreadsheets);
+
+  $('#getsheets').click(
+    function() {
+      CTS.GSheet.getSpreadsheets().then(
+        function(sheets) {
+          var s = '<table>';
+          for (var i = 0; i < sheets.length; i++) {
+            var sheet = sheets[i];
+            s += "<tr><th>" + sheet.title + "</th></tr>";
+            s += "<tr><td>" + sheet.id + "</td></tr>";
+          }
+          s += "</table>";
+          $('#res').html(s);
+        },
+        function(err) {
+          console.err(err);
+        }
+      );
+    }
+  );
+    
   $('#create').click(CTS.GSheet.createSpreadsheet);
+  $('#getworksheets').click(function() {
+    var key = $('#w').val();
+    CTS.GSheet.getWorksheets(key).then(
+      function(worksheets) {
+        console.log(worksheets);
+      },
+      function(err) {
+        console.err(err);
+      }
+    );
+  });
+
+  var testCollab = function(key) {
+    gapi.load("auth:client,drive-realtime,drive-share", function() {
+      gapi.drive.realtime.load(key,
+        function(f) {
+        }, 
+        function(f) {
+        }
+      );
+    });
+  };
+
 });
 </script>
 </head>
 <body>
-Hi.
-<button id="authorize-button">Login</button>
-<button id="getsheets">GetSheets</button>
-<button id="create">Create</button>
+<table>
+  <tr>
+    <th>Login</th>
+    <td><button id="authorize-button">Login</button></td>
+  </tr>
+  <tr>
+    <th>Get All Sheets</th>
+    <td>
+      <button id="getsheets">Get Spreadsheets</button>
+    </td>
+  </tr>
+  <tr>
+    <th>For a particular sheet..</th>
+    <td>
+     <input style="width:400px" type='text' id='w' placeholder='worksheetid' value='tJUOU1bbAqtT86aWxszcsjw'>
+    <button id="getworksheets">Get Worksheets</button>
+  </td>
+</tr>
+<tr>
+  <th>Create</th>
+  <td>
+    <button id="create">Create</button>
+  </td>
+</tr>
+</table>
+<div id="res">
+</div>
 <script src="gapi.js"></script>
 </body>
 </html>
