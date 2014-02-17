@@ -6,76 +6,74 @@
  * To be used with GruntJS <http://gruntjs.com/>
  */
 
-sourcelist = [
-  "src/preamble.js",
+ctsjs_sourcelist = [
+  "src/cts/preamble.js",
 
-  "src/util/fn.js",
+  "src/cts/util/fn.js",
 
-  "src/debugging/log.js",
-  "src/debugging/debugging.js",
-  "src/debugging/tree-viz.js",
+  "src/cts/debugging/log.js",
+  "src/cts/debugging/debugging.js",
+  "src/cts/debugging/tree-viz.js",
 
   /* Misc */
-  "src/util/q.js",
-  "src/util/state-machine.js",
-  "src/util/events.js",
-  "src/util/utilities.js",
-  "src/util/gapi.js",
-  "src/util/gsheet.js",
+  "src/cts/util/q.js",
+  "src/cts/util/state-machine.js",
+  "src/cts/util/events.js",
+  "src/cts/util/utilities.js",
+  "src/cts/util/gapi.js",
+  "src/cts/util/gsheet.js",
 
   /* Node Containers */
-  "src/model/node/node.js",
-  "src/model/node/node-abstract.js",
-  "src/model/node/node-dom.js",
-  "src/model/node/node-glistfeedproperty.js",
-  "src/model/node/node-glistfeeditem.js",
-  "src/model/node/node-gworksheet.js",
-  "src/model/node/node-gspreadsheet.js",
+  "src/cts/model/node/node.js",
+  "src/cts/model/node/node-abstract.js",
+  "src/cts/model/node/node-dom.js",
+  "src/cts/model/node/node-glistfeedproperty.js",
+  "src/cts/model/node/node-glistfeeditem.js",
+  "src/cts/model/node/node-gworksheet.js",
+  "src/cts/model/node/node-gspreadsheet.js",
 
   /* Relations */
-  "src/model/relation/relation-spec.js",
-  "src/model/relation/relation.js",
-  "src/model/relation/is.js",
-  "src/model/relation/are.js",
-  "src/model/relation/ifexist.js",
-  "src/model/relation/ifnexist.js",
-  "src/model/relation/graft.js",
+  "src/cts/model/relation/relation-spec.js",
+  "src/cts/model/relation/relation.js",
+  "src/cts/model/relation/is.js",
+  "src/cts/model/relation/are.js",
+  "src/cts/model/relation/ifexist.js",
+  "src/cts/model/relation/ifnexist.js",
+  "src/cts/model/relation/graft.js",
  
   /* Tree Model */
-  "src/model/tree/tree.js",
-  "src/model/tree/tree-spec.js",
-  "src/model/tree/tree-dom.js",
-  "src/model/tree/tree-gspreadsheet.js",
-  "src/model/forrest-spec.js",
-  "src/model/forrest.js",
-  "src/model/selection-spec.js",
-  "src/model/selection.js",
-  "src/model/dependency-spec.js",
+  "src/cts/model/tree/tree.js",
+  "src/cts/model/tree/tree-spec.js",
+  "src/cts/model/tree/tree-dom.js",
+  "src/cts/model/tree/tree-gspreadsheet.js",
+  "src/cts/model/forrest-spec.js",
+  "src/cts/model/forrest.js",
+  "src/cts/model/selection-spec.js",
+  "src/cts/model/selection.js",
+  "src/cts/model/dependency-spec.js",
  
   /* For creating async stuff */
-  "src/model/factory.js",
+  "src/cts/model/factory.js",
 
   /* Parser */
-  "src/parser/parser.js",
-  "src/parser/parser-json.js",
-  "src/parser/parser-cts.js",
-  "src/parser/parser-cts-impl.js",
-  "src/parser/html.js",
-  //"autogen/cts2-parser.js",
-  //"src/fragments/postparser._js",
+  "src/cts/parser/parser.js",
+  "src/cts/parser/parser-json.js",
+  "src/cts/parser/parser-cts.js",
+  "src/cts/parser/parser-cts-impl.js",
+  "src/cts/parser/html.js",
 
-  "src/engine.js",
-  "src/autoloader.js",
+  "src/cts/engine.js",
+  "src/cts/autoloader.js",
 
   /* Xtras */
-  "src/xtras/xtras.js",
-  "src/xtras/color-tree.js",
+  "src/cts/xtras/xtras.js",
+  "src/cts/xtras/color-tree.js",
 
-  "src/fragments/postfix._js"
+  "src/cts/fragments/postfix._js"
 ];
 
-var devSourceList = sourcelist.slice(0);
-var prodSourceList = sourcelist.slice(0);
+var devSourceList = ctsjs_sourcelist.slice(0);
+var prodSourceList = ctsjs_sourcelist.slice(0);
 
 devSourceList.unshift('src/fragments/constants-debug._js');
 devSourceList.unshift('src/fragments/prefix._js');
