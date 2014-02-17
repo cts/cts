@@ -84,6 +84,8 @@ CTS.Parser.Cts = {
         var kind = h.shift().trim();
         if (kind == 'html') {
           f.treeSpecs.push(new TreeSpec('html', h[0], h[1]));
+        } else if (kind == 'gsheet') {
+          f.treeSpecs.push(new TreeSpec('gsheet', h[0], h[1]));
         } else if (kind == 'css') {
           f.dependencySpecs.push(new DependencySpec('css', h[0]));
         } else if (kind == 'cts') {

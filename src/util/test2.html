@@ -1,0 +1,33 @@
+<html>
+<head>
+<script src="../../release/cts.dev.js?autoload=false"></script>
+<style type="text/cts">
+@gsheet address pvz3p_uE5Kc4n0mjG5Ru4dw;
+</style>
+<script>
+CTS.status.loaded.then(function() {
+  CTS.GSheet._$loginButton = CTS.$('#authorize-button');
+  CTS.GSheet._$loginButton.click(CTS.GSheet._loginButtonClicked);
+  CTS.$('#boot-button').click(function() {
+    CTS.engine = new CTS.Engine();
+    CTS.engine.boot()
+  });
+});
+</script>
+
+</head>
+<body>
+
+<table>
+  <tr>
+    <th>Login</th>
+    <td><button id="authorize-button">Login</button></td>
+  </tr>
+  <tr>
+    <th>Boot CTS</th>
+    <td><button id="boot-button">Boot</button></td>
+  </tr>
+</table>
+
+</body>
+</html>

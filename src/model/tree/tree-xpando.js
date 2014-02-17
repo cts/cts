@@ -9,10 +9,4 @@ CTS.Tree.Xpando = function(forrest, attributes) {
 // ----------------
 CTS.Fn.extend(CTS.Tree.Xpando, CTS.Tree.Base, {
 
-  nodesForSelectionSpec: function(spec) {
-    alert("unimplemented!");
-    return [];
-  }
-
-
 });

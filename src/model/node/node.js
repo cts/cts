@@ -231,6 +231,7 @@ CTS.Node.Base = {
   },
 
   realizeChildren: function() {
+    console.log("Realizing Children for ", this.kind);
     var deferred = Q.defer();
 
     if (this.children.length != 0) {
@@ -248,6 +249,7 @@ CTS.Node.Base = {
         });
         Q.all(promises).then(
           function() {
+            console.log("REALIZED children: ", self.kind);
             deferred.resolve();
           }, 
           function(reason) {

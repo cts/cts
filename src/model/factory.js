@@ -16,6 +16,8 @@ CTS.Factory = {
   Tree: function(spec, forrest) {
     if ((spec.url == null) && (spec.name = 'body')) {
       return CTS.Factory.TreeWithJquery(CTS.$('body'), forrest, spec);
+    } if ((spec.kind == "GSheet" || spec.kind == 'gsheet')) {
+      return CTS.Factory.GSpreadsheetTree(spec, forrest);
     } else if (typeof spec.url == "string") {
       var deferred = Q.defer();
       CTS.Utilities.fetchString(spec).then(
@@ -72,5 +74,26 @@ CTS.Factory = {
       }
     );
     return deferred.promise;
+  },
+
+  GSpreadsheetTree: function(treespec, forrest) {
+    var deferred = Q.defer();
+    // For the GSheet.
+    treespec.sskey = treespec.url;
+    var tree = new CTS.Tree.GSpreadsheet(forrest, treespec);
+    var root = new CTS.Node.GSpreadsheet(treespec, tree);
+    root.realizeChildren().then(
+      function() {
+        console.log("Got it");
+        deferred.resolve(tree);
+      },
+      function(reason) {
+        console.log("Nope");
+        deferred.reject();
+      }
+    );
+    console.log("Promise for gsheet");
+    return deferred.promise;
   }
+
 }

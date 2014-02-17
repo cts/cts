@@ -1,53 +1,45 @@
-CTS.Node.GSheet = function(data, tree, opts) {
+CTS.Node.GSpreadsheet = function(spec, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
-  this.kind = "HTML";
-  this.value = this._createJqueryNode(node);
+  this.spec = spec;
+  this.kind = "GSpreadsheet";
+  this.value = null;
   this.ctsId = Fn.uniqueId().toString();
-  
-  this.value.data('ctsid', this.ctsId);
-  this.value.data('ctsnode', this);
-
   this.on('received-is', function() {
     this.value.trigger('cts-received-is');
   });
 };
 
 // ### Instance Methods
-CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
+CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
 
   debugName: function() {
-    return "GSheet";
+    return "GSpreadsheet";
   },
 
   find: function(selector, ret) {
-    // TODO
+    if (typeof ret == 'undefined') {
+      ret = [];
+    }
+    return ret;
   },
 
-  /************************************************************************
-   **
-   ** Required by Node base class
-   **
-   ************************************************************************/
+  descendantOf: function(other) {
+    false;
+  },
 
-   descendantOf: function(other) {
-     return false;
-   },
-
-   /* Fetches list of workbook nodes from GSheet API.
-    * Also potentially updates the name of this sheet.
-    * - Precondition: this.children.length == 0
-    */
-   _subclass_realizeChildren: function() {
+  _subclass_realizeChildren: function() {
      var deferred = Q.defer();
+     this.children = [];
      var self = this;
-
-     CTS.GSheet.getWorksheets(key),then(
-       function(specs) {
-         for (var i = 0; i < specs.length; i++) {
-           var kid = new CTS.Node.GWorksheet(specs[i], this.tree, this.opts);
-           kid.parentNode = self;
-           self.children.push(kid);
+     CTS.GSheet.getWorksheets(this.spec.sskey).then(
+       function(gdata) {
+         self.gdata = gdata;
+         for (var i = 0; i < gdata.length; i++) {
+           var item = gdata[i];
+           var child = new CTS.Node.GWorksheet(item, self.tree, self.opts);
+           child.parentNode = self;
+           self.children.push(child);
          }
          deferred.resolve();
        },
@@ -59,35 +51,28 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    },
 
    /* 
-    * We have to creat this worksheet in GSheets.
+    * Inserts this DOM node after the child at the specified index.
+    * It must be a new row node.
     */
    _subclass_insertChild: function(child, afterIndex) {
+     // TODO: Figure out what to do.
    },
 
    /*
-    * This gets called when a new worksheet is added to the
-    * remote GSheet structure.
-    *
-    * In practice this will only happen if we enable background
-    * polling of the API, since there are no notifications.
     */
    _onChildInserted: function(child) {
-     // TODO - This should never get called.
+     // TODO: Figure out what to do.
    },
 
    /* 
-    *  Removes this GSheet from Google.
+    *  Removes this Workbook from the GSheet
     */
    _subclass_destroy: function() {
-     // TODO: Is this even possible with the API?
    },
 
-   // Not necessary.
    _subclass_getInlineRelationSpecString: function() {
-     return null;
    },
 
-   // TBD
    _subclass_beginClone: function(node) {
    },
 
@@ -98,12 +83,15 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    ************************************************************************/
 
   getValue: function(opts) {
+    return null;
   },
 
   setValue: function(value, opts) {
+    // noop.
   },
 
   _subclass_ensure_childless: function() { 
+    // noop.
   },
 
   /************************************************************************
@@ -129,3 +117,4 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
   }
 
 });
+

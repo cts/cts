@@ -149,10 +149,20 @@ var GSheet = CTS.GSheet = {
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
-      // TODO: Parse into a spec object.
-      console.log("GetSpreadsheets");
-      console.log(json);
-      deferred.resolve(json);
+      var ret = [];
+      for (var i = 0; i < json.feed.entry.length; i++) {
+        var sheet = json.feed.entry[i];
+        var title = CTS.GSheet._parseGItem(sheet.title);
+        var id = CTS.GSheet._parseGItem(sheet.id);
+        var spec = {
+          title: title,
+          id: id
+        };
+        var parts = spec.id.split('/');
+        spec['key'] = parts[parts.length - 1];
+        ret.push(spec);
+      }
+      deferred.resolve(ret);
     });
     request.fail(function(jqxhr, textStatus) {
       console.log("GetSpreadsheets");
@@ -164,50 +174,44 @@ var GSheet = CTS.GSheet = {
   },
 
   getWorksheets: function(key) {
-    console.log("Getting worksheets for", key);
     var deferred = Q.defer();
-    var url = CTS.GSheet._gSheetUrl('worksheets', key, null, 'private', 'full', true);
-    console.log("The URL", url);
+    var url = CTS.GSheet._gSheetUrl('worksheets', key, null, 'private', 'full', true, true);
     var request = CTS.$.getJSON(url);
-
     request.done(function(json) {
-      // TODO: Parse into a spec object.
-      console.log(json);
-      deferred.resolve(json);
+      var ret = [];
+      for (var i = 0; i < json.feed.entry.length; i++) {
+        var worksheet = json.feed.entry[i];
+        var spec = {
+          kind: 'worksheet',
+          title: CTS.GSheet._parseGItem(worksheet.title),
+          id: CTS.GSheet._parseGItem(worksheet.id),
+          colCount: parseInt(CTS.GSheet._parseGItem(worksheet['gs$colCount'])),
+          rowCount: parseInt(CTS.GSheet._parseGItem(worksheet['gs$rowCount'])),
+          updated: CTS.GSheet._parseGItem(worksheet.updated)
+        };
+        var parts = spec.id.split('/');
+        spec['wskey'] = parts[parts.length - 1];
+        spec['sskey'] = key;
+        ret.push(spec);
+      }
+      deferred.resolve(ret);
     });
 
     request.fail(function(jqxhr, textStatus) {
-      console.log(jqxhr, textStatus);
-      deferred.reject(textStatus);
+      deferred.reject([jqxhr, textStatus]);
     });
 
     return deferred.promise;
-
-    var worksheetSpec = {
-      spreadSheetTitle: null,
-      listFeed: null,
-      cellFeed: null,
-      editUrl: null,
-      rowCount: 0,
-      colCount: 0,
-      title: null,
-      updated: null,
-      id: null
-    };
-    var listFeedUrl = null;
-
-    return deferred.promise();
   },
 
   _parseGItem: function(item) {
     return item['$t'];
   },
 
-  getWorksheetItems: function(spreadsheetKey, worksheetKey, accessToken) {
+  getListFeed: function(spreadsheetKey, worksheetKey) {
     console.log("Getting workshee", spreadsheetKey, worksheetKey);
     var deferred = Q.defer();
-    var url = CTS.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'public', 'values', true, accessToken);
-    console.log("URL", url);
+    var url = CTS.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'private', 'full', true, true);
 
     var request = CTS.$.getJSON(url);
 

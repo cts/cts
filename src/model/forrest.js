@@ -140,32 +140,40 @@ CTS.Fn.extend(Forrest.prototype, {
 
     // Load AND REALIZE all the tree specs
     if (typeof forrestSpec.treeSpecs != 'undefined') {
-      for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
-        (function(treeSpec) {
-          var treeSpec = forrestSpec.treeSpecs[i];
-          self.addTreeSpec(treeSpec);
-          var next = Q.defer();
-          last.then(
-            function() {
-              self.realizeTree(treeSpec).then(
-                function() {
-                  next.resolve();
-                },
-                function(reason) {
-                  next.reject(reason);
-                }
-              );
-            },
-            function(reason) {
-              next.reject(reason);
-            }
-          );
-          last = next.promise;
-        })(forrestSpec.treeSpecs[i])
-      }
+      var promises = CTS.Fn.map(forrestSpec.treeSpecs, function(treeSpec) {
+        self.addTreeSpec(treeSpec);
+        return self.realizeTree(treeSpec);
+      });
+      Q.all(promises).then(function() {
+        initial.resolve();
+      });
+// Why were we doing this?
+//      for (i = 0; i < forrestSpec.treeSpecs.length; i++) {
+//        (function(treeSpec) {
+//          var treeSpec = forrestSpec.treeSpecs[i];
+//          self.addTreeSpec(treeSpec);
+//          var next = Q.defer();
+//          last.then(
+//            function() {
+//              self.realizeTree(treeSpec).then(
+//                function() {
+//                  next.resolve();
+//                },
+//                function(reason) {
+//                  next.reject(reason);
+//                }
+//              );
+//            },
+//            function(reason) {
+//              next.reject(reason);
+//            }
+//          );
+//          last = next.promise;
+//        })(forrestSpec.treeSpecs[i])
+//      }
     }
 
-    initial.resolve();
+    //initial.resolve();
     return last;
   },
 
@@ -195,6 +203,7 @@ CTS.Fn.extend(Forrest.prototype, {
     var promises = [];
     Fn.each(this.treeSpecs, function(treeSpec, name, list) {
       if (! Fn.has(this.trees, name)) {
+        console.log("Promising to realize tree", treeSpec);
         promises.push(this.realizeTree(treeSpec));
       }
     }, this);

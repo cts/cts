@@ -27,7 +27,10 @@ sourcelist = [
   "src/model/node/node.js",
   "src/model/node/node-abstract.js",
   "src/model/node/node-dom.js",
-  "src/model/node/node-json.js",
+  "src/model/node/node-glistfeedproperty.js",
+  "src/model/node/node-glistfeeditem.js",
+  "src/model/node/node-gworksheet.js",
+  "src/model/node/node-gspreadsheet.js",
 
   /* Relations */
   "src/model/relation/relation-spec.js",
@@ -42,8 +45,7 @@ sourcelist = [
   "src/model/tree/tree.js",
   "src/model/tree/tree-spec.js",
   "src/model/tree/tree-dom.js",
-  "src/model/tree/tree-json.js",
-  "src/model/tree/tree-xpando.js",
+  "src/model/tree/tree-gspreadsheet.js",
   "src/model/forrest-spec.js",
   "src/model/forrest.js",
   "src/model/selection-spec.js",

@@ -23,21 +23,6 @@ CTS.Fn.extend(Selection.prototype, {
     return new CTS.Selection(CTS.Fn.union([], this.nodes), this.opts);
   },
 
-  fromSelectionSpec: function(selectionSpec, forrest) {
-    if (selectionSpec.inline === true) {
-      if (this.inlineNode === null) {
-        this.nodes = [];
-      } else {
-        this.nodes = [selectionSpec.inlineObject];
-      }
-    } else {
-      if (this._selection === null) {
-        this.nodes = forrest.nodesForSelectionSpec(selectionSpec);
-      }
-    }
-    this.spec = selectionSpec;
-  },
-
   matchesArray: function(arr, exactly, orArrayAncestor) {
     if (typeof backoffToAncestor == 'undefined') {
       backoffToAncestor = false;
