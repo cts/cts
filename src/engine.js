@@ -72,11 +72,13 @@ CTS.Fn.extend(Engine.prototype, Events, {
             self.forrest.realizeDependencies().then(
               function() {
                 self.bootStage = "Realize Trees";
+                console.log("realizing trees");
                 self.forrest.realizeTrees().then(
                   function() {
                     self.bootStage = "Realize Relations";
                     self.forrest.realizeRelations().then(
                       function() {
+                        console.log("CTS Resources Loaded. Rendering.");
                         self.bootStage = "Render";
                         self.render.call(self);
                         self.bootStage = "Finalizing Boot";

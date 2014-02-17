@@ -1,22 +1,35 @@
-CTS.Node.GWorksheet = function(spec, tree, opts) {
+/** A Google Spreadsheets "List Feed" Property Node.
+ *
+ * The LIST FEED represents the view of a Work Sheet that google considers to
+ * be a list items, each with key-value pairs. This node represents the
+ * PROPERTY of one of those items.
+ *
+ * As such, it is addressed (and initialized, in constructor) with the KEY and
+ * VALUE that it represents, and has no notion of typical spreadsheet
+ * addressing.
+ *
+ */
+
+CTS.Node.GListFeedProperty = function(key, value, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
-  this.spec = spec;
-  this.kind = "GWorksheet";
-  this.value = null;
+  this.key = key;
+  this.value = value;
   this.ctsId = Fn.uniqueId().toString();
+  this.kind = 'GListFeedProperty';
   this.on('received-is', function() {
     this.value.trigger('cts-received-is');
   });
 };
 
 // ### Instance Methods
-CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
+CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
 
   debugName: function() {
-    return "GWorkSheet";
+    return "GListFeedProperty";
   },
 
+  // Find alreays returns empty on a leaf.
   find: function(selector, ret) {
     if (typeof ret == 'undefined') {
       ret = [];
@@ -25,55 +38,48 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   descendantOf: function(other) {
-    false;
+    // This node is only below a worksheet or gsheet.
+    if (this.parentNode != null) {
+      return ((this.parentNode == other) || (this.parentNode.descendentOf(other)));
+    }
+    return false;
   },
 
   _subclass_realizeChildren: function() {
-    var self = this;
+     // No op. This node is a child.
      var deferred = Q.defer();
      this.children = [];
-     CTS.GSheet.getListFeed(this.spec.sskey, this.spec.wskey).then(
-       function(gdata) {
-         self.gdata = gdata;
-         for (var i = 0; i < gdata.items.length; i++) {
-           var item = gdata.items[i];
-           var child = new CTS.Node.GListFeedItem(item.title, item, self.tree, self.opts);
-           self.children.push(child);
-         }
-         console.log("Resolving Worksheet Kids");
-         deferred.resolve();
-       },
-       function(reason) {
-         deferred.reject(reason);
-       }
-     );
+     deferred.resolve();
      return deferred.promise;
    },
 
-   /* 
-    * Inserts this DOM node after the child at the specified index.
-    * It must be a new row node.
-    */
    _subclass_insertChild: function(child, afterIndex) {
-     // TODO: Figure out what to do.
+     CTS.Log.Error("insertChild called (impossibly) on GListFeedProperty Node");
    },
 
    /*
     */
    _onChildInserted: function(child) {
-     // TODO: Figure out what to do.
+     CTS.Log.Error("onChildInserted called (impossibly) on GListFeedProperty Node");
    },
 
    /* 
     *  Removes this Workbook from the GSheet
     */
    _subclass_destroy: function() {
+     // TODO: Delete cell from sheet
    },
 
-   _subclass_getInlineRelationSpecString: function() {
+   _subclass_getInlineRelationSpecString: function() {a
+     return null;
    },
 
    _subclass_beginClone: function(node) {
+     var value = this.value;
+     var key = this.key;
+     var clone = new CTS.Node.GWorkSheet(key, value, this.tree, this.opts);
+     // there are no children, so no need to do anything there.
+     return clone;
    },
 
   /************************************************************************
@@ -83,15 +89,15 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
    ************************************************************************/
 
   getValue: function(opts) {
-    return null;
+    return this.value;
   },
 
   setValue: function(value, opts) {
-    // noop.
+    this.value = value;
   },
 
   _subclass_ensure_childless: function() { 
-    // noop.
+    this.value = null;
   },
 
   /************************************************************************
@@ -117,4 +123,5 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
   }
 
 });
+
 

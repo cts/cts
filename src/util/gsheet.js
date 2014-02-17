@@ -190,7 +190,8 @@ var GSheet = CTS.GSheet = {
           updated: CTS.GSheet._parseGItem(worksheet.updated)
         };
         var parts = spec.id.split('/');
-        spec['key'] = parts[parts.length - 1];
+        spec['wskey'] = parts[parts.length - 1];
+        spec['sskey'] = key;
         ret.push(spec);
       }
       deferred.resolve(ret);
@@ -207,7 +208,7 @@ var GSheet = CTS.GSheet = {
     return item['$t'];
   },
 
-  getWorksheetItems: function(spreadsheetKey, worksheetKey) {
+  getListFeed: function(spreadsheetKey, worksheetKey) {
     console.log("Getting workshee", spreadsheetKey, worksheetKey);
     var deferred = Q.defer();
     var url = CTS.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'private', 'full', true, true);
