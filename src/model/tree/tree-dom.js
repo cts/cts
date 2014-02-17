@@ -17,15 +17,6 @@ CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
     this.root.setProvenance(this);
   },
 
-  nodesForSelectionSpec: function(spec) {
-    if (spec.inline) {
-      return [spec.inlineObject];
-    } else {
-      var results = this.root.find(spec.selectorString);
-      return results;
-    }
-  },
-  
   getCtsNode: function($node) {
     var ctsnode = $node.data('ctsnode');
     if ((ctsnode == null) || (typeof ctsnode == 'undefined') || (ctsnode == '')) {

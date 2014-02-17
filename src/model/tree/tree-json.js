@@ -11,8 +11,4 @@ CTS.Tree.Json = function(forrest, root, spec) {
 // Instance Methods
 // ----------------
 CTS.Fn.extend(CTS.Tree.Json, CTS.Tree.Base, {
-  nodesForSelectionSpec: function(spec) {
-    CTS.Log.Fatal("JsonTree::nodesForSelectionSpec - Unimplemented!");
-    return [];
-  }
 });

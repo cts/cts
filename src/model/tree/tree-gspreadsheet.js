@@ -15,10 +15,6 @@ CTS.Fn.extend(CTS.Tree.GSpreadsheet.prototype, CTS.Tree.Base, {
     this.root.setProvenance(this);
   },
 
-  nodesForSelectionSpec: function(spec) {
-  },
-
   listenForNodeInsertions: function(new_val) {
   }
 });
- 
