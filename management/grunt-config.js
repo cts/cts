@@ -18,6 +18,7 @@
  *
  */
 
+
 var sources = {
   engine: [
     "src/cts/preamble.js",
@@ -102,7 +103,7 @@ var sources = {
     "src/ui/fragments/postfix.js",  
     "src/ui/fragments/autoloader.js"
   ]
-}
+};
 
 var variants = {
   engine: {
@@ -122,6 +123,44 @@ var variants = {
       ],
       output: 'release/cts.js',
       minOutput: 'release/cts.min.js'
+    }
+  },
+  ui: {
+    development: {
+      additions: [
+        "src/ui/fragments/development/constants.js",
+        "<banner>"
+      ],
+      output: 'release/cts-ui.dev.js',
+      less: {
+        options: {
+          paths: ["mockups/css"]
+        },
+        files: {
+          "release/widgets/cts-ui/css/theminator.css": "src/ui/mockups/less/theminator.less",
+          "release/widgets/cts-ui/css/tray.css": "src/ui/mockups/less/tray.less",
+          "release/widgets/cts-ui/css/editor.css": "src/ui/mockups/less/editor.less"
+        }
+      }
+    },
+    production: {
+      additions: [
+        "src/ui/fragments/production/constants.js",
+        "<banner>"
+      ],
+      output: 'release/cts-ui.js',
+      minOutput: 'release/cts-ui.min.js',
+      less: {
+        options: {
+          paths: ["mockups/css"],
+          yuicompress: true
+        },
+        files: {
+          "release/widgets/cts-ui/css/theminator.css": "src/ui/mockups/less/theminator.less",
+          "release/widgets/cts-ui/css/tray.css": "src/ui/mockups/less/tray.less",
+          "release/widgets/cts-ui/css/editor.css": "src/ui/mockups/less/editor.less"
+        }
+      }
     }
   }
 }
@@ -178,14 +217,32 @@ var gruntConfig = {
 
 gruntConfig['concat'] = {};
 for (var project in variants) {
-  for (variant in variants[project]) {
+  for (var variant in variants[project]) {
     var targetName = project + "_" + variant;
     gruntConfig['concat'][targetName] = {
-      src: variants[project][variants].sources,
-      dest: variants[project][variants].output
+      src: variants[project][variant].sources,
+      dest: variants[project][variant].output
     }
   }
 }
+
+/*
+ * Less Task
+ * -----------
+ */
+
+gruntConfig['less'] = {};
+for (var project in variants) {
+  for (var variant in variants[project]) {
+    var targetName = project + "_" + variant;
+    gruntConfig['concat'][targetName] = {
+      src: variants[project][variant].sources,
+      dest: variants[project][variant].output
+    }
+  }
+}
+
+
 
 /*
  * Min Task
