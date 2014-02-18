@@ -13,14 +13,23 @@ number of sub-projects, all packaged together for ease of development:
 This is the Javascript implementation of [Cascading Tree Sheets
 (CTS)](http://www.treesheets.org). 
 
+Dependencies
+------------
+
+You'll need:
+
+   * NodeJS
+   * NPM
+   * MongoDB
+   * Grunt 
+   
+Once you've cloned the repository, run `npm install` to get the required Node
+packages to build the project.
+
 Running the Development Environment
 -----------------------------------
 
-You'll need NodeJS, NPM, and Grunt to start.  Once you've cloned the
-repository, run `npm install` to get the required Node packages to build the
-project.
-
-Then just run 
+Make sure MongoDB is running (`sudo mongod`). Then just run:
 
      grunt server
 

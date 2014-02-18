@@ -166,6 +166,17 @@ app.get('/auth/venmo/callback', passport.authorize('venmo', { failureRedirect: '
  * Start Express server.
  */
 
+var banner = "" +
+"    _________________   \n" +
+"   / ____/_  __/ ___/ \n" + 
+"  / /     / /  \\__ \\      __|  _ \\  __|\\ \\   / _ \\  __| \n" +
+" / /___  / /  ___/ /    \\__ \\  __/ |    \\ \\ /  __/ |   \n" +
+"  ____/ /_/  /____/     ____/\\___|_|     \\_/ \\___|_|   \n\n" +
+"               Cascading Tree Sheets Server \n";
+
+
 app.listen(app.get('port'), function() {
-  console.log("✔ Express server listening on port %d in %s mode", app.get('port'), app.settings.env);
+  console.log("\n" + banner);
+  console.log("  ✔ Express server listening on port %d", app.get('port'));
+  console.log("  ✔ Mode: %s ", app.settings.env);
 });
