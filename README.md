@@ -1,19 +1,38 @@
 Cascading Tree Sheets
 =====================
 
+Cascading Tree Sheets are like CSS for web structure. This project contains a
+number of sub-projects, all packaged together for ease of development:
+
+   *  Cascading Tree Sheets Engine (Javascript)
+      *see:* `src/engine`
+   *  CTS-UI (Javascript), a widget to help you edit sites with CTS
+      *see:* `src/ui`
+   *  A Server project to handle remote edits
+
 This is the Javascript implementation of [Cascading Tree Sheets
-(CTS)](http://www.treesheets.org). CTS does for structure what CSS does for
-style.
+(CTS)](http://www.treesheets.org). 
 
 Running the Development Environment
 -----------------------------------
 
-To host CTS-JS on your development machine, just run:
+You'll need NodeJS, NPM, and Grunt to start.  Once you've cloned the
+repository, run `npm install` to get the required Node packages to build the
+project.
 
-     grunt web_server
+Then just run 
 
-This will host CTS at `http://localhost:9000/release/cts.js', which is
-designed to work with other projects under the CTS umbrella.
+     grunt server
+
+This causes a number of processes to run in parallel:
+
+   *  Runs server on :3000
+   *  Runs file server on :3001
+   *  Watches and recompiles upon file change
+
+
+Testing Things Out
+------------------
 
 ### Getting the bookmarklet link
 
@@ -25,23 +44,6 @@ Visit the following page:
     http://localhost:9000/development-bookmarklet.html
 
 And drag the bookmarklet link to the toolbar of your browser.
-
-### Changing the code and re-running
-
-From a separate console, run grunt in the project root:
-
-    grunt
-
-This will rebuild `release/cts.js`. 
-
-Development
------------
-
-You'll need NodeJS, NPM, and Grunt to start, this project just uses that to
-manage the build environment. CTS has no dependencies on NodeJS.
-
-Once you've cloned the repository, run `npm install` to get the required Node
-packages to build the project.
 
 Testing
 -------
