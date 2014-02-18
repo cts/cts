@@ -1,0 +1,101 @@
+<html>
+  <head>
+  </head>
+  <body>
+
+    <div id="chart">
+
+    <div class="thechart"></div>
+  
+    <div class="cts-data" style="display:none;">
+      <ul class="bubblechains">
+        <li>
+          <span>States</span>
+          <table>
+            <tr><td>California</td><td>1911822</td></tr>
+            <tr><td>Texas</td><td>1158194</td></tr>
+            <tr><td>New York</td><td>1078161</td></tr>
+            <tr><td>Florida</td><td>734727</td></tr>
+            <tr><td>Illinois</td><td>627952</td></tr>
+            <tr><td>Pennsylvania</td><td>549565</td></tr>
+            <tr><td>New Jersey</td><td>480614</td></tr>
+          </table>
+        </li>
+        <li>
+          <span>Countries</span>
+          <table>
+            <tr><td>USA</td><td>14620000</td></tr>
+            <tr><td>China</td><td>5879100</td></tr>
+            <tr><td>Japan</td><td>5391000</td></tr>
+            <tr><td>Germany</td><td>3306000</td></tr>
+            <tr><td>France</td><td>2555000</td></tr>
+            <tr><td>Brazil</td><td>2518000</td></tr>
+            <tr><td>United Kingdom</td><td>2259000</td></tr>
+            <tr><td>Italy</td><td>2037000</td></tr>
+            <tr><td>Canada</td><td>1564000</td></tr>
+          </table>
+        </li>
+      </ul>
+    </div>
+
+    <script>
+      var widget = CTS.Util.getLastInserted();
+      var dataElem = widget.find(".cts-data").first();
+      var chartElem = widget.find(".thechart").first()[0];
+      var allData = CTS.engine.recoverData(dataElem);
+      
+      var r = 400,
+      format = d3.format(",d"),
+      fill = d3.scale.category20c();
+
+      var bubble = d3.layout.pack()
+                     .sort(null)
+                     .size([r, r])
+                     .padding(1.5);
+      
+      var vis = d3.select(chartElem).append("svg")
+                  .attr("width", r)
+                  .attr("height", r)
+                  .attr("class", "bubble");
+      
+      var data = {"name": "flare"};
+      
+      if ("children" in allData) {
+        data["children"] = allData.children;
+      }
+
+      function classes(root) {
+        var classes = [];
+      
+          function recurse(name, node) {
+            if (node.children) node.children.forEach(function(child) { recurse(node.name, child); });
+            else classes.push({packageName: name, className: node.name, value: node.size});
+          }
+      
+          recurse(null, root);
+          return {children: classes};
+      }
+      
+      var node = vis.selectAll("g.node")
+          .data(bubble.nodes(classes(data))
+          .filter(function(d) { return !d.children; }))
+          .enter().append("g")
+                  .attr("class", "node")
+                  .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+      
+      node.append("title")
+          .text(function(d) { return d.className + ": " + format(d.value); });
+      
+      node.append("circle")
+          .attr("r", function(d) { return d.r; })
+          .style("fill", function(d) { return fill(d.packageName); });
+      
+      node.append("text")
+          .attr("text-anchor", "middle")
+          .attr("dy", ".3em")
+          .style("font", "10px sans-serif")
+          .text(function(d) { return d.className.substring(0, d.r / 3); });
+             </script>
+       </div>
+  </body>
+</html>

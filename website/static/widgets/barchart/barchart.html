@@ -1,0 +1,137 @@
+<html>
+  <head>
+    <script type="text/javascript" src="http://d3js.org/d3.v2.js"></script>
+  </head>
+  <body>
+
+    <div id="chart">
+
+    <div class="thechart"></div>
+  
+    <div class="cts-data" style="display:none;">
+      <table class="properties">
+        <tr><td class="width"></td></tr>
+        <tr><td class="height"></td></tr>
+      </table>
+      <table class="series">
+        <tr>
+          <td>Apples</td>
+          <td>4</td>
+          <td>8</td>
+          <td>15</td>
+        </tr>
+      </table>
+    </div>
+
+    <script>
+      var widget = CTS.Util.getLastInserted();
+      console.log("Beginning Widget JS ---------------");
+      console.log(widget.clone());
+      var dataElem = widget.find(".cts-data").first();
+      var chartElem = widget.find(".thechart").first()[0];
+      var width = 150;
+      var height = 200;
+      var data = [];
+
+      var allData = CTS.engine.recoverData(dataElem);
+      if ("series" in allData) {
+        var series = allData.series;
+        if (series.length > 0) {
+          if ((typeof series[0] != "undefined") && ("elements" in series[0])) {
+            var elements = series[0].elements;
+            if (elements.length > 0) {
+              if (isNaN(parseInt(elements[0]))) {
+                elements.shift();
+              }
+              for (var i = 0; i < elements.length; i++) {
+                data.push(parseInt(elements[i]));
+              }
+            }
+          }
+        }
+      }
+      
+      var barheight = 20;
+      var gutter_h = 10;
+      var gutter_w = 15;
+      height = barheight * data.length + gutter_w;
+
+      var x = d3.scale.linear()
+                .domain([0, d3.max(data)])
+                .range([0, width]);
+
+      var y = d3.scale.ordinal()
+                .domain(data)
+                .rangeBands([0, data.length * barheight]);
+
+      var container = d3.select(chartElem)
+                    .append("svg")
+                    .attr("class", "chart")
+                    .attr("width", width + gutter_h)
+                    .attr("height", height)
+                    .style("shape-rendering", "crispEdges")
+                    .style("margin", "1px")
+                    .style("padding", "3px")
+                    .style("font", "10px sans-serif");
+
+      var chart = container.append("g").attr("transform", "translate(10,15)");
+
+      // Draw Axis
+      // --------------------------------------------------------------
+
+      // The g element in SVG is a container element, like div in HTML.
+
+      chart.selectAll("line")
+           .data(x.ticks(10))
+           .enter().append("line")
+                   .attr("x1", x)
+                   .attr("x2", x)
+                   .attr("y1", 0)
+                   .attr("y2", 120)
+                   .style("stroke", "#ccc");
+
+      chart.append("g").selectAll(".rule")
+           .data(x.ticks(10))
+           .enter().append("text")
+                   .attr("class", "rule")
+                   .attr("x", x)
+                   .attr("y", 0)
+                   .attr("dy", -3)
+                   .attr("text-anchor", "middle")
+                   .text(String);
+
+      // Draw bars
+      // --------------------------------------------------------------
+
+      chart.selectAll("rect")
+           .data(data)
+           .enter().append("rect")
+                   .attr("y", y)
+                   .attr("width", x)
+                   .attr("height", y.rangeBand())
+                   .attr("style", "stroke: white; fill: steelblue;");
+
+      // Draw labels
+      // --------------------------------------------------------------
+
+      chart.append("g").selectAll("text")
+           .data(data)
+           .enter().append("text")
+                   .attr("x", x)
+                   .attr("y", function(d) { return y(d) + y.rangeBand() / 2; })
+                   .attr("dx", -3) // padding-right
+                   .attr("dy", ".35em") // vertical-align: middle
+                   .attr("text-anchor", "end") // text-align: right
+                   .attr("fill", "white") // text-align: right
+                   .text(String);
+
+      chart.append("line")
+           .attr("y1", 0)
+           .attr("y2", 120)
+           .style("stroke", "#000");
+
+
+         </script>
+       </div>
+  </body>
+</html>

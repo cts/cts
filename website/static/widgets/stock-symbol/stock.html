@@ -1,0 +1,48 @@
+<html>
+<head>
+</head>
+<body>
+  <section id="ticker" style="display:none"><span class="tickerName">AAPL</span><span class="tickerValue">800.00</span>
+    <script>
+      var widget = CTS.Util.getLastInserted();
+      var tickerName = widget.find(".tickerName").first().html();
+      var tickerValue = widget.find(".tickerValue").first();
+      jQueryHcss.getJSON(
+        "http://query.yahooapis.com/v1/public/yql?callback=?",
+        { "format": "json",
+          "env": "http://datatables.org/alltables.env",
+          "q": "select * from yahoo.finance.quotes where symbol in ('" + tickerName + "')"},
+        function(resp) {
+          if (typeof resp.query != "undefined") {
+            if ((typeof resp.query.results != "undefined") && (resp.query.results != null)) {
+              if (typeof resp.query.results.quote != "undefined") {
+                var ask = resp.query.results.quote.Ask;
+                var change = resp.query.results.quote.Change;
+                var changeInt = parseInt(change);
+                var up = changeInt > 0;
+                var even = changeInt == 0;
+                var str = "&nbsp;$" + ask + "&nbsp;";
+                if (!even) {
+                  if (up) {
+                    str = str + ' <' + 'span style="font-size: 0.8em; color: green;">&#x25b2;<' + '/span>';
+                    str = str + ' <' + 'span style="color: green; margin-right: 0; padding-right:0;">' + change + '<' + '/span>';
+                  } else {
+                    str = str + ' <' + 'span style="font-size: 0.8em; color: red;">&#x25bc;<' + '/span>';
+                    str = str + ' <' + 'span style="color: red; margin-right:0; padding-right:0;">' + change + '<' + '/span>';
+                  }
+                } else {
+                  str = str + "&bull;";
+                  str = str + " " + change;
+                }
+                tickerValue.html(str);
+              }
+            }
+          }
+        });
+      </script>
+  </section>
+</body>
+</html>
+
+
+
