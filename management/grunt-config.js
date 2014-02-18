@@ -199,7 +199,7 @@ var gruntConfig = {
     whyisthisnecessary: 'idontknow',
     options: {
       cors: true,
-      port: 9000,
+      port: 3001,
       logRequests: true,
       nevercache: true
     }
