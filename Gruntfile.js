@@ -7,8 +7,9 @@
  *
  *  default  -  compiles CTS and CTS-UI
  *
- *  server   -  runs the development server
- *                * watches and recompiles upon code modification
+ *  server   -  * Runs server on :3000
+ *              * Runs file server on :3001
+ *              * Watches and recompiles upon file change
  *
  */
 
