@@ -56,7 +56,7 @@ app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 app.use(require('connect-assets')({
-  src: 'public',
+  src: 'static',
   helperContext: app.locals
 }));
 app.use(express.compress());
@@ -85,7 +85,7 @@ app.use(function(req, res, next) {
 });
 app.use(flash());
 app.use(app.router);
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: week }));
+app.use(express.static(path.join(__dirname, 'static'), { maxAge: week }));
 app.use(function(req, res) {
   res.status(404);
   res.render('404');
