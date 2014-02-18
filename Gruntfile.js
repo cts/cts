@@ -5,13 +5,7 @@
  *
  * Most Useful Targets:
  *
- *   engine  -  compiles the CTS engine:
- *                * release/cts.js
- *                * release/cts.dev.js
- *
- *   ui      -  compiles the CTS UI widget:
- *                * release/ctsui.js
- *                * release/ctsui.dev.js
+ *  default  -  compiles CTS and CTS-UI
  *
  *  server   -  runs the development server
  *                * watches and recompiles upon code modification
