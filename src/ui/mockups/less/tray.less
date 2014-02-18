@@ -1,0 +1,103 @@
+/* html5doctor.com Reset v1.6.1 (http://html5doctor.com/html-5-reset-stylesheet/) - http://cssreset.com */
+.cts-ui {
+  html,body,div,span,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,abbr,address,cite,code,del,dfn,em,img,ins,kbd,q,samp,small,strong,sub,sup,var,b,i,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,figcaption,figure,footer,header,hgroup,menu,nav,section,summary,time,mark,audio,video{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}
+  body{line-height:1}
+  article,aside,details,figcaption,figure,footer,header,hgroup,menu,nav,section{display:block}
+  nav ul{list-style:none}
+  blockquote,q{quotes:none}
+  blockquote:before,blockquote:after,q:before,q:after{content:none}
+  a{margin:0;padding:0;font-size:100%;vertical-align:baseline;background:transparent}
+  ins{background-color:#ff9;color:#000;text-decoration:none}
+  mark{background-color:#ff9;color:#000;font-style:italic;font-weight:bold}
+  del{text-decoration:line-through}
+  abbr[title],dfn[title]{border-bottom:1px dotted;cursor:help}
+  table{border-collapse:collapse;border-spacing:0}
+  hr{display:block;height:1px;border:0;border-top:1px solid #ccc;margin:1em 0;padding:0}
+  input,select{vertical-align:middle}
+}
+
+
+/* TRAY:
+ * <div class="tray">
+ *   <div class="tray-contents"></div>
+ *   <div class="expand-tray"></div>
+ * </div>
+ */
+
+.cts-ui {
+  .cts-ui-tray {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    width: 137px;
+    height: 100%;
+
+    .cts-ui-header {
+      margin: 0;
+      font-size: 20px;
+      font-color: black;
+      text-align: center;
+      position: relative;
+      display: block;
+      padding: 10px 5px 10px 5px;
+      background-color: #D2B0B2;
+      overflow: hidden;
+
+      /* To blend in with background */
+      -moz-box-shadow: inset -5px 0 5px -2px #888;
+      -webkit-box-shadow: inset -5px 0 5px -2px #888;
+      box-shadow: inset -5px 0 5px -2px #888;
+
+      h3 {
+        margin: 0 0 0 5px;
+        float: left;
+      }
+
+      a.cts-ui-back {
+        margin-top: 5px;
+        color: black;
+        text-align: left;
+        margin-left: 5px;
+        float: left;
+        border-radius: 4px;
+        background-color: red;
+      }
+
+      a.cts-ui-back:hover {
+      }
+
+      a.cts-ui-back i {
+        padding: 4px;
+        color: white;
+      }
+    }
+
+
+    /* This is the nib to open/close the tray */
+    .cts-ui-expand-tray {
+      position:absolute;
+      top:25%;
+      left:101px;
+
+      .cts-ui-expand-tray-button {
+        cursor: pointer;
+        font-size: 24px;
+        color: red;
+        background-color: black;
+      }
+    }
+
+    /* This is the gutter that contains the tray */
+    .cts-ui-tray-contents {
+      border-right: 1px solid black;
+      width: 100px;
+      height: 100%;
+      padding: 0;
+      -moz-box-shadow: inset -5px 0 5px -2px #888;
+      -webkit-box-shadow: inset -5px 0 5px -2px #888;
+      box-shadow: inset -5px 0 5px -2px #888;
+      background-color: #ddd;
+    }
+  }
+}
