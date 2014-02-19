@@ -76,5 +76,3 @@ if (CTS.autoloadCheck()) {
   CTS.shouldAutoload = true;
   //hideForLoading();
 }
-
-(function() {

@@ -22,13 +22,14 @@
 var sources = {
   engine: [
     "src/engine/preamble.js",
-  
+    "src/engine/constants.js",
+
     "src/engine/util/fn.js",
-  
+
     "src/engine/debugging/log.js",
     "src/engine/debugging/debugging.js",
     "src/engine/debugging/tree-viz.js",
-  
+
     /* Misc */
     "src/engine/util/q.js",
     "src/engine/util/state-machine.js",
@@ -36,7 +37,7 @@ var sources = {
     "src/engine/util/utilities.js",
     "src/engine/util/gapi.js",
     "src/engine/util/gsheet.js",
-  
+
     /* Node Containers */
     "src/engine/model/node/node.js",
     "src/engine/model/node/node-abstract.js",
@@ -45,7 +46,7 @@ var sources = {
     "src/engine/model/node/node-glistfeeditem.js",
     "src/engine/model/node/node-gworksheet.js",
     "src/engine/model/node/node-gspreadsheet.js",
-  
+
     /* Relations */
     "src/engine/model/relation/relation-spec.js",
     "src/engine/model/relation/relation.js",
@@ -54,7 +55,7 @@ var sources = {
     "src/engine/model/relation/ifexist.js",
     "src/engine/model/relation/ifnexist.js",
     "src/engine/model/relation/graft.js",
-   
+
     /* Tree Model */
     "src/engine/model/tree/tree.js",
     "src/engine/model/tree/tree-spec.js",
@@ -65,20 +66,20 @@ var sources = {
     "src/engine/model/selection-spec.js",
     "src/engine/model/selection.js",
     "src/engine/model/dependency-spec.js",
-   
+
     /* For creating async stuff */
     "src/engine/model/factory.js",
-  
+
     /* Parser */
     "src/engine/parser/parser.js",
     "src/engine/parser/parser-json.js",
     "src/engine/parser/parser-engine.js",
     "src/engine/parser/parser-engine-impl.js",
     "src/engine/parser/html.js",
-  
+
     "src/engine/engine.js",
     "src/engine/autoloader.js",
-  
+
     /* Xtras */
     "src/engine/xtras/xtras.js",
     "src/engine/xtras/color-tree.js",
@@ -98,7 +99,7 @@ var sources = {
     "src/ui/sidebar/scraper.js",
     "src/ui/widgets/editor.js",
     "src/ui/sidebar/theme.js",
-    "src/ui/fragments/postfix.js",  
+    "src/ui/fragments/postfix.js",
     "src/ui/fragments/autoloader.js"
   ]
 };
