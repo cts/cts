@@ -11,7 +11,7 @@ module.exports = function(arg1, arg2) {
 
   // The web server on 3000
   var webserver = child_process.exec('node app.js', {
-    cwd: path.join(__dirname, '..', 'website')
+    cwd: path.join(__dirname, 'website')
   });
   webserver.stdout.pipe(process.stdout);
   webserver.stderr.pipe(process.stderr);
