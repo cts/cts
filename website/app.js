@@ -20,6 +20,9 @@ var apiController = require('./controllers/api');
 var contactController = require('./controllers/contact');
 var forgotController = require('./controllers/forgot');
 var resetController = require('./controllers/reset');
+var scratchController = require('./controllers/scratch');
+var widgetController = require('./controllers/widget');
+var docController = require('./controllers/documentation');
 
 /**
  * API keys + Passport configuration.
@@ -109,6 +112,15 @@ app.post('/signup', userController.postSignup);
 app.get('/contact', contactController.getContact);
 app.post('/contact', contactController.postContact);
 app.get('/account', passportConf.isAuthenticated, userController.getAccount);
+
+app.get('/scratch', scratchController.index);
+app.get('/scratch/:page', scratchController.other);
+
+app.get('/widgets', widgetController.index);
+app.get('/widgets/:widget', widgetController.show);
+
+app.get('/cts', docController.index);
+
 app.post('/account/profile', passportConf.isAuthenticated, userController.postUpdateProfile);
 app.post('/account/password', passportConf.isAuthenticated, userController.postUpdatePassword);
 app.post('/account/delete', passportConf.isAuthenticated, userController.postDeleteAccount);

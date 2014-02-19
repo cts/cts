@@ -125,3 +125,131 @@ body {
   padding: 3px;
   bottom: 25px;
 }
+
+// Main Page
+// ---- ---------------------
+
+body.entry {
+  padding: 0;
+}
+
+// Header Widget
+// ---- ---------------------
+
+main.ctsdoc-entry {
+  display: table;
+  width: 100%;
+  .left, .center, .right {
+    display: table-cell;
+    height: 268px;
+  }
+  .center {
+    background-image: url('/img/doc/cts-header-big.png');
+    width: 668px;
+    h1, h2 {
+      display: none;
+    }
+  }
+  .left {
+    background-image: url('/img/doc/cts-header-big-left.png');
+  }
+  .right {
+    background-image: url('/img/doc/cts-header-big-right.png');
+  }
+}
+
+main.ctsdoc-small {
+  display: table;
+  width: 100%;
+  .left, .center, .right {
+    display: table-cell;
+    height: 268px;
+  }
+  .center {
+    background-image: url('/img/doc/cts-header-big.png');
+    width: 668px;
+    h1, h2 {
+      display: none;
+    }
+  }
+  .left {
+    background-image: url('/img/doc/cts-header-big-left.png');
+  }
+  .right {
+    background-image: url('/img/doc/cts-header-big-right.png');
+  }
+}
+
+
+
+/* Share masthead with page headers */
+.docs-masthead,
+.docs-header {
+  position: relative;
+  padding: 30px 15px;
+  color: #cdbfe3;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(0,0,0,.1);
+  background-color: #6f5499;
+  background-image: -webkit-linear-gradient(top, #563d7c 0%, #6f5499 100%);
+  background-image: linear-gradient(to bottom, #563d7c 0%, #6f5499 100%);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#563d7c', endColorstr='#6F5499', GradientType=0);
+}
+
+
+
+ /* Masthead (headings and download button) */
+.docs-masthead .docs-booticon {
+  margin: 0 auto 30px;
+}
+.docs-masthead h1 {
+  font-weight: 300;
+  line-height: 1;
+  color: #fff;
+}
+.docs-masthead .lead {
+  margin: 0 auto 30px;
+  font-size: 20px;
+  color: #fff;
+}
+.docs-masthead .version {
+  margin-top: -15px;
+  margin-bottom: 30px;
+  color: #9783b9;
+}
+.docs-masthead .btn {
+  width: 100%;
+  padding: 15px 30px;
+  font-size: 20px;
+}
+
+@media (min-width: 480px) {
+  .docs-masthead .btn {
+    width: auto;
+  }
+}
+
+@media (min-width: 768px) {
+  .docs-masthead {
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
+  .docs-masthead h1 {
+    font-size: 60px;
+  }
+  .docs-masthead .lead {
+    font-size: 24px;
+  }
+}
+
+@media (min-width: 992px) {
+  .docs-masthead .lead {
+    width: 80%;
+    font-size: 30px;
+  }
+}
+
+
+
+
