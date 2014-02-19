@@ -4,11 +4,12 @@
  */
 
 exports.index = function(req, res) {
-  res.render('widgets/index', {});
+  res.render('cts/widgets/index', {});
 };
 
 exports.show = function(req, res) {
-  res.render('widgets/index', {});
+  var widget = req.params.widget;
+  res.render('cts/widgets/show', {});
 };
 
 

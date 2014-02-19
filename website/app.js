@@ -116,10 +116,10 @@ app.get('/account', passportConf.isAuthenticated, userController.getAccount);
 app.get('/scratch', scratchController.index);
 app.get('/scratch/:page', scratchController.other);
 
-app.get('/widgets', widgetController.index);
-app.get('/widgets/:widget', widgetController.show);
 
 app.get('/cts', docController.index);
+app.get('/cts/widgets', widgetController.index);
+app.get('/cts/widgets/:widget', widgetController.show);
 
 app.post('/account/profile', passportConf.isAuthenticated, userController.postUpdateProfile);
 app.post('/account/password', passportConf.isAuthenticated, userController.postUpdatePassword);
