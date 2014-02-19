@@ -13,8 +13,8 @@
  *
  */
 
-var gruntConfig = require('./management/grunt-config');
-var serverTask  = require('./management/grunt-servertask');
+var gruntConfig = require('./grunt-config');
+var serverTask  = require('./grunt-servertask');
 
 module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-qunit');
