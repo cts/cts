@@ -55,3 +55,43 @@ rounded rect
 pagination
 
 
+
+---
+
+color cell backgrounds if bindings.
+HTML view for selecting
+
+How Non Programmers Thing About Programming Problems
+
+Visual Programming
+No clock
+
+Pure functional programs
+State kept separately
+
+Which directions are more natural for end users?
+Spreadsheet first? Frontend first? Duality?
+
+Collect data from a large number of people -> Google form -> but what about editability
+
+6.813 Quiz Results
+
+More tractible test: show people the two alternatives and see if they prefer one to the other.
+
+- Find examples of Spreadsheet applications
+
+- Quiz Results
+- Address Book
+- Amy Voida
+- GSheet Twitter
+- List of Rows -> Things like text to make drop down menus
+- Checkbox column
+- 
+
+Breaking
+Blankets
+Quilt
+
+---
+
+

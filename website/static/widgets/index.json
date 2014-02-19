@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Bar Chart",
+    "id": "barchart"
+  },
+  {
+    "name": "Bubble Chart",
+    "id": "bubblechart"
+  },
+  {
+    "name": "Choropleth",
+    "id": "choropleth"
+  },
+  {
+    "name": "Google Map",
+    "id": "google-map"
+  },
+  {
+    "name": "Stock Symbol",
+    "id": "stock-symbol"
+  },
+  {
+    "name": "Word Cloud",
+    "id": "wordcloud"
+  }
+]

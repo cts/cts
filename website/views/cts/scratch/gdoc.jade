@@ -1,0 +1,141 @@
+extends ../layouts/scratch
+
+block head
+  title CTS Google Doc Helper Test
+
+block content
+  h1 this is the content of my scratch space
+
+<table>
+  <tr>
+    <th>Login</th>
+    <td><button id="authorize-button">Login</button></td>
+  </tr>
+  <tr>
+    <th>Drive:</th>
+    <td>
+      <button id="getsheets">Get Spreadsheets</button>
+    </td>
+  </tr>
+  <tr>
+    <th>Sheet:</th>
+    <td>
+     <input id='spreadsheetid' style="width:400px" type='text' placeholder='worksheetid' value='1CTO93Mv6tasfZK7ZFOysFf2lVNF6Lj9eM6QI5EvVRlE'>
+     <button id="getworksheets">Get Worksheets</button>
+     <button id="create">Create New</button>
+  </td>
+</tr>
+<tr>
+  <th>Worksheet</th>
+  <td>
+     <input id='worksheetid' style="width:400px" type='text' id='w' placeholder='od' value='od7'>
+     <button id="getdata">Table</button>
+  </td>
+</tr>
+</table>
+<div id="res">
+</div>
+
+
+  script.
+    CTS.status.loaded(function() {
+      CTS.GSheet._$loginButton = $('#authorize-button');
+      CTS.GSheet._$loginButton.click(CTS.GSheet._loginButtonClicked);
+    
+      $('#getsheets').click(
+        function() {
+          CTS.GSheet.getSpreadsheets().then(
+            function(sheets) {
+              var s = '<table>';
+              for (var i = 0; i < sheets.length; i++) {
+                var sheet = sheets[i];
+                s += "<tr><th>" + sheet.key + "</th>";
+                s += "<td>" + sheet.title + "</td></tr>";
+              }
+              s += "</table>";
+              $('#res').html(s);
+            },
+            function(err) {
+              console.err(err);
+            }
+          );
+        }
+      );
+        
+      $('#create').click(CTS.GSheet.createSpreadsheet);
+    
+      $('#getworksheets').click(function() {
+        var key = $('#spreadsheetid').val();
+        CTS.GSheet.getWorksheets(key).then(
+          function(sheets) {
+            var s = '<table>';
+            for (var i = 0; i < sheets.length; i++) {
+              var sheet = sheets[i];
+              s += "<tr><th>" + sheet.key + "</th>";
+              s += "<td>" + sheet.title + "</td></tr>";
+            }
+            s += "</table>";
+            $('#res').html(s);
+          },
+          function(err) {
+            console.err(err);
+          }
+        );
+      });
+    
+      $('#getdata').click(function() {
+        var ss = $('#spreadsheetid').val();
+        var ws = $('#worksheetid').val();
+        CTS.GSheet.getWorksheetItems(ss, ws).then(
+          function(sheet) {
+          console.log(sheet);
+           var headers = {};
+           for (var i = 0; i < sheet.items.length; i++) {
+             for (var key in sheet.items[i].data) {
+               headers[key] = 1; 
+             }
+           }
+           var h = [];
+           for (var key in headers) {
+             h.push(key);
+           }
+           var s = "<table><tr>";
+           for (var hea in h) {
+             s += "<th>" + hea + "</th>"
+           }
+           s += "</tr>";
+    
+           for (var i = 0; i < sheet.items.length; i++) {
+             s += "<tr>";
+             for (var j = 0; j < h.length; j++) { 
+               s += "<td>";
+               if (typeof sheet.items[i].data[h[j]] != 'undefined') {
+                 s += sheet[i].data[h[j]];
+               }
+               s += "</td>";
+             }
+             s += "</tr>";
+           }
+           s += "</table>";
+           $('#res').html(s);
+          },
+          function(err) {
+            console.err(err);
+          }
+        );
+      });
+    
+      var testCollab = function(key) {
+        gapi.load("auth:client,drive-realtime,drive-share", function() {
+          gapi.drive.realtime.load(key,
+            function(f) {
+              
+            }, 
+            function(f) {
+            }
+          );
+        });
+      };
+    
+    });
+

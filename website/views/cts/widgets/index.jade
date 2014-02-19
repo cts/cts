@@ -1,4 +1,18 @@
 extends ../layouts/basic
 
+block title
+  h1 Widgets
+
 block content
-  Hi
+  p.large
+  | CTS lets you easily embed and configure widgets
+  b without programming
+  | .
+ 
+  div.widgets
+    each widget in widgets
+      .widget
+        a.image(href=widget.url)
+          img(src=widget.thumbnailUrl)
+        a.caption(href=widget.url)= widget.name
+
