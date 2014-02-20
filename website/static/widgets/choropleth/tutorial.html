@@ -1,0 +1,94 @@
+<h2>1. Link to the library</h2>
+
+<p>Add the CTS library, D3 library, and widget link to your web page:</p>
+
+<pre><code>&lt;script type="text/javascript" src="http://d3js.org/d3.v2.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="http://www.treesheets.org/hotlink/cts.js"&gt;&lt;/script&gt;
+&lt;script type="text/cts" src="http://people.csail.mit.edu/eob/cts/widgets/choropleth.cts"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" href="http://www.treesheets.org/widgets/choropleth/choropleth.css" type="text/css" media="screen" /&gt;
+</code></pre>
+
+<p>These must be added to the `HEAD` element.</p>
+
+<h2>2. Write your Chart Data</h2>
+
+<p>Next, pick the place you want the map to actually appear on your page and paste
+in the following HTML. This long because we have to list one line for each of
+the 50 states.</p>
+
+<pre><code>&lt;div class="usa-choropleth"&gt;
+  &lt;ul class="properties"&gt;
+    &lt;li class="width"&gt;600&lt;/li&gt;
+  &lt;/ul&gt;
+
+  &lt;table class="states"&gt;
+    &lt;tr&gt;&lt;td&gt;Alabama&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Alaska&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Arizona&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Arkansas&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;California&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Colorado&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Conneticut&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Delaware&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Florida&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Georgia&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Hawaii&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Idaho&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Illinois&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Indiana&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Iowa&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Kansas&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Kentucky&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Louisianna&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Maine&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Maryland&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Massachusetts&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Michigan&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Minnesota&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Mississippi&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Missouri&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Montana&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Nebraska&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Nevada&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;New Hampshire&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;New Jersey&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;New Mexico&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;New York&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;North Carolina&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;North Dakota&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Ohio&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Oklahoma&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Oregon&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Pennsylvania&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Rhode Island&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;South Carolina&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;South Dakota&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Tennessee&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Texas&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Utah&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Vermont&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Virginia&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Washington&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;West Virginia&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Wisconsin&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+    &lt;tr&gt;&lt;td&gt;Wyoming&lt;/td&gt;&lt;td&gt;1.0&lt;/td&gt;&lt;td&gt;&lt;/td&gt;
+  &lt;/table&gt;
+&lt;/div&gt;
+</code></pre>
+
+<p>The `usa-choropleth` class tells the widget that you'd like that table turned
+into a shaded map. When you render your page, you should see something like the
+following:</p>
+
+<img src="/widgets/choropleth/example1.png" />
+
+<p>In the example, we've put in the Gross Domestic Product for each state in
+America.</p>
+
+<h2>Credits</h2>
+
+<p>Thanks to the <a
+  href="http://mbostock.github.com/d3/ex/choropleth.html">Choropleth Demo</a>
+on the D3 website and Sarah Scodel for making the CTS widget.</p>
+
+

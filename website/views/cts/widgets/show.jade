@@ -1,0 +1,13 @@
+extends ../layouts/basic
+
+block title
+  h1=name
+    |  Widget
+  img.widget-banner(src=bannerUrl)
+
+block content
+  .alert.alert-info See a 
+    a.alert-link(href=exampleUrl)
+      = "working " + name + " example"
+  
+  section.example!=exampleHtml
