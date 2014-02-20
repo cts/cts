@@ -1,3 +1,5 @@
+CTS.registerNamespace('CTS.Events');
+
 // Events
 // ==========================================================================
 //
@@ -9,6 +11,7 @@
 //     object.trigger('expand');
 //
 // ==========================================================================
+
 
 // Regular expression used to split event strings.
 var eventSplitter = /\s+/;

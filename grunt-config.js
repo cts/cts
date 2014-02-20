@@ -21,6 +21,10 @@
 
 var sources = {
   engine: [
+    "src/common/base.js",
+    "src/common/constants.js",
+    "src/common/utilities.js",
+
     "src/engine/preamble.js",
   
     "src/engine/util/fn.js",

@@ -47,7 +47,7 @@ _CTSUI.Theme.prototype.loadMockup = function () {
     }
 
 
-    CTS.Utilities.fetchString({
+    CTS.Util.fetchString({
         url: window.location
     }).then(function (html) {
         var otherPage = CTS.$(html);
@@ -80,7 +80,7 @@ _CTSUI.Theme.prototype.revert = function () {
     CTS.engine.shutdown();
 
     
-    CTS.Utilities.fetchString({url: window.location}).then(
+    CTS.Util.fetchString({url: window.location}).then(
       function(html) {
         var otherPage = CTS.$(html);
         otherPage = otherPage.filter('#page').first();

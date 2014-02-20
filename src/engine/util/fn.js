@@ -2,7 +2,6 @@
  * Helper functions. Many of these are taken from Underscore.js
  */
 var Fn = CTS.Fn = {
-  breaker: {},
 
   arrDelete: function(arr, from, to) {
     var rest = arr.slice((to || from) + 1 || arr.length);
@@ -31,24 +30,6 @@ var Fn = CTS.Fn = {
     });
     return !!result;
   },
-
-  each: function(obj, iterator, context) {
-    if (obj == null) return;
-    if (Array.prototype.forEach && obj.forEach === Array.prototype.forEach) {
-      obj.forEach(iterator, context);
-    } else if (obj.length === +obj.length) {
-      for (var i = 0, l = obj.length; i < l; i++) {
-        if (iterator.call(context, obj[i], i, obj) === CTS.Fn.breaker) return;
-      }
-    } else {
-      for (var key in obj) {
-        if (CTS.Fn.has(obj, key)) {
-          if (iterator.call(context, obj[key], key, obj) === CTS.Fn.breaker) return;
-        }
-      }
-    }
-  },
-
   map: function(obj, iterator, context) {
     var results = [];
     if (obj == null) return results;
@@ -57,17 +38,6 @@ var Fn = CTS.Fn = {
       results[results.length] = iterator.call(context, value, index, list);
     });
     return results;
-  },
-
-  extend: function(obj) {
-    CTS.Fn.each(Array.prototype.slice.call(arguments, 1), function(source) {
-      if (source) {
-        for (var prop in source) {
-          obj[prop] = source[prop];
-        }
-      }
-    });
-    return obj;
   },
 
   /*
