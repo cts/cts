@@ -88,6 +88,7 @@ app.use(function(req, res, next) {
 });
 app.use(flash());
 app.use(app.router);
+app.use('/release/current', express.static(path.join(__dirname, '..', 'release'), { maxAge: week }));
 app.use(express.static(path.join(__dirname, 'static'), { maxAge: week }));
 app.use(function(req, res) {
   res.status(404);
@@ -113,13 +114,13 @@ app.get('/contact', contactController.getContact);
 app.post('/contact', contactController.postContact);
 app.get('/account', passportConf.isAuthenticated, userController.getAccount);
 
-app.get('/scratch', scratchController.index);
-app.get('/scratch/:page', scratchController.other);
 
 app.get('/cts', docController.index);
 app.get('/cts/dscrape', docController.dscrape);
 app.get('/cts/widgets', widgetController.index);
 app.get('/cts/widgets/:widget', widgetController.show);
+app.get('/cts/scratch', scratchController.index);
+app.get('/cts/scratch/:page', scratchController.other);
 
 app.post('/account/profile', passportConf.isAuthenticated, userController.postUpdateProfile);
 app.post('/account/password', passportConf.isAuthenticated, userController.postUpdatePassword);

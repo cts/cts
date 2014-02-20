@@ -4,38 +4,33 @@ block head
   title CTS Google Doc Helper Test
 
 block content
-  h1 this is the content of my scratch space
-
-<table>
-  <tr>
-    <th>Login</th>
-    <td><button id="authorize-button">Login</button></td>
-  </tr>
-  <tr>
-    <th>Drive:</th>
-    <td>
-      <button id="getsheets">Get Spreadsheets</button>
-    </td>
-  </tr>
-  <tr>
-    <th>Sheet:</th>
-    <td>
-     <input id='spreadsheetid' style="width:400px" type='text' placeholder='worksheetid' value='1CTO93Mv6tasfZK7ZFOysFf2lVNF6Lj9eM6QI5EvVRlE'>
-     <button id="getworksheets">Get Worksheets</button>
-     <button id="create">Create New</button>
-  </td>
-</tr>
-<tr>
-  <th>Worksheet</th>
-  <td>
-     <input id='worksheetid' style="width:400px" type='text' id='w' placeholder='od' value='od7'>
-     <button id="getdata">Table</button>
-  </td>
-</tr>
-</table>
-<div id="res">
-</div>
-
+  table.
+    <tr>
+      <th>Login</th>
+      <td><button id="authorize-button">Login</button></td>
+    </tr>
+    <tr>
+      <th>Drive:</th>
+      <td>
+        <button id="getsheets">Get Spreadsheets</button>
+      </td>
+    </tr>
+    <tr>
+      <th>Sheet:</th>
+      <td>
+       <input id='spreadsheetid' style="width:400px" type='text' placeholder='worksheetid' value='1CTO93Mv6tasfZK7ZFOysFf2lVNF6Lj9eM6QI5EvVRlE'>
+       <button id="getworksheets">Get Worksheets</button>
+       <button id="create">Create New</button>
+      </td>
+    </tr>
+    <tr>
+      <th>Worksheet</th>
+      <td>
+       <input id='worksheetid' style="width:400px" type='text' id='w' placeholder='od' value='od7'>
+       <button id="getdata">Table</button>
+      </td>
+    </tr>
+  #res
 
   script.
     CTS.status.loaded(function() {

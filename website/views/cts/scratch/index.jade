@@ -1,9 +1,16 @@
-extends ../layouts/ctspage
+extends ../layouts/basic
 
+block title
+  h1 CTS Scratch Space
+  p.large To help test and debug code.
+  
 block content
-  h1 CTS Scratch Space, for Development
-
-  p
-  | Develop more easily by extending this layout.
+  
+  h2 Available Scratches
+  ul
+    each scratch in scratches
+      li 
+        a(href="/cts/scratch/" + scratch)=scratch
+    
 
 
