@@ -116,8 +116,8 @@ app.get('/account', passportConf.isAuthenticated, userController.getAccount);
 app.get('/scratch', scratchController.index);
 app.get('/scratch/:page', scratchController.other);
 
-
 app.get('/cts', docController.index);
+app.get('/cts/dscrape', docController.dscrape);
 app.get('/cts/widgets', widgetController.index);
 app.get('/cts/widgets/:widget', widgetController.show);
 

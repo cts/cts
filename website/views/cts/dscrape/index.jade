@@ -1,0 +1,68 @@
+extends ../layouts/basic
+
+block title
+  h1 DScrape
+  img.widget-banner(src="/img/doc/dscrape-banner.png")
+  p.large DScrape is a declarative web scraping toolkit based on Cascading Tree
+    | Sheets. Given a tree sheet that maps a web page onto an implicit JSON
+    | structure, DScrape will produce that structure for you and output it in a
+    | variety of formats.
+
+block content
+  .row(style="margin-top: 20px; margin-bottom: 20px")
+    .well.well-lg
+      table(width="100%")
+        tr
+          td(width="50%")
+            h3 Installing
+            p <i>Install DScrape using the <a href='http://npmjs.org/'>Node Package Manager</a></i>:
+            code(style='margin-left: 15px') npm install dscrape
+          td(width="50%")
+            h3 Contribute
+            a.btn.btn-success(href='http://github.com/cts/dscrape') DScrape on GitHub
+  
+  .row
+    h2 Using DScrape with a Registered Tree Sheet
+    
+    p The <a href='http://www.github.com/cts/dscrape'>DScrape GitHub
+    | repository</a> maintains a list of pre-written tree sheets you can use for
+    | scraping. If you only provide a URL to DScrape (and no tree sheet), it will
+    | search this scraper repository for a URL match and use the pre-written
+    | scraper if available.
+
+    p Here&#8217;s a list of scrapers already written for you to use along with
+    | example invocations. Please consider <a href='#contribute'>contributing
+    | your own</a>!</p>
+
+    ul
+      li
+        p <strong>Reddit</strong> (and subreddits) article listings (<a href='https://github.com/cts/dscrape/blob/master/examples/reddit.cts'>scraper link</a>)
+        pre dscrape http://www.reddit.com
+      li
+        p <strong>Kickstarter</strong> project pages (<a href='https://github.com/cts/dscrape/blob/master/examples/kickstarter.cts'>scraper link</a>)
+       pre dscrape http://www.kickstarter.com/projects/1068932801/new-york-london
+      li 
+        p <strong>Twitter</strong> profile and latest tweets (<a href='https://github.com/cts/dscrape/blob/master/examples/twitter-profile.cts'>scraper link</a>)
+        pre dscrape http://www.twitter.com/edwardbenson
+
+    h2 Using DScrape with your own Tree Sheet</h1>
+
+    p To use DScrape with your own tree sheet, provide a reference to the tree sheet after the URL. This reference can either be:
+
+    ul
+      li
+        p <strong>A file on your local drive</strong>
+        pre dscrape http://www.reddit.com ~/treesheets/reddit.cts
+      li
+        p <strong>A URL</strong>
+        pre dscrape http://www.reddit.com http://example.org/reddit.cts
+      li 
+        p <strong>A GitHub URL</strong>. DScrape supports a special shorthand for files hosted in GitHub. Create a URL of the form <code>github://user/repository/path/to/file</code>, such as:
+        pre dscrape http://www.reddit.com github://cts/dscrape/examples/reddit.cts
+
+    h2 Contributing a Scraper
+
+    p To contribute a scraper to our repository, fork it on GitHub and add your
+    | tree sheet to the <code>/examples</code> folder. You will also need to add
+    | an entry for your scraper in the <code>/examples/directory.json</code>
+    | file. Then submit a pull request and we will review and incorporate it.
