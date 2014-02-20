@@ -1,0 +1,91 @@
+<h2 id='1_link_to_the_library'>1. Link to the library</h2>
+
+<p>Add the CTS library, Google Maps library, and widget link to your web page:</p>
+
+<pre><code>&lt;script src=&quot;https://maps.googleapis.com/maps/api/js?sensor=false&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;http://www.treesheets.org/hotlink/cts.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/cts&quot; src=&quot;http://www.treesheets.org/widgets/google-map/google-map.cts&quot;&gt;&lt;/script&gt;</code></pre>
+
+<p>It&#8217;s best to add this to the <code>HEAD</code> element, but anywhere will work.</p>
+
+<h2 id='2_request_a_map'>2. Request a Map</h2>
+
+<p>Next, pick the place you want the map to actually appear on your page and paste in the following HTML:</p>
+
+<pre><code>&lt;section class=&quot;map&quot;&gt;
+
+  &lt;ul class=&quot;properties&quot;&gt;
+    &lt;li class=&quot;center-lat&quot;&gt;42.361335&lt;/li&gt;
+    &lt;li class=&quot;center-lng&quot;&gt;-71.089482&lt;/li&gt;
+    &lt;li class=&quot;zoom-level&quot;&gt;15&lt;/li&gt;
+    &lt;li class=&quot;width&quot;&gt;700px&lt;/li&gt;
+    &lt;li class=&quot;height&quot;&gt;500px&lt;/li&gt;
+  &lt;/ul&gt;
+
+&lt;/section&gt;</code></pre>
+
+<p>This tells the map widget that you&#8217;d like a map there. Now edit that data to customize your particular preferences:</p>
+
+<ul>
+<li>The center of the map</li>
+
+<li>The zoom level (1 is zoomed far out and 17 is zoomed all the way in)</li>
+
+<li>The size of the map on your web page</li>
+</ul>
+
+<h2 id='3_add_markers_to_the_map'>3. Add markers to the map</h2>
+
+<p>If you want to add markers in your map, paste the following HTML after the <code>&lt;/ul&gt;</code> tag and <em>before</em> the <code>&lt;/section&gt;</code> tag at the end:</p>
+
+<pre><code>&lt;table class=&quot;markers&quot;&gt;
+
+  &lt;tr&gt;
+    &lt;td class=&quot;title&quot;&gt;The Stata Center&lt;/td&gt;
+    &lt;td class=&quot;lat&quot;&gt;42.361335&lt;/td&gt;
+    &lt;td class=&quot;lng&quot;&gt;-71.089482&lt;/td&gt;
+  &lt;/tr&gt;
+
+  &lt;tr&gt;
+    &lt;td class=&quot;title&quot;&gt;Media Lab&lt;/td&gt;
+    &lt;td class=&quot;lat&quot;&gt;42.360859&lt;/td&gt;
+    &lt;td class=&quot;lng&quot;&gt;-71.08592&lt;/td&gt;
+  &lt;/tr&gt;
+
+&lt;/table&gt;</code></pre>
+
+<p>This example shows two markers being created. You can edit, delete, or add pins by copying and pasting the HTML surrounded by <code>&lt;tr&gt;...&lt;/tr&gt;</code>.</p>
+
+<p>At this point, you&#8217;ve created a map with pins like the one below!</p>
+
+<p><img alt='Google Map Example' src='/widgets/google-map/google-map.png' /></p>
+
+<h2 id='4_customize_your_map_add_popup_balloons'>4. Customize your Map: Add Popup Balloons</h2>
+
+<p>To add a popup baloon to your map, just add another line to each marker containing a description, like this:</p>
+
+<pre><code>  &lt;tr&gt;
+    &lt;td class=&quot;title&quot;&gt;The Stata Center&lt;/td&gt;
+    &lt;td class=&quot;lat&quot;&gt;42.361335&lt;/td&gt;
+    &lt;td class=&quot;lng&quot;&gt;-71.089482&lt;/td&gt;
+    &lt;td class=&quot;description&quot;&gt;
+      Designed by Frank Ghery, the Stata Center is home to
+      the Computer Science and Artificial Intelligence Laboratory
+      at MIT.
+    &lt;/td&gt;
+  &lt;/tr&gt;</code></pre>
+
+<p>You can put any HTML you want inside the description. In the example above we&#8217;ve just used plain text. When the user clicks on the Stata Center pin now, they will see this:</p>
+
+<p><img alt='Google Map Example' src='/widgets/google-map/balloon.png' /></p>
+
+<h2 id='5_customize_your_map_add_special_markers'>5. Customize your Map: Add Special Markers</h2>
+
+<p>If you don&#8217;t like the basic pin image for your markers, you can add other images instead. All you need to know is the URL of the image. For example, if I want to show people that there is a coffee shop inside the stata center, I can add the following line:</p>
+
+<pre><code>  &lt;tr&gt;
+    &lt;td class=&quot;title&quot;&gt;The Stata Center&lt;/td&gt;
+    &lt;td class=&quot;lat&quot;&gt;42.361335&lt;/td&gt;
+    &lt;td class=&quot;lng&quot;&gt;-71.089482&lt;/td&gt;
+    &lt;td class=&quot;marker&quot;&gt;http://treesheets.org/hotlink/coffee.png&lt;/td&gt;
+  &lt;/tr&gt;</code></pre>

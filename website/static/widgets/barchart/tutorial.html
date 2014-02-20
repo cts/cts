@@ -1,0 +1,36 @@
+<h2>1. Link to the library</h2>
+
+<p>Add the CTS library, D3 library, and widget link to your web page:</p>
+
+<pre><code>&lt;script type=&quot;text/javascript&quot; src=&quot;http://d3js.org/d3.v2.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;http://www.treesheets.org/hotlink/cts.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/cts&quot; src=&quot;http://people.csail.mit.edu/eob/cts/widgets/barchart.cts&quot;&gt;&lt;/script&gt;</code></pre>
+
+<p>It&#8217;s best to add this to the <code>HEAD</code> element, but anywhere will work.</p>
+
+<h2>2. Write your Chart Data</h2>
+
+<p>Next, pick the place you want the map to actually appear on your page and paste in the following HTML:</p>
+
+<pre><code>&lt;div class=&quot;barchart&quot;&gt;
+   &lt;table class=&quot;series&quot;&gt;
+     &lt;tr&gt;
+       &lt;td&gt;Values&lt;/td&gt;
+       &lt;td&gt;5&lt;/td&gt;
+       &lt;td&gt;10&lt;/td&gt;
+       &lt;td&gt;15&lt;/td&gt;
+     &lt;/tr&gt;
+   &lt;/table&gt;
+ &lt;/div&gt;</code></pre>
+
+<p>The <code>barchart</code> class tells the chart widget that you&#8217;d like that table turned into a chart. When you render your page, you should see the following:</p>
+
+<p><img alt='Bar Chart Example' src='/widgets/barchart/example1.png' /></p>
+
+<h2>3. Customize the Chart</h2>
+
+<p>TODO</p>
+
+<h3>Credits</h3>
+
+<p>Thanks to the <a href='http://mbostock.github.com/d3/tutorial/bar-1.html'>Bar Chart Demo</a> on the D3 website</p>

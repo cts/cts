@@ -1,0 +1,21 @@
+<h2 id='1_link_to_the_library'>1. Link to the library</h2>
+
+<p>Add the CTS library and widget link to your web page:</p>
+
+<pre><code>&lt;script type=&quot;text/javascript&quot; src=&quot;http://www.treesheets.org/hotlink/cts.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/cts&quot; src=&quot;http://people.csail.mit.edu/eob/cts/widgets/stock.cts&quot;&gt;&lt;/script&gt;</code></pre>
+
+<p>It&#8217;s best to add this to the <code>HEAD</code> element, but anywhere will work.</p>
+
+<h2 id='2_request_a_stock_quote'>2. Request a Stock Quote</h2>
+
+<p>Anywhere in your web page, when you enclose a <code>span</code> of text with the class <code>ticker</code> that contains a stock symbol, it will be replaced by the stock quote.</p>
+
+<p>For example, if I type the sentence:</p>
+
+<pre><code>&lt;p&gt;Today Google (&lt;span class=&quot;ticker&quot;&gt;GOOG&lt;/span&gt;) announced the new Nexus 7.&lt;/p&gt;</code></pre>
+
+<p>It will be rendered like this:</p>
+<p style='padding-top: 10px; padding-bottom: 10px; margin-left: 10px;
+padding-left: 10px; border-left: 3px solid #ccc'>Today Google (GOOG $740.88
+<span style='color: green;'>&#x25b2;</span><span style='color: green;'>4.33</span>) announced the new Nexus 7.</p>

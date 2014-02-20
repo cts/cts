@@ -1,0 +1,33 @@
+<h2 id='1_link_to_the_library'>1. Link to the library</h2>
+
+<p>Add the CTS library, D3 library, and widget link to your web page:</p>
+
+<pre><code>&lt;script type=&quot;text/javascript&quot; src=&quot;http://d3js.org/d3.v2.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;http://www.treesheets.org/hotlink/cts.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;http://www.jasondavies.com/wordcloud/d3.layout.cloud.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/cts&quot; src=&quot;http://people.csail.mit.edu/eob/cts/widgets/word-cloud.cts&quot;&gt;&lt;/script&gt;</code></pre>
+
+<p>These should be added to the <code>HEAD</code> element if possible.</p>
+
+<h2 id='2_write_some_text_to_turn_into_a_word_cloud'>2. Write some text to turn into a word cloud.</h2>
+
+<p>The Word Cloud works manually: you tell it what words you want to be big, small, and medium sized and what color you want each size bucket to be.</p>
+
+<pre><code>&lt;div class=&quot;wordcloud&quot;&gt;
+  &lt;div class =&quot;medium&quot;&gt;
+    &lt;div class=&quot;medium-color&quot;&gt;reds&lt;/div&gt;
+    &lt;div class=&quot;medium-words&quot;&gt;
+      All these words will be medium sized.
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+<p>The color scheme can be <code>greens</code>, <code>reds</code>, <code>blues</code>, <code>purples</code>, <code>yellows</code> or omitted completely, in which case we&#8217;ll default to a primary-color based scheme.</p>
+
+<h2 id='3_thats_it'>3. That&#8217;s it!</h2>
+
+<p>When you render the page, you&#8217;ll your text appear as a word cloud. See the <a href='example.html'>example page</a> for a more involved example with small, medium, and large buckets.</p>
+
+<h3 id='credits'>Credits</h3>
+
+<p>Sarah Scodel, with thanks to the <a href='http://www.jasondavies.com/wordcloud'>D3 Word Cloud Demo</a>.</p>

@@ -1,4 +1,5 @@
 {
-  "name": "Bubble Chart"
+  "name": "Bubble Chart",
+  "description": "The Bubble Chart Widget transforms an ordinary HTML table into a D3-powered bubble chart."
 }
 
