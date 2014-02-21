@@ -33,7 +33,7 @@ block content
   #res
 
   script.
-    CTS.status.loaded(function() {
+    CTS.status.loaded.then(function() {
       CTS.GSheet._$loginButton = $('#authorize-button');
       CTS.GSheet._$loginButton.click(CTS.GSheet._loginButtonClicked);
     

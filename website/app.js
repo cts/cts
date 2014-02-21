@@ -89,6 +89,7 @@ app.use(function(req, res, next) {
 app.use(flash());
 app.use(app.router);
 app.use('/release/current', express.static(path.join(__dirname, '..', 'release'), { maxAge: week }));
+app.use('/src', express.static(path.join(__dirname, '..', 'src'), { maxAge: week }));
 app.use(express.static(path.join(__dirname, 'static'), { maxAge: week }));
 app.use(function(req, res) {
   res.status(404);

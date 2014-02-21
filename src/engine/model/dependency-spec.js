@@ -5,7 +5,7 @@ var DependencySpec = CTS.DependencySpec = function(kind, url) {
 };
 
 DependencySpec.prototype.load = function() {
-  this.url = CTS.Utilities.fixRelativeUrl(this.url, this.loadedFrom);
+  this.url = CTS.Util.fixRelativeUrl(this.url, this.loadedFrom);
   if (this.loaded == false) {
     if (this.kind == 'css') {
       this.loaded = true;
@@ -32,7 +32,7 @@ DependencySpec.prototype.load = function() {
 
 DependencySpec.prototype.unload = function() {
   if (this.loaded) {
-    this.url = CTS.Utilities.fixRelativeUrl(this.url, this.loadedFrom);
+    this.url = CTS.Util.fixRelativeUrl(this.url, this.loadedFrom);
     if (this.kind == 'css') {
       var links = document.getElementsByTagName('link');
       for (var i = 0; i < links.length; i++) {

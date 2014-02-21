@@ -170,20 +170,26 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
        var inline = this.value.attr('data-cts');
        return inline;
      }
+     return null;
    },
 
-   _subclass_beginClone: function(node) {
-     var value = null;
-     if (typeof node == "undefined") {
-       value = this.value.clone();
+   _subclass_beginClone: function($node) {
+     var $value = null;
+     if (typeof $node == "undefined") {
+       $value = this.value.clone();
      } else {
-       value = CTS.$(node);
+       $value = $node;
      }
+
+     // Remove any inline CTS annotations, since we're going to
+     // manually copy in relations.
+     $value.attr('data-cts', null);
+     $value.find("*").attr('data-cts', null);
 
      // NOTE: beginClone is allowed to directly create a Node
      // without going through the factory because we already can be
      // sure that all this node's trees have been realized
-     var clone = new CTS.Node.Html(value, this.tree, this.opts);
+     var clone = new CTS.Node.Html($value, this.tree, this.opts);
 
      // Handled by superclass
      //for (var i = 0; i < this.relations.length; i++) {
@@ -192,13 +198,14 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      //  clone.relations.push(r);
      //}
 
-     if (this.children.length != clone.value.children().length) {
+     var cloneKids = clone.value.children();
+     if (this.children.length != cloneKids.length) {
        CTS.Log.Error("Trying to clone CTS node that is out of sync with dom");
      }
      // We use THIS to set i
-     for (var i = 0; i < this.children.length; i++) {
-       var childNode = clone.value.children()[i];
-       var child = this.children[i]._subclass_beginClone(childNode);
+     for (var i = 0; i < cloneKids.length; i++) {
+       var $child = CTS.$(cloneKids[i]);
+       var child = this.children[i]._subclass_beginClone($child);
        child.parentNode = clone;
        if (typeof child.children  == 'undefined') {
          CTS.Log.Error("Kids undefined");

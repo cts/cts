@@ -236,7 +236,7 @@ CTS.Fn.extend(Forrest.prototype, {
         deferred.reject("Trying to alias undefined tree");
       }
     } else if (typeof treeSpec.url == "string") {
-      treeSpec.url = CTS.Utilities.fixRelativeUrl(treeSpec.url, treeSpec.loadedFrom);
+      treeSpec.url = CTS.Util.fixRelativeUrl(treeSpec.url, treeSpec.loadedFrom);
       CTS.Factory.Tree(treeSpec, this).then(
         function(tree) {
           self.trees[treeSpec.name] = tree;

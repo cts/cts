@@ -39,6 +39,5 @@ CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Base, {
     return new CTS.Relation.Is(n1, n2, this.spec);
   }
 
-
 });
 

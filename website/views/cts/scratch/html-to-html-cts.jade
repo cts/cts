@@ -1,0 +1,65 @@
+extends ../layouts/scratch
+
+block head
+  title CTS HTML-to-HTML Examples
+
+block content
+  .content 
+     .row
+       .col-md-4.col-md-offset-4
+         h1(style="text-align: center;") Simple <b>:is</b> Relation
+     .row
+       .col-md-2.col-md-offset-3
+         h2 Source
+         span#source1 Source Value
+       .col-md-2
+       .col-md-5
+         h2 Destination
+         span(data-cts="this :is #source1;") Should become source value!
+
+     .row
+       .col-md-4.col-md-offset-4
+         h1(style="text-align: center;") Simple <b>:are</b> Relation
+     .row
+       .col-md-2.col-md-offset-3
+         h2 Source
+         ul#container2
+           li A
+           li B
+           li C
+           li D
+       .col-md-2
+       .col-md-5
+         h2 Destination
+         ul#dest2(data-cts="this :are #container2;")
+           li(data-cts="this :is #container2 li;") Should become A, B, C, D
+
+     .row
+       .col-md-4.col-md-offset-4
+         h1(style="text-align: center;") Simple <b>:graft</b> Relation
+     .row
+       .col-md-2.col-md-offset-3
+         h2 Template
+         div#template
+           button.btn.btn-info TEMPLATE
+       .col-md-2
+       .col-md-5
+         h2 Destination
+         p
+           div(data-cts="this :graft #template;")
+             span(data-cts="#template button :is this;") Click Me!
+         p
+           div(data-cts="this :graft #template;")
+             span(data-cts="#template button :is this;") Click Me, Too!
+
+     .row
+       .col-md-6.col-md-offset-3
+         h1(style="text-align: center;") Combination of the above three
+     .row
+       .col-md-2.col-md-offset-3
+       .col-md-2
+       .col-md-5
+         h2 Destination
+         ul#dest2(data-cts="this :are #container2;")
+           li.foo(data-cts="this :graft #template;")
+             span(data-cts="this :is #container2 li; #template button :is this;") Hi

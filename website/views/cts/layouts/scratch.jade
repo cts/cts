@@ -2,9 +2,81 @@ doctype html
 html
   head
     meta(charset='utf-8')
-    script(src='/release/current/cts.js')
+    != css('styles')
+    each source in sources
+      script(src='/' + source)
     block head
 
   body
+    .row#header
+      .col-md-1(style="text-align: right") Auto:
+      .col-md-1
+        button.btn#renderAll Render All
+      .col-md-1(style="text-align: right") Manual:
+      .col-md-1
+        button.btn.btn-sm#loadForrest Load Forrest
+      .col-md-1
+        button.btn.btn-sm#loadCts Load CTS
+      .col-md-1
+        button.btn.btn-sm#realizeDeps Realize Deps
+      .col-md-1
+        button.btn.btn-sm#realizeTrees Realize Trees
+      .col-md-1
+        button.btn.btn-sm#realizeRelns Realize Relns
+      .col-md-1
+        button.btn.btn-sm#render Render
+
     block content
+
+    script.
+      CTS.status.libraryLoaded.then(function() {
+
+        CTS.status.defaultTreeReady.then(function() {
+          CTS.$('#parse').addClass('btn-success');
+        });
+
+        CTS.$('#renderAll').click(function() {
+          CTS.engine = new CTS.Engine();
+          CTS.engine.boot().then(function() {
+            CTS.$('#header button').addClass('btn-success');
+          });
+        });
+
+        CTS.$('#loadForrest').click(function() {
+          CTS.engine = new CTS.Engine();
+          CTS.engine.loadForrest().then(function() {
+            CTS.$('#loadForrest').addClass('btn-success');
+          });
+        });
+
+        CTS.$('#loadCts').click(function() {
+          CTS.engine.loadCts().then(function() {
+            CTS.$('#loadCts').addClass('btn-success');
+          });
+        });
+
+        CTS.$('#realizeDeps').click(function() {
+          CTS.engine.forrest.realizeDependencies().then(function() {
+            CTS.$('#realizeDeps').addClass('btn-success');
+          });
+        });
+
+        CTS.$('#realizeTrees').click(function() {
+          CTS.engine.forrest.realizeTrees().then(function() {
+            CTS.$('#realizeTrees').addClass('btn-success');
+          });
+        });
+
+        CTS.$('#realizeRelns').click(function() {
+          CTS.engine.forrest.realizeRelations().then(function() {
+            CTS.$('#realizeRelns').addClass('btn-success');
+          });
+        });
+
+        CTS.$('#render').click(function() {
+          CTS.engine.render();
+          CTS.$('#render').addClass('btn-success');
+        });
+
+      });
 

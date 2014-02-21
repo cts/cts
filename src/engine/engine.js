@@ -10,7 +10,6 @@
  *
  */
 
-
 var Engine = CTS.Engine = function(opts, args) {
   var defaults;
   this.opts = opts || {};
@@ -167,10 +166,10 @@ CTS.Fn.extend(Engine.prototype, Events, {
     }
 
     if ((typeof self.opts.autoLoadSpecs != 'undefined') && (self.opts.autoLoadSpecs === true)) {
-      Fn.each(CTS.Utilities.getTreesheetLinks(), function(block) {
+      Fn.each(CTS.Util.getTreesheetLinks(), function(block) {
         var deferred = Q.defer();
         if (block.type == 'link') {
-          CTS.Utilities.fetchString(block).then(
+          CTS.Util.fetchString(block).then(
             function(content) {
               var url = block.url;
               parseAndAddSpec(content, block.format, url).then(

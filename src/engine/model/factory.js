@@ -20,7 +20,7 @@ CTS.Factory = {
       return CTS.Factory.GSpreadsheetTree(spec, forrest);
     } else if (typeof spec.url == "string") {
       var deferred = Q.defer();
-      CTS.Utilities.fetchString(spec).then(
+      CTS.Util.fetchString(spec).then(
         function(content) {
           if ((spec.kind == 'HTML') || (spec.kind == 'html')) {
             var div = CTS.$("<div></div>");
@@ -30,7 +30,7 @@ CTS.Factory = {
             });
             div.append(jqNodes);
             if (spec.fixLinks) {
-              CTS.Utilities.rewriteRelativeLinks(div, spec.url);
+              CTS.Util.rewriteRelativeLinks(div, spec.url);
             }
             CTS.Factory.TreeWithJquery(div, forrest, spec).then(
               function(tree) {

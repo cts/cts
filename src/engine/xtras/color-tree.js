@@ -1,3 +1,5 @@
+CTS.registerNamespace('CTS.Xtras.Color');
+
 CTS.Xtras.Color = {
   RainbowColors: [
     "#FB0000",

@@ -92,10 +92,10 @@ CTS.Parser.Cts = {
           f.dependencySpecs.push(new DependencySpec('cts', h[0]));
           var url = h[0];
           if (typeof fromLocation != 'undefined') {
-            url = CTS.Utilities.fixRelativeUrl(url, fromLocation);
+            url = CTS.Util.fixRelativeUrl(url, fromLocation);
           }
           remoteLoads.push(
-            CTS.Utilities.fetchString({url: url}).then(
+            CTS.Util.fetchString({url: url}).then(
               function(str) {
                 return self.parseForrestSpec(str, url);
               }

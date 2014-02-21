@@ -36,7 +36,8 @@ CTS.Node.Base = {
     this.value = null;
     this.shouldThrowEvents = false;
     this.shouldReceiveEvents = false;
-    this.inlineRelationSpecs = []; // TODO(eob): put a realized field to check
+    this.registeredInlineRelationSpecs = false;
+    this.inlineRelationSpecs = [];
   },
 
   getChildren: function() {
@@ -50,7 +51,6 @@ CTS.Node.Base = {
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
       this.toggleThrowDataEvents(true);
-      this.toggleReceiveRelationEvents(true);
     }
   },
 
@@ -60,7 +60,7 @@ CTS.Node.Base = {
   },
 
   getRelations: function() {
-    if (! this.checkedForInlineRealization) {
+    if ((! this.checkedForInlineRealization) && (! this.registeredInlineRelationSpecs)) {
       for (var i = 0; i < this.inlineRelationSpecs.length; i++) {
         var spec = this.inlineRelationSpecs[i];
         this.tree.forrest.realizeRelation(spec);
@@ -116,6 +116,7 @@ CTS.Node.Base = {
       }
     );
 
+    this.registeredInlineRelationSpecs = true;
     return deferred.promise;
   },
 
@@ -231,7 +232,6 @@ CTS.Node.Base = {
   },
 
   realizeChildren: function() {
-    console.log("Realizing Children for ", this.kind);
     var deferred = Q.defer();
 
     if (this.children.length != 0) {
@@ -249,7 +249,6 @@ CTS.Node.Base = {
         });
         Q.all(promises).then(
           function() {
-            console.log("REALIZED children: ", self.kind);
             deferred.resolve();
           }, 
           function(reason) {
@@ -490,7 +489,6 @@ CTS.Node.Base = {
   },
 
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
-    console.log("Event from relation", evt);
     if (this.shouldReceiveEvents) {
       if (evt.name == "ValueChanged") {
         if (fromRelation.name == "is") {
