@@ -18,30 +18,14 @@ CTS.Util.getUrlParameter = function(param, url) {
 };
 
 CTS.Util.shouldAutoload = function() {
+  // Don't autoload if there is a ?autoload=false
   if (typeof document == 'undefined') {
     return false;
   }
-  var scripts = document.getElementsByTagName('script');
-  // Do it backwards because this should be the LAST script
-  // since we're executing, and scripts are loaded sequentially
-  for (var i = scripts.length - 1; i >= 0; i--) {
-    var script = scripts[i];
-    if (typeof script != 'undefined') {
-      if ((typeof script.src != 'undefined') &&
-          (script.src != null) && 
-          ((script.src.indexOf('cts.js') != -1) ||
-           (script.src.indexOf('cts.min.js') != -1) ||
-           (script.src.indexOf('cts.dev.js') != -1))) {
-        var param = CTS.Util.getUrlParameter('autoload', script.src)
-        if (param == 'false') {
-          return false;
-        } else {
-          return true;
-        }
-      }
-    }
+  if (CTS.Util.getUrlParameter('autoload') == 'false') {
+    return false;
   }
-  return false;
+  return true;
 };
 
 CTS.Util.hideDocumentBody = function() {

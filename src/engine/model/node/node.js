@@ -305,6 +305,7 @@ CTS.Node.Base = {
       var otherKid = to.children[j];
       myKid.recursivelyCloneRelations(otherKid);
     }
+    alert("Now I (" + to.value.html() + ") have " + to.relations.length + " relations");
   },
 
   pruneRelations: function(otherParent, otherContainer) {

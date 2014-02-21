@@ -27,11 +27,11 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
 
   execute: function(toward) {
     this._Are_AlignCardinalities(toward);
-    toward.trigger('received-are', {
-      target: toward,
-      source: this.opposite(toward),
-      relation: this
-    });
+//    toward.trigger('received-are', {
+//      target: toward,
+//      source: this.opposite(toward),
+//      relation: this
+//    });
   },
 
   clone: function(n1, n2) {
@@ -49,7 +49,7 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
     var other = this.opposite(toward);
     var otherIterables = this._Are_GetIterables(other);
     var myIterables = this._Are_GetIterables(toward);
-    CTS.Log.Info("Before Align");
+
     CTS.Debugging.DumpTree(toward);
 
     if (myIterables.length > 0) {
