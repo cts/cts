@@ -51,7 +51,6 @@ CTS.Node.Base = {
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
       this.toggleThrowDataEvents(true);
-      this.toggleReceiveRelationEvents(true);
     }
   },
 
@@ -307,7 +306,6 @@ CTS.Node.Base = {
       var otherKid = to.children[j];
       myKid.recursivelyCloneRelations(otherKid);
     }
-    alert("Now I (" + to.value.html() + ") have " + to.relations.length + " relations");
   },
 
   pruneRelations: function(otherParent, otherContainer) {
@@ -493,7 +491,6 @@ CTS.Node.Base = {
   },
 
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
-    console.log("Event from relation", evt);
     if (this.shouldReceiveEvents) {
       if (evt.name == "ValueChanged") {
         if (fromRelation.name == "is") {
