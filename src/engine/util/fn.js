@@ -1,7 +1,9 @@
 /*
  * Helper functions. Many of these are taken from Underscore.js
  */
-var Fn = CTS.Fn = {
+var Fn = CTS.Fn;
+
+CTS.Fn.extend(CTS.Fn, {
 
   arrDelete: function(arr, from, to) {
     var rest = arr.slice((to || from) + 1 || arr.length);
@@ -185,7 +187,7 @@ var Fn = CTS.Fn = {
     return CTS.Fn.map(obj, function(value){ return value[key]; });
   }
 
-};
+});
 
 CTS.Fn.isArray = Array.isArray || function(obj) {
   return toString.call(obj) == '[object Array]';

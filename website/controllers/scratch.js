@@ -22,6 +22,11 @@ exports.index = function(req, res) {
 
 exports.other = function(req, res) {
   var page = req.params.page;
-  res.render('cts/scratch/' + String(page), {});
+
+  // Get a list of files to include.
+  var gruntConfig = require('../../grunt-config');
+  var sources = gruntConfig.variants.engine.development.sources;
+
+  res.render('cts/scratch/' + String(page), {sources: sources});
 };
 

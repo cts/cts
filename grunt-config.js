@@ -21,11 +21,9 @@
 
 var sources = {
   engine: [
-    "src/common/base.js",
-    "src/common/constants.js",
+    // base and constants to be added by next step.
     "src/common/utilities.js",
-
-    "src/engine/preamble.js",
+    "src/engine/prologue.js",
   
     "src/engine/util/fn.js",
   
@@ -81,7 +79,7 @@ var sources = {
     "src/engine/parser/html.js",
   
     "src/engine/engine.js",
-    "src/engine/autoloader.js",
+    "src/engine/epilogue.js",
   
     /* Xtras */
     "src/engine/xtras/xtras.js",
@@ -111,16 +109,15 @@ var variants = {
   engine: {
     development: {
       additions: [
-        "src/engine/fragments/constants-debug._js",
-        "src/engine/fragments/prefix._js",
-        "<banner>"
+        "src/common/constants-devel.js",
+        "src/common/base.js"
       ],
       output: 'release/cts.dev.js'
     },
     production: {
       additions: [
-        "src/engine/fragments/constants-production._js",
-        "src/engine/fragments/prefix._js",
+        "src/common/constants.js",
+        "src/common/base.js",
         "<banner>"
       ],
       output: 'release/cts.js',
@@ -170,8 +167,8 @@ var variants = {
 for (var project in variants) {
   for (variant in variants[project]) {
     var sourcelist = sources[project].slice(0);
-    for (var i = 0; i < variants[project][variant].additions; i++) {
-      sourcelist.unshift(variants[project][variant][i]);
+    for (var i = 0; i < variants[project][variant].additions.length; i++) {
+      sourcelist.unshift(variants[project][variant].additions[i]);
     }
     variants[project][variant]['sources'] = sourcelist;
   }
@@ -195,6 +192,7 @@ function banner(opts) {
 var gruntConfig = {
   pkg: "Cascading Tree Sheets",
   meta: { banner: banner() },
+  variants: variants,
 
   // This is a simple static file server
   web_server: {
