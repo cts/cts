@@ -43,8 +43,11 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
         var child = opp.children[i].clone();
 
         // TODO(eob): This is a subtle bug. It means that you can't graft-map anything outside
-        // the toward node that is being grafted.
-        //child.pruneRelations(toward)
+        // the toward node that is being grafted. But if this isn't done, then ALL of the things
+        // grafting one thing will overwrite each other (i.e., all users of a button widget will
+        // get the label of the last widget.
+        child.pruneRelations(toward);
+
         // TODO(eob): We were pruning before because of geometric duplication of relations
         // when graft happened multiple times, and took out the pruneRelations above because it
         // also removed relations from grafts of grafts (i.e., when one theme includes components of
