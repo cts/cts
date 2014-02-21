@@ -52,3 +52,14 @@ block content
            div(data-cts="this :graft #template;")
              span(data-cts="#template button :is this;") Click Me, Too!
 
+     .row
+       .col-md-6.col-md-offset-3
+         h1(style="text-align: center;") Combination of the above three
+     .row
+       .col-md-2.col-md-offset-3
+       .col-md-2
+       .col-md-5
+         h2 Destination
+         ul#dest2(data-cts="this :are #container2;")
+           li.foo(data-cts="this :graft #template;")
+             span(data-cts="this :is #container2 li; #template button :is this;") Hi

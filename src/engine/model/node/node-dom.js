@@ -174,8 +174,8 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    },
 
    _subclass_beginClone: function($node) {
-     var value = null;
-     if (typeof node == "undefined") {
+     var $value = null;
+     if (typeof $node == "undefined") {
        $value = this.value.clone();
      } else {
        $value = $node;
@@ -198,12 +198,13 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      //  clone.relations.push(r);
      //}
 
-     if (this.children.length != clone.value.children().length) {
+     var cloneKids = clone.value.children();
+     if (this.children.length != cloneKids.length) {
        CTS.Log.Error("Trying to clone CTS node that is out of sync with dom");
      }
      // We use THIS to set i
-     for (var i = 0; i < this.children.length; i++) {
-       var $child = CTS.$(clone.value.children()[i]);
+     for (var i = 0; i < cloneKids.length; i++) {
+       var $child = CTS.$(cloneKids[i]);
        var child = this.children[i]._subclass_beginClone($child);
        child.parentNode = clone;
        if (typeof child.children  == 'undefined') {
