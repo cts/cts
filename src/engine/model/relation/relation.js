@@ -8,9 +8,6 @@ CTS.Relation = {};
 
 CTS.Relation.CreateFromSpec = function(node1, node2, spec) {
   if (spec.name == 'is') {
-    console.log("FUCK", node1, node2, spec);
-    console.log("FUCK", node1.value.html(), node2.value.html(), spec);
-
     return new CTS.Relation.Is(node1, node2, spec);
   } else if (spec.name == 'are') {
     return new CTS.Relation.Are(node1, node2, spec);
