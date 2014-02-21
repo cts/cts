@@ -36,7 +36,8 @@ CTS.Node.Base = {
     this.value = null;
     this.shouldThrowEvents = false;
     this.shouldReceiveEvents = false;
-    this.inlineRelationSpecs = []; // TODO(eob): put a realized field to check
+    this.registeredInlineRelationSpecs = false;
+    this.inlineRelationSpecs = [];
   },
 
   getChildren: function() {
@@ -60,7 +61,7 @@ CTS.Node.Base = {
   },
 
   getRelations: function() {
-    if (! this.checkedForInlineRealization) {
+    if ((! this.checkedForInlineRealization) && (! this.registeredInlineRelationSpecs)) {
       for (var i = 0; i < this.inlineRelationSpecs.length; i++) {
         var spec = this.inlineRelationSpecs[i];
         this.tree.forrest.realizeRelation(spec);
@@ -116,6 +117,7 @@ CTS.Node.Base = {
       }
     );
 
+    this.registeredInlineRelationSpecs = true;
     return deferred.promise;
   },
 
