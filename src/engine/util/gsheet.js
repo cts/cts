@@ -1,4 +1,6 @@
-var GSheet = CTS.GSheet = {
+CTS.registerNamespace('CTS.Util.GSheet');
+
+CTS.Fn.extend(CTS.Util.GSheet, {
   // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiauthauthorize
   _ctsApiClientId: '459454183971-3rhp3qnfrdane1hnoa23eom28qoo146f.apps.googleusercontent.com',
   _ctsApiKey: 'AIzaSyBpNbbqKrk21n6rI8Nw2R6JSz6faN7OiWc',
@@ -39,9 +41,9 @@ var GSheet = CTS.GSheet = {
       } else {
         url += "?";
       }
-      if (CTS.GSheet._currentToken != null) {
-        console.log("token", CTS.GSheet._currentToken);
-        url += "access_token=" + CTS.GSheet._currentToken.access_token;
+      if (CTS.Util.GSheet._currentToken != null) {
+        console.log("token", CTS.Util.GSheet._currentToken);
+        url += "access_token=" + CTS.Util.GSheet._currentToken.access_token;
       } else {
         console.error("Asked for auth but current token null");
       }
@@ -50,52 +52,52 @@ var GSheet = CTS.GSheet = {
   },
 
   _refreshLoginButtonState: function() {
-    if (CTS.GSheet._$loginButton != null) {
-      if (CTS.GSheet._currentToken == null) {
+    if (CTS.Util.GSheet._$loginButton != null) {
+      if (CTS.Util.GSheet._currentToken == null) {
         // Not logged in.
-        CTS.GSheet._$loginButton.html('Login');
+        CTS.Util.GSheet._$loginButton.html('Login');
       } else {
-        CTS.GSheet._$loginButton.html('Log Out');
+        CTS.Util.GSheet._$loginButton.html('Log Out');
       }
     }
   },
 
   _loginButtonClicked: function() {
-    if (CTS.GSheet._$loginButton.html() == 'Login') {
-      CTS.GSheet.login();
+    if (CTS.Util.GSheet._$loginButton.html() == 'Login') {
+      CTS.Util.GSheet.login();
     } else {
-      CTS.GSheet._currentToken == null;
-      CTS.GSheet._refreshLoginButtonState();
+      CTS.Util.GSheet._currentToken == null;
+      CTS.Util.GSheet._refreshLoginButtonState();
     }
   },
 
   _registerCtsCredentials: function() {
-    gapi.client.setApiKey(CTS.GSheet._ctsApiKey);
+    gapi.client.setApiKey(CTS.Util.GSheet._ctsApiKey);
   },
 
   _authenticationResult: function(authResult) {
    var authorizeButton = document.getElementById('authorize-button');
    if (authResult && !authResult.error) {
      authorizeButton.style.visibility = 'hidden';
-     CTS.GSheet._currentToken = gapi.auth.getToken();
-     console.log("Token", CTS.GSheet._currentToken);
-     CTS.GSheet._refreshLoginButtonState();
+     CTS.Util.GSheet._currentToken = gapi.auth.getToken();
+     console.log("Token", CTS.Util.GSheet._currentToken);
+     CTS.Util.GSheet._refreshLoginButtonState();
    } else {
-     CTS.GSheet._currentToken = null;
-     console.log("Token", CTS.GSheet._currentToken);
-     CTS.GSheet._refreshLoginButtonState();
+     CTS.Util.GSheet._currentToken = null;
+     console.log("Token", CTS.Util.GSheet._currentToken);
+     CTS.Util.GSheet._refreshLoginButtonState();
    }
   },
 
   login: function() {
     gapi.auth.authorize({
-      client_id: CTS.GSheet._ctsApiClientId,
-      scope: CTS.GSheet._ctsApiClientScopes},
-    CTS.GSheet._authenticationResult);
+      client_id: CTS.Util.GSheet._ctsApiClientId,
+      scope: CTS.Util.GSheet._ctsApiClientScopes},
+    CTS.Util.GSheet._authenticationResult);
   },
 
   isLoggedIn: function() {
-    return (CTS.GSheet._currentToken != null);
+    return (CTS.Util.GSheet._currentToken != null);
   },
 
   createSpreadsheet: function(title) {
@@ -144,7 +146,7 @@ var GSheet = CTS.GSheet = {
 
   getSpreadsheets: function() {
     var deferred = Q.defer();
-    var url = CTS.GSheet._gSheetUrl(
+    var url = CTS.Util.GSheet._gSheetUrl(
         'spreadsheets', null, null, 'private', 'full', true, true);
     var request = CTS.$.getJSON(url);
 
@@ -152,8 +154,8 @@ var GSheet = CTS.GSheet = {
       var ret = [];
       for (var i = 0; i < json.feed.entry.length; i++) {
         var sheet = json.feed.entry[i];
-        var title = CTS.GSheet._parseGItem(sheet.title);
-        var id = CTS.GSheet._parseGItem(sheet.id);
+        var title = CTS.Util.GSheet._parseGItem(sheet.title);
+        var id = CTS.Util.GSheet._parseGItem(sheet.id);
         var spec = {
           title: title,
           id: id
@@ -175,7 +177,7 @@ var GSheet = CTS.GSheet = {
 
   getWorksheets: function(key) {
     var deferred = Q.defer();
-    var url = CTS.GSheet._gSheetUrl('worksheets', key, null, 'private', 'full', true, true);
+    var url = CTS.Util.GSheet._gSheetUrl('worksheets', key, null, 'private', 'full', true, true);
     var request = CTS.$.getJSON(url);
     request.done(function(json) {
       var ret = [];
@@ -183,11 +185,11 @@ var GSheet = CTS.GSheet = {
         var worksheet = json.feed.entry[i];
         var spec = {
           kind: 'worksheet',
-          title: CTS.GSheet._parseGItem(worksheet.title),
-          id: CTS.GSheet._parseGItem(worksheet.id),
-          colCount: parseInt(CTS.GSheet._parseGItem(worksheet['gs$colCount'])),
-          rowCount: parseInt(CTS.GSheet._parseGItem(worksheet['gs$rowCount'])),
-          updated: CTS.GSheet._parseGItem(worksheet.updated)
+          title: CTS.Util.GSheet._parseGItem(worksheet.title),
+          id: CTS.Util.GSheet._parseGItem(worksheet.id),
+          colCount: parseInt(CTS.Util.GSheet._parseGItem(worksheet['gs$colCount'])),
+          rowCount: parseInt(CTS.Util.GSheet._parseGItem(worksheet['gs$rowCount'])),
+          updated: CTS.Util.GSheet._parseGItem(worksheet.updated)
         };
         var parts = spec.id.split('/');
         spec['wskey'] = parts[parts.length - 1];
@@ -211,24 +213,24 @@ var GSheet = CTS.GSheet = {
   getListFeed: function(spreadsheetKey, worksheetKey) {
     console.log("Getting workshee", spreadsheetKey, worksheetKey);
     var deferred = Q.defer();
-    var url = CTS.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'private', 'full', true, true);
+    var url = CTS.Util.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'private', 'full', true, true);
 
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
       var spec = {};
       console.log(json);
-      spec.title = CTS.GSheet._parseGItem(json.feed.title);
-      spec.updated = CTS.GSheet._parseGItem(json.feed.updated);
-      spec.id = CTS.GSheet._parseGItem(json.feed.id);
+      spec.title = CTS.Util.GSheet._parseGItem(json.feed.title);
+      spec.updated = CTS.Util.GSheet._parseGItem(json.feed.updated);
+      spec.id = CTS.Util.GSheet._parseGItem(json.feed.id);
       spec.items = [];
       for (var i = 0; i < json.feed.entry.length; i++) {
-        var title = CTS.GSheet._parseGItem(json.feed.entry[i].title);
+        var title = CTS.Util.GSheet._parseGItem(json.feed.entry[i].title);
         var data = {};
         for (var key in json.feed.entry[i]) {
           if ((key.length > 4) && (key.substring(0,4) == 'gsx$')) {
             var k = key.substring(4);
-            data[k] = CTS.GSheet._parseGItem(json.feed.entry[i][key]);
+            data[k] = CTS.Util.GSheet._parseGItem(json.feed.entry[i][key]);
           }
         }
         spec.items.push({
@@ -246,4 +248,4 @@ var GSheet = CTS.GSheet = {
 
     return deferred.promise;
   },
-};
+});

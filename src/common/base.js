@@ -19,7 +19,6 @@ if (typeof exports !== 'undefined') {
 } else {
   CTS = root.CTS = {};
 }
-
 CTS.VERSION = '0.6.0';
 
 // Set up bare minimum functionality that we want available for
