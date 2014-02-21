@@ -1,0 +1,16 @@
+extends ../layouts/scratch
+
+block head
+  title CTS HTML-to-HTML Examples
+
+block content
+  .content 
+     .row
+       .col-md-2.col-md-offset-3
+         h1 Source
+         span#source1 Source Value
+       .col-md-2
+       .col-md-5
+         h1 Destination
+         span(data-cts="this :is #source1;") Should become source value!
+
