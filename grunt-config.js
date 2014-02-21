@@ -82,7 +82,6 @@ var sources = {
     "src/engine/epilogue.js",
   
     /* Xtras */
-    "src/engine/xtras/xtras.js",
     "src/engine/xtras/color-tree.js",
   ],
   ui: [
