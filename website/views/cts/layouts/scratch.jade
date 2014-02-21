@@ -2,6 +2,7 @@ doctype html
 html
   head
     meta(charset='utf-8')
+    != css('styles')
     each source in sources
       script(src='/' + source)
     block head

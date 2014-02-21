@@ -74,8 +74,8 @@ var sources = {
     /* Parser */
     "src/engine/parser/parser.js",
     "src/engine/parser/parser-json.js",
-    "src/engine/parser/parser-engine.js",
-    "src/engine/parser/parser-engine-impl.js",
+    "src/engine/parser/parser-cts.js",
+    "src/engine/parser/parser-cts-impl.js",
     "src/engine/parser/html.js",
   
     "src/engine/engine.js",
