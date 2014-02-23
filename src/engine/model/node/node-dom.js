@@ -285,12 +285,16 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     if (eventName == "ValueChanged") {
       // TODO: This is the wrong event.
       this.value.on("DOMNodeInserted", handler);
+    } else if (eventName == "NodeInserted") {
+      this.value.on("DOMNodeInserted", handler);
     }
   },
 
   _subclass_offDataEvent: function(eventName, handler) {
     if (eventName == "ValueChanged") {
       // TODO: This is the wrong event.
+      this.value.off("DOMNodeInserted", handler);
+    } else if (eventName == "NodeInserted") {
       this.value.off("DOMNodeInserted", handler);
     }
   },

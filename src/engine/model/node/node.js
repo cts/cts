@@ -12,7 +12,7 @@ CTS.Node.Factory = {
   Html: function(node, tree, opts) {
     var deferred = Q.defer();
     var node = new CTS.Node.Html(node, tree, opts);
-    node.registerInlineRelationSpecs().then(
+    node.parseInlineRelationSpecs().then(
       function() {
         deferred.resolve(node);
       },
@@ -36,8 +36,9 @@ CTS.Node.Base = {
     this.value = null;
     this.shouldThrowEvents = false;
     this.shouldReceiveEvents = false;
-    this.registeredInlineRelationSpecs = false;
     this.inlineRelationSpecs = [];
+    this.parsedInlineRelationSpecs = false;
+    this.realizedInlineRelationSpecs = false;
   },
 
   getChildren: function() {
@@ -60,21 +61,22 @@ CTS.Node.Base = {
   },
 
   getRelations: function() {
-    if ((! this.checkedForInlineRealization) && (! this.registeredInlineRelationSpecs)) {
+    if (! this.realizedInlineRelationSpecs) {
       for (var i = 0; i < this.inlineRelationSpecs.length; i++) {
         var spec = this.inlineRelationSpecs[i];
         this.tree.forrest.realizeRelation(spec);
       }
-      this.checkedForInlineRealization = true;
+      this.realizedInlineRelationSpecs = true;
     }
     return this.relations;
   },
 
-  registerInlineRelationSpecs: function() {
+  parseInlineRelationSpecs: function() {
     var deferred = Q.defer();
+    var self = this;
 
     // Already added
-    if (this.addedMyInlineRelationsToForrest === true) {
+    if (this.parsedInlineRelationSpecs === true) {
       CTS.Log.Warn("Not registering inline relations: have already done so.");
       deferred.resolve();
       return deferred.promise;
@@ -85,17 +87,20 @@ CTS.Node.Base = {
     // No inline spec
     if (! specStr) {
       deferred.resolve();
+      self.parsedInlineRelationSpecs = true;
       return deferred.promise;
     }
 
     if (typeof this.tree == 'undefined') {
       deferred.reject("Undefined tree");
+      self.parsedInlineRelationSpecs = true;
       return deferred.promise;
     }
 
 
     if (typeof this.tree.forrest == 'undefined') {
       deferred.reject("Undefined forrest");
+      self.parsedInlineRelationSpecs = true;
       return deferred.promise;
     }
 
@@ -104,7 +109,7 @@ CTS.Node.Base = {
     CTS.Parser.parseInlineSpecs(specStr, self, self.tree.forrest, true).then(
       function(forrestSpecs) {
         Fn.each(forrestSpecs, function(forrestSpec) {
-          self.addedMyInlineRelationsToForrest = true;
+          self.parsedInlineRelationSpecs = true;
           if (typeof forrestSpec.relationSpecs != 'undefined') {
             self.inlineRelationSpecs = forrestSpec.relationSpecs;
           }
@@ -112,11 +117,11 @@ CTS.Node.Base = {
         deferred.resolve();
       },
       function(reason) {
+        self.parsedInlineRelationSpecs = true;
         deferred.reject(reason);
       }
     );
 
-    this.registeredInlineRelationSpecs = true;
     return deferred.promise;
   },
 
