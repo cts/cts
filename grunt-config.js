@@ -85,7 +85,7 @@ var sources = {
     "src/engine/xtras/color-tree.js",
   ],
   ui: [
-    "src/ui/fragments/prefix.js",
+    "src/ui/prologue.js",
     "src/ui/util/utilities.js",
     "src/lib/alertify.js",
     "src/lib/jquery.fileDownload.js",
@@ -99,8 +99,7 @@ var sources = {
     "src/ui/sidebar/scraper.js",
     "src/ui/widgets/editor.js",
     "src/ui/sidebar/theme.js",
-    "src/ui/fragments/postfix.js",  
-    "src/ui/fragments/autoloader.js"
+    "src/ui/epilogue.js"
   ]
 };
 
@@ -126,8 +125,8 @@ var variants = {
   ui: {
     development: {
       additions: [
-        "src/ui/fragments/development/constants.js",
-        "<banner>"
+        "src/ui/constants-devel.js",
+        "src/common/base.js"
       ],
       output: 'release/cts-ui.dev.js',
       less: {
@@ -143,8 +142,8 @@ var variants = {
     },
     production: {
       additions: [
-        "src/ui/fragments/production/constants.js",
-        "<banner>"
+        "src/ui/constants.js",
+        "src/common/base.js"
       ],
       output: 'release/cts-ui.js',
       minOutput: 'release/cts-ui.min.js',

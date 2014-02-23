@@ -1,4 +1,21 @@
-_CTSUI.autoload = function() {
+/*
+ * This is only to be run once we're sure CTS is present.
+ */
+CTS.UI.load = function() {
+  console.log("CTS Loaded");
+  CTS.$(function() {
+    CTS.UI.clipboard = new CTS.UI.Clipboard();
+    CTS.UI.switchboard = new CTS.UI.Switchboard(CTS.$, CTS.Q);
+    CTS.UI.picker = new _CTSUI.Picker(CTS.$, CTS.Q);
+    CTS.UI.modal = new _CTSUI.Modal(CTS.$, CTS.Q);
+    CTS.UI.tray = new CTS.UI.Tray();
+  });
+};
+
+/*
+ *
+ */
+CTS.UI.autoload = function() {
   // Load CK Editor
   var s = document.createElement('script');
   s.setAttribute('src', _CTSUI.URLs.Scripts.ckeditor);
@@ -19,7 +36,6 @@ _CTSUI.autoload = function() {
     s.setAttribute('type', 'text/javascript');
     s.onload = function() {
 
-      CTS.UI = _CTSUI;
       // Now we have to wait for $ to load
       CTS.status.defaultTreeReady.then(function() {
         CTS.Q.longStackSupport = true;
@@ -40,4 +56,6 @@ _CTSUI.autoload = function() {
     document.getElementsByTagName('head')[0].appendChild(ckeditor);
   }
 };
-_CTSUI.autoload();
+
+CTS.UI.autoload();
+

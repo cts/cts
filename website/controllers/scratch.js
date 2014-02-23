@@ -26,7 +26,8 @@ exports.other = function(req, res) {
   // Get a list of files to include.
   var gruntConfig = require('../../grunt-config');
   var sources = gruntConfig.variants.engine.development.sources;
+  var uisources = gruntConfig.variants.ui.development.sources;
 
-  res.render('cts/scratch/' + String(page), {sources: sources});
+  res.render('cts/scratch/' + String(page), {sources: sources, uisources: uisources});
 };
 

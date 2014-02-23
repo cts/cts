@@ -5,14 +5,25 @@ html
     != css('styles')
     each source in sources
       script(src='/' + source)
+    block subtemplatehead
     block head
 
   body(style="padding: 0")
-    .row#header(style="margin-top: 0; padding-bottom: 25px; padding-top: 25px; border-bottom: 2px solid #333;")
-      .col-md-1(style="text-align: right") Auto:
+    main.ctsdoc-small
+      .left &nbsp;
+      .center
+        h1 Cascading Tree Sheets
+        h2 CSS for Structure
+      .right &nbsp;
+
+    .row#header(style="margin-top: 0; margin-bottom: 10px; padding-bottom: 25px; padding-top: 25px; border-bottom: 2px solid #333;")
       .col-md-1
-        button.btn#renderAll Render All
-      .col-md-1(style="text-align: right") Manual:
+      .col-md-1(style="text-align: center;")
+        span(style="font-size: 16px") <b>Test<br />Harness</b>
+      .col-md-1(style="text-align: right")
+      .col-md-1
+        button.btn.btn-sm#renderAll Auto Run
+      .col-md-1(style="text-align: right") Manual<br>Bootup:
       .col-md-1
         button.btn.btn-sm#loadForrest Load Forrest
       .col-md-1

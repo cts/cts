@@ -1,8 +1,10 @@
-_CTSUI.Switchboard = function($, q, opts) {
+CTS.registerNamespace('CTS.UI.Switchboard');
+
+CTS.UI.Switchboard = function($, q, opts) {
   this.opts = opts || {};
 
   if (typeof this.opts.serverUrl == 'undefined') {
-    this.opts.serverUrl = _CTSUI.serverBase + _CTSUI.switchboardPath;
+    this.opts.serverUrl = CTS.UI.serverBase + CTS.UI.switchboardPath;
   }
 
   this._q = q;
@@ -16,14 +18,14 @@ _CTSUI.Switchboard = function($, q, opts) {
   this.opts.serverUrl = 'cts.php';
 };
 
-_CTSUI.Switchboard.prototype.recordOperation = function(operation) {
+CTS.UI.Switchboard.prototype.recordOperation = function(operation) {
   console.log("Saving operation: ", operation);
   var tuple = [operation, this._q.defer()];
   this._opQueue.push(tuple);
   return tuple[1].promise;
 };
 
-_CTSUI.Switchboard.prototype.flush = function() {
+CTS.UI.Switchboard.prototype.flush = function() {
   console.log("Switchboard::flush");
   if (this._flushLock != null) {
     console.log("Switchboard::flush -- Flush already in progress");
@@ -45,7 +47,7 @@ _CTSUI.Switchboard.prototype.flush = function() {
   }
 };
 
-_CTSUI.Switchboard.prototype._flushComplete = function(success, msg, jqXHR, textStatus) {
+CTS.UI.Switchboard.prototype._flushComplete = function(success, msg, jqXHR, textStatus) {
   console.log("Switchboard::_flushComplete");
   // Rotate all the locks.
   var oldLock = this._flushLock;
@@ -80,7 +82,7 @@ _CTSUI.Switchboard.prototype._flushComplete = function(success, msg, jqXHR, text
   }
 };
 
-_CTSUI.Switchboard.prototype._doFlush = function() {
+CTS.UI.Switchboard.prototype._doFlush = function() {
   console.log("Switchboard::_doFlush");
   var self = this;
 
@@ -108,7 +110,7 @@ _CTSUI.Switchboard.prototype._doFlush = function() {
   });
 };
 
-_CTSUI.Switchboard.prototype._maybeFlush = function() {
+CTS.UI.Switchboard.prototype._maybeFlush = function() {
   console.log("Switchboard::_maybeFlush");
   // TODO: It would be nice to pool multiple operations together.
   return this.flush();
