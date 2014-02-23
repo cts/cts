@@ -1,4 +1,6 @@
-_CTSUI.Theminator = function(tray, $page) {
+CTS.registerNamespace('CTS.UI.Theminator');
+
+CTS.UI.Theminator = function(tray, $page) {
   this._tray = tray; // A Javascript object
   this.$page = $page;
   this.$container = null;
@@ -13,7 +15,7 @@ _CTSUI.Theminator = function(tray, $page) {
   this.loadMockup();
 };
 
-_CTSUI.Theminator.prototype.loadMockup = function() {
+CTS.UI.Theminator.prototype.loadMockup = function() {
   this.$container = CTS.$("<div class='cts-ui-theminator-page'></div>");
   var cts = "@html theminator " + CTS.UI.URLs.Mockups.theminator+ ";";
   CTS.UI.Util.addCss(CTS.UI.URLs.Styles.theminator);
@@ -27,7 +29,7 @@ _CTSUI.Theminator.prototype.loadMockup = function() {
   this.$container.appendTo(this.$page);
 };
 
-_CTSUI.Theminator.prototype.setupMockup = function() {
+CTS.UI.Theminator.prototype.setupMockup = function() {
     var self = this;
     this.$node = this.$container.find('.cts-ui-theminator');
     
@@ -54,7 +56,7 @@ _CTSUI.Theminator.prototype.setupMockup = function() {
     this.$node.find('.cts-ui-header-content').css('background-image','url('+CTS.UI.URLs.Images.header+')');
 };
 
-_CTSUI.Theminator.prototype.loadContent = function() {
+CTS.UI.Theminator.prototype.loadContent = function() {
     var self = this;
     CTS.$.getJSON(CTS.UI.URLs.Data.filterInfo, function(data) {
       console.log(data);
@@ -79,7 +81,7 @@ _CTSUI.Theminator.prototype.loadContent = function() {
     });
 };
 
-_CTSUI.Theminator.prototype.displayThemeThumbnail = function(theme, themeData) {
+CTS.UI.Theminator.prototype.displayThemeThumbnail = function(theme, themeData) {
     this.$node.find('.cts-ui-templates-container').append(
         '<div class="cts-ui-screenshot-thumbnail cts-ui-effeckt-caption cts-ui-effeckt-caption-2" data-theme="'+this.fixForObject(theme)+'">'+
             '<img width="200px" class="cts-ui-screenshot" src="'+themeData.screenshot+'">'+
@@ -99,24 +101,24 @@ _CTSUI.Theminator.prototype.displayThemeThumbnail = function(theme, themeData) {
     );
 };
 
-_CTSUI.Theminator.prototype.displayNewData = function(newData) {
+CTS.UI.Theminator.prototype.displayNewData = function(newData) {
     this.paginate(newData);
     this.displayPage(1);
 };
 
-_CTSUI.Theminator.prototype.prettify = function(str) {
+CTS.UI.Theminator.prototype.prettify = function(str) {
     var stringArray = str.split(/[\s-]+/);
     for (var w=0; w<stringArray.length; w++) {
         stringArray[w] = stringArray[w].charAt(0).toUpperCase() + stringArray[w].substring(1);
     }
     return stringArray.join(" ");
 }
-_CTSUI.Theminator.prototype.fixForObject = function(str) {
+CTS.UI.Theminator.prototype.fixForObject = function(str) {
     var stringArray = str.split(/[\s-]+/);
     return stringArray.join("_");
 }
 
-_CTSUI.Theminator.prototype.paginate = function(themesObject) {
+CTS.UI.Theminator.prototype.paginate = function(themesObject) {
     this.themeDisplayList = [];
     var page = {};
     var count = 0;
@@ -134,7 +136,7 @@ _CTSUI.Theminator.prototype.paginate = function(themesObject) {
     }
 };
 
-_CTSUI.Theminator.prototype.displayPage = function(pageNum) {
+CTS.UI.Theminator.prototype.displayPage = function(pageNum) {
     this.$node.find('.cts-ui-templates-container').empty();
     if (this.themeDisplayList.length == 0) {
         this.$node.find('.cts-ui-templates-container').text('No results found');
@@ -149,11 +151,11 @@ _CTSUI.Theminator.prototype.displayPage = function(pageNum) {
     this.$node.find('.cts-ui-templates-container').scrollTop(0);
 };
 
-_CTSUI.Theminator.prototype.newPageNumber = function(value) {
+CTS.UI.Theminator.prototype.newPageNumber = function(value) {
     return CTS.$('<li><a>'+value+'</a></li>');
 };
 
-_CTSUI.Theminator.prototype.configurePager = function(pageNum, pageLength) {
+CTS.UI.Theminator.prototype.configurePager = function(pageNum, pageLength) {
     
     this.$node.find('.cts-ui-pager-custom').empty();
     var leftArrow = this.newPageNumber('<i class="cts-ui-icon-chevron-left"></i>');
@@ -211,7 +213,7 @@ _CTSUI.Theminator.prototype.configurePager = function(pageNum, pageLength) {
     });
 };
 
-_CTSUI.Theminator.prototype.goToNewPage = function(pagerValue, pageNum) {
+CTS.UI.Theminator.prototype.goToNewPage = function(pagerValue, pageNum) {
     if (!isNaN(pagerValue.html())) {
         this.displayPage(parseInt(pagerValue.html()));
     } else {
@@ -223,7 +225,7 @@ _CTSUI.Theminator.prototype.goToNewPage = function(pagerValue, pageNum) {
     }
 };
 
-_CTSUI.Theminator.prototype.initiateThumbnailVisibilities = function(thumbnail) {
+CTS.UI.Theminator.prototype.initiateThumbnailVisibilities = function(thumbnail) {
     thumbnail.on('mouseenter', function() {
         CTS.$(this).find('.cts-ui-screenshot-options').show();
         CTS.$(this).find('.cts-ui-add-to-favorites').show();
@@ -240,11 +242,11 @@ _CTSUI.Theminator.prototype.initiateThumbnailVisibilities = function(thumbnail) 
     }
 };
 
-_CTSUI.Theminator.prototype.initiateScreenshotTints = function(screenshot) {
+CTS.UI.Theminator.prototype.initiateScreenshotTints = function(screenshot) {
     screenshot.wrap('<div class="cts-ui-tint"></div>'); 
 };
 
-_CTSUI.Theminator.prototype.initiateFavoritesEvents = function(favoriteButton) {
+CTS.UI.Theminator.prototype.initiateFavoritesEvents = function(favoriteButton) {
     favoriteButton.on('mouseenter', function() {
         if (CTS.$(this).find('img').hasClass('cts-ui-not-favorite')) {
             CTS.$(this).html('<img class="cts-ui-hover-favorite" src="'+CTS.UI.URLs.Images.transparentStar+'">');
@@ -261,7 +263,7 @@ _CTSUI.Theminator.prototype.initiateFavoritesEvents = function(favoriteButton) {
     });
 };
 
-_CTSUI.Theminator.prototype.toggleFavorite = function(favoriteButton) {
+CTS.UI.Theminator.prototype.toggleFavorite = function(favoriteButton) {
     
     if (favoriteButton.find('img').hasClass('cts-ui-hover-favorite')) {
         favoriteButton.html('<img class="cts-ui-favorite" src="'+CTS.UI.URLs.Images.star+'">');
@@ -274,7 +276,7 @@ _CTSUI.Theminator.prototype.toggleFavorite = function(favoriteButton) {
     localStorage["favorites"] = JSON.stringify(this.favorites);
 }
 
-_CTSUI.Theminator.prototype.togglePreview = function(previewButton) {
+CTS.UI.Theminator.prototype.togglePreview = function(previewButton) {
     if (previewButton.hasClass('cts-ui-active')) {
         previewButton.parents('.cts-ui-screenshot-thumbnail').find('.cts-ui-tint').removeClass('cts-ui-active');
         previewButton.removeClass('cts-ui-active');
@@ -289,7 +291,7 @@ _CTSUI.Theminator.prototype.togglePreview = function(previewButton) {
     }
 };
 
-_CTSUI.Theminator.prototype.initiateNewThemes = function() {
+CTS.UI.Theminator.prototype.initiateNewThemes = function() {
     var self = this;
     this.$node.find('.cts-ui-screenshot-options').hide();
     this.$node.find('.cts-ui-add-to-favorites').hide();
@@ -307,7 +309,7 @@ _CTSUI.Theminator.prototype.initiateNewThemes = function() {
     });
 }
 
-_CTSUI.Theminator.prototype.toggleFilterTray = function(toggleButton) {
+CTS.UI.Theminator.prototype.toggleFilterTray = function(toggleButton) {
     var self = this;
     if (toggleButton.find('i').hasClass('cts-ui-icon-chevron-down')) {
         this.$node.find('.cts-ui-filter-content-container').show();
@@ -325,7 +327,7 @@ _CTSUI.Theminator.prototype.toggleFilterTray = function(toggleButton) {
     }
 };
 
-_CTSUI.Theminator.prototype.showOneFilter = function(filterType) {
+CTS.UI.Theminator.prototype.showOneFilter = function(filterType) {
     this.$node.find('.cts-ui-tag-details').show();
     this.$node.find('.cts-ui-tag-details-type').hide();
     this.$node.find('.cts-ui-tag-'+filterType+'-details').show();
@@ -333,14 +335,14 @@ _CTSUI.Theminator.prototype.showOneFilter = function(filterType) {
     this.$node.find('.cts-ui-tag-'+filterType+'-details').parent().addClass("cts-ui-active");
 };
 
-_CTSUI.Theminator.prototype.initiateFilters = function() {
+CTS.UI.Theminator.prototype.initiateFilters = function() {
     var self = this;
     this.$node.find('.cts-ui-filter-type').on('click', function() {
         self.openFilterType(CTS.$(this))
     });
 };
 
-_CTSUI.Theminator.prototype.openFilterType = function(typeButton) {
+CTS.UI.Theminator.prototype.openFilterType = function(typeButton) {
     if (typeButton.parent().hasClass("cts-ui-active")) {
         typeButton.parent().removeClass("cts-ui-active");
         this.$node.find('.cts-ui-tag-details-type').hide();
@@ -362,7 +364,7 @@ _CTSUI.Theminator.prototype.openFilterType = function(typeButton) {
 };
 
 
-_CTSUI.Theminator.prototype.deselectFilters = function() {
+CTS.UI.Theminator.prototype.deselectFilters = function() {
     if (this.$node.find('.tag-details-type:visible').length == 0) {
         this.$node.find('.tag-details input[type=checkbox]').attr('checked', false);
     } else {
@@ -370,7 +372,7 @@ _CTSUI.Theminator.prototype.deselectFilters = function() {
     }
 };
 
-_CTSUI.Theminator.prototype.performFilter = function() {
+CTS.UI.Theminator.prototype.performFilter = function() {
     var filterSpans = this.$node.find('.cts-ui-tag-details input[type=checkbox]:checked').next();
     var filters = [];
     filterSpans.each(function() {
@@ -398,7 +400,7 @@ _CTSUI.Theminator.prototype.performFilter = function() {
     this.displayNewData(filteredThemes);
 }
 
-_CTSUI.Theminator.prototype.performSearch = function(event) {
+CTS.UI.Theminator.prototype.performSearch = function(event) {
     event.preventDefault();
     var searchFor = this.$node.find('.cts-ui-search-query').val();
     var searchedThemes = {};
@@ -418,7 +420,7 @@ _CTSUI.Theminator.prototype.performSearch = function(event) {
     this.displayNewData(searchedThemes);
 };
 
-_CTSUI.Theminator.prototype.displayFavorites = function() {
+CTS.UI.Theminator.prototype.displayFavorites = function() {
     var displayFavoritesList = {}
     for (var theme in this.themes) {
         if (this.favorites.indexOf(theme) != -1) {
@@ -428,11 +430,11 @@ _CTSUI.Theminator.prototype.displayFavorites = function() {
     this.displayNewData(displayFavoritesList);
 }
 
-_CTSUI.Theminator.prototype.requestedWidth = function() {
+CTS.UI.Theminator.prototype.requestedWidth = function() {
   return 200;
 };
 
-_CTSUI.Theminator.prototype.updateSize = function(height, width) {
+CTS.UI.Theminator.prototype.updateSize = function(height, width) {
     this.$container.height(height);
     this.$themeList.height(height - this.$header.height());
     this.$header.width(width);

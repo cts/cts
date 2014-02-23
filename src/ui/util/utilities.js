@@ -1,4 +1,6 @@
-_CTSUI.Util = {
+CTS.registerNamespace('CTS.UI.Util');
+
+CTS.Fn.extend(CTS.Util, {
   addCss: function(url) {
     var link = document.createElement('link')
     link.setAttribute('rel', 'stylesheet');
@@ -36,4 +38,4 @@ _CTSUI.Util = {
     $c.append($x);
     return $c.html();
   }
-};
+});

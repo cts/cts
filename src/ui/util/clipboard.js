@@ -1,4 +1,6 @@
-_CTSUI.Clipboard = function(server) {
+CTS.registerNamespace('CTS.UI.Clipboard');
+
+CTS.UI.Clipboard = function(server) {
   this._key = "cts-clipboard";
   this._server = server;
   if (typeof server == "undefined") {
@@ -11,13 +13,13 @@ _CTSUI.Clipboard = function(server) {
   this.addIframe();
 };
 
-_CTSUI.Clipboard.prototype.addIframe = function() {
+CTS.UI.Clipboard.prototype.addIframe = function() {
   this._iframe = CTS.$("<iframe class='cts-ignore cts-ui' src='" + this._server + "'></iframe>");
   this._iframe.hide();
   CTS.$('body').append(this._iframe);
 };
 
-_CTSUI.Clipboard.prototype.onLoad = function(evt) {
+CTS.UI.Clipboard.prototype.onLoad = function(evt) {
   if (evt.source == this._iframe.get(0).contentWindow) {
     window.removeEventListener("message", this._onLoad);
     this._serverWindow = evt.source;
@@ -25,7 +27,7 @@ _CTSUI.Clipboard.prototype.onLoad = function(evt) {
   }
 };
 
-_CTSUI.Clipboard.prototype.copy = function(text) {
+CTS.UI.Clipboard.prototype.copy = function(text) {
   var self = this;
   this._deferred.done(function() {
     self._serverWindow.postMessage({
@@ -37,7 +39,7 @@ _CTSUI.Clipboard.prototype.copy = function(text) {
 };
 
 
-_CTSUI.Clipboard.prototype.paste = function(callback) {
+CTS.UI.Clipboard.prototype.paste = function(callback) {
   var self = this;
 
   var returnData = function(evt) {

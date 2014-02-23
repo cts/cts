@@ -1,4 +1,6 @@
-_CTSUI.Tray = function() {
+CTS.registerNamespace('CTS.UI.Tray');
+
+CTS.UI.Tray = function() {
   this.$body = CTS.$('body');
   this._originalBodyMargin = this.$body.css("margin-left");
   this.$body.css({"position": "relative", "overflow-x": "scroll"});
@@ -17,7 +19,7 @@ _CTSUI.Tray = function() {
   this.loadMockup();
 };
 
-_CTSUI.Tray.prototype.loadMockup = function() {
+CTS.UI.Tray.prototype.loadMockup = function() {
   this.$container = CTS.$("<div class='cts-ui'></div>");
   this.$container.css({
     zIndex: 64999// Important: more than the picker.
@@ -39,7 +41,7 @@ _CTSUI.Tray.prototype.loadMockup = function() {
   this.$container.appendTo(this.$body);
 };
 
-_CTSUI.Tray.prototype.setupMockup = function() {
+CTS.UI.Tray.prototype.setupMockup = function() {
   var self = this;
   this.$node = this.$container.find('.cts-ui-tray');
   this.$trayContents = this.$container.find('.cts-ui-tray-contents');
@@ -65,7 +67,7 @@ _CTSUI.Tray.prototype.setupMockup = function() {
   this.toggle();
 };
 
-_CTSUI.Tray.prototype.invokeTheminator = function(page) {
+CTS.UI.Tray.prototype.invokeTheminator = function(page) {
   var $page = CTS.$('<div class="cts-ui-page"></div>');
   $page.hide();
   $page.appendTo(this.$trayContents);
@@ -73,7 +75,7 @@ _CTSUI.Tray.prototype.invokeTheminator = function(page) {
   this.pushPage(this._theminator);
 };
 
-_CTSUI.Tray.prototype.invokeScraper = function(page) {
+CTS.UI.Tray.prototype.invokeScraper = function(page) {
   var $page = CTS.$('<div class="cts-ui-page"></div>');
   $page.hide();
   $page.appendTo(this.$trayContents);
@@ -81,7 +83,7 @@ _CTSUI.Tray.prototype.invokeScraper = function(page) {
   this.pushPage(this._scraper);
 };
 
-_CTSUI.Tray.prototype.pushPage = function(page) {
+CTS.UI.Tray.prototype.pushPage = function(page) {
   this._pages[this._pages.length - 1].$page.hide();
   this._pages.push(page);
   page.$page.show();
@@ -90,7 +92,7 @@ _CTSUI.Tray.prototype.pushPage = function(page) {
   page.updateSize(windowHeight);
 };
 
-_CTSUI.Tray.prototype.popPage = function() {
+CTS.UI.Tray.prototype.popPage = function() {
   var page = this._pages.pop();
   if (page) {
     page.$page.remove();
@@ -100,7 +102,7 @@ _CTSUI.Tray.prototype.popPage = function() {
   newPage.$page.show();
 };
 
-_CTSUI.Tray.prototype.transitionToWidth = function(width, completeFn) {
+CTS.UI.Tray.prototype.transitionToWidth = function(width, completeFn) {
   this._width = width;
   var outerWidth = width + this._buttonWidth;
   this.$node.find('.cts-ui-tray-contents').animate({
@@ -115,25 +117,25 @@ _CTSUI.Tray.prototype.transitionToWidth = function(width, completeFn) {
   this.$node.find('.cts-ui-expand-tray').animate(spec2);
 };
 
-_CTSUI.Tray.prototype.isOpen = function() {
+CTS.UI.Tray.prototype.isOpen = function() {
   return this.$node.css("left") == "0px";
 };
 
-_CTSUI.Tray.prototype.open = function() {
+CTS.UI.Tray.prototype.open = function() {
     //var fromTop = CTS.$(window).scrollTop();
   this.$node.animate({"left":"0px"});
     //CTS.$(window).scrollTop(fromTop);
   this.$body.animate({"left": ((this._width + 1) + "px")});
 };
 
-_CTSUI.Tray.prototype.close = function() {
+CTS.UI.Tray.prototype.close = function() {
     //var fromTop = CTS.$(window).scrollTop();
   this.$node.animate({"left":("-" + (this._width + 1) + "px")});
     //CTS.$(window).scrollTop(fromTop);
   this.$body.animate({"left":"0px"});
 };
 
-_CTSUI.Tray.prototype.toggle = function() {
+CTS.UI.Tray.prototype.toggle = function() {
   if (this.isOpen()) {
     this.close();
     this.$node.removeClass("cts-ui-open");
@@ -145,7 +147,7 @@ _CTSUI.Tray.prototype.toggle = function() {
   } 
 };
 
-_CTSUI.Tray.prototype.updateSize = function() {
+CTS.UI.Tray.prototype.updateSize = function() {
   // Set the height of the tray to the window size
   var windowHeight = CTS.$(window).height();
   this.$node.height(windowHeight);

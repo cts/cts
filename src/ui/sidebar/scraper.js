@@ -1,4 +1,6 @@
-_CTSUI.Scraper = function(tray, $page) {
+CTS.registerNamespace('CTS.UI.Scraper');
+
+CTS.UI.Scraper = function(tray, $page) {
   this._tray = tray; // A Javascript object
   this.$page = $page;
   this.$container = null;
@@ -7,7 +9,7 @@ _CTSUI.Scraper = function(tray, $page) {
   this.loadMockup();
 };
 
-_CTSUI.Scraper.prototype.loadMockup = function() {
+CTS.UI.Scraper.prototype.loadMockup = function() {
   this.$container = CTS.$("<div class='cts-ui-scraper-page'></div>");
   var cts = "@html scraper " + CTS.UI.URLs.Mockups.scraper + ";";
   CTS.UI.Util.addCss(CTS.UI.URLs.Styles.scraper);
@@ -21,7 +23,7 @@ _CTSUI.Scraper.prototype.loadMockup = function() {
   this.$container.appendTo(this.$page);
 };
 
-_CTSUI.Scraper.prototype.setupMockup = function() {
+CTS.UI.Scraper.prototype.setupMockup = function() {
     var self = this;
     this.$node = this.$container.find('.cts-ui-scraper');
     this.$header = this.$node.find('.cts-ui-header');
@@ -31,11 +33,11 @@ _CTSUI.Scraper.prototype.setupMockup = function() {
     });
 };
 
-_CTSUI.Scraper.prototype.requestedWidth = function() {
+CTS.UI.Scraper.prototype.requestedWidth = function() {
   return 200;
 };
 
-_CTSUI.Scraper.prototype.updateSize = function(height) {
+CTS.UI.Scraper.prototype.updateSize = function(height) {
     this.$container.height(height);
     this.$header.width(width);
 };

@@ -1,4 +1,6 @@
-_CTSUI.Theme = function (theme) {
+CTS.registerNamespace('CTS.UI.Theme');
+
+CTS.UI.Theme = function (theme) {
     console.log("Theme loading");
 
     this._bodyNode = CTS.$('body');
@@ -20,7 +22,7 @@ _CTSUI.Theme = function (theme) {
     }
 };
 
-_CTSUI.Theme.prototype.loadMockup = function () {
+CTS.UI.Theme.prototype.loadMockup = function () {
     var self = this;
     var loadTheme = function (self, pageType) {
         CTS.engine.forrest.removeDependencies();
@@ -74,7 +76,7 @@ _CTSUI.Theme.prototype.loadMockup = function () {
     });
 
 };
-_CTSUI.Theme.prototype.revert = function () {
+CTS.UI.Theme.prototype.revert = function () {
     console.log("revert")
     CTS.engine.forrest.removeDependencies();
     CTS.engine.shutdown();
@@ -106,12 +108,12 @@ _CTSUI.Theme.prototype.revert = function () {
     
 };
 
-_CTSUI.Theme.prototype.loadCTSRules = function (file) {
+CTS.UI.Theme.prototype.loadCTSRules = function (file) {
     CTS.$.get(file, function (data) {
         return data;
     });
 }
 
-_CTSUI.Theme.prototype.setupMockup = function () {
+CTS.UI.Theme.prototype.setupMockup = function () {
     console.log("setup mockup");
 };
