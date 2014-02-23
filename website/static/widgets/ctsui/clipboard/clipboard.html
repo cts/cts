@@ -1,0 +1,56 @@
+<html>
+<head>
+<title>
+Cross-Site Cookie Implementation
+</title>
+</head>
+<body>
+<H1>Cross-Site Cookie Server Page</H1> 
+
+This page implements a cross-site cookie functionality using the html5
+window.postMessage method.  It is not intended to be visited by human
+beings; instead it is loaded by the cookie service to provide a
+rendezvous for clients.
+
+The cookie server provides an RPC protocol (via window.PostMessage)
+for setting and getting cookies on the domain of this page.
+<p>
+Note that by design anyone can read these cookies, so you shouldn't
+store sensitive data in it.  Also note that the cookie server works by
+setting
+so-called <a href="http://www.bobulous.org.uk/misc/third-party-cookies.html">third-party
+cookies</a>, so a browser set to block those won't be able to use the
+clipboard.
+<p>
+How does it work?  The clipboard is stored as a cookie associated with
+this clip-server.html page.  clip-server.html loads clip-server.js which
+implements the clipboard server.  It listens for window.postMessage
+events asking it to get/set the clipboard value; it does so by
+accessing the cookie and using window.postMessage to return the result
+if necessary.
+<p>
+Below is a small inspection screen for testing the value of the cookie
+named "clipboard".  Type to change the clipboard; click "refresh" to
+update/paste from the clipboard after changing the clipboard
+elsewhere:
+<p>
+<div><textarea id="clipboard"></textarea></div>
+<div><input type="button" value="Refresh" id="button"></div>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script src="cookie-server.js"></script>
+
+<script>
+//debug/inspect scripts
+CookieServer.show = function() {
+    $("#clipboard").val(CookieServer.getCookie("clipboard"));
+};
+
+$("#clipboard").change(function () {
+	CookieServer.setCookie("clipboard", $("#clipboard").val(), 7);
+    });
+
+$("#button").click(CookieServer.show);
+CookieServer.show();
+</script>
+</body>
