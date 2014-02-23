@@ -1,4 +1,6 @@
-_CTSUI.Editor = function(tray, $page) {
+CTS.registerNamespace('CTS.UI.Editor');
+
+CTS.UI.Editor = function(tray, $page) {
   this._tray = tray; // A Javascript object
 
   this.$page = $page;
@@ -48,7 +50,7 @@ _CTSUI.Editor = function(tray, $page) {
   CKEDITOR.on('instanceCreated', this._onCkEditorInstanceCreated);
 };
 
-_CTSUI.Editor.prototype.loadMockup = function() {
+CTS.UI.Editor.prototype.loadMockup = function() {
   this.$container = CTS.$("<div class='cts-ui-editor-page'></div>");
 
   var cts = "@html editor " + CTS.UI.URLs.Mockups.editor + ";";
@@ -64,7 +66,7 @@ _CTSUI.Editor.prototype.loadMockup = function() {
   });
 };
 
-_CTSUI.Editor.prototype.setupMockup = function() {
+CTS.UI.Editor.prototype.setupMockup = function() {
  // var whatever = this.$node.height();
  // this.$node.height(whatever);
 
@@ -138,7 +140,7 @@ _CTSUI.Editor.prototype.setupMockup = function() {
 //var DOWNLOAD_ZIP = "Download Complete Page";
 //var SAVE_TO_WEB = "Save to web";
 //
-//_CTSUI.Editor.prototype.saveClicked = function() {
+//CTS.UI.Editor.prototype.saveClicked = function() {
 //  // Hit the CTS server with a request to duplicate this page, and then redirect.
 //  var title = "Save your Changes";
 //  var body = "How do you want to save?";
@@ -156,7 +158,7 @@ _CTSUI.Editor.prototype.setupMockup = function() {
  *
  * See cts-server/app/models/operation.js for operation definition.
  */
-//_CTSUI.Editor.prototype.saveChoiceMade = function(choice) {
+//CTS.UI.Editor.prototype.saveChoiceMade = function(choice) {
 //  if ((choice != DOWNLOAD_ZIP) && (choice != SAVE_TO_WEB)) {
 //    console.log("Unknown save choice: " + choice);
 //    return;
@@ -178,14 +180,14 @@ _CTSUI.Editor.prototype.setupMockup = function() {
 //
 //      //TODO: This is a hack. Figure out unified way to handle resources IDs.
 //      var key = operation.result.url;
-//      var url = _CTSUI.serverBase + 'tree/' + key;
+//      var url = CTS.UI.serverBase + 'tree/' + key;
 //    },
 //    function(errorMesage) {
 //    }
 //  );
 //};
 
-_CTSUI.Editor.prototype.downloadClicked = function(choice) {
+CTS.UI.Editor.prototype.downloadClicked = function(choice) {
   if (this._isEditMode) {
     this.exitEditMode();
   }
@@ -208,7 +210,7 @@ _CTSUI.Editor.prototype.downloadClicked = function(choice) {
 //  );
 };
 
-_CTSUI.Editor.prototype.uploadClicked = function(choice) {
+CTS.UI.Editor.prototype.uploadClicked = function(choice) {
   if (this._isEditMode) {
     this.exitEditMode();
   }
@@ -226,7 +228,7 @@ _CTSUI.Editor.prototype.uploadClicked = function(choice) {
  * ====================================================================
  */
 
-_CTSUI.Editor.prototype.duplicateClicked = function() {
+CTS.UI.Editor.prototype.duplicateClicked = function() {
   if (this._isEditMode) {
     this.exitEditMode();
   }
@@ -242,7 +244,7 @@ _CTSUI.Editor.prototype.duplicateClicked = function() {
   }).done(self.duplicateSuccess).fail(self.duplicateFailed);
 };
 
-_CTSUI.Editor.prototype.duplicateSuccess = function(response) {
+CTS.UI.Editor.prototype.duplicateSuccess = function(response) {
   var response = JSON.parse(response);
   var serverWithoutSlash = CTS.UI.Domains.Server.substring(0, CTS.UI.Domains.Server.length - 1);
   var downloadUrl = serverWithoutSlash + response.downloadUrl;
@@ -250,7 +252,7 @@ _CTSUI.Editor.prototype.duplicateSuccess = function(response) {
   window.location.replace(viewUrl);
 };
 
-_CTSUI.Editor.prototype.duplicateFailed = function(reason) {
+CTS.UI.Editor.prototype.duplicateFailed = function(reason) {
   var body = "<p><b>Terribly sorry, but I wasn't able to duplicate the page.</b></p>" +
     "<p>The error message my code generated was:</p><br />" +
     "<p>" + reason + "</p>";
@@ -266,7 +268,7 @@ _CTSUI.Editor.prototype.duplicateFailed = function(reason) {
  * ====================================================================
  */
 
-_CTSUI.Editor.prototype.editClicked = function() {
+CTS.UI.Editor.prototype.editClicked = function() {
   if (this._isEditMode) {
     this.exitEditMode();
   } else {
@@ -274,20 +276,20 @@ _CTSUI.Editor.prototype.editClicked = function() {
   }
 };
 
-_CTSUI.Editor.prototype.exitEditMode = function() {
+CTS.UI.Editor.prototype.exitEditMode = function() {
   this.completeEdit();
   this._isEditMode = false;
   this._editBtn.removeClass("highlighted");
   CTS.UI.picker.cancel();
 };
 
-_CTSUI.Editor.prototype.enterEditMode = function() {
+CTS.UI.Editor.prototype.enterEditMode = function() {
   this._isEditMode = true;
   this._editBtn.addClass("highlighted");
   this.offerEditSelect();
 };
 
-_CTSUI.Editor.prototype.offerEditSelect = function() {
+CTS.UI.Editor.prototype.offerEditSelect = function() {
   this._editBtn.addClass("highlighted");
   var pickPromise = CTS.UI.picker.pick({
     ignoreCTSUI: true,
@@ -306,7 +308,7 @@ _CTSUI.Editor.prototype.offerEditSelect = function() {
   );
 };
 
-_CTSUI.Editor.prototype.beginEdit = function($e) {
+CTS.UI.Editor.prototype.beginEdit = function($e) {
   console.log("Begin Edit", $e);
   this._isEditing = true;
   CTS.engine.forrest.stopListening();
@@ -339,7 +341,7 @@ _CTSUI.Editor.prototype.beginEdit = function($e) {
   });
 };
 
-_CTSUI.Editor.prototype.cancelEdit = function() {
+CTS.UI.Editor.prototype.cancelEdit = function() {
   console.log("Cancel Edit");
   this._isEditing = false;
   CTS.engine.forrest.startListening();
@@ -357,7 +359,7 @@ _CTSUI.Editor.prototype.cancelEdit = function() {
   }
 };
 
-_CTSUI.Editor.prototype.completeEdit = function() {
+CTS.UI.Editor.prototype.completeEdit = function() {
   console.log("Completed Edit");
   var content = null;
   this._isEditing = false;
@@ -409,7 +411,7 @@ _CTSUI.Editor.prototype.completeEdit = function() {
  *
  * ====================================================================
  */
-_CTSUI.Editor.prototype.copyClicked = function() {
+CTS.UI.Editor.prototype.copyClicked = function() {
   if (this._isEditMode) {
     this.exitEditMode();
   }
@@ -437,7 +439,7 @@ _CTSUI.Editor.prototype.copyClicked = function() {
  *
  * ====================================================================
  */
-_CTSUI.Editor.prototype.pasteClicked = function() {
+CTS.UI.Editor.prototype.pasteClicked = function() {
   if (this._isEditMode) {
     this.exitEditMode();
   }
@@ -460,7 +462,7 @@ _CTSUI.Editor.prototype.pasteClicked = function() {
   );
 };
 
-_CTSUI.Editor.prototype._onCkEditorInstanceCreated = function(event) {
+CTS.UI.Editor.prototype._onCkEditorInstanceCreated = function(event) {
   var editor = event.editor,
   element = editor.element;
  
@@ -479,7 +481,7 @@ _CTSUI.Editor.prototype._onCkEditorInstanceCreated = function(event) {
  *
  * ====================================================================
  */
-_CTSUI.Editor.prototype.themesClicked = function() {
+CTS.UI.Editor.prototype.themesClicked = function() {
   if (this._isEditMode) {
     this.exitEditMode();
   }
@@ -492,7 +494,7 @@ _CTSUI.Editor.prototype.themesClicked = function() {
  *
  * ====================================================================
  */
-_CTSUI.Editor.prototype.scrapeClicked = function() {
+CTS.UI.Editor.prototype.scrapeClicked = function() {
   if (this._isEditMode) {
     this.exitEditMode();
   }
@@ -508,7 +510,7 @@ _CTSUI.Editor.prototype.scrapeClicked = function() {
  * ====================================================================
  */
 
-_CTSUI.Editor.prototype.cloneClicked = function() {
+CTS.UI.Editor.prototype.cloneClicked = function() {
   console.log("Duplicate clicked");
   var pickPromise = CTS.UI.picker.pick({
     ignoreCTSUI: true,
@@ -526,7 +528,7 @@ _CTSUI.Editor.prototype.cloneClicked = function() {
   );
 };
 
-_CTSUI.Editor.prototype.cloneElement = function($e) {
+CTS.UI.Editor.prototype.cloneElement = function($e) {
   var clone = $e.clone();
   var selector = CTS.UI.uniqueSelectorFor(e);
   clone.insertAfter($e);
@@ -557,7 +559,7 @@ _CTSUI.Editor.prototype.cloneElement = function($e) {
  * ====================================================================
  */
 
-_CTSUI.Editor.prototype.loginClicked = function() {
+CTS.UI.Editor.prototype.loginClicked = function() {
   var self = this;
   CTS.UI.modal.login("Login", "Yeah").then(
     self.loginCredentialsProvided,
@@ -565,19 +567,19 @@ _CTSUI.Editor.prototype.loginClicked = function() {
   );
 };
 
-_CTSUI.Editor.prototype.loginCredentialsProvided = function(tuple) {
+CTS.UI.Editor.prototype.loginCredentialsProvided = function(tuple) {
   console.log(tuple);
 };
 
-_CTSUI.Editor.prototype.loginCredentialsCanceled = function() {
+CTS.UI.Editor.prototype.loginCredentialsCanceled = function() {
   // No op
 };
 
-_CTSUI.Editor.prototype.loginHandshakeSucceeded = function() {
+CTS.UI.Editor.prototype.loginHandshakeSucceeded = function() {
   Alertify.log.success("Login success!", 1500);
 };
 
-_CTSUI.Editor.prototype.loginHandshakeFailed = function() {
+CTS.UI.Editor.prototype.loginHandshakeFailed = function() {
   CTS.UI.modal.alert("Login Failed", "<p>Sorry. The odds were not in your favor.");
 };
 

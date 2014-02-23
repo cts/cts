@@ -1,3 +1,5 @@
+CTS.registerNamespace('CTS.UI.Card');
+
 /**
  * Card
  *
@@ -11,7 +13,7 @@
  *  $front  - The front of the card
  *  $back   - The back of the card
  */
-_CTSUI.Card = function($, $front, $back) {
+CTS.UI.Card = function($, $front, $back) {
   this.$ = $;
   this.$front = $front;
   this.$back = $back;
@@ -27,8 +29,8 @@ _CTSUI.Card = function($, $front, $back) {
 
 /** Adds CSS to the HEAD if it isn't already
   */
-_CTSUI.Card.CssAdded = false;
-_CTSUI.Card.Css = "<style>" +
+CTS.UI.Card.CssAdded = false;
+CTS.UI.Card.Css = "<style>" +
   ".cts-ui-card { -webkit-perspective: 1000; -moz-perspective: 1000; perspective: 1000; }" +
   ".cts-ui-card-flipper { "+
      "-webkit-transition: 0.6s; -moz-transition: 0.6s; transition: 0.6s; " +
@@ -42,17 +44,17 @@ _CTSUI.Card.Css = "<style>" +
   ".cts-ui-card-back { -webkit-transform: rotateY(180deg); -moz-transform: rotateY(180deg); transform: rotateY(180deg); }" +
   "</style>";
 
-_CTSUI.Card.prototype.initializeCss = function() {
-  if (! _CTSUI.Card.CssAdded) {
-    this.$('head').append(_CTSUI.Card.Css);
-    _CTSUI.Card.CssAdded = true;
+CTS.UI.Card.prototype.initializeCss = function() {
+  if (! CTS.UI.Card.CssAdded) {
+    this.$('head').append(CTS.UI.Card.Css);
+    CTS.UI.Card.CssAdded = true;
   }
 };
 
 /** Replaces the element in the DOM with a card structure.
  *
  */
-_CTSUI.Card.prototype.initializeCard = function() {
+CTS.UI.Card.prototype.initializeCard = function() {
   // Set the width and height.
   var width = 320;
   var height = 480;
@@ -83,7 +85,7 @@ _CTSUI.Card.prototype.initializeCard = function() {
 
 };
 
-_CTSUI.Card.prototype.showBack = function() {
+CTS.UI.Card.prototype.showBack = function() {
   if (! this._showingFront) {
     return;
   }
@@ -91,7 +93,7 @@ _CTSUI.Card.prototype.showBack = function() {
   this.$card.addClass('flip');
 };
 
-_CTSUI.Card.prototype.showFront = function() {
+CTS.UI.Card.prototype.showFront = function() {
   if (this._showingFront) {
     return;
   }

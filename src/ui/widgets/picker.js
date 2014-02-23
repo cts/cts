@@ -1,3 +1,5 @@
+CTS.registerNamespace('CTS.UI.Picker');
+
 /**
  * Element Picker.
  *
@@ -5,7 +7,7 @@
  *  $ - jQuery (can be found at CTS.$ once CTS loads)
  *  q - The Q library (can be found at CTS.Q once CTS loads)
  */
-_CTSUI.Picker = function($, q) {
+CTS.UI.Picker = function($, q) {
   this._$ = $;
   this._q = q;
 
@@ -87,14 +89,14 @@ _CTSUI.Picker = function($, q) {
 /*
  * Returns boolean: whether the picker is active.
  */
-_CTSUI.Picker.prototype.isPickInProgress = function() {
+CTS.UI.Picker.prototype.isPickInProgress = function() {
   return (this._deferred != null);
 };
 
 /**
  * Returns a promise to pick something.
  */
-_CTSUI.Picker.prototype.pick = function(opts) {
+CTS.UI.Picker.prototype.pick = function(opts) {
   console.log("Offer Pick");
   CTS.engine.forrest.stopListening();
 
@@ -111,7 +113,7 @@ _CTSUI.Picker.prototype.pick = function(opts) {
 /*
  * Cancel the current picking action.
  */
-_CTSUI.Picker.prototype.cancel = function(reason) {
+CTS.UI.Picker.prototype.cancel = function(reason) {
   console.log("Cancel Pick");
   CTS.engine.forrest.startListening();
 
@@ -128,7 +130,7 @@ _CTSUI.Picker.prototype.cancel = function(reason) {
  * User interface
  *-----------------------------------------------------*/
 
-_CTSUI.Picker.prototype._constructUI = function() {
+CTS.UI.Picker.prototype._constructUI = function() {
   this._$(document)
     .on('keydown', this.CALLBACK.keydown)
     .on('keyup', this.CALLBACK.keyup)
@@ -140,7 +142,7 @@ _CTSUI.Picker.prototype._constructUI = function() {
   var h2 = this._$('body').html();
 };
 
-_CTSUI.Picker.prototype._destroyUI = function() {
+CTS.UI.Picker.prototype._destroyUI = function() {
   this._$(document)
     .off('keydown', this.CALLBACK.keydown)
     .off('keyup', this.CALLBACK.keyup)
@@ -153,7 +155,7 @@ _CTSUI.Picker.prototype._destroyUI = function() {
  * Args:
  *  $elem - jQuery object
  */
-_CTSUI.Picker.prototype._select = function($elem) {
+CTS.UI.Picker.prototype._select = function($elem) {
   console.log("Select", $elem);
   // Behavior on empty selection: nothing
   if ((typeof $elem == 'undefined') || ($elem == null) || ($elem.length == 0)) {
@@ -214,12 +216,12 @@ _CTSUI.Picker.prototype._select = function($elem) {
 };
 
 
-_CTSUI.Picker.prototype.makeOptionTray = function($elem) {
+CTS.UI.Picker.prototype.makeOptionTray = function($elem) {
 
 };
 
 
-_CTSUI.Picker.prototype.offerOptions = function($elem) {
+CTS.UI.Picker.prototype.offerOptions = function($elem) {
   // make option tray
   // show option tray
 };
@@ -227,7 +229,7 @@ _CTSUI.Picker.prototype.offerOptions = function($elem) {
 /*
  * Clears current selection.
  */
-_CTSUI.Picker.prototype._deselect = function() {
+CTS.UI.Picker.prototype._deselect = function() {
   this._$selected = null;
   this._$ui.hide();
   this._$optionTray.hide();
@@ -237,7 +239,7 @@ _CTSUI.Picker.prototype._deselect = function() {
  * Listeners
  *-----------------------------------------------------*/
 
-_CTSUI.Picker.prototype._keyDown = function(event) {
+CTS.UI.Picker.prototype._keyDown = function(event) {
   if (this._isKeyDown) {
     // Browser repeats keydown while key is depressed..
     return;
@@ -301,11 +303,11 @@ _CTSUI.Picker.prototype._keyDown = function(event) {
   this._swallowEvent(event);
 };
 
-_CTSUI.Picker.prototype._keyUp = function(event) {
+CTS.UI.Picker.prototype._keyUp = function(event) {
   this._isKeyDown = false;
 };
 
-_CTSUI.Picker.prototype._mouseMove = function(event) {
+CTS.UI.Picker.prototype._mouseMove = function(event) {
   // Don't be too hyper about tracking mouse movements.
   var now = new Date();
   if (now - this._lastTime < this.CONST.MOUSE_MOVEMENT_GRANULARITY) {
@@ -352,7 +354,7 @@ _CTSUI.Picker.prototype._mouseMove = function(event) {
   }
 };
 
-_CTSUI.Picker.prototype._click = function(event) {
+CTS.UI.Picker.prototype._click = function(event) {
   if (this._canSelect(this._$selected)) {
     this._complete(this._$selected);
     this._swallowEvent(event);
@@ -362,7 +364,7 @@ _CTSUI.Picker.prototype._click = function(event) {
 /*
  * Completes the current pick.
  */
-_CTSUI.Picker.prototype._complete= function(reason) {
+CTS.UI.Picker.prototype._complete= function(reason) {
   console.log("Complete Pick");
   this._destroyUI();
   CTS.engine.forrest.startListening();
@@ -381,7 +383,7 @@ _CTSUI.Picker.prototype._complete= function(reason) {
 /* 
  * This filters out any CTS elements.
  */
-_CTSUI.Picker.prototype._canConsider = function($e) {
+CTS.UI.Picker.prototype._canConsider = function($e) {
   var passesIgnore = true;
 
   // Don't consider if part of the side tray
@@ -410,7 +412,7 @@ _CTSUI.Picker.prototype._canConsider = function($e) {
  *   cts-enumerated: Only permit editing cts-enumerated nodes
  * 
  */
-_CTSUI.Picker.prototype._canSelect = function($e) {
+CTS.UI.Picker.prototype._canSelect = function($e) {
   if ($e == null) {
     return false;
   }
@@ -434,7 +436,7 @@ _CTSUI.Picker.prototype._canSelect = function($e) {
   return false;
 };
 
-_CTSUI.Picker.prototype._elementWidth = function($e) {
+CTS.UI.Picker.prototype._elementWidth = function($e) {
   // http://stackoverflow.com/questions/10277323/get-real-width-of-elements-with-jquery
   //if ($e.children().length > 0) {
   //  return $e.outerWidth();
@@ -455,7 +457,7 @@ _CTSUI.Picker.prototype._elementWidth = function($e) {
   return result;
 };
 
-_CTSUI.Picker.prototype._elementX = function($e) {
+CTS.UI.Picker.prototype._elementX = function($e) {
   var el = $e[0];
   var _x = 0;
   var _y = 0;
@@ -468,7 +470,7 @@ _CTSUI.Picker.prototype._elementX = function($e) {
   return _x;
 };
 
-_CTSUI.Picker.prototype._canOfferOptions = function($e) {
+CTS.UI.Picker.prototype._canOfferOptions = function($e) {
   if ($e == null) {
     return false;
   }
@@ -482,7 +484,7 @@ _CTSUI.Picker.prototype._canOfferOptions = function($e) {
   return false;
 };
 
-_CTSUI.Picker.prototype._swallowEvent = function(e) {
+CTS.UI.Picker.prototype._swallowEvent = function(e) {
   e.preventDefault();
   e.stopPropagation();
 };

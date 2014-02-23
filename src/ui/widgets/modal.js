@@ -1,3 +1,5 @@
+CTS.registerNamespace('CTS.UI.Modal');
+
 /**
  * Modal Dialogue
  *
@@ -13,7 +15,7 @@
  *  $    - jQuery (can be found at CTS.$ once CTS loads)
  *  q    - The Q library (can be found at CTS.Q once CTS loads)
  */
-_CTSUI.Modal = function($, q) {
+CTS.UI.Modal = function($, q) {
   this._$ = $;
   this._q = q;
   this._deferred = null;
@@ -36,7 +38,7 @@ _CTSUI.Modal = function($, q) {
  * Returns via promise:
  *   When the "OK" button clicked
  */
-_CTSUI.Modal.prototype.alert = function(title, body) {
+CTS.UI.Modal.prototype.alert = function(title, body) {
   var deferred = this._deferred = this._q.defer();
   var content = this._makeContent(title, body);
   Alertify.dialog.alert(content, function() {
@@ -59,7 +61,7 @@ _CTSUI.Modal.prototype.alert = function(title, body) {
  * Rejects via promise:
  *   If the "no" option clicked.
  */
-_CTSUI.Modal.prototype.confirm = function(title, body) {
+CTS.UI.Modal.prototype.confirm = function(title, body) {
   var deferred = this._deferred = this._q.defer();
   var content = this._makeContent(title, body);
   Alertify.dialog.confirm(content,
@@ -87,7 +89,7 @@ _CTSUI.Modal.prototype.confirm = function(title, body) {
  *   "No input" if no data entered.
  *   "Canceled" if the cancel button clicked.
  */
-_CTSUI.Modal.prototype.prompt = function(title, body) {
+CTS.UI.Modal.prototype.prompt = function(title, body) {
   var deferred = this._deferred = this._q.defer();
   var content = this._makeContent(title, body);
   Alertify.dialog.prompt(content,
@@ -121,7 +123,7 @@ _CTSUI.Modal.prototype.prompt = function(title, body) {
  *   "No input" if no data entered.
  *   "Canceled" if the cancel button clicked.
  */
-_CTSUI.Modal.prototype.login = function(title, body) {
+CTS.UI.Modal.prototype.login = function(title, body) {
   var deferred = this._deferred = this._q.defer();
   var content = this._makeContent(title, body);
   Alertify.dialog.login(content,
@@ -151,7 +153,7 @@ _CTSUI.Modal.prototype.login = function(title, body) {
  *   "No input" if no choice selected.
  *   "Canceled" if the cancel button clicked.
  */
-_CTSUI.Modal.prototype.select = function(title, body, choices) {
+CTS.UI.Modal.prototype.select = function(title, body, choices) {
   var deferred = this._deferred = this._q.defer();
   var content = this._makeContent(title, body);
   var alertify_choices = {'choices': choices};
@@ -170,7 +172,7 @@ _CTSUI.Modal.prototype.select = function(title, body, choices) {
   return deferred.promise;
 };
 
-_CTSUI.Modal.prototype.cancel = function() {
+CTS.UI.Modal.prototype.cancel = function() {
   if (this._deferred != null) {
     this._deferred.reject("Canceled");
     this._deferred = null;
@@ -185,7 +187,7 @@ _CTSUI.Modal.prototype.cancel = function() {
 /**
  * Combines the optional title and body components of the message
  */
-_CTSUI.Modal.prototype._makeContent = function(title, body) {
+CTS.UI.Modal.prototype._makeContent = function(title, body) {
   var msg = "";
   if ((typeof title != 'undefined') && (title != null)) {
     msg += '<h2 style="color: black;">' + title + '</h2>';

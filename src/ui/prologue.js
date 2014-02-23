@@ -8,40 +8,40 @@ CTS.registerNamespace('CTS.UI.URLs');
 
 CTS.Fn.extend(CTS.UI.URLs, {
   Mockups: {
-    tray: _CTSUI.Domains.UIMockups + "tray.html",
-    editor: _CTSUI.Domains.UIMockups + "editor.html",
-    theminator: _CTSUI.Domains.UIMockups + "theminator.html",
-    scraper: _CTSUI.Domains.UIMockups + "scraper.html"
+    tray: CTS.UI.Domains.UIMockups + "tray.html",
+    editor: CTS.UI.Domains.UIMockups + "editor.html",
+    theminator: CTS.UI.Domains.UIMockups + "theminator.html",
+    scraper: CTS.UI.Domains.UIMockups + "scraper.html"
   },
   Scripts: {
-    cts: _CTSUI.Domains.CTS + "cts.js",
-    ckeditor: _CTSUI.Domains.Server + "lib/ckeditor/ckeditor.js",
-    ckeditor_codemirror: _CTSUI.Domains.Server + "js/ckeditor/plugins/codemirror/js/codemirror.js"
+    cts: CTS.UI.Domains.CTS + "cts.js",
+    ckeditor: CTS.UI.Domains.Server + "lib/ckeditor/ckeditor.js",
+    ckeditor_codemirror: CTS.UI.Domains.Server + "js/ckeditor/plugins/codemirror/js/codemirror.js"
   },
   Styles: {
-    tray: _CTSUI.Domains.UIMockups + "css/tray.css",
-    editor: _CTSUI.Domains.UIMockups + "css/editor.css",
-    modal: _CTSUI.Domains.UIMockups + "css/modal.css",
-    theminator: _CTSUI.Domains.UIMockups + "css/theminator.css",
-    scraper: _CTSUI.Domains.UIMockups + "css/scraper.css",
-    bootstrap: _CTSUI.Domains.UIMockups + "css/bootstrap/bootstrap.min.css",
-    ionicons: _CTSUI.Domains.Server + "widgets/ctsui/ionicons/css/ionicons.min.css"
+    tray: CTS.UI.Domains.UIMockups + "css/tray.css",
+    editor: CTS.UI.Domains.UIMockups + "css/editor.css",
+    modal: CTS.UI.Domains.UIMockups + "css/modal.css",
+    theminator: CTS.UI.Domains.UIMockups + "css/theminator.css",
+    scraper: CTS.UI.Domains.UIMockups + "css/scraper.css",
+    bootstrap: CTS.UI.Domains.UIMockups + "css/bootstrap/bootstrap.min.css",
+    ionicons: CTS.UI.Domains.Server + "widgets/ctsui/ionicons/css/ionicons.min.css"
   },
   Images: {
-    lightWool: _CTSUI.Domains.UIMockups + "img/light_wool.png",
-    transparentStar: _CTSUI.Domains.UIMockups + "img/transparent-star.png",
-    star: _CTSUI.Domains.UIMockups + "img/star.png",
-    emptyStar: _CTSUI.Domains.UIMockups + "img/empty-star.png",
-    header: _CTSUI.Domains.UIMockups + "img/cts-header-theminator.png"
+    lightWool: CTS.UI.Domains.UIMockups + "img/light_wool.png",
+    transparentStar: CTS.UI.Domains.UIMockups + "img/transparent-star.png",
+    star: CTS.UI.Domains.UIMockups + "img/star.png",
+    emptyStar: CTS.UI.Domains.UIMockups + "img/empty-star.png",
+    header: CTS.UI.Domains.UIMockups + "img/cts-header-theminator.png"
   },
   Data: {
-    filterInfo: _CTSUI.Domains.Theme + "filterInfo.json",
-    themeInfo: _CTSUI.Domains.Theme + "themeInfo.json"
+    filterInfo: CTS.UI.Domains.Theme + "filterInfo.json",
+    themeInfo: CTS.UI.Domains.Theme + "themeInfo.json"
   },
   Services: {
-    switchboard: _CTSUI.Domains.Server + 'tree/switchboard',
-    clipboard: _CTSUI.Domains.Server + 'widgets/ctsui/clipboard/clipboard.html',
-    zipFactory: _CTSUI.Domains.Server + 'zip'
+    switchboard: CTS.UI.Domains.Server + 'tree/switchboard',
+    clipboard: CTS.UI.Domains.Server + 'widgets/ctsui/clipboard/clipboard.html',
+    zipFactory: CTS.UI.Domains.Server + 'zip'
   }
 });
 
@@ -51,42 +51,42 @@ CTS.Fn.extend(CTS.UI.Blog, {
   Themes: {
     mog: {
       Mockup: {
-        index: _CTSUI.themeBase + "mog/index.html",
-        list: _CTSUI.themeBase + "mog/list.html",
-        post: _CTSUI.themeBase + "mog/post.html",
-        page: _CTSUI.themeBase + "mog/page.html",
-        default: _CTSUI.themeBase + "mog/default.html"
+        index: CTS.UI.themeBase + "mog/index.html",
+        list: CTS.UI.themeBase + "mog/list.html",
+        post: CTS.UI.themeBase + "mog/post.html",
+        page: CTS.UI.themeBase + "mog/page.html",
+        default: CTS.UI.themeBase + "mog/default.html"
       },
-      Cts: _CTSUI.themeBase + "mog/mog.cts"
+      Cts: CTS.UI.themeBase + "mog/mog.cts"
     },
     spun: {
       Mockup: {
-        index: _CTSUI.themeBase + "spun/index.html",
-        list: _CTSUI.themeBase + "spun/list.html",
-        post: _CTSUI.themeBase + "spun/post.html",
-        page: _CTSUI.themeBase + "spun/page.html",
-        default: _CTSUI.themeBase + "spun/default.html"
+        index: CTS.UI.themeBase + "spun/index.html",
+        list: CTS.UI.themeBase + "spun/list.html",
+        post: CTS.UI.themeBase + "spun/post.html",
+        page: CTS.UI.themeBase + "spun/page.html",
+        default: CTS.UI.themeBase + "spun/default.html"
       },
-      Cts: _CTSUI.themeBase + "spun/spun.cts"
+      Cts: CTS.UI.themeBase + "spun/spun.cts"
     },
     twenty_thirteen: {
       Mockup: {
-        index: _CTSUI.themeBase + "twenty-thirteen/index.html",
-        list: _CTSUI.themeBase + "twenty-thirteen/list.html",
-        post: _CTSUI.themeBase + "twenty-thirteen/post.html",
-        page: _CTSUI.themeBase + "twenty-thirteen/page.html",
-        default: _CTSUI.themeBase + "twenty-thirteen/default.html"
+        index: CTS.UI.themeBase + "twenty-thirteen/index.html",
+        list: CTS.UI.themeBase + "twenty-thirteen/list.html",
+        post: CTS.UI.themeBase + "twenty-thirteen/post.html",
+        page: CTS.UI.themeBase + "twenty-thirteen/page.html",
+        default: CTS.UI.themeBase + "twenty-thirteen/default.html"
       },
-      Cts: _CTSUI.themeBase + "twenty-thirteen/twenty-thirteen.cts"
+      Cts: CTS.UI.themeBase + "twenty-thirteen/twenty-thirteen.cts"
     }
   },
   Jekyll: {
     Cts: {
-      index: _CTSUI.themeBase + "index.cts",
-      list: _CTSUI.themeBase + "list.cts",
-      post: _CTSUI.themeBase + "post.cts",
-      page: _CTSUI.themeBase + "page.cts",
-      default: _CTSUI.themeBase + "default.cts"
+      index: CTS.UI.themeBase + "index.cts",
+      list: CTS.UI.themeBase + "list.cts",
+      post: CTS.UI.themeBase + "post.cts",
+      page: CTS.UI.themeBase + "page.cts",
+      default: CTS.UI.themeBase + "default.cts"
     }
   }
 });
