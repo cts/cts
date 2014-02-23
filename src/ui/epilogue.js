@@ -16,35 +16,28 @@ CTS.UI.load = function() {
  *
  */
 CTS.UI.autoload = function() {
-  // Load CK Editor
-  var s = document.createElement('script');
-  s.setAttribute('src', CTS.UI.URLs.Scripts.ckeditor);
-  s.setAttribute('type', 'text/javascript');
-  document.getElementsByTagName('head')[0].appendChild(s);
+  console.log("CTS.UI.autoload");
 
-  if (typeof CTS != 'undefined') {
-    CTS.UI = CTS.UI;
+  /* See if the CTS Library is loaded
+   * -----------------------------------------------------
+   */
+  var loadCtsUi = function() {
     CTS.status.defaultTreeReady.then(function() {
-      CTS.Q.longStackSupport = true;
-      CTS.UI.load();
-      loadCtsUiFileDownloadPlugin();
+      CTS.engine.booted.then(function() {
+        CTS.UI.load();
+        loadCtsUiFileDownloadPlugin();
+      });
     });
+  };
+
+  if (typeof CTS.Engine != 'undefined') {
+    loadCtsUi();
   } else {
     // CTS isn't present. Let's create it with a script.
     var s = document.createElement('script');
     s.setAttribute('src', CTS.UI.URLs.Scripts.cts);
     s.setAttribute('type', 'text/javascript');
-    s.onload = function() {
-
-      // Now we have to wait for $ to load
-      CTS.status.defaultTreeReady.then(function() {
-        CTS.Q.longStackSupport = true;
-        CTS.engine.booted.then(function() {
-          CTS.UI.load();
-          loadCtsUiFileDownloadPlugin();
-        });
-      });
-    };
+    s.onload = loadCtsUi;
     document.getElementsByTagName('head')[0].appendChild(s);
   }
 

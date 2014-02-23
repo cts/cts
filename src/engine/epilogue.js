@@ -31,6 +31,9 @@ CTS.Epilogue.maybeAutoload = function() {
   console.log("CTS Autoload check...");
   if (CTS.Util.shouldAutoload()) {
     CTS.$(function() {
+      if (CTS.Constants.longstackSupport) {
+        CTS.Q.longStackSupport = true;
+      }
       CTS.engine = new CTS.Engine();
       CTS.engine.boot().then(
         function() {

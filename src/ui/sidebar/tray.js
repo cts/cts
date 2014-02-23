@@ -27,10 +27,10 @@ CTS.UI.Tray.prototype.loadMockup = function() {
   this.$body.animate({"left": ((this._width + 1) + "px")});
 
   var cts = "@html tray " + CTS.UI.URLs.Mockups.tray + ";";
-  CTS.UI.Util.addCss(CTS.UI.URLs.Styles.tray);
-  CTS.UI.Util.addCss(CTS.UI.URLs.Styles.bootstrap);
-  CTS.UI.Util.addCss(CTS.UI.URLs.Styles.modal);
-  CTS.UI.Util.addCss(CTS.UI.URLs.Styles.ionicons);
+  CTS.Util.addCss(CTS.UI.URLs.Styles.tray);
+  CTS.Util.addCss(CTS.UI.URLs.Styles.bootstrap);
+  CTS.Util.addCss(CTS.UI.URLs.Styles.modal);
+  CTS.Util.addCss(CTS.UI.URLs.Styles.ionicons);
   cts += "this :is tray | #cts-ui-tray;";
   this.$container.attr("data-cts", cts);
   var self = this;
