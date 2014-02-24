@@ -23,16 +23,8 @@
  *   <div class="expand-tray"></div>
  * </div>
  */
-
 .cts-ui {
   .cts-ui-tray {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 9999;
-    width: 137px;
-    height: 100%;
-
     .cts-ui-header {
       margin: 0;
       font-size: 20px;
@@ -72,32 +64,51 @@
         color: white;
       }
     }
-
-
-    /* This is the nib to open/close the tray */
-    .cts-ui-expand-tray {
-      position:absolute;
-      top:25%;
-      left:101px;
-
-      .cts-ui-expand-tray-button {
-        cursor: pointer;
-        font-size: 24px;
-        color: red;
-        background-color: black;
-      }
-    }
-
-    /* This is the gutter that contains the tray */
-    .cts-ui-tray-contents {
-      border-right: 1px solid black;
-      width: 100px;
-      height: 100%;
-      padding: 0;
-      -moz-box-shadow: inset -5px 0 5px -2px #888;
-      -webkit-box-shadow: inset -5px 0 5px -2px #888;
-      box-shadow: inset -5px 0 5px -2px #888;
-      background-color: #ddd;
-    }
+ 
   }
 }
+
+#cts-ui-tray-button, #cts-ui-tray-button:active {
+  border: 0;
+  position: fixed;
+  left: 10px;
+  top: 10px;
+  width: 44px;
+  height: 44px;
+  z-index: 9998;
+  background-color: #333332;
+  color: #eee;
+}
+
+#cts-ui-tray {
+  transition: all 0.3s ease;
+  position: fixed;
+  background-color: #333332;
+  top: 0;
+  left: 0;
+  height: 100%;
+  z-index: 9999;
+
+  .cts-ui-tray-header {
+    padding: 5px;
+
+    button.close-btn {
+      background-color: black;
+      padding: 5px;
+      color: #eee;
+      border: 1px solid #dedede;
+    }
+  }
+
+  .cts-ui-tray-contents {
+    width: 100px;
+    height: 100%;
+    padding: 0;
+  }
+}
+
+#cts-ui-tray.closed {
+  left: -100px;
+}
+
+

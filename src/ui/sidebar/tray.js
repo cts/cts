@@ -2,9 +2,8 @@ CTS.registerNamespace('CTS.UI.Tray');
 
 CTS.UI.Tray = function() {
   this.$body = CTS.$('body');
-  this._originalBodyMargin = this.$body.css("margin-left");
   this.$body.css({"position": "relative", "overflow-x": "scroll"});
-  this._width = 100;
+  this._originalBodyMargin = this.$body.css("margin-left");
   this._buttonWidth = 37;
 
   // Pages inside the tray, such as the theminator
@@ -24,14 +23,13 @@ CTS.UI.Tray.prototype.loadMockup = function() {
   this.$container.css({
     zIndex: 64999// Important: more than the picker.
   });
-  this.$body.animate({"left": ((this._width + 1) + "px")});
 
   var cts = "@html tray " + CTS.UI.URLs.Mockups.tray + ";";
   CTS.Util.addCss(CTS.UI.URLs.Styles.tray);
   CTS.Util.addCss(CTS.UI.URLs.Styles.bootstrap);
   CTS.Util.addCss(CTS.UI.URLs.Styles.modal);
   CTS.Util.addCss(CTS.UI.URLs.Styles.ionicons);
-  cts += "this :is tray | #cts-ui-tray;";
+  cts += "this :is tray | #cts-ui-tray-widget;";
   this.$container.attr("data-cts", cts);
   var self = this;
   this.$container.on("cts-received-is", function(evt) {
@@ -46,15 +44,18 @@ CTS.UI.Tray.prototype.setupMockup = function() {
   this.$node = this.$container.find('.cts-ui-tray');
   this.$trayContents = this.$container.find('.cts-ui-tray-contents');
 
-  this._button = this.$node.find('.cts-ui-expand-tray-button');
-  this._button.on('click', function() {
-    self.toggle();
+  this.$openButton = CTS.$('#cts-ui-tray-button');
+  this.$openButton.on('click', function() {
+    self.open();
+    this.blur();
   });
 
-  this._buttonContainer = this.$node.find('.cts-ui-expand-tray');
-  this._buttonContainer.css({ zIndex: 65000 });
+  this.$closeButton = this.$node.find('.close-btn');
+  this.$closeButton.on('click', function() {
+    self.close();
+  });
 
-  var $page = CTS.$('<div class="cts-ui-page"></div>');
+  var $page = CTS.$('<div id="cts-ui-editor" class="cts-ui-page"></div>');
   $page.appendTo(this.$trayContents);
   this._editor = new CTS.UI.Editor(this, $page);
   this._pages.push(this._editor);
@@ -64,7 +65,8 @@ CTS.UI.Tray.prototype.setupMockup = function() {
     self.updateSize();
   });
 
-  this.toggle();
+  // Start in the OFF state.
+  this.toggle(false);
 };
 
 CTS.UI.Tray.prototype.invokeTheminator = function(page) {
@@ -102,49 +104,17 @@ CTS.UI.Tray.prototype.popPage = function() {
   newPage.$page.show();
 };
 
-CTS.UI.Tray.prototype.transitionToWidth = function(width, completeFn) {
-  this._width = width;
-  var outerWidth = width + this._buttonWidth;
-  this.$node.find('.cts-ui-tray-contents').animate({
-    'width': width + 'px'
-  });
-  this.$node.animate({
-    'width': outerWidth + 'px'
-  });
-  var spec2 = {
-    'left': ((this._width + 1) + "px"),
-  };
-  this.$node.find('.cts-ui-expand-tray').animate(spec2);
-};
-
-CTS.UI.Tray.prototype.isOpen = function() {
-  return this.$node.css("left") == "0px";
-};
-
 CTS.UI.Tray.prototype.open = function() {
-    //var fromTop = CTS.$(window).scrollTop();
-  this.$node.animate({"left":"0px"});
-    //CTS.$(window).scrollTop(fromTop);
-  this.$body.animate({"left": ((this._width + 1) + "px")});
+  var self = this;
+  this.$openButton.fadeOut(200, function() {
+    self.$node.removeClass('closed');
+    //this.$node.animate({"left":"0px"});
+  });
 };
 
 CTS.UI.Tray.prototype.close = function() {
-    //var fromTop = CTS.$(window).scrollTop();
-  this.$node.animate({"left":("-" + (this._width + 1) + "px")});
-    //CTS.$(window).scrollTop(fromTop);
-  this.$body.animate({"left":"0px"});
-};
-
-CTS.UI.Tray.prototype.toggle = function() {
-  if (this.isOpen()) {
-    this.close();
-    this.$node.removeClass("cts-ui-open");
-    this.$node.addClass("cts-ui-closed");
-  } else {
-    this.open();
-    this.$node.removeClass("cts-ui-closed");
-    this.$node.addClass("cts-ui-open");
-  } 
+  this.$node.addClass("closed");
+  this.$openButton.delay(300).fadeIn(200);
 };
 
 CTS.UI.Tray.prototype.updateSize = function() {
@@ -152,7 +122,4 @@ CTS.UI.Tray.prototype.updateSize = function() {
   var windowHeight = CTS.$(window).height();
   this.$node.height(windowHeight);
   this.$trayContents.height(windowHeight);
-  for (var i = 0; i < this._pages.length; i++) {
-    this._pages[i].updateSize(windowHeight, this._width);
-  }
 };

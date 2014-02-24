@@ -17,7 +17,8 @@
  *                * watches and recompiles upon code modification
  *
  */
-
+var path = require('path');
+var fs = require('fs');
 
 var sources = {
   engine: [
@@ -133,11 +134,7 @@ var variants = {
         options: {
           paths: ["mockups/css"]
         },
-        files: {
-          "release/widgets/cts-ui/css/theminator.css": "src/ui/mockups/less/theminator.less",
-          "release/widgets/cts-ui/css/tray.css": "src/ui/mockups/less/tray.less",
-          "release/widgets/cts-ui/css/editor.css": "src/ui/mockups/less/editor.less"
-        }
+        files: {}
       }
     },
     production: {
@@ -152,16 +149,31 @@ var variants = {
           paths: ["mockups/css"],
           yuicompress: true
         },
-        files: {
-          "release/widgets/cts-ui/css/theminator.css": "src/ui/mockups/less/theminator.less",
-          "release/widgets/cts-ui/css/tray.css": "src/ui/mockups/less/tray.less",
-          "release/widgets/cts-ui/css/editor.css": "src/ui/mockups/less/editor.less"
-        }
+        files: {}
       }
     }
   }
 }
 
+// For each file in website/static/widgets/ctsui/less, map it to same in css.
+var p = path.join(__dirname, 'website', 'static', 'widgets', 'ctsui', 'less');
+var files = fs.readdirSync(p);
+for (var i = 0; i < files.length; i++) {
+  var file = files[i];
+  var parts = file.split('.');
+  if (parts[parts.length - 1] == 'less') {
+    var css = file.split('.');
+    css[css.length - 1] = 'css';
+    css = css.join('.');
+    var prefix = path.join('website', 'static', 'widgets', 'ctsui');
+    var lessFile = path.join(prefix, 'less', file);
+    var cssFile = path.join(prefix, 'css', css);
+    variants.ui.development.less.files[cssFile] = lessFile;
+    variants.ui.production.less.files[cssFile] = lessFile;
+  }
+}
+
+// Now build teh source lists
 for (var project in variants) {
   for (variant in variants[project]) {
     var sourcelist = sources[project].slice(0);
@@ -232,15 +244,12 @@ for (var project in variants) {
 gruntConfig['less'] = {};
 for (var project in variants) {
   for (var variant in variants[project]) {
-    var targetName = project + "_" + variant;
-    gruntConfig['concat'][targetName] = {
-      src: variants[project][variant].sources,
-      dest: variants[project][variant].output
+    if (typeof variants[project][variant].less != 'undefined') {
+      var targetName = project + "_" + variant;
+      gruntConfig['less'][targetName] = variants[project][variant].less
     }
   }
 }
-
-
 
 /*
  * Min Task
@@ -279,7 +288,12 @@ gruntConfig['watch'] = {
   scripts: {
     files: "src/**/*.js",
     tasks: ["default"]
+  },
+  less: {
+    files: "website/static/widgets/ctsui/less/*.less",
+    tasks: ["less"]
   }
 };
+
 
 module.exports = gruntConfig;

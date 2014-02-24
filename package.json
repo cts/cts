@@ -23,6 +23,7 @@
     "grunt-contrib-nodeunit": "~0.1.2",
     "grunt-contrib-uglify": "*",
     "grunt-contrib-qunit": "*",
+    "grunt-contrib-less": "*",
     "grunt-contrib-concat": "*",
     "grunt-contrib-watch": "*",
     "grunt-web-server": "*",
