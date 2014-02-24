@@ -46,12 +46,13 @@ CTS.UI.Tray.prototype.setupMockup = function() {
 
   this.$openButton = CTS.$('#cts-ui-tray-button');
   this.$openButton.on('click', function() {
-    self.open();
     this.blur();
+    self.open();
   });
 
   this.$closeButton = this.$node.find('.close-btn');
   this.$closeButton.on('click', function() {
+    this.blur();
     self.close();
   });
 

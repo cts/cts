@@ -186,8 +186,10 @@
   color: white;
 }
 #cts-ui-tray-button,
-#cts-ui-tray-button:active {
+#cts-ui-tray-button:active,
+#cts-ui-tray-button:focus {
   border: 0;
+  outline: none;
   position: fixed;
   left: 10px;
   top: 10px;
@@ -207,13 +209,17 @@
   z-index: 9999;
 }
 #cts-ui-tray .cts-ui-tray-header {
-  padding: 5px;
+  padding: 0;
 }
 #cts-ui-tray .cts-ui-tray-header button.close-btn {
-  background-color: black;
-  padding: 5px;
+  outline: none;
+  position: relative;
+  width: 100%;
+  background-color: #222;
+  padding: 10px 5px 10px 5px;
   color: #eee;
-  border: 1px solid #dedede;
+  text-align: center;
+  border: 0;
 }
 #cts-ui-tray .cts-ui-tray-contents {
   width: 100px;
