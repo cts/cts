@@ -2,9 +2,9 @@ CTS.registerNamespace('CTS.UI.Editor');
 
 CTS.UI.Editor = function(tray, $page) {
   this._tray = tray; // A Javascript object
-
+  
   this.$page = $page;
-  this.$container = null;
+  this.$widgetContainer = null;
   this.$node = null;
 
   this._isEditing = false;
@@ -51,16 +51,17 @@ CTS.UI.Editor = function(tray, $page) {
 };
 
 CTS.UI.Editor.prototype.loadMockup = function() {
-  this.$container = CTS.$("<div class='cts-ui-editor-page'></div>");
+  this.$widgetContainer = CTS.$("<div class='cts-ui-editor-widget'></div>");
 
   var cts = "@html editor " + CTS.UI.URLs.Mockups.editor + ";";
-  CTS.UI.Util.addCss(CTS.UI.URLs.Styles.editor);
+  CTS.Util.addCss(CTS.UI.URLs.Styles.editor);
   cts += "this :is editor | #cts-ui-editor;";
-  this.$container.attr("data-cts", cts);
+  this.$widgetContainer.attr("data-cts", cts);
+  console.log("CONT", this.$widgetContainer);
 
   var self = this;
-  this.$container.appendTo(this.$page);
-  this.$container.on("cts-received-is", function(evt) {
+  this.$widgetContainer.appendTo(this.$page);
+  this.$widgetContainer.on("cts-received-is", function(evt) {
     self.setupMockup()
     evt.stopPropagation();
   });
@@ -70,7 +71,7 @@ CTS.UI.Editor.prototype.setupMockup = function() {
  // var whatever = this.$node.height();
  // this.$node.height(whatever);
 
-  this.$node = this.$container.find('.cts-ui-editor');
+  this.$node = this.$widgetContainer.find('.cts-ui-editor');
   this._editBtn = this.$node.find('.cts-ui-edit-btn');
   this._uploadBtn = this.$node.find('.cts-ui-upload-btn');
   this._downloadBtn = this.$node.find('.cts-ui-download-btn');
@@ -109,6 +110,11 @@ CTS.UI.Editor.prototype.setupMockup = function() {
   this._scrapeBtn.on('click', function(e) {
     self.scrapeClicked();
   });
+
+  CTS.Util.GSheet._loginStateModified = function() {
+    self._gsheetLoginStateModified();
+  };
+
   this._loginBtn.on('click', function(e) {
     self.loginClicked();
   });
@@ -367,7 +373,7 @@ CTS.UI.Editor.prototype.completeEdit = function() {
   if (this._$editNode != null) {
     this._editBtn.removeClass("highlighted");
     if ((this._editor != null) && (this._editor.checkDirty())) {
-      var selector = CTS.UI.Util.uniqueSelectorFor(this._$editNode);
+      var selector = CTS.Util.uniqueSelectorFor(this._$editNode);
       content = this._editor.getData();
       console.log("content", content);
   
@@ -424,7 +430,7 @@ CTS.UI.Editor.prototype.copyClicked = function() {
   
   pickPromise.then(
     function(element) {
-      var data = CTS.UI.Util.elementHtml(element);
+      var data = CTS.Util.elementHtml(element);
       console.log(data);
       CTS.UI.clipboard.copy(data);
       Alertify.log.success("Copied to web clipboard.", 1500);
@@ -559,12 +565,30 @@ CTS.UI.Editor.prototype.cloneElement = function($e) {
  * ====================================================================
  */
 
+CTS.UI.Editor.prototype._gsheetLoginStateModified = function() {
+  console.log("Login State Modified");
+  if (CTS.Util.GSheet.isLoggedIn()) {
+    this._loginBtn.addClass('highlighted');
+    this._loginBtn.find('span').html('Log Out');
+  } else {
+    this._loginBtn.removeClass('highlighted');
+    this._loginBtn.find('span').html('Login');
+  }
+};
+
 CTS.UI.Editor.prototype.loginClicked = function() {
   var self = this;
-  CTS.UI.modal.login("Login", "Yeah").then(
-    self.loginCredentialsProvided,
-    self.loginCredentialsCanceled
-  );
+  if (CTS.Util.GSheet.isLoggedIn()) {
+    CTS.Util.GSheet.logout();
+  } else {
+    CTS.Util.GSheet.login();
+  }
+  // This is how we do it for the CTS Server.
+  //
+  //  CTS.UI.modal.login("Login", "Yeah").then(
+  //    self.loginCredentialsProvided,
+  //    self.loginCredentialsCanceled
+  //  );
 };
 
 CTS.UI.Editor.prototype.loginCredentialsProvided = function(tuple) {

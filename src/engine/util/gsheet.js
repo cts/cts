@@ -5,7 +5,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   _ctsApiClientId: '459454183971-3rhp3qnfrdane1hnoa23eom28qoo146f.apps.googleusercontent.com',
   _ctsApiKey: 'AIzaSyBpNbbqKrk21n6rI8Nw2R6JSz6faN7OiWc',
   _ctsApiClientScopes: 'https://www.googleapis.com/auth/plus.me http://spreadsheets.google.com/feeds/ https://www.googleapis.com/auth/drive',
-  _$loginButton: null,
+  _loginStateModified: null,
   _currentToken: null,
 
   /*
@@ -51,23 +51,15 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     return url;
   },
 
-  _refreshLoginButtonState: function() {
-    if (CTS.Util.GSheet._$loginButton != null) {
-      if (CTS.Util.GSheet._currentToken == null) {
-        // Not logged in.
-        CTS.Util.GSheet._$loginButton.html('Login');
-      } else {
-        CTS.Util.GSheet._$loginButton.html('Log Out');
-      }
-    }
+  isLoggedIn: function() {
+    return (CTS.Util.GSheet._currentToken != null);
   },
 
-  _loginButtonClicked: function() {
-    if (CTS.Util.GSheet._$loginButton.html() == 'Login') {
-      CTS.Util.GSheet.login();
-    } else {
-      CTS.Util.GSheet._currentToken == null;
-      CTS.Util.GSheet._refreshLoginButtonState();
+  logout: function() {
+    console.log("GSHEET Logout");
+    CTS.Util.GSheet._currentToken = null;
+    if (typeof this._loginStateModified == 'function') {
+      this._loginStateModified();
     }
   },
 
@@ -76,16 +68,13 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   _authenticationResult: function(authResult) {
-   var authorizeButton = document.getElementById('authorize-button');
    if (authResult && !authResult.error) {
-     authorizeButton.style.visibility = 'hidden';
      CTS.Util.GSheet._currentToken = gapi.auth.getToken();
-     console.log("Token", CTS.Util.GSheet._currentToken);
-     CTS.Util.GSheet._refreshLoginButtonState();
    } else {
      CTS.Util.GSheet._currentToken = null;
-     console.log("Token", CTS.Util.GSheet._currentToken);
-     CTS.Util.GSheet._refreshLoginButtonState();
+   }
+   if (typeof CTS.Util.GSheet._loginStateModified == 'function') {
+     CTS.Util.GSheet._loginStateModified();
    }
   },
 

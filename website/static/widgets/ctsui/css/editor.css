@@ -1,36 +1,44 @@
-.cts-ui .cts-ui-tray .cts-ui-editor-page {
+#cts-ui-tray {
+  /* 
+   * This has the CTS annotation which contains
+   * the widget.
+   */
+}
+#cts-ui-tray .cts-ui-editor-widget {
   padding: 0;
   margin: 0;
   height: 100%;
   width: 100px;
+  /*
+     * This is the actual widget.
+     */
+}
+#cts-ui-tray .cts-ui-editor-widget .cts-ui-editor {
   text-align: center;
 }
-.cts-ui .cts-ui-tray .cts-ui-editor-page .cts-ui-editor h3 {
+#cts-ui-tray .cts-ui-editor-widget .cts-ui-editor h3 {
   padding: 0;
   margin: 0;
   margin-bottom: 10px;
   font-size: 13px;
   font-color: black;
   text-align: center;
-  background-color: #D2B0B2;
-  /* To blend in with background */
-  -moz-box-shadow: inset -5px 0 5px -2px #888888;
-  -webkit-box-shadow: inset -5px 0 5px -2px #888888;
-  box-shadow: inset -5px 0 5px -2px #888888;
+  border-bottom: 3px solid #76BCE2;
+  color: #eee;
 }
-.cts-ui .cts-ui-tray .cts-ui-editor-page .cts-ui-editor a.cts-editor-button {
+#cts-ui-tray .cts-ui-editor-widget .cts-ui-editor a.cts-editor-button {
   text-align: center;
   display: block;
   text-decoration: none;
   cursor: pointer;
-  color: #333;
+  color: #eee;
   font-size: 11px;
   margin-bottom: 10px;
 }
-.cts-ui .cts-ui-tray .cts-ui-editor-page .cts-ui-editor a.highlighted {
+#cts-ui-tray .cts-ui-editor-widget .cts-ui-editor a.highlighted {
   color: red;
 }
-.cts-ui .cts-ui-tray .cts-ui-editor-page .cts-ui-editor a.cts-editor-button i {
+#cts-ui-tray .cts-ui-editor-widget .cts-ui-editor a.cts-editor-button i {
   font-size: 24px;
   display: block;
 }
