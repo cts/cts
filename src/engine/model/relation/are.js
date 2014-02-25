@@ -57,6 +57,13 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
         var bye = myIterables.pop();
         bye.destroy();
       }
+      console.log("After prune to 1");
+      CTS.Debugging.DumpTree(toward);
+
+      // var ul = CTS.$(CTS.$('ul')[1]); var ulC = CTS.$(CTS.$('ul')[1]).data('ctsnode')
+      // var li = ul.find('li')[1]
+      // liC = li.data('ctsnode')
+      // ulC.relations[0].execute(ulC)
   
       // Now build it back up.
       if (otherIterables.length == 0) {
@@ -68,8 +75,12 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
         for (var i = 1; i < otherIterables.length; i++) {
           // Clone the iterable.
           var clone = myIterables[0].clone();
+      console.log("After clone to " + i);
+      CTS.Debugging.DumpTree(toward);
+
           toward.insertChild(clone, lastIndex, true);
           clone.pruneRelations(otherIterables[i], other);
+
           lastIndex++;
         }
         myIterables[0].pruneRelations(otherIterables[0], other);

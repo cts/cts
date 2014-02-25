@@ -83,6 +83,8 @@ CTS.Fn.extend(CTS.Util, {
   },
 
   /**
+   * Args:
+   *   $fromNode (optional) - Constrains search to this node.
    *
    * Returns:
    *   Array of Objects:
@@ -93,12 +95,16 @@ CTS.Fn.extend(CTS.Util, {
    *      args:     any other args
    *    }
    *
-   * TODO(eob): Provide a root element as optional argument
-   * to support ingestion of cts rules from transcluded content.
    */ 
-  getTreesheetLinks: function() {
+  getTreesheetLinks: function($fromNode) {
     var ret = [];
-    CTS.Fn.each(CTS.$('script[data-treesheet]'), function(elem) {
+
+    var find = CTS.$;
+    if (typeof $fromNode != 'undefined') {
+      find = $fromNode.find;
+    }
+
+    CTS.Fn.each(find('script[data-treesheet]'), function(elem) {
       var str = CTS.$(elem).attr('data-treesheet');
       if (str != null) {
         var urls = str.split(";");
@@ -112,7 +118,7 @@ CTS.Fn.extend(CTS.Util, {
         }
       }
     }, this);
-    CTS.Fn.each(CTS.$('script[data-theme]'), function(elem) {
+    CTS.Fn.each(find('script[data-theme]'), function(elem) {
       var str = CTS.$(elem).attr('data-theme');
       var sub = CTS.$(elem).attr('data-subtheme');
       if (str != null) {
@@ -129,7 +135,7 @@ CTS.Fn.extend(CTS.Util, {
       }
     }, this);
 
-    CTS.Fn.each(CTS.$('style[type="text/cts"]'), function(elem) {
+    CTS.Fn.each(find('style[type="text/cts"]'), function(elem) {
       var block = {
         type: 'block',
         format: 'string',
@@ -137,7 +143,7 @@ CTS.Fn.extend(CTS.Util, {
       };
       ret.push(block);
     }, this);
-    CTS.Fn.each(CTS.$('style[type="json/cts"]'), function(elem) {
+    CTS.Fn.each(find('style[type="json/cts"]'), function(elem) {
       var block = {
         type: 'block',
         format: 'json',
@@ -147,7 +153,7 @@ CTS.Fn.extend(CTS.Util, {
     }, this);
     // TODO(eob): see if this causes it to get the smae element three times...
     // XXX !important
-    CTS.Fn.each(CTS.$('link[rel="treesheet"],link[type="txt/cts"],link[type="json/cts"]'), function(elem) {
+    CTS.Fn.each(find('link[rel="treesheet"],link[type="txt/cts"],link[type="json/cts"]'), function(elem) {
       var e = CTS.$(elem);
       var type = e.attr('type');
       var format = 'string';

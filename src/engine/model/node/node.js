@@ -51,7 +51,6 @@ CTS.Node.Base = {
     }
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
-      this.toggleThrowDataEvents(true);
     }
   },
 
@@ -273,6 +272,7 @@ CTS.Node.Base = {
     if (c.relations.length > 0) {
       CTS.Log.Error("Clone shouldn't have relations yet");
     }
+
     this.recursivelyCloneRelations(c);
     // Note that we DON'T wire up any parent-child relationships
     // because that would result in more than just cloning the node

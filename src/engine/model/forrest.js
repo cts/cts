@@ -339,12 +339,15 @@ CTS.Fn.extend(Forrest.prototype, {
       return;
     }
 
-
     for (var i = 0; i < nodes1.length; i++) {
       for (var j = 0; j < nodes2.length; j++) {
         // Realize a relation between i and j. Creating the relation adds
         // a pointer back to the nodes.
         var relation = new CTS.Relation.CreateFromSpec(nodes1[i], nodes2[j], spec);
+        // Tell nodes1 and nodes2 that inline specs have been realized
+        nodes1[i].realizedInlineRelationSpecs = true;
+        nodes2[j].realizedInlineRelationSpecs = true;
+
         // Add the relation to the forrest
        if (typeof this.relations == 'undefined') {
          CTS.Log.Error("relations undefined");
