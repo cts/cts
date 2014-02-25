@@ -25,7 +25,7 @@ var Forrest = CTS.Forrest = function(opts) {
 
   this.defaultTreeReady = this._defaultTreeReady.promise;
 
-  if (typeof opts.engine != 'undefined') {
+  if (opts && (typeof opts.engine != 'undefined')) {
     this.engine = opts.engine;
     // Default tree was realized.
     // Add callback for DOM change events.

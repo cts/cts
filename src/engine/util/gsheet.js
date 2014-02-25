@@ -200,7 +200,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   getListFeed: function(spreadsheetKey, worksheetKey) {
-    console.log("Getting workshee", spreadsheetKey, worksheetKey);
+    console.log("Getting worksheet", spreadsheetKey, worksheetKey);
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'private', 'full', true, true);
 

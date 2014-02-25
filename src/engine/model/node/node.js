@@ -97,7 +97,6 @@ CTS.Node.Base = {
       return deferred.promise;
     }
 
-
     if (typeof this.tree.forrest == 'undefined') {
       deferred.reject("Undefined forrest");
       self.parsedInlineRelationSpecs = true;

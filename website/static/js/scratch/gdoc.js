@@ -1,6 +1,8 @@
 CTS.status.libraryLoaded.then(function() {
-  CTS.Util.GSheet._$loginButton = CTS.$('#authorize-button');
-  CTS.Util.GSheet._$loginButton.click(CTS.Util.GSheet._loginButtonClicked);
+
+  CTS.$('#authorize-button').click(function() {
+    CTS.Util.GSheet.login();
+  });
 
   CTS.$('#getsheets').click(
     function() {
@@ -21,6 +23,25 @@ CTS.status.libraryLoaded.then(function() {
       );
     }
   );
+
+  CTS.$('#maketree').click(function() {
+    var forrest = new CTS.Forrest();
+    var sskey = CTS.$('#spreadsheetid').val();
+    var spec = {
+      sskey: sskey
+    };
+    var tree = new CTS.Tree.GSpreadsheet(forrest, spec);
+    var root = new CTS.Node.GSpreadsheet(spec, tree);
+    tree.setRoot(root);
+    root.realizeChildren().then(
+      function() {
+        CTS.$('#res').html("tree is in window.thetree");
+        window.thetree = tree;
+      },
+      function(reason) {
+        CTS.$('#res').html(reason);
+      });
+  });
     
   CTS.$('#create').click(CTS.Util.GSheet.createSpreadsheet);
 

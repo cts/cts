@@ -17,10 +17,32 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
     return "GSpreadsheet";
   },
 
-  find: function(selector, ret) {
+  find: function(spec, ret) {
+    // Selector is spec.selectorString
+    var selector = spec.selectorString;
     if (typeof ret == 'undefined') {
       ret = [];
     }
+
+    // Figure out which worksheets to pull from.
+    var parts = selector.split("!");
+    var union = this.children;
+    if (parts.length > 1) {
+      var subselector = parts.slice(1).join("!");
+      var worksheet = parts[0].trim();
+      union = [];
+      for (var i = 0; i < this.children.length; i++) {
+        var child = this.children[i];
+        if (child) {
+          union.push(child);
+        }
+      }
+    }
+    for (var i = 0; i < union.length; i++) {
+      var kid = union[i];
+      var results = kid.find(subselector, ret);
+    }
+
     return ret;
   },
 
@@ -32,7 +54,7 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
      var deferred = Q.defer();
      this.children = [];
      var self = this;
-     CTS.GSheet.getWorksheets(this.spec.sskey).then(
+     CTS.Util.GSheet.getWorksheets(this.spec.sskey).then(
        function(gdata) {
          self.gdata = gdata;
          for (var i = 0; i < gdata.length; i++) {

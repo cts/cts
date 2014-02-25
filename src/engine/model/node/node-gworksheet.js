@@ -1,4 +1,5 @@
 CTS.Node.GWorksheet = function(spec, tree, opts) {
+  console.log("GWorksheet Constructor");
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
   this.spec = spec;
@@ -29,26 +30,30 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_realizeChildren: function() {
+    console.log("Worksheet realize kids", this.spec);
     var self = this;
-     var deferred = Q.defer();
-     this.children = [];
-     CTS.GSheet.getListFeed(this.spec.sskey, this.spec.wskey).then(
-       function(gdata) {
-         self.gdata = gdata;
-         for (var i = 0; i < gdata.items.length; i++) {
-           var item = gdata.items[i];
-           var child = new CTS.Node.GListFeedItem(item.title, item, self.tree, self.opts);
-           self.children.push(child);
-         }
-         console.log("Resolving Worksheet Kids");
-         deferred.resolve();
-       },
-       function(reason) {
-         deferred.reject(reason);
-       }
-     );
-     return deferred.promise;
-   },
+    var deferred = Q.defer();
+    this.children = [];
+    console.log(this.spec.sskey, this.spec.wskey);
+    CTS.Util.GSheet.getListFeed(this.spec.sskey, this.spec.wskey).then(
+      function(gdata) {
+        console.log("Got list feed worksheet", gdata);
+        self.gdata = gdata;
+        for (var i = 0; i < gdata.items.length; i++) {
+          var item = gdata.items[i];
+          var child = new CTS.Node.GListFeedItem(item.title, item, self.tree, self.opts);
+          self.children.push(child);
+        }
+        console.log("Resolving Worksheet Kids");
+        deferred.resolve();
+      },
+      function(reason) {
+        console.log("Rejected", reason);
+        deferred.reject(reason);
+      }
+    );
+    return deferred.promise;
+  },
 
    /* 
     * Inserts this DOM node after the child at the specified index.

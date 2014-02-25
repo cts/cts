@@ -83,11 +83,15 @@ CTS.Fn.extend(CTS.Util, {
   },
 
   /**
-   * Returns array of objects with keys:
-   *  type: (link or inline)
-   *  content: the cts content for inline
-   *  url: the url for links
-   *  args: any other args
+   *
+   * Returns:
+   *   Array of Objects:
+   *    { 
+   *      type:     link or inline
+   *      content:  the CTS content, if inline
+   *      url:      the URL, if a link
+   *      args:     any other args
+   *    }
    *
    * TODO(eob): Provide a root element as optional argument
    * to support ingestion of cts rules from transcluded content.
