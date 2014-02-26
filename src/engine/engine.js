@@ -121,88 +121,17 @@ CTS.Fn.extend(Engine.prototype, Events, {
     var promises = [];
     var self = this;
 
-    function addSpecs(specs) {
-      var promises = Fn.map(specs, function(spec) {
-        return self.forrest.addSpec(spec);
-      });
-      return Q.all(promises);
-    };
-
-    // tuple = [raw, kind]
-    function parseAndAddSpec(rawData, kind, fromUrl) {
-      var deferred = Q.defer();
-
-      CTS.Parser.parseForrestSpec(rawData, kind, fromUrl).then(
-        function(specs) {
-          if (fromUrl != 'undefined') {
-            Fn.each(specs, function(spec) {
-              for (i = 0; i < spec.treeSpecs.length; i++) {
-                spec.treeSpecs[i].loadedFrom = fromUrl;
-              }
-              for (i = 0; i < spec.dependencySpecs.length; i++) {
-                spec.dependencySpecs[i].loadedFrom = fromUrl;
-              }
-            });
-          }
-          addSpecs(specs).then(
-            function() {
-              deferred.resolve();
-            },
-            function(reason) {
-              deferred.reject(reason);
-            }
-          );
-        },
-        function(reason) {
-          deferred.reject(reason);
-        }
-      );
-      return deferred.promise;
-    };
-
     // Possibly add specs from the OPTS hash passed to Engine.
     if ((typeof self.opts.forrestSpecs != 'undefined') && (self.opts.forrestSpecs.length > 0)) {
-      promises.push(addSpecs(self.opts.forrestSpecs));
+      promises.push(self.forrest.addSpecs(self.opts.forrestSpecs));
     }
 
     if ((typeof self.opts.autoLoadSpecs != 'undefined') && (self.opts.autoLoadSpecs === true)) {
-      Fn.each(CTS.Util.getTreesheetLinks(), function(block) {
-        var deferred = Q.defer();
-        if (block.type == 'link') {
-          CTS.Util.fetchString(block).then(
-            function(content) {
-              var url = block.url;
-              parseAndAddSpec(content, block.format, url).then(
-                function() {
-                  deferred.resolve();
-                },
-                function(reason) {
-                  CTS.Log.Error("Could not parse and add spec", content, block);
-                  deferred.resolve();
-                }
-              );
-            },
-            function(reason) {
-              CTS.Log.Error("Could not fetch CTS link:", block);
-              deferred.resolve();
-            });
-        } else if (block.type == 'block') {
-          var url = window.location;
-          parseAndAddSpec(block.content, block.format, url).then(
-            function() {
-              deferred.resolve();
-            },
-            function(reason) {
-              CTS.Log.Error("Could not parse and add spec", content, block);
-              deferred.resolve();
-            }
-          );
-        } else {
-          CTS.Log.Error("Could not load CTS: did not understand block type", block.block, block);
-          deferred.resolve();
-        }
-        promises.push(deferred.promise);
-      });
+      var links = CTS.Util.getTreesheetLinks();
+      var ps = self.forrest.parseAndAddSpecsFromLinks(links);
+      for (var i = 0; i < ps.length; i++) {
+        promises.push(ps[i]);
+      }
     }
     return Q.all(promises);
   },

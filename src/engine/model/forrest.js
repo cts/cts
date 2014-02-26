@@ -176,6 +176,95 @@ CTS.Fn.extend(Forrest.prototype, {
     //initial.resolve();
     return last;
   },
+  
+  addSpecs: function(specs) {
+    var self = this;
+    var promises = CTS.Fn.map(specs, function(spec) {
+      return self.addSpec(spec);
+    });
+    return Q.all(promises);
+  },
+
+  parseAndAddSpec: function(rawData, kind, fromUrl) {
+    var deferred = Q.defer();
+    var self = this;
+
+    CTS.Parser.parseForrestSpec(rawData, kind, fromUrl).then(
+      function(specs) {
+        if (fromUrl != 'undefined') {
+          CTS.Fn.each(specs, function(spec) {
+            for (i = 0; i < spec.treeSpecs.length; i++) {
+              spec.treeSpecs[i].loadedFrom = fromUrl;
+            }
+            for (i = 0; i < spec.dependencySpecs.length; i++) {
+              spec.dependencySpecs[i].loadedFrom = fromUrl;
+            }
+          });
+        }
+        self.addSpecs(specs).then(
+          function() {
+            deferred.resolve();
+          },
+          function(reason) {
+            deferred.reject(reason);
+          }
+        );
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+    return deferred.promise;
+  },
+
+  /*
+   * Params:
+   *   links -- The output of CTS.Util.getTresheetLinks
+   *
+   * Returns:
+   *   promises
+   */
+  parseAndAddSpecsFromLinks: function(links) {
+    var self = this;
+    var promises = CTS.Fn.map(links, function(block) {
+      var deferred = Q.defer();
+      if (block.type == 'link') {
+        CTS.Util.fetchString(block).then(
+          function(content) {
+            var url = block.url;
+            self.parseAndAddSpec(content, block.format, url).then(
+              function() {
+                deferred.resolve();
+             },
+             function(reason) {
+               CTS.Log.Error("Could not parse and add spec", content, block);
+               deferred.resolve();
+             }
+           );
+         },
+         function(reason) {
+           CTS.Log.Error("Could not fetch CTS link:", block);
+           deferred.resolve();
+         });
+      } else if (block.type == 'block') {
+        var url = window.location;
+        self.parseAndAddSpec(block.content, block.format, url).then(
+          function() {
+            deferred.resolve();
+          },
+          function(reason) {
+            CTS.Log.Error("Could not parse and add spec", content, block);
+            deferred.resolve();
+          }
+        );
+      } else {
+        CTS.Log.Error("Could not load CTS: did not understand block type", block.block, block);
+        deferred.resolve();
+      }
+      return deferred.promise;
+    });
+    return promises;
+  },
 
   addTreeSpec: function(treeSpec) {
     this.treeSpecs[treeSpec.name] = treeSpec;
@@ -427,7 +516,9 @@ CTS.Fn.extend(Forrest.prototype, {
           if (prnt == null) {
             // CTS.Log.Error("Node inserted into yet unmapped region of tree", prnt);
           } else {
-            // CTS.Log.Info("Responding to new DOM node insertion", $node.html());
+            // First see if any CTS blocks live in this region
+            var ctsLinks = CTS.Util.getTreesheetLinks($node);
+
             // Create the CTS tree for this region.
             var node = prnt._onChildInserted($node);
           }
