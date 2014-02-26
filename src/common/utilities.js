@@ -99,9 +99,17 @@ CTS.Fn.extend(CTS.Util, {
   getTreesheetLinks: function($fromNode) {
     var ret = [];
 
-    var find = CTS.$;
+    var find = function(sel) {
+      return CTS.$(sel);
+    };
     if (typeof $fromNode != 'undefined') {
-      find = $fromNode.find;
+      find = function(sel) {
+        var s1 = $fromNode.find(sel);
+        if ($fromNode.is(sel)) {
+          s1 = s1.add($fromNode);
+        }
+        return s1;
+      }
     }
 
     CTS.Fn.each(find('script[data-treesheet]'), function(elem) {
@@ -143,6 +151,7 @@ CTS.Fn.extend(CTS.Util, {
       };
       ret.push(block);
     }, this);
+
     CTS.Fn.each(find('style[type="json/cts"]'), function(elem) {
       var block = {
         type: 'block',
@@ -153,6 +162,7 @@ CTS.Fn.extend(CTS.Util, {
     }, this);
     // TODO(eob): see if this causes it to get the smae element three times...
     // XXX !important
+
     CTS.Fn.each(find('link[rel="treesheet"],link[type="txt/cts"],link[type="json/cts"]'), function(elem) {
       var e = CTS.$(elem);
       var type = e.attr('type');
@@ -167,6 +177,7 @@ CTS.Fn.extend(CTS.Util, {
       };
       ret.push(block);
     }, this);
+
     return ret;
   },
 

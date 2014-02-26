@@ -505,6 +505,7 @@ CTS.Fn.extend(Forrest.prototype, {
 
   _onDomNodeInserted: function(tree, $node, evt) {
     // If the tree is the main tree, we want to possibly run any CTS
+    var self = this;
     if (typeof evt.ctsHandled == 'undefined') {
       var node = tree.getCtsNode($node);
       if (node == null) {
@@ -518,9 +519,15 @@ CTS.Fn.extend(Forrest.prototype, {
           } else {
             // First see if any CTS blocks live in this region
             var ctsLinks = CTS.Util.getTreesheetLinks($node);
-
-            // Create the CTS tree for this region.
-            var node = prnt._onChildInserted($node);
+            var promises = self.parseAndAddSpecsFromLinks(ctsLinks);
+            Q.all(promises).then(
+              function() {
+                // Create the CTS tree for this region.
+                var node = prnt._onChildInserted($node);
+              }, function(errors) {
+                CTS.Log.Error("Couldn't add CTS blocks from inserted dom node", errors);
+              }
+            );
           }
         }
       }
