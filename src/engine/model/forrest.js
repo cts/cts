@@ -523,6 +523,7 @@ CTS.Fn.extend(Forrest.prototype, {
             Q.all(promises).then(
               function() {
                 // Create the CTS tree for this region.
+                CTS.Log.Info("Running onChildInserted", prnt);
                 var node = prnt._onChildInserted($node);
               }, function(errors) {
                 CTS.Log.Error("Couldn't add CTS blocks from inserted dom node", errors);
