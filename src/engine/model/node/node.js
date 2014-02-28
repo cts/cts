@@ -14,6 +14,9 @@ CTS.Node.Factory = {
     var node = new CTS.Node.Html(node, tree, opts);
     node.parseInlineRelationSpecs().then(
       function() {
+        if (node == null) {
+          CTS.Log.Error("Created NULL child");
+        }
         deferred.resolve(node);
       },
       function(reason) {
