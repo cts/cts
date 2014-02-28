@@ -18,8 +18,15 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   find: function(spec, ret) {
+    console.log("SS find", spec);
     // Selector is spec.selectorString
-    var selector = spec.selectorString;
+    var selector;
+    if (typeof spec == "string") {
+      selector = spec;
+    } else {
+      selector = spec.selectorString;
+    }
+
     if (typeof ret == 'undefined') {
       ret = [];
     }
@@ -27,8 +34,10 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
     // Figure out which worksheets to pull from.
     var parts = selector.split("!");
     var union = this.children;
+    var subselector = selector;
     if (parts.length > 1) {
-      var subselector = parts.slice(1).join("!");
+      console.log("Addressing a particular worksheet!");
+      subselector = parts.slice(1).join("!");
       var worksheet = parts[0].trim();
       union = [];
       for (var i = 0; i < this.children.length; i++) {
@@ -40,8 +49,10 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
     }
     for (var i = 0; i < union.length; i++) {
       var kid = union[i];
+      console.log("Worksheet, please find ", subselector);
       var results = kid.find(subselector, ret);
     }
+    console.log("Finished SS Find", ret);
 
     return ret;
   },

@@ -213,19 +213,21 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       spec.updated = CTS.Util.GSheet._parseGItem(json.feed.updated);
       spec.id = CTS.Util.GSheet._parseGItem(json.feed.id);
       spec.items = [];
-      for (var i = 0; i < json.feed.entry.length; i++) {
-        var title = CTS.Util.GSheet._parseGItem(json.feed.entry[i].title);
-        var data = {};
-        for (var key in json.feed.entry[i]) {
-          if ((key.length > 4) && (key.substring(0,4) == 'gsx$')) {
-            var k = key.substring(4);
-            data[k] = CTS.Util.GSheet._parseGItem(json.feed.entry[i][key]);
+      if (typeof json.feed.entry != 'undefined') {
+        for (var i = 0; i < json.feed.entry.length; i++) {
+          var title = CTS.Util.GSheet._parseGItem(json.feed.entry[i].title);
+          var data = {};
+          for (var key in json.feed.entry[i]) {
+            if ((key.length > 4) && (key.substring(0,4) == 'gsx$')) {
+              var k = key.substring(4);
+              data[k] = CTS.Util.GSheet._parseGItem(json.feed.entry[i][key]);
+            }
           }
+          spec.items.push({
+            title: title,
+            data: data
+          });
         }
-        spec.items.push({
-          title: title,
-          data: data
-        });
       }
       deferred.resolve(spec);
     });
@@ -237,4 +239,47 @@ CTS.Fn.extend(CTS.Util.GSheet, {
 
     return deferred.promise;
   },
+
+  getCellFeed: function(spreadsheetKey, worksheetKey) {
+    console.log("Getting worksheet cell feed", spreadsheetKey, worksheetKey);
+    var deferred = Q.defer();
+    var url = CTS.Util.GSheet._gSheetUrl('cells', spreadsheetKey, worksheetKey, 'private', 'full', true, true);
+
+    var request = CTS.$.getJSON(url);
+
+    request.done(function(json) {
+      var spec = {};
+      console.log(json);
+      console.log("SHEET FEED", json);
+      spec.title = CTS.Util.GSheet._parseGItem(json.feed.title);
+      spec.updated = CTS.Util.GSheet._parseGItem(json.feed.updated);
+      spec.id = CTS.Util.GSheet._parseGItem(json.feed.id);
+      spec.rows = {};
+
+      for (var i = 0; i < json.feed.entry.length; i++) {
+        var cell = CTS.Util.GSheet._parseGItem(json.feed.entry[i].title);
+        var content = CTS.Util.GSheet._parseGItem(json.feed.entry[i].content);
+        var letterIdx = 0;
+        while (isNaN(parseInt(cell[letterIdx]))) {
+          letterIdx++;
+        }
+        var row = cell.slice(0, letterIdx);
+        var col = parseInt(cell.slice(letterIdx));
+
+        if (typeof spec.rows[row] == "undefined") {
+          spec.rows[row] = {};
+        }
+        spec.rows[row][col] = content;
+      }
+      deferred.resolve(spec);
+    });
+
+    request.fail(function(jqxhr, textStatus) {
+      console.log(jqxhr, textStatus);
+      deferred.reject(textStatus);
+    });
+
+    return deferred.promise;
+  },
+
 });

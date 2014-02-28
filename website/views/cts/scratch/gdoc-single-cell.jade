@@ -1,0 +1,25 @@
+extends ../layouts/scratchui
+
+block head
+  title Google Doc - Single Cell
+
+block content
+  textarea(id="cts").
+    <div>
+      <style type="text/cts">
+        @gsheet sheet 0Arj8lnBW4_tZdDdMZTV2SkVzZF9RNjBTaTQxajBHMEE;
+      </style>
+      <div data-cts="this :is sheet | SingleCell!B6;">B6 Value</div>
+    </div>
+  
+  div#sink
+
+  button#go.btn-success.btn Render Sheet
+
+  script.
+    CTS.status.libraryLoaded.then(function() {
+      CTS.$('#go').click(function() {
+        CTS.$('#sink').html(CTS.$('#cts').val());
+      });
+    });
+

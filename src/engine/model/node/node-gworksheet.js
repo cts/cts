@@ -19,9 +19,53 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   find: function(selector, ret) {
+    console.log("WS find", selector);
     if (typeof ret == 'undefined') {
       ret = [];
     }
+
+    if (selector.trim() == "items") {
+      console.log("Worksheet interpreting find request as ITEM enumeration");
+      // TODO: A number of things should really apply here..
+      for (var i = 0; i < this.children.length; i++) {
+        if (this.children[i].kind == "GListFeedItem") {
+          ret.push(this.children[i]);
+        }
+      }
+    } else if (selector.trim()[0] == ".") {
+      console.log("Worksheet interpreting find request as ITEM PROPERTY search");
+      for (var i = 0; i < this.children.length; i++) {
+        if (this.children[i].kind == "GListFeedItem") {
+          this.children[i].find(selector, ret);
+        }
+      }
+    } else {
+      console.log("Worksheet interpreting find request as CELL query");
+      // We'll do it ssheet reference style
+      selector = selector.trim();
+      console.log("console ", selector);
+      var letterIdx = 0;
+      while (isNaN(parseInt(selector[letterIdx]))) {
+        letterIdx++;
+      }
+      console.log("Letter Index", letterIdx);
+      var col = selector.slice(0, letterIdx);
+      var row = parseInt(selector.slice(letterIdx));
+
+      console.log("Row", row, "Col", col);
+
+      for (var i = 0; i < this.children.length; i++) {
+        console.log("Kid type", this.children[i].kind)
+        if (this.children[i].kind == "GColumn") {
+          console.log("has value", this.children[i].value)
+          if (this.children[i].value == col) {
+            console.log("Asking kid to find", row);
+            this.children[i].find(row, ret);
+          }
+        }
+      }
+    }
+    console.log("Finished WS Find", ret);
     return ret;
   },
 
@@ -32,9 +76,13 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
   _subclass_realizeChildren: function() {
     console.log("Worksheet realize kids", this.spec);
     var self = this;
-    var deferred = Q.defer();
+
+    var listFeedPromise = Q.defer();
+    var cellFeedPromise = Q.defer();
+
     this.children = [];
     console.log(this.spec.sskey, this.spec.wskey);
+
     CTS.Util.GSheet.getListFeed(this.spec.sskey, this.spec.wskey).then(
       function(gdata) {
         console.log("Got list feed worksheet", gdata);
@@ -45,14 +93,37 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
           self.children.push(child);
         }
         console.log("Resolving Worksheet Kids");
-        deferred.resolve();
+        listFeedPromise.resolve();
       },
       function(reason) {
         console.log("Rejected", reason);
-        deferred.reject(reason);
+        listFeedPromise.reject(reason);
       }
     );
-    return deferred.promise;
+
+    CTS.Util.GSheet.getCellFeed(this.spec.sskey, this.spec.wskey).then(
+      function(gdata) {
+        console.log("Got cell feed worksheet", gdata);
+        self.gdata = gdata;
+
+        for (var rowName in gdata.rows) {
+          console.log("Row", rowName);
+          var columns = gdata.rows[rowName];
+          console.log("Row Columns", columns);
+          var child = new CTS.Node.GColumn(rowName, columns, self.tree, self.opts);
+          console.log("New Child ", child);
+          self.children.push(child);
+        }
+        console.log("Resolving Worksheet Kids");
+        cellFeedPromise.resolve();
+      },
+      function(reason) {
+        console.log("Rejected", reason);
+        cellFeedPromise.reject(reason);
+      }
+    );
+
+    return Q.all([listFeedPromise.promise, cellFeedPromise.promise]);
   },
 
    /* 

@@ -1,28 +1,21 @@
-/** A Google Spreadsheets "List Feed" Property Node.
- *
- * The LIST FEED represents the view of a Work Sheet that google considers to
- * be a list items, each with key-value pairs. This node represents one of
- * those ITEMS.
+/** A Google Spreadsheets "Cell Row" Node.
  *
  */
 
-CTS.Node.GListFeedItem = function(value, spec, tree, opts) {
+CTS.Node.GColumnCell = function(row, value, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
   this.value = value;
-  this.spec = spec;
+  this.row = row;
   this.ctsId = Fn.uniqueId().toString();
-  this.kind = 'GListFeedItem';
-  this.on('received-is', function() {
-    this.value.trigger('cts-received-is');
-  });
+  this.kind = 'GColumnCell';
 };
 
 // ### Instance Methods
-CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
+CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
 
   debugName: function() {
-    return "GListFeedItem";
+    return "GColumnCell";
   },
 
   // Find alreays returns empty on a leaf.
@@ -30,21 +23,6 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
     if (typeof ret == 'undefined') {
       ret = [];
     }
-    // If any of the properties match.
-    var found = 0;
-    selector = selector.trim();
-    if (selector[0] == ".") {
-      selector = selector.slice(1);
-      console.log("ListFeed find:", selector);
-      for (var i = 0; i < this.children.length; i++) {
-        var child = this.children[i];
-        if (selector == child.key) {
-          found++;
-          ret.push(child);
-        }
-      }
-    }
-    console.log("Finished List Find", found);
     return ret;
   },
 
@@ -53,22 +31,17 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
     if (this.parentNode != null) {
       if (other == this.parentNode) {
         return true;
-      }
-      if ((this.parentNode.parenNode != null) && (other == this.parentNode.parentNode)) {
-        return true;
+      } else {
+        return this.parentNode.descendantOf(other);
       }
     }
     return false;
   },
 
   _subclass_realizeChildren: function() {
+     // No kids!
      var deferred = Q.defer();
      this.children = [];
-     for (var key in this.spec.data) {
-       var value = this.spec.data[key];
-       var child = new CTS.Node.GListFeedProperty(key, value, this.tree, this.opts);
-       this.children.push(child);
-     }
      deferred.resolve();
      return deferred.promise;
    },
@@ -95,13 +68,7 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
    },
 
    _subclass_beginClone: function(node) {
-     var value = this.value;
-     // TODO: Need to generate a NEW id for insertion. And beginClone here
-     // will neeed to be deferred!
-     var spec = this.spec;
-     var clone = new CTS.Node.GListFeedItem(value, spec, this.tree, this.opts);
-     // there are no children, so no need to do anything there.
-     return clone;
+     return null;
    },
 
   /************************************************************************
@@ -111,7 +78,7 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
    ************************************************************************/
 
   getValue: function(opts) {
-    return null; // no value.
+    return this.value; // no value.
   },
 
   setValue: function(value, opts) {

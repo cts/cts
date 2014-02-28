@@ -40,10 +40,14 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
       ret.push(this);
     }
     for (var i = 0; i < this.children.length; i++) {
-      if (typeof this.children[i] == 'undefined') {
-        CTS.Log.Error("Undefined child");
+      if (this.children[i] == null) {
+        CTS.Log.Error("Error: Child " + i + " of me is null (find:" + selector + ")", this);
+      } else {
+        if (typeof this.children[i] == 'undefined') {
+          CTS.Log.Error("Undefined child");
+        }
+        this.children[i].find(selector, ret);
       }
-      this.children[i].find(selector, ret);
     }
     return ret;
   },
@@ -85,10 +89,14 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
          self.children = results;
          for (var i = 0; i < self.children.length; i++) {
            var node = self.children[i];
-           if (typeof node == "undefined") {
-             CTS.Log.Error("Child is undefined");
+           if ((typeof node == "undefined") || (node == null)) {
+             CTS.Log.Error("Child is undefined or null!");
            }
            node.parentNode = self;
+         }
+         if (self.value.is('body')) {
+           console.log("BODY!");
+           console.log(self.children);
          }
          deferred.resolve();
        },
@@ -131,6 +139,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
        function(ctsChild) {
          ctsChild.parentNode = self;
          var idx = child.index();
+         var l = self.children.length;
          self.children[self.children.length] = null;
          // TODO: need locking on kids
          for (var i = self.children.length - 1; i >= idx; i--) {
@@ -139,6 +148,11 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
            } else {
              self.children[i] = self.children[i - 1];
            }
+         }
+         // XXX TODO: This is a hack case that happens when CTS indexing and DOM indexing get out of sync
+         // because of cts-ignore nodes. Need to figure out how to fix.
+         if ((self.children[self.children.length - 1] == null) && (idx >= self.children.length)) {
+           self.children[self.children.length - 1] = ctsChild;
          }
 
          ctsChild.realizeChildren().then(

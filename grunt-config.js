@@ -46,6 +46,8 @@ var sources = {
     "src/engine/model/node/node-dom.js",
     "src/engine/model/node/node-glistfeedproperty.js",
     "src/engine/model/node/node-glistfeeditem.js",
+    "src/engine/model/node/node-gcolumn.js",
+    "src/engine/model/node/node-gcolumncell.js",
     "src/engine/model/node/node-gworksheet.js",
     "src/engine/model/node/node-gspreadsheet.js",
   
