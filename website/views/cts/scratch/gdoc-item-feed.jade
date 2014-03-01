@@ -1,0 +1,26 @@
+extends ../layouts/scratchui
+
+block head
+  title CTS Google Doc Tree Test
+
+block content
+  textarea(id="cts").
+    <div>
+      <style type="text/cts">
+        @gsheet sheet 0Arj8lnBW4_tZdDdMZTV2SkVzZF9RNjBTaTQxajBHMEE;
+      </style>
+      <ul data-cts="this :are sheet | AddressBook!items;">
+        <li data-cts="this :is sheet | AddressBook!.name;">A</li>
+      </ul>
+    </div>
+  
+  div#sink
+
+  button#go.btn-success.btn Render Sheet
+
+  script.
+    CTS.status.libraryLoaded.then(function() {
+      CTS.$('#go').click(function() {
+        CTS.$('#sink').html(CTS.$('#cts').val());
+      });
+    });

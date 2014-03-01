@@ -89,8 +89,17 @@ CTS.Factory = {
         deferred.resolve(tree);
       },
       function(reason) {
-        console.log("Nope");
-        deferred.reject();
+        CTS.Log.Error("Not authenticated with GDocs. Trying now.");
+        // We'll try to log in if possible.
+        CTS.Util.GSheet.login().then(
+          function() {
+            deferred.resolve();
+          },
+          function() {
+            CTS.Log.Error("Couldn't login");
+            deferred.reject("Couldn't login");
+          }
+        );
       }
     );
     console.log("Promise for gsheet");

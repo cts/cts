@@ -1,32 +1,25 @@
 /** A Google Spreadsheets "List Feed" Property Node.
  *
  * The LIST FEED represents the view of a Work Sheet that google considers to
- * be a list items, each with key-value pairs. This node represents the
- * PROPERTY of one of those items.
- *
- * As such, it is addressed (and initialized, in constructor) with the KEY and
- * VALUE that it represents, and has no notion of typical spreadsheet
- * addressing.
- *
+ * be a list items, each with key-value pairs. This node represents one of
+ * those ITEMS.
  */
-
-CTS.Node.GListFeedProperty = function(key, value, tree, opts) {
+CTS.Node.GListFeed = function(spec, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
-  this.key = key;
-  this.value = value;
+  this.spec = spec;
   this.ctsId = Fn.uniqueId().toString();
-  this.kind = 'GListFeedProperty';
+  this.kind = 'GListFeed';
   this.on('received-is', function() {
     this.value.trigger('cts-received-is');
   });
 };
 
 // ### Instance Methods
-CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
+CTS.Fn.extend(CTS.Node.GListFeed.prototype, CTS.Node.Base, CTS.Events, {
 
   debugName: function() {
-    return "GListFeedProperty";
+    return this.kind;
   },
 
   // Find alreays returns empty on a leaf.
@@ -34,6 +27,15 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
     if (typeof ret == 'undefined') {
       ret = [];
     }
+    // If any of the properties match.
+    selector = selector.trim();
+    if (selector[0] == ".") {
+      for (var i = 0; i < this.children.length; i++) {
+        var child = this.children[i];
+        child.find(selector, ret);
+      }
+    } 
+    console.log("GListFeed Finished Find");
     return ret;
   },
 
@@ -52,28 +54,45 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_realizeChildren: function() {
-     // No op. This node is a child.
      var deferred = Q.defer();
      this.children = [];
-     deferred.resolve();
+     var self = this;
+     CTS.Util.GSheet.getListFeed(this.spec.sskey, this.spec.wskey).then(
+       function(gdata) {
+         console.log("Got list feed worksheet", gdata);
+         self.gdata = gdata;
+         for (var i = 0; i < gdata.items.length; i++) {
+           var item = gdata.items[i];
+           var child = new CTS.Node.GListFeedItem(item.title, item, self.tree, self.opts);
+           child.parentNode = self;
+           self.children.push(child);
+         }
+         console.log("Resolving Worksheet Kids");
+         deferred.resolve();
+       },
+       function(reason) {
+         console.log("Rejected", reason);
+         deferred.reject(reason);
+       }
+     );
      return deferred.promise;
    },
 
    _subclass_insertChild: function(child, afterIndex) {
-     CTS.Log.Error("insertChild called (impossibly) on GListFeedProperty Node");
+     CTS.Log.Error("insertChild called (impossibly) on GListFeedItem");
    },
 
    /*
     */
    _onChildInserted: function(child) {
-     CTS.Log.Error("onChildInserted called (impossibly) on GListFeedProperty Node");
+     CTS.Log.Error("onChildInserted called (impossibly) on GListFeedItem Node");
    },
 
    /* 
     *  Removes this Workbook from the GSheet
     */
    _subclass_destroy: function() {
-     // TODO: Delete cell from sheet
+     // TODO: Delete item from sheet
    },
 
    _subclass_getInlineRelationSpecString: function() {a
@@ -82,8 +101,10 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
 
    _subclass_beginClone: function(node) {
      var value = this.value;
-     var key = this.key;
-     var clone = new CTS.Node.GWorkSheet(key, value, this.tree, this.opts);
+     // TODO: Need to generate a NEW id for insertion. And beginClone here
+     // will neeed to be deferred!
+     var spec = this.spec;
+     var clone = new CTS.Node.GListFeedItem(value, spec, this.tree, this.opts);
      // there are no children, so no need to do anything there.
      return clone;
    },
@@ -95,15 +116,14 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
    ************************************************************************/
 
   getValue: function(opts) {
-    return this.value;
+    return null; // no value.
   },
 
   setValue: function(value, opts) {
-    this.value = value;
+    // noop.
   },
 
   _subclass_ensure_childless: function() { 
-    this.value = null;
   },
 
   /************************************************************************
@@ -126,9 +146,10 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
    **************************************************************************/
 
   _subclass_setValue: function(newValue) {
-    this.value = newValue;
   }
 
 });
+
+
 
 

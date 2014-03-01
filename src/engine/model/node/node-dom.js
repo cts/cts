@@ -58,11 +58,11 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    **
    ************************************************************************/
 
-   descendantOf: function(other) {
-     // jQuery trick
-     // this.value is a jQuery node
-     return this.value.closest(other.value).length != 0;
-   },
+   //descendantOf: function(other) {
+   //  // jQuery trick
+   //  // this.value is a jQuery node
+   //  return this.value.closest(other.value).length != 0;
+   //},
 
    /*
     * Precondition: this.children.length == 0

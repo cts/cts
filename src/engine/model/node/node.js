@@ -320,9 +320,10 @@ CTS.Node.Base = {
       // If the rule ISN'T subtree of this iterable
       // But it IS inside the other container
       // Remove it
-      if ((! (other.equals(otherParent) || other.isDescendantOf(otherParent))) 
-         && ((typeof otherContainer == 'undefined') || other.isDescendantOf(otherContainer)))
-        { 
+      var otherCheck = ((typeof otherContainer == 'undefined') || other.isDescendantOf(otherContainer));
+      var thisCheck = (! (other.equals(otherParent) || other.isDescendantOf(otherParent)));
+      console.log("Prune relations", thisCheck, otherCheck, this, otherParent, otherContainer);
+      if (thisCheck && otherCheck) { 
         r.destroy();
         return false;
       } else {

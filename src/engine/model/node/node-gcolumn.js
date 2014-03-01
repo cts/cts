@@ -36,14 +36,13 @@ CTS.Fn.extend(CTS.Node.GColumn.prototype, CTS.Node.Base, CTS.Events, {
     return ret;
   },
 
-  descendantOf: function(other) {
+  isDescendantOf: function(other) {
     // This node is only below a worksheet or gsheet.
     if (this.parentNode != null) {
       if (other == this.parentNode) {
         return true;
-      }
-      if ((this.parentNode.parenNode != null) && (other == this.parentNode.parentNode)) {
-        return true;
+      } else {
+        return this.parentNode.isDescendantOf(other);
       }
     }
     return false;
@@ -57,6 +56,7 @@ CTS.Fn.extend(CTS.Node.GColumn.prototype, CTS.Node.Base, CTS.Events, {
        var cellValue = this.columns[rowName];
        console.log("Realize Cell Value", this.value, rowName, cellValue);
        var child = new CTS.Node.GColumnCell(rowName, cellValue, this.tree, this.opts);
+       child.parentNode = this;
        this.children.push(child);
      }
      deferred.resolve();

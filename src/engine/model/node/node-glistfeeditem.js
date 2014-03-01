@@ -48,17 +48,18 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
     return ret;
   },
 
-  descendantOf: function(other) {
+  isDescendantOf: function(other) {
     // This node is only below a worksheet or gsheet.
+    var ret = false;
     if (this.parentNode != null) {
       if (other == this.parentNode) {
-        return true;
-      }
-      if ((this.parentNode.parenNode != null) && (other == this.parentNode.parentNode)) {
-        return true;
+        ret =true;
+      } else {
+        ret = this.parentNode.isDescendantOf(other);
       }
     }
-    return false;
+    console.log(this, "descendant of?", other, ret);
+    return ret;
   },
 
   _subclass_realizeChildren: function() {
@@ -67,6 +68,7 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
      for (var key in this.spec.data) {
        var value = this.spec.data[key];
        var child = new CTS.Node.GListFeedProperty(key, value, this.tree, this.opts);
+       child.parentNode = this;
        this.children.push(child);
      }
      deferred.resolve();

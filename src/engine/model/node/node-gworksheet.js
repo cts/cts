@@ -4,6 +4,7 @@ CTS.Node.GWorksheet = function(spec, tree, opts) {
   this.initializeNodeBase(tree, opts);
   this.spec = spec;
   this.kind = "GWorksheet";
+  this.name = spec.title;
   this.value = null;
   this.ctsId = Fn.uniqueId().toString();
   this.on('received-is', function() {
@@ -26,42 +27,23 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
 
     if (selector.trim() == "items") {
       console.log("Worksheet interpreting find request as ITEM enumeration");
-      // TODO: A number of things should really apply here..
       for (var i = 0; i < this.children.length; i++) {
-        if (this.children[i].kind == "GListFeedItem") {
+        if (this.children[i].kind == "GListFeed") {
           ret.push(this.children[i]);
         }
       }
     } else if (selector.trim()[0] == ".") {
       console.log("Worksheet interpreting find request as ITEM PROPERTY search");
       for (var i = 0; i < this.children.length; i++) {
-        if (this.children[i].kind == "GListFeedItem") {
+        if (this.children[i].kind == "GListFeed") {
           this.children[i].find(selector, ret);
         }
       }
     } else {
       console.log("Worksheet interpreting find request as CELL query");
-      // We'll do it ssheet reference style
-      selector = selector.trim();
-      console.log("console ", selector);
-      var letterIdx = 0;
-      while (isNaN(parseInt(selector[letterIdx]))) {
-        letterIdx++;
-      }
-      console.log("Letter Index", letterIdx);
-      var col = selector.slice(0, letterIdx);
-      var row = parseInt(selector.slice(letterIdx));
-
-      console.log("Row", row, "Col", col);
-
       for (var i = 0; i < this.children.length; i++) {
-        console.log("Kid type", this.children[i].kind)
-        if (this.children[i].kind == "GColumn") {
-          console.log("has value", this.children[i].value)
-          if (this.children[i].value == col) {
-            console.log("Asking kid to find", row);
-            this.children[i].find(row, ret);
-          }
+        if (this.children[i].kind == "GCellFeed") {
+          this.children[i].find(selector, ret);
         }
       }
     }
@@ -69,61 +51,20 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
     return ret;
   },
 
-  descendantOf: function(other) {
+  isDescendantOf: function(other) {
     false;
   },
 
   _subclass_realizeChildren: function() {
     console.log("Worksheet realize kids", this.spec);
-    var self = this;
-
-    var listFeedPromise = Q.defer();
-    var cellFeedPromise = Q.defer();
-
-    this.children = [];
-    console.log(this.spec.sskey, this.spec.wskey);
-
-    CTS.Util.GSheet.getListFeed(this.spec.sskey, this.spec.wskey).then(
-      function(gdata) {
-        console.log("Got list feed worksheet", gdata);
-        self.gdata = gdata;
-        for (var i = 0; i < gdata.items.length; i++) {
-          var item = gdata.items[i];
-          var child = new CTS.Node.GListFeedItem(item.title, item, self.tree, self.opts);
-          self.children.push(child);
-        }
-        console.log("Resolving Worksheet Kids");
-        listFeedPromise.resolve();
-      },
-      function(reason) {
-        console.log("Rejected", reason);
-        listFeedPromise.reject(reason);
-      }
-    );
-
-    CTS.Util.GSheet.getCellFeed(this.spec.sskey, this.spec.wskey).then(
-      function(gdata) {
-        console.log("Got cell feed worksheet", gdata);
-        self.gdata = gdata;
-
-        for (var rowName in gdata.rows) {
-          console.log("Row", rowName);
-          var columns = gdata.rows[rowName];
-          console.log("Row Columns", columns);
-          var child = new CTS.Node.GColumn(rowName, columns, self.tree, self.opts);
-          console.log("New Child ", child);
-          self.children.push(child);
-        }
-        console.log("Resolving Worksheet Kids");
-        cellFeedPromise.resolve();
-      },
-      function(reason) {
-        console.log("Rejected", reason);
-        cellFeedPromise.reject(reason);
-      }
-    );
-
-    return Q.all([listFeedPromise.promise, cellFeedPromise.promise]);
+    var lf = new CTS.Node.GListFeed(this.spec, this.tree, this.opts);
+    lf.parentNode = this;
+    var cf = new CTS.Node.GCellFeed(this.spec, this.tree, this.opts);
+    cf.parentNode = this;
+    this.children = [lf, cf];
+    var deferred = Q.defer();
+    deferred.resolve();
+    return deferred.promise;
   },
 
    /* 

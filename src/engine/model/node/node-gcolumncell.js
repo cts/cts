@@ -26,13 +26,13 @@ CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
     return ret;
   },
 
-  descendantOf: function(other) {
+  isDescendantOf: function(other) {
     // This node is only below a worksheet or gsheet.
     if (this.parentNode != null) {
       if (other == this.parentNode) {
         return true;
       } else {
-        return this.parentNode.descendantOf(other);
+        return this.parentNode.isDescendantOf(other);
       }
     }
     return false;

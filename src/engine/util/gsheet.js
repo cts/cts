@@ -7,6 +7,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   _ctsApiClientScopes: 'https://www.googleapis.com/auth/plus.me http://spreadsheets.google.com/feeds/ https://www.googleapis.com/auth/drive',
   _loginStateModified: null,
   _currentToken: null,
+  _loginDefer: Q.defer(),
 
   /*
    * Args:
@@ -68,10 +69,13 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   _authenticationResult: function(authResult) {
+   CTS.Log.Info("Got GDoc Auth Result", authResult);
    if (authResult && !authResult.error) {
      CTS.Util.GSheet._currentToken = gapi.auth.getToken();
+     CTS.Util.GSheet._loginDefer.resolve();
    } else {
      CTS.Util.GSheet._currentToken = null;
+     CTS.Util.GSheet._loginDefer.reject();
    }
    if (typeof CTS.Util.GSheet._loginStateModified == 'function') {
      CTS.Util.GSheet._loginStateModified();
@@ -79,10 +83,12 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   login: function() {
+    CTS.Log.Info("Trying to log into GDocs");
     gapi.auth.authorize({
       client_id: CTS.Util.GSheet._ctsApiClientId,
       scope: CTS.Util.GSheet._ctsApiClientScopes},
     CTS.Util.GSheet._authenticationResult);
+    return CTS.Util.GSheet._loginDefer.promise;
   },
 
   isLoggedIn: function() {

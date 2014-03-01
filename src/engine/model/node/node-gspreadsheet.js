@@ -39,13 +39,9 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
       console.log("Addressing a particular worksheet!");
       subselector = parts.slice(1).join("!");
       var worksheet = parts[0].trim();
-      union = [];
-      for (var i = 0; i < this.children.length; i++) {
-        var child = this.children[i];
-        if (child) {
-          union.push(child);
-        }
-      }
+      union = CTS.Fn.filter(this.children, function(kid) {
+        return kid.name == worksheet;
+      });
     }
     for (var i = 0; i < union.length; i++) {
       var kid = union[i];
@@ -57,7 +53,7 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
     return ret;
   },
 
-  descendantOf: function(other) {
+  isDescendantOf: function(other) {
     false;
   },
 
