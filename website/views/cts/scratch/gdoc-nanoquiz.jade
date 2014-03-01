@@ -1,0 +1,119 @@
+extends ../layouts/scratchui
+
+block head
+  title Nano Quiz
+  script(src='/js/lib/jquery-2.1.0.min.js')
+  script(src='/js/lib/bootstrap.min.js')
+  style.
+    table.student td.info {
+      padding-left: 5px;
+    }
+    table.student td.info span.name {
+      font-size: 18px;
+      display: block;
+    }
+    table.student td.info {
+      vertical-align: middle;
+    }
+    table.student td.picture img {
+      width: 60px;
+      height: 60px;
+    }
+    table.nanoquiz tr.graderow td span.grade {
+      line-height: 40px;
+      margin-right: 5px;
+      font-size: 18px;
+    }
+    table.nanoquiz tr.graderow td.answer {
+      width: 85px;
+    }
+    table.nanoquiz tr.tophead th {
+      border: 0;
+    }
+    table.nanoquiz tr.tophead {
+      border-bottom: 0;
+      border: 0;
+    }
+
+    table.nanoquiz tr.subhead th {
+      background-color: #EEFCFF;
+      border: 0;
+      border-bottom: 1px solid #72818B;
+    }
+
+    table.header {
+      border-bottom: 4px solid #72818B;
+    }
+
+
+
+block content
+  .content
+    div.row
+      div.col-md-9.col-md-offset-1
+        table.header(width="100%")
+          tr
+            td
+              h1 Nanoquiz 7
+            td
+              div.btn-group.pull-right
+                button(type="button").btn All
+                button(type="button").btn.btn-default Perfect
+                button(type="button").btn.btn-default Imperfect
+                button(type="button").btn.btn-default As
+                button(type="button").btn.btn-default Bs
+                button(type="button").btn.btn-default Cs and Below
+
+
+        table.table.nanoquiz
+          tr.tophead
+            th 
+            th Q1
+            th Q2
+            th Q3
+            th Q4
+            th Q5
+            th Bonus
+            th Final
+          tr.subhead
+            th(style="text-align: right") Answer Key:
+            th A
+            th B
+            th C
+            th D
+            th E
+            th 
+            th 
+          each student in [0,1,2,3,4,5]
+            tr.graderow
+              td 
+                table.student
+                  tr
+                    td.picture
+                      img(src="http://gravatar.com/avatar/e6ec6e853bf22a2f3ad69ca56564b093?s=142")
+                    td.info
+                      span.name Ted Benson
+                      span.email eob@mit.edu
+              td.answer
+                span.grade A
+              td.answer
+                span.grade B
+              td.answer
+                span.grade C
+              td.answer
+                span.grade D
+                span.comment-btn
+                  img(src="/img/speech-bubble-2.png")
+              td.answer
+                span.grade E
+              td
+                span.grade 0
+              td
+                span.grade 80 B
+                br
+                a Add Comment
+
+
+
+
+
