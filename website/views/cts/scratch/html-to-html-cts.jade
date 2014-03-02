@@ -2,6 +2,15 @@ extends ../layouts/scratch
 
 block head
   title CTS HTML-to-HTML Examples
+  style.
+    h3 {
+      text-align: center;
+    }
+
+    td.title {
+      background-color: #ccc;
+      text-align: center;
+    }
 
 block content
   .content
@@ -16,8 +25,8 @@ block content
             th
               h2 Should Be
           tr
-            td(colspan="3" style="background-color: #ccc; text-align: center;")
-              h3(style="text-align: center;") Simple <b>:is</b> Relation
+            td(colspan="3").title
+              h3 <b>:is</b>
           tr
             td
               span#source1 Source Value
@@ -26,8 +35,30 @@ block content
             td
               span Source Value
           tr
-            td(colspan="3" style="background-color: #ccc; text-align: center;")
-              h3(style="text-align: center;") Simple <b>:are</b> Relation
+            td(colspan="3").title
+              h3 <b>:if-exist</b>
+          tr
+            td
+              span#ohyeah Source Value
+            td
+              span(data-cts="this :if-exist #ohyeah;") HERE
+              span(data-cts="this :if-exist #nonexistant;") ..NOTHERE
+            td
+              span HERE
+          tr
+            td(colspan="3").title
+              h3 <b>:if-nexist</b>
+          tr
+            td
+              span#ohyeah2 Source Value
+            td
+              span(data-cts="this :if-nexist #ohyeah2;") HERE
+              span(data-cts="this :if-nexist #nonexistant;") ..NOTHERE
+            td
+              span ..NOTHERE
+          tr
+            td(colspan="3").title
+              h3 Simple <b>:are</b> Relation
           tr
             td
               ul#container2
@@ -45,8 +76,8 @@ block content
                 li C
                 li D
           tr
-            td(colspan="3" style="background-color: #ccc; text-align: center;")
-              h3(style="text-align: center;") Simple <b>:graft</b> Relation
+            td(colspan="3").title
+              h3 <b>:graft</b>
           tr
             td
               div#template
@@ -67,7 +98,7 @@ block content
                   button.btn.btn-info Click Me, Too!
           tr
             td(colspan="3" style="background-color: #ccc; text-align: center;")
-              h3(style="text-align: center;") Combination of the above three
+              h3 Combination of the above three
           tr
             td
             td
