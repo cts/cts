@@ -351,12 +351,9 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   realizeRelations: function() {
-    var deferred = Q.defer();
-    deferred.resolve();
     for (var i = 0; i < this.relationSpecs.length; i++) {
       this.realizeRelation(this.relationSpecs[i]);
     }
-    return deferred.promise;
   },
 
   /* The JSON should be of the form:

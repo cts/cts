@@ -24,7 +24,7 @@ block head
       margin-right: 5px;
       font-size: 18px;
     }
-    table.nanoquiz tr.graderow td.answer {
+    table.nanoquiz tr.graderow td.q {
       width: 85px;
     }
     table.nanoquiz tr.tophead th {
@@ -33,6 +33,10 @@ block head
     table.nanoquiz tr.tophead {
       border-bottom: 0;
       border: 0;
+    }
+
+    table.nanoquiz td.q div.comment-data {
+      display: none;
     }
 
     table.nanoquiz tr.subhead th {
@@ -45,6 +49,31 @@ block head
       border-bottom: 4px solid #72818B;
     }
 
+  style(type="text/cts").
+    @gsheet sheet 0Arj8lnBW4_tZdDdMZTV2SkVzZF9RNjBTaTQxajBHMEE;
+
+    tbody#grades            :are      sheet | Nanoquiz!items { prefix: 1 };
+    span.name               :is       sheet | .name ;
+    span.email              :is       sheet | .email ;
+    td.q1 span.answer       :is       sheet | .q1 ;
+    td.q2 span.answer       :is       sheet | .q2 ;
+    td.q3 span.answer       :is       sheet | .q3 ;
+    td.q4 span.answer       :is       sheet | .q4 ;
+    td.q5 span.answer       :is       sheet | .q5 ;
+
+    td.q1 span.comment      :if-exist sheet | .q1comment;
+    td.q2 span.comment      :if-exist sheet | .q2comment;
+    td.q3 span.comment      :if-exist sheet | .q3comment;
+    td.q4 span.comment      :if-exist sheet | .q4comment;
+    td.q5 span.comment      :if-exist sheet | .q5comment;
+
+    td.q1 div.comment-data  :is       sheet | .q1comment;
+    td.q2 div.comment-data  :is       sheet | .q2comment;
+    td.q3 div.comment-data  :is       sheet | .q3comment;
+    td.q4 div.comment-data  :is       sheet | .q4comment;
+    td.q5 div.comment-data  :is       sheet | .q5comment;
+
+    span.totalpoints        :is       sheet | .totalpoints ;
 
 
 block content
@@ -63,7 +92,6 @@ block content
                 button(type="button").btn.btn-default As
                 button(type="button").btn.btn-default Bs
                 button(type="button").btn.btn-default Cs and Below
-
 
         table.table.nanoquiz
           tr.tophead
@@ -84,7 +112,7 @@ block content
             th E
             th 
             th 
-          each student in [0,1,2,3,4,5]
+          tbody#grades
             tr.graderow
               td 
                 table.student
@@ -94,19 +122,32 @@ block content
                     td.info
                       span.name Ted Benson
                       span.email eob@mit.edu
-              td.answer
-                span.grade A
-              td.answer
-                span.grade B
-              td.answer
-                span.grade C
-              td.answer
-                span.grade D
-                span.comment-btn
+              td.q.q1
+                span.answer A
+                span.comment
                   img(src="/img/speech-bubble-2.png")
-              td.answer
-                span.grade E
-              td
+                div.comment-data
+              td.q.q2
+                span.answer B
+                span.comment
+                  img(src="/img/speech-bubble-2.png")
+                div.comment-data
+              td.q.q3
+                span.answer C
+                span.comment
+                  img(src="/img/speech-bubble-2.png")
+                div.comment-data
+              td.q.q4
+                span.answer D
+                span.comment
+                  img(src="/img/speech-bubble-2.png")
+                div.comment-data
+              td.q.q5
+                span.answer E
+                span.comment
+                  img(src="/img/speech-bubble-2.png")
+                div.comment-data
+              td.totalpoints
                 span.grade 0
               td
                 span.grade 80 B

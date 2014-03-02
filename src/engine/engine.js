@@ -56,65 +56,51 @@ CTS.Fn.extend(Engine.prototype, Events, {
     } else {
       self.booting = true;
     }
-    var uhoh = function(reason) {
-      CTS.Error(uhoh);
-      deferred.reject(uhoh);
-    }
-
     self.bootStage = "Loading Forrest";
-    self.loadForrest().then(
-      function() {
-        self.bootStage = "Loading CTS";
-        self.loadCts().then(
-          function() {
-            self.bootStage = "Realizing Dependencies";
-            self.forrest.realizeDependencies().then(
-              function() {
-                self.bootStage = "Realize Trees";
-                CTS.Log.Info("Engine: Realizing Trees");
-                self.forrest.realizeTrees().then(
-                  function() {
-                    self.bootStage = "Realize Relations";
-                    self.forrest.realizeRelations().then(
-                      function() {
-                        CTS.Log.Info("Engine: CTS Resources Loaded. Rendering.");
-                        self.bootStage = "Render";
-                        self.render.call(self);
-                        self.bootStage = "Finalizing Boot";
-                        self._booted.resolve();
-                      }, uhoh
-                    );
-                  }, uhoh
-                );
-              }, uhoh
-            );
-          }, uhoh
-        );
-      }, uhoh
-    );
-
+    self.loadForrest().then(function() {
+      CTS.Log.Info("Engine: Loaded Forrest");
+      self.bootStage = "Loading CTS";
+      return self.loadCts();
+    }).then(function() {
+      CTS.Log.Info("Engine: Loaded CTS");
+      self.bootStage = "Realizing Dependencies";
+      return self.forrest.realizeDependencies();
+    }).then(function() {
+      CTS.Log.Info("Engine: Realized Dependencies");
+      self.bootStage = "Realize Trees";
+      return self.forrest.realizeTrees();
+    }).then(function() {
+      CTS.Log.Info("Engine: Realized Trees");
+      self.bootStage = "Realize Relations";
+      return Q.fcall(function() {
+        self.forrest.realizeRelations()
+      });
+    }).then(function() {
+      CTS.Log.Info("Engine: CTS Realized Relations. Starting Render.");
+      self.bootStage = "Render";
+      self.render.call(self);
+      self.bootStage = "Finalizing Boot";
+      self._booted.resolve();
+      return Q.fcall(function() { return true; });
+    }).fail(function(error) {
+      CTS.Log.Error("Boot stage failed.", error);
+      self._booted.reject(error);
+    }).done();
     return self.booted;
   },
 
   loadForrest: function() {
-    var deferred = Q.defer();
     var self = this;
     if (typeof this.opts.forrest == 'undefined') {
       this.opts.forrest = {};
     }
     this.opts.forrest.engine = this;
-    CTS.Factory.Forrest(this.opts.forrest).then(
+    return CTS.Factory.Forrest(this.opts.forrest).then(
       function(forrest) {
         self.forrest = forrest;
-        CTS.Info("Engine: Resolved forrest.");
-        deferred.resolve();
-      },
-      function(reason) {
-        CTS.Log.Error(reason);
-        deferred.reject(reason);
+        CTS.Log.Info("Engine: Resolved forrest.");
       }
     );
-    return deferred.promise;
   },
 
   loadCts: function() {

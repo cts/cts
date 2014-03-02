@@ -49,9 +49,7 @@ CTS.Log = {
   },
 
   Error: function(message) {
-    if (1 >= CTS.Log.Level) {
-      CTS.Log._LogWithLevel("ERROR", CTS.LogLevel.Error, 'error', arguments);
-    }
+    CTS.Log._LogWithLevel("ERROR", CTS.LogLevel.Error, 'error', arguments);
   },
 
   Warn: function(message) {

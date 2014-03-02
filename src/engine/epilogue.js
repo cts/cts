@@ -39,7 +39,7 @@ CTS.Epilogue.maybeAutoload = function() {
         function() {
           CTS.Util.showDocumentBody();
         }
-      );
+      ).done();
     });
   }
 };
@@ -52,4 +52,4 @@ CTS.Epilogue.ensureJquery().then(
   },
   function(reason) {
   }
-);
+).done();
