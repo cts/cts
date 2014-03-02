@@ -23,7 +23,7 @@ CTS.Fn.extend(CTS.Node.GColumn.prototype, CTS.Node.Base, CTS.Events, {
     if (typeof ret == 'undefined') {
       ret = [];
     }
-    console.log("Column asked to find selector", selector);
+    CTS.Log.Debug("Column asked to find selector", selector);
     // Incoming: a number
     selector = parseInt(selector);
     if (! isNaN(selector)) {
@@ -49,12 +49,12 @@ CTS.Fn.extend(CTS.Node.GColumn.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_realizeChildren: function() {
-    console.log("GColumn Realize Children");
+    CTS.Log.Debug("GColumn Realize Children");
      var deferred = Q.defer();
      this.children = [];
      for (var rowName in this.columns) {
        var cellValue = this.columns[rowName];
-       console.log("Realize Cell Value", this.value, rowName, cellValue);
+       CTS.Log.Debug("Realize Cell Value", this.value, rowName, cellValue);
        var child = new CTS.Node.GColumnCell(rowName, cellValue, this.tree, this.opts);
        child.parentNode = this;
        this.children.push(child);

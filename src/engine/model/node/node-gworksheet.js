@@ -1,5 +1,5 @@
 CTS.Node.GWorksheet = function(spec, tree, opts) {
-  console.log("GWorksheet Constructor");
+  CTS.Log.Debug("GWorksheet Constructor");
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
   this.spec = spec;
@@ -20,34 +20,34 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   find: function(selector, ret) {
-    console.log("WS find", selector);
+    CTS.Log.Debug("WS find", selector);
     if (typeof ret == 'undefined') {
       ret = [];
     }
 
     if (selector.trim() == "items") {
-      console.log("Worksheet interpreting find request as ITEM enumeration");
+      CTS.Log.Debug("Worksheet interpreting find request as ITEM enumeration");
       for (var i = 0; i < this.children.length; i++) {
         if (this.children[i].kind == "GListFeed") {
           ret.push(this.children[i]);
         }
       }
     } else if (selector.trim()[0] == ".") {
-      console.log("Worksheet interpreting find request as ITEM PROPERTY search");
+      CTS.Log.Debug("Worksheet interpreting find request as ITEM PROPERTY search");
       for (var i = 0; i < this.children.length; i++) {
         if (this.children[i].kind == "GListFeed") {
           this.children[i].find(selector, ret);
         }
       }
     } else {
-      console.log("Worksheet interpreting find request as CELL query");
+      CTS.Log.Debug("Worksheet interpreting find request as CELL query");
       for (var i = 0; i < this.children.length; i++) {
         if (this.children[i].kind == "GCellFeed") {
           this.children[i].find(selector, ret);
         }
       }
     }
-    console.log("Finished WS Find", ret);
+    CTS.Log.Debug("Finished WS Find", ret);
     return ret;
   },
 
@@ -56,7 +56,7 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_realizeChildren: function() {
-    console.log("Worksheet realize kids", this.spec);
+    CTS.Log.Debug("Worksheet realize kids", this.spec);
     var lf = new CTS.Node.GListFeed(this.spec, this.tree, this.opts);
     lf.parentNode = this;
     var cf = new CTS.Node.GCellFeed(this.spec, this.tree, this.opts);

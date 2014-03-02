@@ -1,4 +1,5 @@
 CTS.Debugging = {
+
   DumpStack: function() {
     var e = new Error('dummy');
     var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')

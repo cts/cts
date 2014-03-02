@@ -17,27 +17,27 @@ CTS.LogLevel = {
 
   // 0: Fatal
   Fatal: function() {
-    return CTS.LogLevel >= 0;
+    return CTS.LogLevel.Level >= 0;
   },
    
   // 1: Error
   Error: function() {
-    return CTS.LogLevel >= 1;
+    return CTS.LogLevel.Level >= 1;
   },
 
   // 2: Warn
   Warn: function() {
-    return CTS.LogLevel >= 2;
+    return CTS.LogLevel.Level >= 2;
   },
 
-  // 3: Debug
-  Debug: function() {
-    return CTS.LogLevel >= 3;
-  },
-
-  // 4: Info
+  // 3: Info
   Info: function() {
-    return CTS.LogLevel >= 4;
+    return CTS.LogLevel.Level >= 3;
+  },
+
+  // 4: Debug 
+  Debug: function() {
+    return CTS.LogLevel.Level >= 4;
   }
 };
 
@@ -45,33 +45,36 @@ CTS.Log = {
 
   Fatal: function(msg) {
     alert(msg);
-    CTS.Log._LogWithLevel("FATAL", CTS.LogLevel.Fatal, arguments);
+    CTS.Log._LogWithLevel("FATAL", CTS.LogLevel.Fatal, 'error', arguments);
   },
 
   Error: function(message) {
     if (1 >= CTS.Log.Level) {
-      CTS.Log._LogWithLevel("ERROR", CTS.LogLevel.Error, arguments);
+      CTS.Log._LogWithLevel("ERROR", CTS.LogLevel.Error, 'error', arguments);
     }
   },
 
   Warn: function(message) {
-    CTS.Log._LogWithLevel("WARN", CTS.LogLevel.Warn, arguments);
+    CTS.Log._LogWithLevel("WARN", CTS.LogLevel.Warn, 'warn', arguments);
   },
 
   Debug: function(message) {
-    CTS.Log._LogWithLevel("DEBUG", CTS.LogLevel.Debug, arguments);
+    CTS.Log._LogWithLevel("DEBUG", CTS.LogLevel.Debug, 'debug', arguments);
   },
 
   Info: function(message) {
-    CTS.Log._LogWithLevel("INFO", CTS.LogLevel.Info, arguments);
+    CTS.Log._LogWithLevel("INFO", CTS.LogLevel.Info, 'info', arguments);
   },
 
   // To be considered private.
-  _LogWithLevel: function(levelName, levelFn, args) {
+  _LogWithLevel: function(levelName, levelFn, consoleFn, args) {
     if (console && levelFn()) {
       var args = Array.prototype.slice.call(args);
-      args.unshift(levelName);
-      console.log.apply(console, args);
+      if (! console[consoleFn]) {
+        consoleFn = 'log';
+        args.unshift(levelName + ": ");
+      }
+      console[consoleFn].apply(console, args);
     }
   }
 

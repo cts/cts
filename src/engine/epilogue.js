@@ -28,7 +28,7 @@ CTS.Epilogue.ensureJquery = function() {
 }
 
 CTS.Epilogue.maybeAutoload = function() {
-  console.log("CTS Autoload check...");
+  CTS.Log.Info("CTS Epilogue: Autoload check...");
   if (CTS.Util.shouldAutoload()) {
     CTS.$(function() {
       if (CTS.Constants.longstackSupport) {

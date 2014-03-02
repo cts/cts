@@ -94,10 +94,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
            }
            node.parentNode = self;
          }
-         if (self.value.is('body')) {
-           console.log("BODY!");
-           console.log(self.children);
-         }
          deferred.resolve();
        },
        function(reason) {
@@ -335,7 +331,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
    **************************************************************************/
 
   _subclass_setValue: function(newValue) {
-    console.log("Instructed to set value to", newValue);
+    CTS.Log.Debug("Instructed to set value to", newValue);
     // To suppress throwing a data event without worrying about event firing
     // timing. The event listener will look for this.
     this.value.data('ValueChanged', newValue); 

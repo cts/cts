@@ -19,7 +19,6 @@ CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Base, {
   execute: function(toward) {
     var from = this.opposite(toward);
     var content = from.getValue(this.optsFor(from));
-    //CTS.Log.Info("From", from.tree.name, from.getValue(), "Overwriting", toward.tree.name, toward.getValue());
     toward.setValue(content, this.optsFor(toward));
     toward.trigger('received-is', {
       target: toward,

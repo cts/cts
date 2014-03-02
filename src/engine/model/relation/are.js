@@ -50,15 +50,16 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
     var otherIterables = this._Are_GetIterables(other);
     var myIterables = this._Are_GetIterables(toward);
 
-    CTS.Debugging.DumpTree(toward);
-
     if (myIterables.length > 0) {
       while (myIterables.length > 1) {
         var bye = myIterables.pop();
         bye.destroy();
       }
-      console.log("After prune to 1");
-      CTS.Debugging.DumpTree(toward);
+
+      if (CTS.LogLevel.Debug()) {
+        CTS.Log.Debug("After prune to 1");
+        CTS.Debugging.DumpTree(toward);
+      }
   
       // Now build it back up.
       if (otherIterables.length == 0) {
@@ -70,22 +71,17 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
         for (var i = 1; i < otherIterables.length; i++) {
           // Clone the iterable.
           var clone = myIterables[0].clone();
-          console.log("After clone to " + i);
-          CTS.Debugging.DumpTree(toward);
           toward.insertChild(clone, lastIndex, true);
           clone.pruneRelations(otherIterables[i], other);
           lastIndex++;
         }
-
-        CTS.Log.Info("Other Guy Before Prune");
-        CTS.Debugging.DumpTree(myIterables[0]);
         myIterables[0].pruneRelations(otherIterables[0], other);
-        CTS.Log.Info("Other Guy After Prune");
-        CTS.Debugging.DumpTree(myIterables[0]);
       }
     }
-    CTS.Log.Info("After Align");
-    CTS.Debugging.DumpTree(toward);
+    if (CTS.LogLevel.Debug()) {
+      CTS.Log.Debug("After Align");
+      CTS.Debugging.DumpTree(toward);
+    }
   },
 
   _Are_GetIterables: function(node) {

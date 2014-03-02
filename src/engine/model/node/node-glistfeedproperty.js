@@ -47,7 +47,6 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
         ret = this.parentNode.isDescendantOf(other);
       }
     }
-    console.log(this, "descendant of?", other, ret);
     return ret;
   },
 

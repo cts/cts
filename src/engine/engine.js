@@ -48,7 +48,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
   },
 
   boot: function() {
-    console.log("CTS engine booting...");
+    CTS.Log.Info("Engine: Starting Boot");
     this.bootStage = "Booting";
     var self = this;
     if (typeof self.booting != 'undefined') {
@@ -71,13 +71,13 @@ CTS.Fn.extend(Engine.prototype, Events, {
             self.forrest.realizeDependencies().then(
               function() {
                 self.bootStage = "Realize Trees";
-                console.log("realizing trees");
+                CTS.Log.Info("Engine: Realizing Trees");
                 self.forrest.realizeTrees().then(
                   function() {
                     self.bootStage = "Realize Relations";
                     self.forrest.realizeRelations().then(
                       function() {
-                        console.log("CTS Resources Loaded. Rendering.");
+                        CTS.Log.Info("Engine: CTS Resources Loaded. Rendering.");
                         self.bootStage = "Render";
                         self.render.call(self);
                         self.bootStage = "Finalizing Boot";
@@ -106,7 +106,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
     CTS.Factory.Forrest(this.opts.forrest).then(
       function(forrest) {
         self.forrest = forrest;
-        console.log("Resolved forrest");
+        CTS.Info("Engine: Resolved forrest.");
         deferred.resolve();
       },
       function(reason) {

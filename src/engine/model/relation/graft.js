@@ -33,10 +33,12 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
 
     if (opp != null) {
 
-      //console.log("GRAFT THE FOLLOWING");
-      //CTS.Debugging.DumpTree(opp);
-      //console.log("GRAFT ONTO THE FOLLOWING");
-      //CTS.Debugging.DumpTree(toward);
+      if (CTS.LogLevel.Debug()) {
+        CTS.Log.Debug("GRAFT THE FOLLOWING");
+        CTS.Debugging.DumpTree(opp);
+        CTS.Log.Debug("GRAFT ONTO THE FOLLOWING");
+        CTS.Debugging.DumpTree(toward);
+      }
 
       var replacements = [];
       for (var i = 0; i < opp.children.length; i++) {
@@ -57,9 +59,11 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
         child._processIncoming();
         replacements.push(child);
       }
-      Fn.map(replacements, function(r) {
-        console.log("replacement", r.value.html());
-      });
+      if (CTS.LogLevel.Debug()) {
+        Fn.map(replacements, function(r) {
+          CTS.Log.Debug("replacement", r.value.html());
+        });
+      }
       toward.replaceChildrenWith(replacements);
       toward.setProvenance(opp.tree, opp);
     }

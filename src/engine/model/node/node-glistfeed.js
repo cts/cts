@@ -35,7 +35,7 @@ CTS.Fn.extend(CTS.Node.GListFeed.prototype, CTS.Node.Base, CTS.Events, {
         child.find(selector, ret);
       }
     } 
-    console.log("GListFeed Finished Find");
+    CTS.Log.Debug("GListFeed Finished Find");
     return ret;
   },
 
@@ -49,7 +49,6 @@ CTS.Fn.extend(CTS.Node.GListFeed.prototype, CTS.Node.Base, CTS.Events, {
         ret = this.parentNode.isDescendantOf(other);
       }
     }
-    console.log(this, "descendant of?", other, ret);
     return ret;
   },
 
@@ -59,7 +58,7 @@ CTS.Fn.extend(CTS.Node.GListFeed.prototype, CTS.Node.Base, CTS.Events, {
      var self = this;
      CTS.Util.GSheet.getListFeed(this.spec.sskey, this.spec.wskey).then(
        function(gdata) {
-         console.log("Got list feed worksheet", gdata);
+         CTS.Log.Debug("Got list feed worksheet", gdata);
          self.gdata = gdata;
          for (var i = 0; i < gdata.items.length; i++) {
            var item = gdata.items[i];
@@ -67,11 +66,11 @@ CTS.Fn.extend(CTS.Node.GListFeed.prototype, CTS.Node.Base, CTS.Events, {
            child.parentNode = self;
            self.children.push(child);
          }
-         console.log("Resolving Worksheet Kids");
+         CTS.Log.Debug("Resolving Worksheet Kids");
          deferred.resolve();
        },
        function(reason) {
-         console.log("Rejected", reason);
+         CTS.Log.Warn("ListFeed Load Rejected", reason);
          deferred.reject(reason);
        }
      );

@@ -322,7 +322,9 @@ CTS.Node.Base = {
       // Remove it
       var otherCheck = ((typeof otherContainer == 'undefined') || other.isDescendantOf(otherContainer));
       var thisCheck = (! (other.equals(otherParent) || other.isDescendantOf(otherParent)));
-      console.log("Prune relations", thisCheck, otherCheck, this, otherParent, otherContainer);
+      if (CTS.LogLevel.Debug()) {
+        CTS.Log.Debug("Prune relations", thisCheck, otherCheck, this, otherParent, otherContainer);
+      }
       if (thisCheck && otherCheck) { 
         r.destroy();
         return false;
@@ -490,7 +492,9 @@ CTS.Node.Base = {
   },
 
   handleEventFromData: function(evt) {
-    console.log("Event from data", evt);
+    if (CTS.LogLevel.Debug()) {
+      CTS.Log.Debug("Event from data", evt);
+    }
     if (this.shouldThrowEvents) {
       this.passEventToRelations(evt);
     }

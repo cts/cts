@@ -29,23 +29,23 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
     }
 
     selector = selector.trim();
-    console.log("console ", selector);
+    CTS.Log.Debug("console ", selector);
     var letterIdx = 0;
     while (isNaN(parseInt(selector[letterIdx]))) {
       letterIdx++;
     }
-    console.log("Letter Index", letterIdx);
+    CTS.Log.Debug("Letter Index", letterIdx);
     var col = selector.slice(0, letterIdx);
     var row = parseInt(selector.slice(letterIdx));
 
-    console.log("Row", row, "Col", col);
+    CTS.Log.Debug("Row", row, "Col", col);
 
     for (var i = 0; i < this.children.length; i++) {
-      console.log("Kid type", this.children[i].kind)
+      CTS.Log.Debug("Kid type", this.children[i].kind)
       if (this.children[i].kind == "GColumn") {
-        console.log("has value", this.children[i].value)
+        CTS.Log.Debug("has value", this.children[i].value)
         if (this.children[i].value == col) {
-          console.log("Asking kid to find", row);
+          CTS.Log.Debug("Asking kid to find", row);
           this.children[i].find(row, ret);
         }
       }
@@ -72,7 +72,7 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
      var self = this;
      CTS.Util.GSheet.getCellFeed(this.spec.sskey, this.spec.wskey).then(
        function(gdata) {
-         console.log("Got cell feed worksheet", gdata);
+         CTS.Log.Debug("Got cell feed worksheet", gdata);
          self.gdata = gdata;
  
          for (var rowName in gdata.rows) {
@@ -81,11 +81,11 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
            child.parentNode = self;
            self.children.push(child);
          }
-         console.log("Resolving Worksheet Kids");
+         CTS.Log.Debug("Resolving Worksheet Kids");
          deferred.resolve();
        },
        function(reason) {
-         console.log("Rejected", reason);
+         CTS.Log.Warn("CellFeed Load Rejected", reason);
          deferred.reject(reason);
        }
      );
