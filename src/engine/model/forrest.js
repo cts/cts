@@ -83,14 +83,14 @@ CTS.Fn.extend(Forrest.prototype, {
   },
 
   stopListening: function() {
-    console.log("Stop Listening");
+    CTS.Log.Info("Stop Listening");
     for (var treeName in this.insertionListeners) {
       this.listenForNodeInsertionsOnTree(treeName, false);
     }
   },
 
   startListening: function() {
-    console.log("Start Listening");
+    CTS.Log.Info("Start Listening");
     this.listenForNodeInsertionsOnTree('body', true);
   },
 
@@ -292,7 +292,7 @@ CTS.Fn.extend(Forrest.prototype, {
     var promises = [];
     Fn.each(this.treeSpecs, function(treeSpec, name, list) {
       if (! Fn.has(this.trees, name)) {
-        console.log("Promising to realize tree", treeSpec);
+        CTS.Log.Info("Promising to realize tree", treeSpec);
         promises.push(this.realizeTree(treeSpec));
       }
     }, this);
@@ -417,12 +417,12 @@ CTS.Fn.extend(Forrest.prototype, {
     var nodes2 = this.trees[s2.treeName].nodesForSelectionSpec(s2);
 
     if (nodes1.length == 0) {
-      CTS.Log.Warn("Can not realize RelationSpec because selection is empty", s1);
-      return;
+      nodes1 = [CTS.NonExistantNode];
+      CTS.Log.Info("empty selection -> NonExistantNode!", s1);
     }
     if (nodes2.length == 0) {
-      CTS.Log.Warn("Can not realize RelationSpec because selection is empty", s2);
-      return;
+      nodes2 = [CTS.NonExistantNode];
+      CTS.Log.Info("empty selection -> NonExistantNode!", s2);
     }
 
     for (var i = 0; i < nodes1.length; i++) {
@@ -507,7 +507,7 @@ CTS.Fn.extend(Forrest.prototype, {
       var node = tree.getCtsNode($node);
       if (node == null) {
         if (! $node.hasClass("cts-ignore")) {
-          console.log("Insertion", $node);
+          CTS.Log.Debug("Insertion", $node);
           // Get the parent
           var $prnt = CTS.$($node.parent());
           var prnt = tree.getCtsNode($prnt);
