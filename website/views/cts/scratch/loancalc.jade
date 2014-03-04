@@ -1,0 +1,61 @@
+head
+  title Student Loan Calculator
+    link(href='http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', rel='stylesheet')
+    script(src='http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js')
+    script(src='http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js')
+  body
+    .container
+      .row
+        .col-md-12
+          .jumbotron
+            h1
+              | Loan calculator
+              h1
+                p
+                  | This will calculate your student loan payments
+                  p
+      .row
+        .col-md-8.col-md-offset-2
+          form(role='form')
+            .form-group
+              label(for='loanBalance') Loan Balance
+              input#loanBalance.form-control(type='text', placeholder='$100.00')
+            .form-group
+              label(for='interestRate') Interest Rate
+              input#interestRate.form-control(type='text', placeholder='6.8%')
+            .form-group
+              label(for='loanFees') Loan Fees
+              input#loanFees.form-control(type='text', placeholder='0.0%')
+            .form-group
+              label(for='loanTerm') Loan Term (Years)
+              input#loanTerm.form-control(type='text', placeholder='10')
+            .form-group
+              label(for='minimum') Minimum Payment
+              input#minimum.form-control(type='text', placeholder='$50')
+            .form-group
+              label Enrollment Status
+              select#enrollment.form-control
+                option Not Specified
+                option Still in School
+                option Graduating Soon
+                option In Repayment
+            .form-group
+              label Degree Program
+              select#degree.form-control
+                option Not Specified
+                option Associate's Degree
+                option Bachelor's Degree
+                option Master's Degree
+                option Ph. D.
+                option Lawyer (LLB or JD)
+                option Doctor (M.D.)
+            button.btn.btn-default(type='submit') Calculate
+      .row
+        .col-md-8.col-md-offset-2
+          h2
+            | Result:
+            span#result
+          div(style='margin-top: 200px;')
+      .row
+        .col-md-12
+          iframe(style='height: 500px; width: 100%;', src='https://docs.google.com/spreadsheet/ccc?key=0AiBlqYNI6IbndGw4bUc2Z2xTMGNpd3VTZ2dWVl9UUmc&usp=sharing')
