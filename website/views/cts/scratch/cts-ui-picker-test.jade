@@ -1,0 +1,23 @@
+extends ../layouts/scratchui
+
+block head
+  title Simple test of loading CTS-UI
+
+block content
+  div.row
+    div.col-md-3
+    div.col-md-4
+      span#source1 Source 1
+      span#source2 Source 2
+      ul#source3
+        li One
+        li Two
+        li Three
+  div.row(style="margin-top: 10px; padding-top: 10px; border-top: 1px solid black")
+    div.col-md-3
+    div.col-md-4
+      div(data-cts="this :is #source1;") ...
+      div(data-cts="this :is #source2;") ...
+      ul(data-cts="this :are #source3;")
+        li(data-cts="this :is #source3 li;") ...
+     
