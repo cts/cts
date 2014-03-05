@@ -175,13 +175,8 @@ CTS.UI.Picker.prototype._select = function($elem) {
 
   var left = x - bodyPos.left - this.CONST.UI.BorderPadding;
   var top = ($elem.offset().top - bodyPos.top - this.CONST.UI.BorderPadding);
-  var width = w - (this.CONST.UI.BorderThickness * 2) + (2 * this.CONST.UI.BorderPadding);
-  var height = ($elem.outerHeight() - (this.CONST.UI.BorderThickness * 2) + (2 * this.CONST.UI.BorderPadding));
-
-  // Possibly offset the left and width if the tray is open.
-  if (CTS.UI.tray.isOpen()) {
-    left = left + CTS.UI.tray._width;
-  }
+  var width = w - this.CONST.UI.BorderThickness + (2 * this.CONST.UI.BorderPadding);
+  var height = ($elem.outerHeight() - this.CONST.UI.BorderThickness + (2 * this.CONST.UI.BorderPadding));
 
   var newCss = {
     position: 'absolute',
@@ -190,6 +185,8 @@ CTS.UI.Picker.prototype._select = function($elem) {
     width: width + 'px',
     height: height + 'px'
   };
+
+  console.log(newCss);
 
   if (offerElementSelection) {
     console.log("Offer Selection");
