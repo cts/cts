@@ -58,6 +58,9 @@
     // <script>
     } else {
         Q = definition();
+        if (typeof CTS != 'undefined') {
+          CTS.Q = Q;
+        }
     }
 
 })(function () {
