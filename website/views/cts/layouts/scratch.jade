@@ -3,12 +3,27 @@ html
   head
     meta(charset='utf-8')
     != css('styles')
+    style.
+      a#scratch {
+        position: absolute;
+        top: 14px;
+        left: 10px;
+        background: none;
+        color: white;
+        border: 1px solid white;
+        border-radius: 5px;
+        padding: 5px;
+      }
+      a#scratch:hover {
+        text-decoration: none;
+      }
     each source in sources
       script(src='/' + source)
     block subtemplatehead
     block head
 
   body(style="padding: 0")
+    a(href="/cts/scratch")#scratch &#9664; Scratch
     main.ctsdoc-small
       .left &nbsp;
       .center
