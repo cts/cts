@@ -181,7 +181,7 @@ CTS.UI.Picker.prototype._select = function($elem) {
   // Possibly offset the left and width if the tray is open.
   if (CTS.UI.tray.isOpen()) {
     left = left + CTS.UI.tray._width;
-  } 
+  }
 
   var newCss = {
     position: 'absolute',
@@ -342,7 +342,7 @@ CTS.UI.Picker.prototype._mouseMove = function(event) {
   // Look for a parent that is selectable it not.
   while (($element.length > 0) &&
          ($element[0] != document.body) &&
-         (! (this._canConsider($element) && 
+         (! (this._canConsider($element) &&
             (this._canSelect($element) || this._canOfferOptions($element))))) {
     $element = $element.parent();
   }
@@ -380,7 +380,7 @@ CTS.UI.Picker.prototype._complete= function(reason) {
  * Utility methods (General)
  *-----------------------------------------------------*/
 
-/* 
+/*
  * This filters out any CTS elements.
  */
 CTS.UI.Picker.prototype._canConsider = function($e) {
@@ -410,7 +410,7 @@ CTS.UI.Picker.prototype._canConsider = function($e) {
  * Planned modes:
  *   cts-value: Only permit editing cts-value nodes
  *   cts-enumerated: Only permit editing cts-enumerated nodes
- * 
+ *
  */
 CTS.UI.Picker.prototype._canSelect = function($e) {
   if ($e == null) {
@@ -440,7 +440,7 @@ CTS.UI.Picker.prototype._elementWidth = function($e) {
   // http://stackoverflow.com/questions/10277323/get-real-width-of-elements-with-jquery
   //if ($e.children().length > 0) {
   //  return $e.outerWidth();
-  //} 
+  //}
   var element = $e[0];
   var $wrapper= CTS.$('<div style="display: inline-block"></div>');
   var wrapper = $wrapper[0];
@@ -475,7 +475,7 @@ CTS.UI.Picker.prototype._canOfferOptions = function($e) {
     return false;
   }
 
-  if (('enumeration' in this._currentOpts) && 
+  if (('enumeration' in this._currentOpts) &&
       (this._currentOpts['enumeration'])) {
     var $$node = CTS.engine.forrest.trees.body.getCtsNode($e);
     return ($$node.isEnumerated() || (typeof $e.attr('data-cts-enumeration') != 'undefined'));
