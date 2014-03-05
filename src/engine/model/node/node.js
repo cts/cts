@@ -434,7 +434,8 @@ CTS.Node.Base = {
         if (p.relations[i].name == 'are') {
           var r = p.relations[i];
           var opts = r.optsFor(p);
-          var iterables = node.getChildren().slice(opts.prefix, kids.length - opts.suffix);
+          var kids = p.getChildren();
+          var iterables = kids.slice(opts.prefix, kids.length - opts.suffix);
           if (iterables.indexOf(this) > -1) {
             return true;
           }
