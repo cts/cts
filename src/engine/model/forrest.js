@@ -13,7 +13,7 @@ var Forrest = CTS.Forrest = function(opts) {
 
   this.treeSpecs = {};
   this.trees = {};
-  
+
   this.relationSpecs = [];
   this.relations= [];
 
@@ -176,7 +176,7 @@ CTS.Fn.extend(Forrest.prototype, {
     //initial.resolve();
     return last;
   },
-  
+
   addSpecs: function(specs) {
     var self = this;
     var promises = CTS.Fn.map(specs, function(spec) {
@@ -471,7 +471,7 @@ CTS.Fn.extend(Forrest.prototype, {
     var listening = (treeName in this.insertionListeners);
     var tree = this.trees[treeName];
     var self = this;
-    if (typeof tree == 'undefined'){ 
+    if (typeof tree == 'undefined'){
       CTS.Log.Error("listenForNodeInsertion (" + new_val + "):" +
           "Tree " + treeName + " not present.");
       return false;
