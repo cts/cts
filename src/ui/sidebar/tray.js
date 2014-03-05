@@ -14,6 +14,7 @@ CTS.UI.Tray = function() {
 
   // The node representing the tray body, loaded by CTS.
   this.$node = null;
+  this._isOpen = false;
 
   this.loadMockup();
 };
@@ -102,17 +103,23 @@ CTS.UI.Tray.prototype.popPage = function() {
   newPage.$page.show();
 };
 
+CTS.UI.Tray.prototype.isOpen = function() {
+  return this._isOpen;
+};
+
 CTS.UI.Tray.prototype.open = function() {
   var self = this;
   this.$openButton.fadeOut(200, function() {
     self.$node.removeClass('closed');
     //this.$node.animate({"left":"0px"});
   });
+  this._isOpen = true;
 };
 
 CTS.UI.Tray.prototype.close = function() {
   this.$node.addClass("closed");
   this.$openButton.delay(300).fadeIn(200);
+  this._isOpen = false;
 };
 
 CTS.UI.Tray.prototype.updateSize = function() {
