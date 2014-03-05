@@ -74,7 +74,7 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
        function(gdata) {
          CTS.Log.Debug("Got cell feed worksheet", gdata);
          self.gdata = gdata;
- 
+
          for (var rowName in gdata.rows) {
            var columns = gdata.rows[rowName];
            var child = new CTS.Node.GColumn(rowName, columns, self.tree, self.opts);
@@ -102,7 +102,7 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
      CTS.Log.Error("onChildInserted called (impossibly) on GListFeedItem Node");
    },
 
-   /* 
+   /*
     *  Removes this Workbook from the GSheet
     */
    _subclass_destroy: function() {
@@ -137,7 +137,7 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
     // noop.
   },
 
-  _subclass_ensure_childless: function() { 
+  _subclass_ensure_childless: function() {
   },
 
   /************************************************************************
@@ -163,8 +163,3 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
   }
 
 });
-
-
-
-
-

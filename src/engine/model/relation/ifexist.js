@@ -19,11 +19,9 @@ CTS.Relation.IfExist = function(node1, node2, spec) {
 CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Base, {
   isEmpty: function(node) {
     return (
-      (node == CTS.NonExistantNode) || 
-      (node == null) || 
-      (CTS.Fn.isUndefined(node)) ||
-      (node.value == null) ||
-      (node.value == "")
+      (node == CTS.NonExistantNode) ||
+      (node == null) ||
+      (! node.getIfExistValue())
     );
   },
 

@@ -68,7 +68,7 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
      CTS.Log.Error("onChildInserted called (impossibly) on GListFeedProperty Node");
    },
 
-   /* 
+   /*
     *  Removes this Workbook from the GSheet
     */
    _subclass_destroy: function() {
@@ -101,7 +101,11 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
     this.value = value;
   },
 
-  _subclass_ensure_childless: function() { 
+  getIfExistValue: function() {
+    return ((this.value != null) && (this.value != ""));
+  },
+
+  _subclass_ensure_childless: function() {
     this.value = null;
   },
 
@@ -129,5 +133,3 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
   }
 
 });
-
-

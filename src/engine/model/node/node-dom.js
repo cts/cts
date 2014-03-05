@@ -5,7 +5,7 @@ CTS.Node.Html = function(node, tree, opts) {
   this.kind = "HTML";
   this.value = this._createJqueryNode(node);
   this.ctsId = Fn.uniqueId().toString();
-  
+
   this.value.data('ctsid', this.ctsId);
   this.value.data('ctsnode', this);
 
@@ -76,7 +76,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      this.children = [];
 
      // Map each child
-    
+
      var self = this;
      var promises = CTS.Fn.map(this.value.children(), function(child) {
        var promise = CTS.Node.Factory.Html(child, self.tree, self.opts);
@@ -104,7 +104,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      return deferred.promise;
    },
 
-   /* 
+   /*
     * Inserts this DOM node after the child at the specified index.
     */
    _subclass_insertChild: function(child, afterIndex) {
@@ -168,7 +168,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      ).done();
    },
 
-   /* 
+   /*
     *  Removes this DOM node from the DOM tree it is in.
     */
    _subclass_destroy: function() {
@@ -255,7 +255,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     }
   },
 
-  _subclass_ensure_childless: function() { 
+  _subclass_ensure_childless: function() {
     if (this.value !== null) {
       this.value.html("");
     }
@@ -314,7 +314,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_valueChangedListener: function(evt) {
-    // Don't fire the event if we just changed the node because of an 
+    // Don't fire the event if we just changed the node because of an
     // event from a related node.
     var newValue = this.value.html();
     if (this.value.data('ValueChanged') == newValue) {
@@ -338,7 +338,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     CTS.Log.Debug("Instructed to set value to", newValue);
     // To suppress throwing a data event without worrying about event firing
     // timing. The event listener will look for this.
-    this.value.data('ValueChanged', newValue); 
+    this.value.data('ValueChanged', newValue);
     this.value.html(newValue);
   }
 

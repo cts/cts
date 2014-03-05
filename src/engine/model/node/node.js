@@ -1,6 +1,6 @@
 // Node
 // --------------------------------------------------------------------------
-// 
+//
 // A Node represents a fragment of a tree which is annotated with CTS.
 //
 // Nodes are responsible for understanding how to behave when acted on
@@ -83,7 +83,7 @@ CTS.Node.Base = {
       deferred.resolve();
       return deferred.promise;
     }
-    
+
     var specStr = this._subclass_getInlineRelationSpecString();
 
     // No inline spec
@@ -167,7 +167,7 @@ CTS.Node.Base = {
     return deferred.promise;
     */
   },
-  
+
   insertChild: function(node, afterIndex, log) {
     if (typeof afterIndex == 'undefined') {
       afterIndex = this.children.length - 1;
@@ -256,7 +256,7 @@ CTS.Node.Base = {
         Q.all(promises).then(
           function() {
             deferred.resolve();
-          }, 
+          },
           function(reason) {
             deferred.reject(reason);
           }
@@ -325,14 +325,14 @@ CTS.Node.Base = {
       if (CTS.LogLevel.Debug()) {
         CTS.Log.Debug("Prune relations", thisCheck, otherCheck, this, otherParent, otherContainer);
       }
-      if (thisCheck && otherCheck) { 
+      if (thisCheck && otherCheck) {
         r.destroy();
         return false;
       } else {
         return true;
       }
     });
-    
+
     for (var i = 0; i < this.children.length; i++) {
       this.children[i].pruneRelations(otherParent, otherContainer);
     }
@@ -374,11 +374,11 @@ CTS.Node.Base = {
     self._processIncomingRelations(r, 'if-nexist');
     self._processIncomingRelations(r, 'is');
     self._processIncomingRelations(r, 'are');
-    
+
     for (var i = 0; i < self.children.length; i++) {
       self.children[i]._processIncoming();
     }
-    
+
     // Do graft
     self._processIncomingRelations(r, 'graft', true);
   },
@@ -404,6 +404,11 @@ CTS.Node.Base = {
 
   getValue: function(opts) {
     return this.value;
+  },
+
+  getIfExistValue: function() {
+    // The node's existence is enough by default.
+    return true;
   },
 
   setValue: function(v, opts) {
@@ -527,7 +532,7 @@ CTS.Node.Base = {
   /***************************************************************************
    * STUBS FOR SUBCLASS
    **************************************************************************/
-  
+
   _subclass_onDataEvent: function() {},
   _subclass_offDataEvent: function() {},
   _subclass_realizeChildren: function() {},
