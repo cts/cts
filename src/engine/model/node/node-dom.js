@@ -160,12 +160,12 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
            function(reason) {
              CTS.Log.Error("Could not realize children of new CTS node", ctsChild);
            }
-         );
+         ).done();
        },
        function(reason) {
          CTS.Log.Error("Could not convert new node to CTS node", child, reason);
        }
-     );
+     ).done();
    },
 
    /* 
@@ -245,9 +245,13 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   setValue: function(value, opts) {
+    console.log("SET VALUE", value, opts);
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
       this.value.html(value);
-      this.value.attr(opts.attribute, value);
+    } else {
+      if (opts.attribute != null) {
+        this.value.attr(opts.attribute, value);
+      }
     }
   },
 
