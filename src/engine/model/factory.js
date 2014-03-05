@@ -93,7 +93,15 @@ CTS.Factory = {
         // We'll try to log in if possible.
         CTS.Util.GSheet.login().then(
           function() {
-            deferred.resolve();
+            root.realizeChildren().then(
+              function() {
+                deferred.resolve(tree);
+              },
+              function() {
+                CTS.Log.Error("Couldn't login");
+                deferred.reject("Couldn't login");
+              }
+            );
           },
           function() {
             CTS.Log.Error("Couldn't login");
