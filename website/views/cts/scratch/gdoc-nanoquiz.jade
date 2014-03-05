@@ -53,27 +53,42 @@ block head
     @gsheet sheet 0Arj8lnBW4_tZdDdMZTV2SkVzZF9RNjBTaTQxajBHMEE;
 
     tbody#grades            :are      sheet | Nanoquiz!items { prefix: 1 };
-    span.name               :is       sheet | .name ;
-    span.email              :is       sheet | .email ;
-    td.q1 span.answer       :is       sheet | .q1 ;
-    td.q2 span.answer       :is       sheet | .q2 ;
-    td.q3 span.answer       :is       sheet | .q3 ;
-    td.q4 span.answer       :is       sheet | .q4 ;
-    td.q5 span.answer       :is       sheet | .q5 ;
+    span.name               :is       sheet | Nanoquiz!.name ;
+    span.email              :is       sheet | Nanoquiz!.email ;
+    td.q1 span.answer       :is       sheet | Nanoquiz!.q1 ;
+    td.q2 span.answer       :is       sheet | Nanoquiz!.q2 ;
+    td.q3 span.answer       :is       sheet | Nanoquiz!.q3 ;
+    td.q4 span.answer       :is       sheet | Nanoquiz!.q4 ;
+    td.q5 span.answer       :is       sheet | Nanoquiz!.q5 ;
 
-    td.q1 span.comment      :if-exist sheet | .q1comment;
-    td.q2 span.comment      :if-exist sheet | .q2comment;
-    td.q3 span.comment      :if-exist sheet | .q3comment;
-    td.q4 span.comment      :if-exist sheet | .q4comment;
-    td.q5 span.comment      :if-exist sheet | .q5comment;
+    td.q1 span.comment      :if-exist sheet | Nanoquiz!.q1comment;
+    td.q2 span.comment      :if-exist sheet | Nanoquiz!.q2comment;
+    td.q3 span.comment      :if-exist sheet | Nanoquiz!.q3comment;
+    td.q4 span.comment      :if-exist sheet | Nanoquiz!.q4comment;
+    td.q5 span.comment      :if-exist sheet | Nanoquiz!.q5comment;
 
-    td.q1 div.comment-data  :is       sheet | .q1comment;
-    td.q2 div.comment-data  :is       sheet | .q2comment;
-    td.q3 div.comment-data  :is       sheet | .q3comment;
-    td.q4 div.comment-data  :is       sheet | .q4comment;
-    td.q5 div.comment-data  :is       sheet | .q5comment;
+    td.q1 div.comment-data  :is       sheet | Nanoquiz!.q1comment;
+    td.q2 div.comment-data  :is       sheet | Nanoquiz!.q2comment;
+    td.q3 div.comment-data  :is       sheet | Nanoquiz!.q3comment;
+    td.q4 div.comment-data  :is       sheet | Nanoquiz!.q4comment;
+    td.q5 div.comment-data  :is       sheet | Nanoquiz!.q5comment;
 
-    span.totalpoints        :is       sheet | .totalpoints ;
+    span.totalpoints        :is       sheet | Nanoquiz!.totalpoints ;
+
+  script.
+    CTS.status.libraryLoaded.then(function() {
+      CTS.$(function() {
+        CTS.$('body').on('click', function(e) {
+          $t = CTS.$(e.target);
+          if ($t.is('span.comment img')) {
+            alert("Yes!");
+            var $commentData = $t.parent().parent().find('.comment-data');
+            alert($commentData.html());
+          }
+        });
+  
+      });
+    });
 
 
 block content
@@ -153,7 +168,6 @@ block content
                 span.grade 80 B
                 br
                 a Add Comment
-
 
 
 
