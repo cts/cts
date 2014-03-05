@@ -65,9 +65,6 @@ CTS.UI.Tray.prototype.setupMockup = function() {
   CTS.$(window).resize(function() {
     self.updateSize();
   });
-
-  // Start in the OFF state.
-  this.toggle(false);
 };
 
 CTS.UI.Tray.prototype.invokeTheminator = function(page) {
