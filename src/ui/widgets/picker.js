@@ -97,7 +97,6 @@ CTS.UI.Picker.prototype.isPickInProgress = function() {
  * Returns a promise to pick something.
  */
 CTS.UI.Picker.prototype.pick = function(opts) {
-  console.log("Offer Pick");
   CTS.engine.forrest.stopListening();
 
   this._currentOpts = opts || {};
@@ -114,7 +113,6 @@ CTS.UI.Picker.prototype.pick = function(opts) {
  * Cancel the current picking action.
  */
 CTS.UI.Picker.prototype.cancel = function(reason) {
-  console.log("Cancel Pick");
   CTS.engine.forrest.startListening();
 
   if (this.isPickInProgress()) {
@@ -151,65 +149,60 @@ CTS.UI.Picker.prototype._destroyUI = function() {
   this._$ui.remove();
 };
 
+CTS.UI.Picker.prototype._boundsForObject = function($elem) {
+  var bodyPos = this._$('body').position();
+  var w = this._elementWidth($elem);
+  var x = this._elementX($elem);
+  var left = x - bodyPos.left - this.CONST.UI.BorderPadding;
+  var top = ($elem.offset().top - bodyPos.top - this.CONST.UI.BorderPadding);
+  var width = w - this.CONST.UI.BorderThickness + (2 * this.CONST.UI.BorderPadding);
+  var height = ($elem.outerHeight() - this.CONST.UI.BorderThickness + (2 * this.CONST.UI.BorderPadding));
+  return {
+    top: top,
+    left: left,
+    width: width,
+    height: height
+  };
+};
+
 /*
  * Args:
  *  $elem - jQuery object
  */
 CTS.UI.Picker.prototype._select = function($elem) {
-  console.log("Select", $elem);
-  // Behavior on empty selection: nothing
-  if ((typeof $elem == 'undefined') || ($elem == null) || ($elem.length == 0)) {
-    return;
-  }
-
-  // If the selected element is already this, do nothing.
-  if ($elem.is(this._$selected)) {
-    return;
-  }
-
-  var offerElementSelection = this._canSelect($elem);
   var offerElementOptions = this._canOfferOptions($elem);
-  var bodyPos = this._$('body').position();
-  var w = this._elementWidth($elem);
-  var x = this._elementX($elem);
 
-  var left = x - bodyPos.left - this.CONST.UI.BorderPadding;
-  var top = ($elem.offset().top - bodyPos.top - this.CONST.UI.BorderPadding);
-  var width = w - this.CONST.UI.BorderThickness + (2 * this.CONST.UI.BorderPadding);
-  var height = ($elem.outerHeight() - this.CONST.UI.BorderThickness + (2 * this.CONST.UI.BorderPadding));
-
-  var newCss = {
-    position: 'absolute',
-    left: left  + 'px',
-    top: top + 'px',
-    width: width + 'px',
-    height: height + 'px'
+  var uiCSS = {
+    position: 'absolute'
   };
 
-  console.log(newCss);
-
-  if (offerElementSelection) {
-    console.log("Offer Selection");
-    newCss['background'] = this.CONST.UI.Offer.background;
-    newCss['broder'] = this.CONST.UI.Offer.border;
-  } else if ((!offerElementSelection) && (offerElementOptions)) {
-    console.log("Offer Options");
-    newCss['background'] = this.CONST.UI.OptionOnly.background;
-    newCss['broder'] = this.CONST.UI.OptionOnly.border;
+  if (this._canSelect($elem)) {
+    console.log("Offer Selection", $elem);
+    var bounds = this._boundsForObject($elem);
+    uiCSS['background'] = this.CONST.UI.Offer.background;
+    uiCSS['broder'] = this.CONST.UI.Offer.border;
+    uiCSS['left'] = bounds.left + 'px';
+    uiCSS['top'] = bounds.top + 'px';
+    uiCSS['width'] = bounds.width + 'px';
+    uiCSS['height'] = bounds.height + 'px';
+    uiCSS['display'] = 'block';
+    this._$ui.show();
+    this._$selected = $elem;
+  } else if (this._canOfferOptions($elem)) {
+    console.log("Offer Options", $elem);
+    uiCSS['background'] = this.CONST.UI.OptionOnly.background;
+    uiCSS['broder'] = this.CONST.UI.OptionOnly.border;
+    this._$selected = $elem;
     this.offerOptions($elem);
+    this._$ui.hide();
   } else {
-    console.log("Offer Neither");
-    newCss['background'] = this.CONST.UI.NoOffer.background;
-    newCss['broder'] = this.CONST.UI.NoOffer.border;
+    console.log("Offer Neither", $elem);
+    uiCSS['background'] = this.CONST.UI.NoOffer.background;
+    uiCSS['broder'] = this.CONST.UI.NoOffer.border;
+    this._$ui.css({display: 'none'});
+    this._$ui.hide();
   }
-  this._$ui.css(newCss);
-
-  if (offerElementOptions) {
-  } else {
-  }
-
-  this._$ui.show();
-  this._$selected = $elem;
+  this._$ui.css(uiCSS);
 };
 
 
@@ -227,6 +220,7 @@ CTS.UI.Picker.prototype.offerOptions = function($elem) {
  * Clears current selection.
  */
 CTS.UI.Picker.prototype._deselect = function() {
+  console.log("Deselect");
   this._$selected = null;
   this._$ui.hide();
   this._$optionTray.hide();
@@ -314,12 +308,12 @@ CTS.UI.Picker.prototype._mouseMove = function(event) {
 
   var element = event.target;
 
-  if (element.id == this.CONST.UI_ID) {
-    // We've selected our own user interface element! Need to
-    // figure out what is beneath by momentarily hiding the UI.
-    this._$ui.hide();
-    element = document.elementFromPoint(event.clientX, event.clientY);
-    this._$ui.show();
+  if (this._$ui.is(element)) {
+    return; // We've selected our own user interface element!
+  }
+
+  if ((element == document.documentElement) || (element == document.body)) {
+    return;
   }
 
   $element = this._$(element);
@@ -338,7 +332,7 @@ CTS.UI.Picker.prototype._mouseMove = function(event) {
 
   // Look for a parent that is selectable it not.
   while (($element.length > 0) &&
-         ($element[0] != document.body) &&
+         ($element.parent()[0] != document.body) &&
          (! (this._canConsider($element) &&
             (this._canSelect($element) || this._canOfferOptions($element))))) {
     $element = $element.parent();
@@ -362,7 +356,6 @@ CTS.UI.Picker.prototype._click = function(event) {
  * Completes the current pick.
  */
 CTS.UI.Picker.prototype._complete= function(reason) {
-  console.log("Complete Pick");
   this._destroyUI();
   CTS.engine.forrest.startListening();
   if (this._deferred != null) {
@@ -410,9 +403,13 @@ CTS.UI.Picker.prototype._canConsider = function($e) {
  *
  */
 CTS.UI.Picker.prototype._canSelect = function($e) {
-  if ($e == null) {
+  if ((typeof $e == 'undefined') ||
+      ($e == null) ||
+      ($e.length == 0) ||
+      ($e.is(this._$selected))) {
     return false;
   }
+
   if (!('restrict' in this._currentOpts)) {
     return true;
   }
@@ -468,14 +465,17 @@ CTS.UI.Picker.prototype._elementX = function($e) {
 };
 
 CTS.UI.Picker.prototype._canOfferOptions = function($e) {
-  if ($e == null) {
+  if ((typeof $e == 'undefined') ||
+      ($e == null) ||
+      ($e.length == 0) ||
+      ($e.is(this._$selected))) {
     return false;
   }
 
   if (('enumeration' in this._currentOpts) &&
       (this._currentOpts['enumeration'])) {
     var $$node = CTS.engine.forrest.trees.body.getCtsNode($e);
-    return ($$node.isEnumerated() || (typeof $e.attr('data-cts-enumeration') != 'undefined'));
+    return (($$node) && (($$node.isEnumerated() || (typeof $e.attr('data-cts-enumeration') != 'undefined'))));
   }
 
   return false;
