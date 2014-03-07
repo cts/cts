@@ -21,7 +21,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
    *
    *  "od6" is the worksheet id for the default.
    */
-  _gSheetUrl: function(feed, key, worksheet, security, mode, jsonCallback, accessToken) {
+  _gSheetUrl: function(feed, key, worksheet, security, mode, cell, jsonCallback, accessToken) {
     var url = "http://spreadsheets.google.com/feeds/";
     if (feed != null) {
       url = (url + feed + "/");
@@ -33,6 +33,9 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       url += (worksheet + "/")
     }
     url += security + "/" + mode;
+    if (cell != null) {
+      url += ('/' + cell)
+    }
     if (jsonCallback) {
       url += "?alt=json-in-script&callback=?";
     }
@@ -142,7 +145,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   getSpreadsheets: function() {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl(
-        'spreadsheets', null, null, 'private', 'full', true, true);
+        'spreadsheets', null, null, 'private', 'full', null, true, true);
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
@@ -172,7 +175,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
 
   getWorksheets: function(key) {
     var deferred = Q.defer();
-    var url = CTS.Util.GSheet._gSheetUrl('worksheets', key, null, 'private', 'full', true, true);
+    var url = CTS.Util.GSheet._gSheetUrl('worksheets', key, null, 'private', 'full', null, true, true);
     var request = CTS.$.getJSON(url);
     request.done(function(json) {
       var ret = [];
@@ -208,7 +211,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   getListFeed: function(spreadsheetKey, worksheetKey) {
     console.log("Getting worksheet", spreadsheetKey, worksheetKey);
     var deferred = Q.defer();
-    var url = CTS.Util.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'private', 'full', true, true);
+    var url = CTS.Util.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
 
     var request = CTS.$.getJSON(url);
 
@@ -249,7 +252,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   getCellFeed: function(spreadsheetKey, worksheetKey) {
     console.log("Getting worksheet cell feed", spreadsheetKey, worksheetKey);
     var deferred = Q.defer();
-    var url = CTS.Util.GSheet._gSheetUrl('cells', spreadsheetKey, worksheetKey, 'private', 'full', true, true);
+    var url = CTS.Util.GSheet._gSheetUrl('cells', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
 
     var request = CTS.$.getJSON(url);
 
@@ -285,6 +288,39 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       deferred.reject(textStatus);
     });
 
+    return deferred.promise;
+  },
+
+  modifyCell: function(ssKey, wsKey, rowNum, colNum, value) {
+    var deferred = Q.defer();
+    var cell = 'R' + rowNum + 'C' + colNum;
+    var url = CTS.Util.GSheet._gSheetUrl('cells', ssKey, wsKey, 'private', 'full', cell, true, true);
+    var contentType = "application/atom+xml";
+    var xmlBody = '<entry xmlns="http://www.w3.org/2005/Atom';
+    xmlBody += ' xmlns:gs="http://schemas.google.com/spreadsheets/2006">';
+    xmlBody += '<id>' + url + '</id>';
+    xmlBody += '<link rel="edit" type="application/atom+xml" ';
+    xmlBody += 'href="' + url + '" />';
+    xmlBody += '<gs:cell row="' + row + '" col="' + col + '" ';
+    xmlBody += 'inputValue="' + value + '"/></entry>';
+    var verb = 'PUT';
+    console.log(url);
+    console.log(xmlBody);
+    var request = CTS.$.ajax({
+      url: url,
+      type: verb,
+      data: xmlBody,
+      processData: false,
+      mimeType: contentType
+    });
+    request.done(function(json) {
+      console.log("Set sell result", json);
+      deferred.resolve(res);
+    });
+    request.fail(function(jqxhr, textStatus) {
+      console.log(jqxhr, textStatus);
+      deferred.reject(textStatus);
+    });
     return deferred.promise;
   },
 
