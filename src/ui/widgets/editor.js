@@ -2,7 +2,7 @@ CTS.registerNamespace('CTS.UI.Editor');
 
 CTS.UI.Editor = function(tray, $page) {
   this._tray = tray; // A Javascript object
-  
+
   this.$page = $page;
   this.$widgetContainer = null;
   this.$node = null;
@@ -48,6 +48,10 @@ CTS.UI.Editor = function(tray, $page) {
 
   // TODO: Ensure CKEDITOR is available.
   CKEDITOR.on('instanceCreated', this._onCkEditorInstanceCreated);
+  CKEDITOR.dtd.$editable.span = 1;
+  CKEDITOR.dtd.$editable.a = 1;
+  CKEDITOR.dtd.$editable.li = 1;
+  CKEDITOR.dtd.$editable.td = 1;
 };
 
 CTS.UI.Editor.prototype.loadMockup = function() {
@@ -322,8 +326,6 @@ CTS.UI.Editor.prototype.beginEdit = function($e) {
   if (ctsNode) {
     ctsNode.stash();
   }
-
-  // 1. Stash away the content of the old node.
   if (this._$editNode != null) {
     this.completeEdit();
   }
@@ -336,7 +338,7 @@ CTS.UI.Editor.prototype.beginEdit = function($e) {
     self._editor.focus();
   });
 
-  /* 
+  /*
    * The BLUR event is thrown when the editor loses focus.
    * We turn that back into a select operation.
    */
@@ -376,7 +378,7 @@ CTS.UI.Editor.prototype.completeEdit = function() {
       var selector = CTS.Util.uniqueSelectorFor(this._$editNode);
       content = this._editor.getData();
       console.log("content", content);
-  
+
       var operation = {
         treeUrl: window.location.href,
         treeType: 'html',
@@ -386,7 +388,7 @@ CTS.UI.Editor.prototype.completeEdit = function() {
           content: content
         }
       };
-    
+
       // Flush the queue of pending edit operations.
       CTS.UI.switchboard.recordOperation(operation).then(
         function(operation) {
@@ -422,12 +424,12 @@ CTS.UI.Editor.prototype.copyClicked = function() {
     this.exitEditMode();
   }
 
- 
+
   var pickPromise = CTS.UI.picker.pick({
     ignoreCTSUI: true
   });
   var self = this;
-  
+
   pickPromise.then(
     function(element) {
       var data = CTS.Util.elementHtml(element);
@@ -449,12 +451,12 @@ CTS.UI.Editor.prototype.pasteClicked = function() {
   if (this._isEditMode) {
     this.exitEditMode();
   }
- 
+
   var pickPromise = CTS.UI.picker.pick({
     ignoreCTSUI: true
   });
   var self = this;
-  
+
   pickPromise.then(
     function(element) {
       CTS.UI.clipboard.paste(function(data) {
@@ -471,9 +473,9 @@ CTS.UI.Editor.prototype.pasteClicked = function() {
 CTS.UI.Editor.prototype._onCkEditorInstanceCreated = function(event) {
   var editor = event.editor,
   element = editor.element;
- 
+
   // These editors don't need features like smileys, templates, iframes etc.
-  if ( element.is( 'h1', 'h2', 'h3' ) || element.getAttribute( 'id' ) == 'taglist' ) {
+  if (element.is( 'h1', 'h2', 'h3' )) {
     // Customize the editor configurations on "configLoaded" event,
     // which is fired after the configuration file loading and
     // execution. This makes it possible to change the
@@ -613,4 +615,3 @@ CTS.UI.Editor.prototype.loginHandshakeFailed = function() {
  *
  * ====================================================================
  */
-
