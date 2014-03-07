@@ -170,7 +170,9 @@ CTS.UI.Picker.prototype._boundsForObject = function($elem) {
  *  $elem - jQuery object
  */
 CTS.UI.Picker.prototype._select = function($elem) {
-  var offerElementOptions = this._canOfferOptions($elem);
+  if ($elem.is(this._$selected)) {
+    return;
+  }
 
   var uiCSS = {
     position: 'absolute'
@@ -349,6 +351,8 @@ CTS.UI.Picker.prototype._click = function(event) {
   if (this._canSelect(this._$selected)) {
     this._complete(this._$selected);
     this._swallowEvent(event);
+  } else {
+    this._deselect();
   }
 };
 
@@ -405,8 +409,7 @@ CTS.UI.Picker.prototype._canConsider = function($e) {
 CTS.UI.Picker.prototype._canSelect = function($e) {
   if ((typeof $e == 'undefined') ||
       ($e == null) ||
-      ($e.length == 0) ||
-      ($e.is(this._$selected))) {
+      ($e.length == 0)) {
     return false;
   }
 
