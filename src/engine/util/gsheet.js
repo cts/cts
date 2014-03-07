@@ -22,7 +22,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
    *  "od6" is the worksheet id for the default.
    */
   _gSheetUrl: function(feed, key, worksheet, security, mode, cell, jsonCallback, accessToken) {
-    var url = "http://spreadsheets.google.com/feeds/";
+    var url = "https://spreadsheets.google.com/feeds/";
     if (feed != null) {
       url = (url + feed + "/");
     }
@@ -292,26 +292,22 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   modifyCell: function(ssKey, wsKey, rowNum, colNum, value) {
+    // The Google Docs API incorrectly responds to OPTIONS preflights, so
+    // we are completely blocked from sending non-GET requests to it from
+    // within the browser. For now we'll proxy via the CTS server. Ugh.
     var deferred = Q.defer();
-    var cell = 'R' + rowNum + 'C' + colNum;
-    var url = CTS.Util.GSheet._gSheetUrl('cells', ssKey, wsKey, 'private', 'full', cell, true, true);
-    var contentType = "application/atom+xml";
-    var xmlBody = '<entry xmlns="http://www.w3.org/2005/Atom';
-    xmlBody += ' xmlns:gs="http://schemas.google.com/spreadsheets/2006">';
-    xmlBody += '<id>' + url + '</id>';
-    xmlBody += '<link rel="edit" type="application/atom+xml" ';
-    xmlBody += 'href="' + url + '" />';
-    xmlBody += '<gs:cell row="' + row + '" col="' + col + '" ';
-    xmlBody += 'inputValue="' + value + '"/></entry>';
-    var verb = 'PUT';
-    console.log(url);
-    console.log(xmlBody);
+    console.log("Value", value);
     var request = CTS.$.ajax({
-      url: url,
-      type: verb,
-      data: xmlBody,
-      processData: false,
-      mimeType: contentType
+      url: '/api/updatecell',
+      type: 'POST',
+      data: {
+        rowNum: rowNum,
+        colNum: colNum,
+        ssKey: ssKey,
+        wsKey: wsKey,
+        value: value,
+        token: this._currentToken.access_token
+      }
     });
     request.done(function(json) {
       console.log("Set sell result", json);

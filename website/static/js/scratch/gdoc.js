@@ -42,7 +42,7 @@ CTS.status.libraryLoaded.then(function() {
         CTS.$('#res').html(reason);
       });
   });
-    
+
   CTS.$('#create').click(CTS.Util.GSheet.createSpreadsheet);
 
   CTS.$('#getworksheets').click(function() {
@@ -64,6 +64,17 @@ CTS.status.libraryLoaded.then(function() {
     );
   });
 
+  CTS.$('#setCell').click(function() {
+    var ss = CTS.$('#spreadsheetid').val();
+    var ws = CTS.$('#worksheetid').val();
+    var row = CTS.$('#rowNum').val();
+    var col = CTS.$('#colNum').val();
+    var val = CTS.$('#cellValue').val();
+    var promise = CTS.Util.GSheet.modifyCell(
+      ss, ws, row, col, val
+    );
+  });
+
   CTS.$('#getdata').click(function() {
     var ss = CTS.$('#spreadsheetid').val();
     var ws = CTS.$('#worksheetid').val();
@@ -73,7 +84,7 @@ CTS.status.libraryLoaded.then(function() {
        var headers = {};
        for (var i = 0; i < sheet.items.length; i++) {
          for (var key in sheet.items[i].data) {
-           headers[key] = 1; 
+           headers[key] = 1;
          }
        }
        var h = [];
@@ -88,7 +99,7 @@ CTS.status.libraryLoaded.then(function() {
 
        for (var i = 0; i < sheet.items.length; i++) {
          s += "<tr>";
-         for (var j = 0; j < h.length; j++) { 
+         for (var j = 0; j < h.length; j++) {
            s += "<td>";
            if (typeof sheet.items[i].data[h[j]] != 'undefined') {
              s += sheet[i].data[h[j]];
@@ -110,8 +121,8 @@ CTS.status.libraryLoaded.then(function() {
     gapi.load("auth:client,drive-realtime,drive-share", function() {
       gapi.drive.realtime.load(key,
         function(f) {
-          
-        }, 
+
+        },
         function(f) {
         }
       );

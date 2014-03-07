@@ -14,6 +14,7 @@ var Github = require('github-api');
 var Twit = require('twit');
 var paypal = require('paypal-rest-sdk');
 var twilio = require('twilio')(secrets.twilio.sid, secrets.twilio.token);
+var Q = require('q');
 
 /**
  * GET /api
@@ -23,6 +24,46 @@ var twilio = require('twilio')(secrets.twilio.sid, secrets.twilio.token);
 exports.getApi = function(req, res) {
   res.render('api/index', {
     title: 'API Browser'
+  });
+};
+
+exports.updateCell = function(req, res) {
+  var deferred = Q.defer();
+  var rowNum = req.body.rowNum;
+  var colNum = req.body.colNum;
+  var ssKey = req.body.ssKey;
+  var wsKey = req.body.wsKey;
+  var value = req.body.value;
+  var cell = 'R' + rowNum + 'C' + colNum;
+  var token = req.body.token;
+
+  var url = "https://spreadsheets.google.com/feeds/cells/" +
+        ssKey + "/" + wsKey + "/private/full/" + cell +
+        "?access_token=" + token;
+
+  var contentType = "application/atom+xml";
+  var xmlBody = '<entry xmlns="http://www.w3.org/2005/Atom"';
+  xmlBody += ' xmlns:gs="http://schemas.google.com/spreadsheets/2006">\n';
+  xmlBody += '\t<id>' + url + '</id>\n';
+  xmlBody += '\t<link rel="edit" type="application/atom+xml" ';
+  xmlBody += 'href="' + url + '" />\n';
+  xmlBody += '\t<gs:cell row="' + rowNum + '" col="' + colNum + '" ';
+  xmlBody += 'inputValue="' + value + '"/>\n</entry>';
+  console.log(xmlBody);
+  var verb = 'PUT';
+
+  request({
+    url: url,
+    method: verb,
+    body: xmlBody,
+    headers: {
+      'Content-Type': contentType,
+      'GData-Version': '3.0',
+      'If-Match': '*'
+    }},
+    function(err, resp, body) {
+
+      console.log(err, resp, body);
   });
 };
 

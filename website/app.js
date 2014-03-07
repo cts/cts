@@ -77,12 +77,29 @@ app.use(express.session({
     auto_reconnect: true
   })
 }));
-app.use(express.csrf());
+
+var csrf = express.csrf();
+
+var conditionalCSRF = function (req, res, next) {
+  var needCSRF = true;
+  if (req.url.indexOf("/api/updatecell") != -1) {
+    needCSRF = false;
+  }
+  if (needCSRF) {
+    csrf(req, res, next);
+  } else {
+    next();
+  }
+}
+
+app.use(conditionalCSRF);
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(function(req, res, next) {
   res.locals.user = req.user;
-  res.locals.token = req.csrfToken();
+  if (typeof req.csrfToken != 'undefined') {
+    res.locals.token = req.csrfToken();
+  }
   res.locals.secrets = secrets;
   next();
 });
@@ -115,13 +132,14 @@ app.get('/contact', contactController.getContact);
 app.post('/contact', contactController.postContact);
 app.get('/account', passportConf.isAuthenticated, userController.getAccount);
 
-
 app.get('/cts', docController.index);
 app.get('/cts/dscrape', docController.dscrape);
 app.get('/cts/widgets', widgetController.index);
 app.get('/cts/widgets/:widget', widgetController.show);
 app.get('/cts/scratch', scratchController.index);
 app.get('/cts/scratch/:page', scratchController.other);
+
+app.post('/api/updatecell', apiController.updateCell);
 
 app.post('/account/profile', passportConf.isAuthenticated, userController.postUpdateProfile);
 app.post('/account/password', passportConf.isAuthenticated, userController.postUpdatePassword);
@@ -182,7 +200,7 @@ app.get('/auth/venmo/callback', passport.authorize('venmo', { failureRedirect: '
 
 var banner = "" +
 "    _________________   \n" +
-"   / ____/_  __/ ___/ \n" + 
+"   / ____/_  __/ ___/ \n" +
 "  / /     / /  \\__ \\      __|  _ \\  __|\\ \\   / _ \\  __| \n" +
 " / /___  / /  ___/ /    \\__ \\  __/ |    \\ \\ /  __/ |   \n" +
 "  ____/ /_/  /____/     ____/\\___|_|     \\_/ \\___|_|   \n\n" +
