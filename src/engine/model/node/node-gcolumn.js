@@ -6,6 +6,7 @@ CTS.Node.GColumn = function(value, columns, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
   this.value = value;
+  this.columnNum = null;
   this.columns = columns;
   this.ctsId = Fn.uniqueId().toString();
   this.kind = 'GColumn';
@@ -16,6 +17,14 @@ CTS.Fn.extend(CTS.Node.GColumn.prototype, CTS.Node.Base, CTS.Events, {
 
   debugName: function() {
     return "GColumn";
+  },
+
+  getColNum: function() {
+    return this.columnNum;
+  },
+
+  getWorksheetKey: function() {
+    return this.parentNode.getWorksheetKey();
   },
 
   // Find alreays returns empty on a leaf.
@@ -73,7 +82,7 @@ CTS.Fn.extend(CTS.Node.GColumn.prototype, CTS.Node.Base, CTS.Events, {
      CTS.Log.Error("onChildInserted called (impossibly) on GListFeedItem Node");
    },
 
-   /* 
+   /*
     *  Removes this Workbook from the GSheet
     */
    _subclass_destroy: function() {
@@ -102,7 +111,7 @@ CTS.Fn.extend(CTS.Node.GColumn.prototype, CTS.Node.Base, CTS.Events, {
     // noop.
   },
 
-  _subclass_ensure_childless: function() { 
+  _subclass_ensure_childless: function() {
   },
 
   /************************************************************************
@@ -128,6 +137,3 @@ CTS.Fn.extend(CTS.Node.GColumn.prototype, CTS.Node.Base, CTS.Events, {
   }
 
 });
-
-
-

@@ -22,6 +22,14 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
     return this.kind;
   },
 
+  getWorksheetKey: function() {
+    return this.spec.wsKey;
+  },
+
+  getSpreadsheetKey: function() {
+    return this.spec.ssKey;
+  },
+
   // Find alreays returns empty on a leaf.
   find: function(selector, ret) {
     if (typeof ret == 'undefined') {

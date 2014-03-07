@@ -38,6 +38,22 @@ CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
     return false;
   },
 
+  getRowNum: function() {
+    return this.row;
+  },
+
+  getColNum: function() {
+    return this.parentNode.getColNum();
+  },
+
+  getWorksheetKey: function() {
+    return this.parentNode.parentNode.getWorksheetKey();
+  },
+
+  getSpreadsheetKey: function() {
+    return this.parentNode.parentNode.getSpreadsheetKey();
+  },
+
   _subclass_realizeChildren: function() {
      // No kids!
      var deferred = Q.defer();
@@ -86,7 +102,12 @@ CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   setValue: function(value, opts) {
-    // noop.
+    var promise = CTS.Util.GSheet.modifyCell(
+      this.getSpreadsheetKey(),
+      this.getWorksheetKey(),
+      this.getRowNum(),
+      this.getColNum(),
+      value);
   },
 
   _subclass_ensure_childless: function() {
@@ -105,6 +126,7 @@ CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_valueChangedListener: function(evt) {
+    console.log("VALUE CHANGED!", evt);
   },
 
   /***************************************************************************

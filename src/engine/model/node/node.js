@@ -507,6 +507,7 @@ CTS.Node.Base = {
   },
 
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
+    console.log("EVENT FROM RELATION");
     if (this.shouldReceiveEvents) {
       if (evt.name == "ValueChanged") {
         if (fromRelation.name == "is") {
