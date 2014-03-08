@@ -10,11 +10,17 @@ module.exports = function(arg1, arg2) {
   var path = require('path');
 
   // The web server on 3000
-  var webserver = child_process.exec('node app.js', {
+  var docserver = child_process.exec('PORT=3000 node app-docs.js', {
     cwd: path.join(__dirname, 'website')
   });
-  webserver.stdout.pipe(process.stdout);
-  webserver.stderr.pipe(process.stderr);
+  docserver.stdout.pipe(process.stdout);
+  docserver.stderr.pipe(process.stderr);
+
+  var quiltserver = child_process.exec('PORT=5000 node app-quilted.js', {
+    cwd: path.join(__dirname, 'website')
+  });
+  quiltserver.stdout.pipe(process.stdout);
+  quiltserver.stderr.pipe(process.stderr);
 
   // The file server on 3001
   var fileserver = child_process.exec('grunt web_server');

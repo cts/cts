@@ -9,8 +9,8 @@ html
     title #{title} - Starter Template for Bootstrap
     != css('styles')
     != js('application')
-  body.entry
-
+  body.cts.cts-doc
+    include ../partials/navigation
     main.ctsdoc-small
       .left &nbsp;
       .center
@@ -19,12 +19,11 @@ html
       .right &nbsp;
 
     .col-md-3
-    .col-md-7
+    .col-md-6
       .row
         block title
       .row
         block content
     .col-md-2
-    
-    .footer(style="height:50px")
 
+    .footer(style="height:50px")

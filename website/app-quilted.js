@@ -55,7 +55,7 @@ var day = (hour * 24);
 var week = (day * 7);
 var month = (day * 30);
 
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 5000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 app.use(require('connect-assets')({
@@ -117,6 +117,15 @@ app.use(express.errorHandler());
 /**
  * Application routes.
  */
+
+if (process.env.DOCS) {
+  // CTS DOC SERVER
+
+
+} else {
+  // Quilted Server
+
+}
 
 app.get('/', homeController.index);
 app.get('/login', userController.getLogin);
@@ -197,7 +206,6 @@ app.get('/auth/venmo/callback', passport.authorize('venmo', { failureRedirect: '
 /**
  * Start Express server.
  */
-
 var banner = "" +
 "    _________________   \n" +
 "   / ____/_  __/ ___/ \n" +
@@ -205,7 +213,6 @@ var banner = "" +
 " / /___  / /  ___/ /    \\__ \\  __/ |    \\ \\ /  __/ |   \n" +
 "  ____/ /_/  /____/     ____/\\___|_|     \\_/ \\___|_|   \n\n" +
 "               Cascading Tree Sheets Server \n";
-
 
 app.listen(app.get('port'), function() {
   console.log("\n" + banner);

@@ -16,7 +16,10 @@ exports.index = function(req, res) {
       return 0;
     });
 
-    res.render('cts/scratch/index', {scratches: scratches});
+    res.render('cts/scratch/index', {
+      title: 'Scratch',
+      scratches: scratches
+    });
   });
 };
 
@@ -30,4 +33,3 @@ exports.other = function(req, res) {
 
   res.render('cts/scratch/' + String(page), {sources: sources, uisources: uisources});
 };
-
