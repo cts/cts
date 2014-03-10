@@ -87,7 +87,7 @@ CTS.Factory = {
     } else {
       tree.root = new CTS.Node.GSpreadsheet(treespec, tree);
     }
-    root.realizeChildren().then(
+    tree.root.realizeChildren().then(
       function() {
         console.log("Got it");
         deferred.resolve(tree);
@@ -97,7 +97,7 @@ CTS.Factory = {
         // We'll try to log in if possible.
         CTS.Util.GSheet.login().then(
           function() {
-            root.realizeChildren().then(
+            tree.root.realizeChildren().then(
               function() {
                 deferred.resolve(tree);
               },

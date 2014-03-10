@@ -188,7 +188,6 @@ CTS.Fn.extend(Forrest.prototype, {
   parseAndAddSpec: function(rawData, kind, fromUrl) {
     var deferred = Q.defer();
     var self = this;
-
     CTS.Parser.parseForrestSpec(rawData, kind, fromUrl).then(
       function(specs) {
         if (fromUrl != 'undefined') {

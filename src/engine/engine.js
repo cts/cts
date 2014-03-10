@@ -3,7 +3,7 @@
 
 /*
  * Available options:
- * 
+ *
  * - autoLoadSpecs (default: true) - Should we autload specs from
  *   script and link elements
  * - forrestSpecs - optional array of forrest specs to load
@@ -38,7 +38,7 @@ CTS.Fn.extend(Engine.prototype, Events, {
    * Rendering picks a primary tree. For each node in the tree, we:
    *  1: Process any *incoming* relations for its subtree.
    *  2: Process any *outgoing* tempalte operations
-   *  3: 
+   *  3:
    */
   render: function(opts) {
     var pt = this.forrest.getPrimaryTree();
