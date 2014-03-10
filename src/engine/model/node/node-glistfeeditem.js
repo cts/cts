@@ -84,7 +84,7 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
      CTS.Log.Error("onChildInserted called (impossibly) on GListFeedItem Node");
    },
 
-   /* 
+   /*
     *  Removes this Workbook from the GSheet
     */
    _subclass_destroy: function() {
@@ -119,7 +119,7 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
     // noop.
   },
 
-  _subclass_ensure_childless: function() { 
+  _subclass_ensure_childless: function() {
   },
 
   /************************************************************************
@@ -135,16 +135,6 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_valueChangedListener: function(evt) {
-  },
-
-  /***************************************************************************
-   * EVENTS
-   **************************************************************************/
-
-  _subclass_setValue: function(newValue) {
   }
 
 });
-
-
-

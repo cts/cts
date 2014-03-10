@@ -238,16 +238,23 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
 
   getValue: function(opts) {
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
-      return this.value.html();
+      if (this.value.is("input")) {
+        return this.value.val();
+      } else {
+        return this.value.html();
+      }
     } else {
       return this.value.attr(opts.attribute);
     }
   },
 
   setValue: function(value, opts) {
-    console.log("SET VALUE", value, opts);
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
-      this.value.html(value);
+      if (this.value.is("input")) {
+        this.value.val(value);
+      } else {
+        this.value.html(value);
+      }
     } else {
       if (opts.attribute != null) {
         this.value.attr(opts.attribute, value);
@@ -328,18 +335,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
       };
       this.handleEventFromData(ctsEvent);
     }
-  },
-
-  /***************************************************************************
-   * EVENTS
-   **************************************************************************/
-
-  _subclass_setValue: function(newValue) {
-    CTS.Log.Debug("Instructed to set value to", newValue);
-    // To suppress throwing a data event without worrying about event firing
-    // timing. The event listener will look for this.
-    this.value.data('ValueChanged', newValue);
-    this.value.html(newValue);
   }
 
 });

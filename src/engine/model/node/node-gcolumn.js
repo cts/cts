@@ -127,13 +127,7 @@ CTS.Fn.extend(CTS.Node.GColumn.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_valueChangedListener: function(evt) {
-  },
-
-  /***************************************************************************
-   * EVENTS
-   **************************************************************************/
-
-  _subclass_setValue: function(newValue) {
   }
+
 
 });

@@ -79,7 +79,7 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
      return deferred.promise;
    },
 
-   /* 
+   /*
     * Inserts this DOM node after the child at the specified index.
     * It must be a new row node.
     */
@@ -93,7 +93,7 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
      // TODO: Figure out what to do.
    },
 
-   /* 
+   /*
     *  Removes this Workbook from the GSheet
     */
    _subclass_destroy: function() {
@@ -119,7 +119,7 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
     // noop.
   },
 
-  _subclass_ensure_childless: function() { 
+  _subclass_ensure_childless: function() {
     // noop.
   },
 
@@ -136,14 +136,6 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_valueChangedListener: function(evt) {
-  },
-
-  /***************************************************************************
-   * EVENTS
-   **************************************************************************/
-
-  _subclass_setValue: function(newValue) {
   }
 
 });
-

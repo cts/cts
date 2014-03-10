@@ -122,14 +122,6 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_valueChangedListener: function(evt) {
-  },
-
-  /***************************************************************************
-   * EVENTS
-   **************************************************************************/
-
-  _subclass_setValue: function(newValue) {
-    this.value = newValue;
   }
 
 });

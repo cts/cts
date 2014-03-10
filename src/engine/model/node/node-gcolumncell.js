@@ -127,13 +127,6 @@ CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
 
   _subclass_valueChangedListener: function(evt) {
     console.log("VALUE CHANGED!", evt);
-  },
-
-  /***************************************************************************
-   * EVENTS
-   **************************************************************************/
-
-  _subclass_setValue: function(newValue) {
   }
 
 });
