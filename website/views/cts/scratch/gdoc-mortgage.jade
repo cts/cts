@@ -1,0 +1,71 @@
+extends ../layouts/scratchui
+
+block head
+  title Mortgage Calculator
+  script(src='/js/lib/jquery-2.1.0.min.js')
+  script(src='/js/lib/bootstrap.min.js')
+  style.
+
+    table.nanoquiz td.q div.comment-data {
+      display: none;
+    }
+
+    table.nanoquiz tr.subhead th {
+      background-color: #EEFCFF;
+      border: 0;
+      border-bottom: 1px solid #72818B;
+    }
+
+    table.header {
+      border-bottom: 4px solid #72818B;
+    }
+
+  style(type="text/cts").
+    @gsheet sheet 0Arj8lnBW4_tZdDdMZTV2SkVzZF9RNjBTaTQxajBHMEE Mortgage;
+
+    #price         :is       sheet | C3;
+    #downpmt       :is       sheet | C4;
+    #rate          :is       sheet | C7;
+    #years         :is       sheet | C8;
+    #start         :is       sheet | C9;
+
+block content
+  .content
+    .row
+      div.col-md-9.col-md-offset-1
+        h1 Mortgage Calculator
+    .row
+      .col-md-4.col-md-offset-1
+        h2 Your House
+        form
+          .form-group
+            label Purchase Price
+            input#price
+          .form-group
+            label Down Payment Pct
+            input#downpmt
+          .form-group
+            label Interest Rate
+            input#rate
+          .form-group
+            label Duration (years)
+            input#years
+          .form-group
+            label Stard Date
+            inpur#start
+
+
+  script.
+    CTS.status.libraryLoaded.then(function() {
+      CTS.$(function() {
+        CTS.$('body').on('click', function(e) {
+          $t = CTS.$(e.target);
+          if ($t.is('span.comment img')) {
+            alert("Yes!");
+            var $commentData = $t.parent().parent().find('.comment-data');
+            alert($commentData.html());
+          }
+        });
+
+      });
+    });

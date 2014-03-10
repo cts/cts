@@ -41,7 +41,7 @@ CTS.Parser.Cts = {
             return intoForrest.addSpec(spec);
           }
         });
-    
+
         Q.all(promises).then(
           // Specs here is ref to result from parseForrestSpec
           function() {
@@ -83,9 +83,13 @@ CTS.Parser.Cts = {
         var h = json.headers[i];
         var kind = h.shift().trim();
         if (kind == 'html') {
-          f.treeSpecs.push(new TreeSpec('html', h[0], h[1]));
+          f.treeSpecs.push(new TreeSpec('html', {name: h[0], url: h[1]}));
         } else if (kind == 'gsheet') {
-          f.treeSpecs.push(new TreeSpec('gsheet', h[0], h[1]));
+          if (h.length > 2) {
+            f.treeSpecs.push(new TreeSpec('gsheet', {name: h[0], url: h[1], worksheet: h[2]}));
+          } else {
+            f.treeSpecs.push(new TreeSpec('gsheet', {name: h[0], url: h[1]}));
+          }
         } else if (kind == 'css') {
           f.dependencySpecs.push(new DependencySpec('css', h[0]));
         } else if (kind == 'cts') {
@@ -110,7 +114,7 @@ CTS.Parser.Cts = {
     }
     f.relationSpecs = json.relations;
     forrestSpecs.push(f);
-    
+
     Q.all(remoteLoads).then(
       function(moreSpecs) {
         // Results here contains MORE cts strings

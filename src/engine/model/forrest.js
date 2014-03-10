@@ -64,9 +64,9 @@ CTS.Fn.extend(Forrest.prototype, {
     var self = this;
     var pageBody = null;
     if (typeof this.opts.defaultTree != 'undefined') {
-      var pageBody = new CTS.Tree.Spec('HTML', 'body', this.opts.defaultTree);
+      var pageBody = new CTS.Tree.Spec('html', {name: 'body', url: this.opts.defaultTree});
     } else {
-      var pageBody = new CTS.Tree.Spec('HTML', 'body', null);
+      var pageBody = new CTS.Tree.Spec('html', {name: 'body'});
     }
     this.addTreeSpec(pageBody);
     this.realizeTree(pageBody).then(

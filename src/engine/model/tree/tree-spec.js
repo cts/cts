@@ -1,10 +1,9 @@
-var TreeSpec = CTS.Tree.Spec = function(kind, name, url, loadedFrom) {
+var TreeSpec = CTS.Tree.Spec = function(kind, opts) {
   this.kind = kind;
-  this.name = name;
-  this.url = url;
+  // name, url, loadedFrom, fixLinks
   this.fixLinks = true;
   this.loadedFrom = null;
-  if (typeof loadedFrom != 'undefined') {
-    this.loadedFrom = loadedFrom;
-  }
+  this.name = null;
+  this.url = null;
+  CTS.Fn.extend(this, opts);
 };

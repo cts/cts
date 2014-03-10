@@ -81,8 +81,12 @@ CTS.Factory = {
     // For the GSheet.
     treespec.sskey = treespec.url;
     var tree = new CTS.Tree.GSpreadsheet(forrest, treespec);
-    var root = new CTS.Node.GSpreadsheet(treespec, tree);
-    tree.root = root;
+    if (typeof treespec.worksheet != 'undefined') {
+      treespec.wskey = treespec.worksheet;
+      tree.root = new CTS.Node.GWorksheet(treespec, tree);
+    } else {
+      tree.root = new CTS.Node.GSpreadsheet(treespec, tree);
+    }
     root.realizeChildren().then(
       function() {
         console.log("Got it");
