@@ -19,10 +19,21 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
     return "GWorkSheet";
   },
 
-  find: function(selector, ret) {
+  find: function(spec, ret) {
     CTS.Log.Debug("WS find", selector);
     if (typeof ret == 'undefined') {
       ret = [];
+    }
+
+    var selector;
+    if (typeof spec == "string") {
+      selector = spec;
+    } else {
+      selector = spec.selectorString;
+    }
+
+    if ((typeof selector == 'undefined') || (selector == null)) {
+      return ret;
     }
 
     if (selector.trim() == "items") {

@@ -81,41 +81,45 @@ CTS.Factory = {
     // For the GSheet.
     treespec.sskey = treespec.url;
     var tree = new CTS.Tree.GSpreadsheet(forrest, treespec);
+    var ss = new CTS.Node.GSpreadsheet(treespec, tree);
+    var ws = false;
     if (typeof treespec.worksheet != 'undefined') {
-      treespec.wskey = treespec.worksheet;
-      tree.root = new CTS.Node.GWorksheet(treespec, tree);
-    } else {
-      tree.root = new CTS.Node.GSpreadsheet(treespec, tree);
+      ws = true;
     }
-    tree.root.realizeChildren().then(
+
+    CTS.Util.GSheet.maybeLogin().then(
       function() {
-        console.log("Got it");
-        deferred.resolve(tree);
-      },
-      function(reason) {
-        CTS.Log.Error("Not authenticated with GDocs. Trying now.");
-        // We'll try to log in if possible.
-        CTS.Util.GSheet.login().then(
+        ss.realizeChildren().then(
           function() {
-            tree.root.realizeChildren().then(
-              function() {
-                deferred.resolve(tree);
-              },
-              function() {
-                CTS.Log.Error("Couldn't login");
-                deferred.reject("Couldn't login");
+            if (ws) {
+              var found = false;
+              for (var i = 0; i < ss.children.length; i++) {
+                var child = ss.children[i];
+                if ((! found) && (child.name == treespec.worksheet)) {
+                  tree.root = child;
+                  found = true;
+                  deferred.resolve(tree);
+                }
               }
-            );
+              if (! found) {
+                deferred.reject("Couldn't find worksheet named: " + treespec.worksheet);
+              }
+            } else {
+              tree.root = ss;
+              deferred.resolve(tree);
+            }
           },
-          function() {
-            CTS.Log.Error("Couldn't login");
-            deferred.reject("Couldn't login");
+          function(reason) {
+            console.log("couldn't realize");
+            deferred.reject(reason);
           }
         );
+      },
+      function(reason) {
+        CTS.Log.Error("Couldn't Login to Google Spreadsheets", reason);
+        deferred.reject(reason);
       }
     );
-    console.log("Promise for gsheet");
     return deferred.promise;
   }
-
 }

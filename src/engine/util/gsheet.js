@@ -85,6 +85,14 @@ CTS.Fn.extend(CTS.Util.GSheet, {
    }
   },
 
+  maybeLogin: function() {
+    if (this._currentToken == null) {
+      return CTS.Util.GSheet.login();
+    } else {
+      return CTS.Util.GSheet._loginDefer.promise;
+    }
+  },
+
   login: function() {
     CTS.Log.Info("Trying to log into GDocs");
     gapi.auth.authorize({

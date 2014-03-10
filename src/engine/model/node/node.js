@@ -241,7 +241,7 @@ CTS.Node.Base = {
     var deferred = Q.defer();
 
     if (this.children.length != 0) {
-      CTS.Log.Fatal("Trying to realize children when already have some.");
+      CTS.Log.Fatal("Trying to realize children when already have some.", this);
       deferred.reject("Trying to realize when children > 0");
     }
 
