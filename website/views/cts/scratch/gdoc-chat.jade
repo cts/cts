@@ -29,52 +29,35 @@ block head
     #years         :is       sheet | C8;
     #start         :is       sheet | C9;
 
-    #monthlyPmt    :is       sheet | H3;
-    #numberPmts    :is       sheet | H4;
-    #totalInterest :is       sheet | H5;
-
 block content
   .content
     .row
       div.col-md-9.col-md-offset-1
         h1 Mortgage Calculator
     .row
-      .col-sm-offset-1.col-md-4
+      .col-md-4.col-md-offset-1
         h2 Your House
-        form.container.form-horizontal
+        form.form-horizontal
           .form-group
-            label.col-sm-2.control-label Purchase Price
-            .col-sm-2
+            label.col-md-2.control-label Purchase Price
+            .col-md-2
               input.form-control#price
           .form-group
-            label.col-sm-2.control-label Down Payment Pct
-            .col-sm-2
+            label.col-md-2.control-label Down Payment Pct
+            .col-md-2
               input.form-control#downpmt
           .form-group
-            label.col-sm-2.control-label Interest Rate
-            .col-sm-2
+            label.col-md-2.control-label Interest Rate
+            .col-md-2
               input.form-control#rate
           .form-group
-            label.col-sm-2.control-label Duration (years)
-            .col-sm-2
+            label.col-md-2.control-label Duration (years)
+            .col-md-2
               input.form-control#years
           .form-group
-            label.col-sm-2.control-label Stard Date
-            .col-sm-2
-              input.form-control#start
-      .col-sm-offset-1.col-md-4
-        h2 Payment Schedule
-        form.container.form-horizontal
-          .form-group
-            .col-sm-2.control-label Monthly Payment
-            .col-sm-2.control-label#monthlyPmt Foo
-          .form-group
-            .col-sm-2.control-label Number Payments
-            .col-sm-2.control-label#numberPmts Foo
-          .form-group
-            .col-sm-2.control-label Total Interest
-            .col-sm-2.control-label#totalInterest Foo
-
+            label.col-md-2.control-label Stard Date
+            .col-md-2
+              inpur.form-control#start
 
   script.
     CTS.status.libraryLoaded.then(function() {
