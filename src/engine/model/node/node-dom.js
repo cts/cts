@@ -28,6 +28,15 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     this.tree.nodeStash[this.ctsId] = this;
   },
 
+  _subclass_shouldRunCtsOnInsertion: function() {
+    if (! this.value) return false;
+    if (this.value.hasClass('cts-ignore')) return false;
+  },
+
+  _subclass_getTreesheetLinks: function() {
+    return CTS.Util.getTreesheetLinks(this.value);
+  },
+
   // Horrendously inefficient.
   find: function(selector, ret) {
     if (typeof ret == 'undefined') {
@@ -201,13 +210,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      // sure that all this node's trees have been realized
      var clone = new CTS.Node.Html($value, this.tree, this.opts);
 
-     // Handled by superclass
-     //for (var i = 0; i < this.relations.length; i++) {
-     //  var r = this.relations[i].clone();
-     //  r.rebind(this, clone);
-     //  clone.relations.push(r);
-     //}
-
      var cloneKids = clone.value.children();
      if (this.children.length != cloneKids.length) {
        CTS.Log.Error("Trying to clone CTS node that is out of sync with dom");
@@ -302,39 +304,86 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
     return n;
   },
 
-  _subclass_onDataEvent: function(eventName, handler) {
-    if (eventName == "ValueChanged") {
-      // TODO: This is the wrong event.
-      this.value.on("DOMNodeInserted", handler);
-    } else if (eventName == "NodeInserted") {
-      this.value.on("DOMNodeInserted", handler);
+
+  /************************************************************************
+   **
+   ** Events
+   **
+   ************************************************************************/
+
+  /* Toggles whether this node will throw events when its data change. If so,
+   * the event will be thrown by calling Node (superclass)'s
+   * _throwEvent(name, data)
+   */
+  _subclass_throwChangeEvents: function(toggle, subtree) {
+    var existing = (this._subclass_proxy_handleDomChange != null);
+    // GET
+    if (typeof toggle == 'undefined') {
+      return existing;
+    }
+    // SET NO-OP
+    if (toggle == existing) {
+      return toggle;
+    }
+
+    var self = this;
+    if (toggle) {
+      // SET ON
+      // This funny way of implementing is to save the "this" pointer.
+      this._subclass_proxy_handleDomChange = function(e) {
+        self._subclass_handleDomChangeEvent(e);
+      }
+      CTS.Log.Info("Observing", this);
+      this._changeObserver = new MutationObserver(this._subclass_proxy_handleDomChange);
+      var opts = {
+
+      };
+      this._changeObserver.observe(this.value[0], {
+        attribute: true,
+        characterData: true,
+        childList: true,
+        subtree: true
+      });
+    } else {
+      // SET OFF
+      this._changeObserver.disconnect();
+      this._changeObserver = null;
+      this._subclass_proxy_handleDomChange = null;
     }
   },
 
-  _subclass_offDataEvent: function(eventName, handler) {
-    if (eventName == "ValueChanged") {
-      // TODO: This is the wrong event.
-      this.value.off("DOMNodeInserted", handler);
-    } else if (eventName == "NodeInserted") {
-      this.value.off("DOMNodeInserted", handler);
-    }
-  },
+  _subclass_handleDomChangeEvent: function(mrs) {
+    CTS.Log.Info("Change Occured", this, mrs);
+    for (var j = 0; j < mrs.length; j++) {
+      var mr = mrs[j];
 
-  _subclass_valueChangedListener: function(evt) {
+      // Destroy the CTS accounting for any nodes that were removed.
+      for (var i = 0; i < mr.removedNodes.length; i++) {
+        var $removedNode = CTS.$(mr.removedNodes[i]);
+        var $$rn = $removedNode.data('ctsNode');
+        if ($$rn) {
+            $$rn.destroy(false);
+        }
+      }
+
+      for (var i = 0; i < mr.addedNodes.length; i++) {
+        var $addedNode = CTS.$(mr.addedNodes[i]);
+        this._maybeThrowDataEvent({
+          eventName: "ValueChanged",
+          node: $addedNode,
+        });
+      }
+    }
+
     // Don't fire the event if we just changed the node because of an
     // event from a related node.
-    var newValue = this.value.html();
-    if (this.value.data('ValueChanged') == newValue) {
-      // Don't fire an event. Otherwise we'll end up in an endless event loop
-      // back and forth across the relation boundary.
-      this.value.data('ValueChanged', null);
-    } else {
-      var ctsEvent = {
-        name: "ValueChanged",
-        newValue: this.value.html()
-      };
-      this.handleEventFromData(ctsEvent);
-    }
+    // var newValue = this.value.html();
+    // var ctsEvent = {
+    //   name: "ValueChanged",
+    //   newValue: this.value.html()
+    // }
+    // // On superclass.
+    // this._maybeThrowDataEvent(ctsEvent);
   }
 
 });

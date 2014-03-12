@@ -467,60 +467,78 @@ CTS.Fn.extend(Forrest.prototype, {
    * -------------------------------------------------------- */
 
   listenForNodeInsertionsOnTree: function(treeName, new_val) {
-    var listening = (treeName in this.insertionListeners);
+    // CURRENT STATUS
     var tree = this.trees[treeName];
+    var listening = (treeName in this.insertionListeners);
     var self = this;
+
+    // ERROR
     if (typeof tree == 'undefined'){
       CTS.Log.Error("listenForNodeInsertion (" + new_val + "):" +
           "Tree " + treeName + " not present.");
       return false;
     }
 
+    // GET
     if (typeof new_val == 'undefined') {
-      // Get the current status.
       return listening;
-    } else {
-      // Set
-      if (listening == new_val) {
-        return listening;
-      } else if (new_val == true) {
-        var listener = function(evt) {
-          self._onDomNodeInserted(tree, CTS.$(evt.target), evt);
-        };
-        tree.root.onDataEvent("NodeInserted", listener); // At CTS Node level
-        this.insertionListeners[treeName] = listener;
-        return true;
-      } else if (new_val == false) {
-        var listener = this.insertionListeners[treeName];
-        tree.root.offDataEvent("NodeInserted", listener); // At CTS Node level
-        delete this.insertionListeners[treeName];
-        return false;
-      }
+    }
+
+    // SET
+    if (new_val == true) {
+      tree.root.toggleThrowDataEvents(true);
+      tree.on('ValueChanged', this._onTreeValueChanged, this);
+      return true;
+    } else if (new_val == false) {
+      tree.root.toggleThrowDataEvents(false);
+      tree.off('ValueChanged', this._onTreeValueChanged, this);
+      delete this.insertionListeners[treeName];
     }
   },
 
-  _onDomNodeInserted: function(tree, $node, evt) {
+  _onTreeValueChanged: function(evt) {
+    CTS.Log.Info("Forrest caught tree value change");
+    var node = evt.sourceNode;
+    var tree = evt.sourceTree;
+
+    if (node._subclass_shouldRunCtsOnInsertion()) {
+      var links = node._subclass_getTreesheetLinks();
+      var promises = self.parseAndAddSpecsFromLinks(ctsLinks);
+      Q.all(promises).then(
+        function() {
+          // Creae the CTS tree for this region.
+          CTS.Log.Info("Running onChildInserted", prnt);
+
+          var node = prnt._onChildInserted($node);
+        }, function(errors) {
+          CTS.Log.Error("Couldn't add CTS blocks from inserted dom node", errors);
+        }
+      );
+    }
+
+    // If the tree is the main tree, we might run some CTS.
+
     // If the tree is the main tree, we want to possibly run any CTS
     var self = this;
     if (typeof evt.ctsHandled == 'undefined') {
-      var node = tree.getCtsNode($node);
+      var node = tree.getCtsNode(evt.node);
       if (node == null) {
-        if (! $node.hasClass("cts-ignore")) {
-          CTS.Log.Debug("Insertion", $node);
+        if (! evt.node.hasClass("cts-ignore")) {
+          CTS.Log.Info("Insertion", evt.node);
           // Get the parent
-          var $prnt = CTS.$($node.parent());
+          var $prnt = evt.node.parent();
           var prnt = tree.getCtsNode($prnt);
           if (prnt == null) {
             // CTS.Log.Error("Node inserted into yet unmapped region of tree", prnt);
           } else {
             // First see if any CTS blocks live in this region
-            var ctsLinks = CTS.Util.getTreesheetLinks($node);
+            var ctsLinks = CTS.Util.getTreesheetLinks(evt.node);
             var promises = self.parseAndAddSpecsFromLinks(ctsLinks);
             Q.all(promises).then(
               function() {
                 // Create the CTS tree for this region.
                 CTS.Log.Info("Running onChildInserted", prnt);
-                var node = prnt._onChildInserted($node);
+                var node = prnt._onChildInserted(evt.node);
               }, function(errors) {
                 CTS.Log.Error("Couldn't add CTS blocks from inserted dom node", errors);
               }

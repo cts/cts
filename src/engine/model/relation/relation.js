@@ -55,6 +55,16 @@ CTS.Relation.Base = {
     return (node == this.node1) ? this.node2 : this.node1;
   },
 
+  handleEventFromNode: function(evt) {
+    // Pass it on over.
+    evt.viaRelation = this;
+    if (evt.sourceNode = this.node1) {
+      this.node1.handleEventFromRelation(evt);
+    } else {
+      this.node2.handleEventFromRelation(evt);
+    }
+  },
+
   /*
    * removes this relation from both node1 and node2
    */
@@ -64,18 +74,6 @@ CTS.Relation.Base = {
     }
     if (this.node2 != null) {
       this.node2.unregisterRelation(this);
-    }
-  },
-
-  rebind: function(source, destination) {
-    if (source == this.node1) {
-      this.node1.registerRelation(this);
-      this.node1 = destination;
-    } else if (source == this.node2) {
-      this.node2.registerRelation(this);
-      this.node2 = destination;
-    } else {
-      CTS.Log.Error("Asked to rebind but no match.");
     }
   },
 

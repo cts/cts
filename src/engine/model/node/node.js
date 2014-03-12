@@ -42,6 +42,7 @@ CTS.Node.Base = {
     this.inlineRelationSpecs = [];
     this.parsedInlineRelationSpecs = false;
     this.realizedInlineRelationSpecs = false;
+    this._lastValueChangedValue = null;
   },
 
   getChildren: function() {
@@ -54,10 +55,12 @@ CTS.Node.Base = {
     }
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
+      this.on('ValueChanged', relation.handleEventFromNode, relation);
     }
   },
 
   unregisterRelation: function(relation) {
+    this.off('ValueChanged', relation.handleEventFromNode, relation);
     this.relations = CTS.Fn.filter(this.relations,
         function(r) { return r != relation; });
   },
@@ -218,8 +221,11 @@ CTS.Node.Base = {
     return this == other;
   },
 
-  destroy: function() {
+  destroy: function(destroyValueToo) {
     var gotIt = false;
+    if (typeof destroyValueToo == 'undefined') {
+      destroyValueToo = true;
+    }
     if (this.parentNode) {
       for (var i = 0; i < this.parentNode.children.length; i++) {
         if (this.parentNode.children[i] == this) {
@@ -229,9 +235,15 @@ CTS.Node.Base = {
         }
       }
     }
+
+    for (var i = 0; i < this.relations.length; i++) {
+      this.relations[i].destroy();
+    }
     // No need to log if we don't have it. That means it's root.
     // TODO(eob) log error if not tree root
-    this._subclass_destroy();
+    if (destroyValueToo) {
+      this._subclass_destroy();
+    }
   },
 
   undestroy: function() {
@@ -449,14 +461,6 @@ CTS.Node.Base = {
     return false;
   },
 
-  onDataEvent: function(eventName, callback) {
-    this._subclass_onDataEvent(eventName, callback);
-  },
-
-  offDataEvent: function(eventName, callback) {
-    this._subclass_offDataEvent(eventName, callback);
-  },
-
   /***************************************************************************
    * EVENTS
    *
@@ -480,10 +484,32 @@ CTS.Node.Base = {
       return;
     } else if (bool) {
       this.shouldThrowEvents = true;
-      this._subclass_onDataEvent("ValueChanged", this._valueChangedListenerProxy);
+      this._subclass_throwChangeEvents(true);
     } else {
       this.shouldThrowEvents = false;
-      this._subclass_offDataEvent("ValueChanged", this._valueChangedListenerProxy);
+      this._subclass_throwChangeEvents(false);
+    }
+  },
+
+  _maybeThrowDataEvent: function(evt) {
+    if (this.shouldThrowEvents) {
+      evt.newValue = evt.node[0].outerHTML;
+      if (evt.eventName == 'ValueChanged') {
+        // Maybe squash if we're in an echo chamber.
+        if (this._lastValueChangedValue == evt.newValue) {
+          // An echo! Stop it here.
+          CTS.Log.Info("Suppressing event echo", this, evt);
+          this._lastValueChangedValue = null;
+          return;
+        } else {
+          this._lastValueChangedValue = evt.newValue;
+          evt.sourceNode = this;
+          evt.sourceTree = this.tree;
+          CTS.Log.Info("Throwing Event", evt);
+          this.trigger(evt.eventName, evt);
+          this.tree.trigger(evt.eventName, evt); // Throw it for the tree, too.
+        }
+      }
     }
   },
 
@@ -497,15 +523,6 @@ CTS.Node.Base = {
     }
   },
 
-  handleEventFromData: function(evt) {
-    if (CTS.LogLevel.Debug()) {
-      CTS.Log.Debug("Event from data", evt);
-    }
-    if (this.shouldThrowEvents) {
-      this.passEventToRelations(evt);
-    }
-  },
-
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
     console.log("EVENT FROM RELATION");
     if (this.shouldReceiveEvents) {
@@ -514,17 +531,6 @@ CTS.Node.Base = {
           this.setValue(evt.newValue);
         }
       }
-    }
-  },
-
-  passEventToRelations: function(evt) {
-    if (! this.relations) {
-      return;
-    }
-    for (var i = 0; i < this.relations.length; i++) {
-      var relation = this.relations[i];
-      var other = relation.opposite(this);
-      other.handleEventFromRelation(evt, relation, this);
     }
   },
 

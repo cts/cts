@@ -11,7 +11,7 @@ CTS.Tree.Html = function(forrest, spec) {
 
 // Instance Methods
 // ----------------
-CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, {
+CTS.Fn.extend(CTS.Tree.Html.prototype, CTS.Tree.Base, CTS.Events, {
   setRoot: function($$node) {
     this.root = $$node;
     this.root.setProvenance(this);
