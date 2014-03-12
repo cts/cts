@@ -373,6 +373,15 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
           node: $addedNode,
         });
       }
+
+      if (mr.type == "characterData") {
+        var textNode = mr.target;
+        var $changedNode = CTS.$(textNode.parentElement);
+        this._maybeThrowDataEvent({
+          eventName: "ValueChanged",
+          node: $changedNode
+        });
+      }
     }
 
     // Don't fire the event if we just changed the node because of an
