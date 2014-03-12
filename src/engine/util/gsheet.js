@@ -46,7 +46,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
         url += "?";
       }
       if (CTS.Util.GSheet._currentToken != null) {
-        console.log("token", CTS.Util.GSheet._currentToken);
         url += "access_token=" + CTS.Util.GSheet._currentToken.access_token;
       } else {
         console.error("Asked for auth but current token null");
@@ -60,7 +59,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   logout: function() {
-    console.log("GSHEET Logout");
     CTS.Util.GSheet._currentToken = null;
     if (typeof this._loginStateModified == 'function') {
       this._loginStateModified();
@@ -72,7 +70,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   _authenticationResult: function(authResult) {
-   CTS.Log.Info("Got GDoc Auth Result", authResult);
    if (authResult && !authResult.error) {
      CTS.Util.GSheet._currentToken = gapi.auth.getToken();
      CTS.Util.GSheet._loginDefer.resolve();
@@ -143,7 +140,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
         console.log('create error', resp.error);
         deferred.reject(resp.error);
       } else {
-        console.log("create success", resp);
         deferred.resolve(resp);
       }
     });
@@ -173,8 +169,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       deferred.resolve(ret);
     });
     request.fail(function(jqxhr, textStatus) {
-      console.log("GetSpreadsheets");
-      console.log(jqxhr, textStatus);
       deferred.reject(textStatus);
     });
 
@@ -217,7 +211,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   getListFeed: function(spreadsheetKey, worksheetKey) {
-    console.log("Getting worksheet", spreadsheetKey, worksheetKey);
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
 
@@ -225,7 +218,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
 
     request.done(function(json) {
       var spec = {};
-      console.log(json);
       spec.title = CTS.Util.GSheet._parseGItem(json.feed.title);
       spec.updated = CTS.Util.GSheet._parseGItem(json.feed.updated);
       spec.id = CTS.Util.GSheet._parseGItem(json.feed.id);
@@ -258,7 +250,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   getCellFeed: function(spreadsheetKey, worksheetKey) {
-    console.log("Getting worksheet cell feed", spreadsheetKey, worksheetKey);
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('cells', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
 
@@ -266,8 +257,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
 
     request.done(function(json) {
       var spec = {};
-      console.log(json);
-      console.log("SHEET FEED", json);
       spec.title = CTS.Util.GSheet._parseGItem(json.feed.title);
       spec.updated = CTS.Util.GSheet._parseGItem(json.feed.updated);
       spec.id = CTS.Util.GSheet._parseGItem(json.feed.id);
@@ -282,11 +271,15 @@ CTS.Fn.extend(CTS.Util.GSheet, {
         }
         var row = cell.slice(0, letterIdx);
         var col = parseInt(cell.slice(letterIdx));
+        var colNum = parseInt(json.feed.entry[i]['gs$cell']['col'])
 
         if (typeof spec.rows[row] == "undefined") {
           spec.rows[row] = {};
         }
-        spec.rows[row][col] = content;
+        spec.rows[row][col] = {
+          content: content,
+          colNum: colNum
+        };
       }
       deferred.resolve(spec);
     });
@@ -304,7 +297,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     // we are completely blocked from sending non-GET requests to it from
     // within the browser. For now we'll proxy via the CTS server. Ugh.
     var deferred = Q.defer();
-    console.log("Value", value);
     var request = CTS.$.ajax({
       url: '/api/updatecell',
       type: 'POST',
@@ -318,7 +310,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       }
     });
     request.done(function(json) {
-      console.log("Set sell result", json);
       deferred.resolve(res);
     });
     request.fail(function(jqxhr, textStatus) {

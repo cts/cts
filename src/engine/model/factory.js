@@ -98,6 +98,7 @@ CTS.Factory = {
                 if ((! found) && (child.name == treespec.worksheet)) {
                   tree.root = child;
                   found = true;
+                  tree.toggleReceiveRelationEvents(true);
                   deferred.resolve(tree);
                 }
               }

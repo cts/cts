@@ -27,4 +27,5 @@ CTS.Fn.extend(CTS.Tree.GSpreadsheet.prototype, CTS.Tree.Base, {
 
   listenForNodeInsertions: function(new_val) {
   }
+
 });

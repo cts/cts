@@ -4,7 +4,7 @@ CTS.Fn.extend(CTS.Util, {
   loadJavascript: function(url, onload) {
     var s = document.createElement('script');
     var proto = '';
-    if ((typeof window != 'undefined') && 
+    if ((typeof window != 'undefined') &&
         (typeof window.location != 'undefined') &&
         (window.location.protocol == 'file:')) {
       proto = 'http:';
@@ -15,6 +15,28 @@ CTS.Fn.extend(CTS.Util, {
       s.onload = onload;
     }
     document.getElementsByTagName('head')[0].appendChild(s);
+  },
+
+  createJqueryNode: function(node) {
+    // A Node contains multiple DOM Nodes
+    var n = null;
+    if (typeof node == 'object') {
+      if (! CTS.Fn.isUndefined(node.jquery)) {
+        n = node;
+      } else if (node instanceof Array) {
+        n = node[0];
+      } else if (node instanceof Element) {
+        n = CTS.$(node);
+      } else {
+        n = null;
+      }
+    } else if (typeof node == 'string') {
+      n = $(node);
+    } else {
+      n = null;
+    }
+
+    return n;
   },
 
   getUrlBase: function(url) {
@@ -54,7 +76,7 @@ CTS.Fn.extend(CTS.Util, {
     var pat = /^https?:\/\//i;
     var fixElemAttr = function(elem, attr) {
       var a = elem.attr(attr);
-      if ((typeof a != 'undefined') && 
+      if ((typeof a != 'undefined') &&
           (a !== null) &&
           (a.length > 0)) {
         if (! pat.test(a)) {
@@ -63,7 +85,7 @@ CTS.Fn.extend(CTS.Util, {
           } else {
             a = basePath + "/" + a;
           }
-          elem.attr(attr, a); 
+          elem.attr(attr, a);
         }
       }
     };
@@ -88,14 +110,14 @@ CTS.Fn.extend(CTS.Util, {
    *
    * Returns:
    *   Array of Objects:
-   *    { 
+   *    {
    *      type:     link or inline
    *      content:  the CTS content, if inline
    *      url:      the URL, if a link
    *      args:     any other args
    *    }
    *
-   */ 
+   */
   getTreesheetLinks: function($fromNode) {
     var ret = [];
 
@@ -182,7 +204,7 @@ CTS.Fn.extend(CTS.Util, {
   },
 
   themeUrls: function(themeRef, subthemeRef) {
-    // theme urls take the form TYPE/INSTANCE/PAGE 
+    // theme urls take the form TYPE/INSTANCE/PAGE
     // TODO(eob): create more flexible ecosystem
 
     var parts = themeRef.split("/");

@@ -1,0 +1,61 @@
+extends ../layouts/scratch
+
+block head
+  title DOM Insertion Listening
+
+block content
+  .content
+    div.row
+      div.col-md-9.col-md-offset-1
+        h1 Insertion Listening
+
+        h3 This is the template
+        div#template
+          button.btn.btn-info TEMPLATE
+
+        h3 Load CTS and then push this button:
+        button#doit(onclick="doit(); return false;") Insert
+
+        h3 The text that appears here should be ignored by CTS (has class cts-ignore)
+        div.plain
+
+        h3 The text that appears here should be decorated by CTS
+        div.decorated
+
+        h3 Notes
+
+        ul
+          li <code>Engine</code> calls <code>forrest.startListening</code>
+          li <code>startListening</code> calls <code>forrest.listenForNodeInsertionsOnTree</code> on the <code>body</code> (the idea is that <code>startListening</code> might eventually listen for other things too, which is why this layer of indirection exists.
+          li <code>listenForNodeInsertionsOnTree</code> Better eents
+
+        script.
+          function doit() {
+            CTS.$('.plain').html(
+              "<span class='cts-ignore'><span data-cts='this :graft #template;'><span data-cts='#template button :is this;'>Plain</span></span></span>");
+            CTS.$('.decorated').html(
+              "<span><span data-cts='this :graft #template;'><span data-cts='#template button :is this;'>Decorated</span></span></span>");
+
+          }
+      div.col-md-9.col-md-offset-1
+        h1 Change Listening
+        h3 Simple
+        div#changeme Value1
+        button(onclick="changeit();") Change Value 1
+        script.
+          function changeit() {
+            CTS.$('#changeme').html("Value 2");
+          }
+
+        h3 More Complex
+        div#changeme2
+          <span>What?</span>
+          <span>Oh yeah.</span>
+        button(onclick="changeit2();") Change
+        script.
+          function changeit2() {
+            CTS.$('#changeme2').html("<span>It's done.</span>");
+          }
+
+        h3 Input Value
+        input#changeme3(value="Change me")

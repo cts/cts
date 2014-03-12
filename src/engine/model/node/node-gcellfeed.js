@@ -23,11 +23,11 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   getWorksheetKey: function() {
-    return this.spec.wsKey;
+    return this.spec.wskey;
   },
 
   getSpreadsheetKey: function() {
-    return this.spec.ssKey;
+    return this.spec.sskey;
   },
 
   // Find alreays returns empty on a leaf.

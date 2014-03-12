@@ -5,10 +5,12 @@
 CTS.Node.GColumnCell = function(row, value, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
-  this.value = value;
+  this.value = value.content;
   this.row = row;
+  this.colNum = value.colNum;
   this.ctsId = Fn.uniqueId().toString();
   this.kind = 'GColumnCell';
+  this.shouldReceiveEvents = true;
 };
 
 // ### Instance Methods
@@ -43,7 +45,7 @@ CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   getColNum: function() {
-    return this.parentNode.getColNum();
+    return this.colNum;
   },
 
   getWorksheetKey: function() {
@@ -102,6 +104,7 @@ CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   setValue: function(value, opts) {
+    CTS.Log.Info("Column Cell setting to ", value, this);
     var promise = CTS.Util.GSheet.modifyCell(
       this.getSpreadsheetKey(),
       this.getWorksheetKey(),

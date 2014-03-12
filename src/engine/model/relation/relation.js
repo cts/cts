@@ -59,9 +59,9 @@ CTS.Relation.Base = {
     // Pass it on over.
     evt.viaRelation = this;
     if (evt.sourceNode = this.node1) {
-      this.node1.handleEventFromRelation(evt);
+      this.node2.handleEventFromRelation(evt, this, this.node1);
     } else {
-      this.node2.handleEventFromRelation(evt);
+      this.node1.handleEventFromRelation(evt, this, this.node2);
     }
   },
 

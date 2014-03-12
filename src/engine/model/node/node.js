@@ -11,7 +11,19 @@ CTS.Node = {};
 CTS.Node.Factory = {
   Html: function(node, tree, opts) {
     var deferred = Q.defer();
-    var node = new CTS.Node.Html(node, tree, opts);
+    var klass = CTS.Node.Html;
+
+    if (! CTS.Fn.isUndefined(node.jquery)) {
+      if (node.is('input')) {
+        klass = CTS.Node.HtmlInput;
+      }
+    } else if (node instanceof Element) {
+      if (node.nodeName == 'INPUT') {
+        klass = CTS.Node.HtmlInput;
+      }
+    }
+
+    var node = new klass(node, tree, opts);
     node.parseInlineRelationSpecs().then(
       function() {
         if (node == null) {
@@ -493,27 +505,30 @@ CTS.Node.Base = {
 
   _maybeThrowDataEvent: function(evt) {
     if (this.shouldThrowEvents) {
-      evt.newValue = evt.node[0].outerHTML;
-      if (evt.eventName == 'ValueChanged') {
-        // Maybe squash if we're in an echo chamber.
-        if (this._lastValueChangedValue == evt.newValue) {
-          // An echo! Stop it here.
-          CTS.Log.Info("Suppressing event echo", this, evt);
-          this._lastValueChangedValue = null;
-          return;
-        } else {
-          this._lastValueChangedValue = evt.newValue;
-          evt.sourceNode = this;
-          evt.sourceTree = this.tree;
-          CTS.Log.Info("Throwing Event", evt);
-          this.trigger(evt.eventName, evt);
-          this.tree.trigger(evt.eventName, evt); // Throw it for the tree, too.
+      console.log(evt.node);
+      if (evt.ctsNode) {
+        evt.newValue = evt.ctsNode.getValue();
+        if (evt.eventName == 'ValueChanged') {
+          // Maybe squash if we're in an echo chamber.
+          if (this._lastValueChangedValue == evt.newValue) {
+            // An echo! Stop it here.
+            CTS.Log.Info("Suppressing event echo", this, evt);
+            this._lastValueChangedValue = null;
+            return;
+          } else {
+            this._lastValueChangedValue = evt.newValue;
+            evt.sourceNode = this;
+            evt.sourceTree = this.tree;
+            CTS.Log.Info("Throwing Event", evt);
+            this.trigger(evt.eventName, evt);
+            this.tree.trigger(evt.eventName, evt); // Throw it for the tree, too.
+          }
         }
       }
     }
   },
 
-  toggleReceiveRelationEvents: function(bool) {
+  toggleReceiveRelationEvents: function(bool, recursive) {
     if (bool == this.shouldReceiveEvents) {
       return;
     } else if (bool) {
@@ -521,12 +536,18 @@ CTS.Node.Base = {
     } else {
       this.shouldReceiveEvents = true;
     }
+
+    if (recursive) {
+      for (var i = 0; i < this.getChildren().length; i++) {
+        this.children[i].toggleReceiveRelationEvents(bool, recursive);
+      }
+    }
   },
 
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
-    console.log("EVENT FROM RELATION");
+    CTS.Log.Info("Event from relation", evt, this);
     if (this.shouldReceiveEvents) {
-      if (evt.name == "ValueChanged") {
+      if (evt.eventName == "ValueChanged") {
         if (fromRelation.name == "is") {
           this.setValue(evt.newValue);
         }

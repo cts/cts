@@ -19,6 +19,7 @@ CTS.Tree.Base = {
     }
   },
 
+  toggleReceiveRelationEvents: function(toggle) {
+    this.root.toggleReceiveRelationEvents(toggle, true);
+  }
 };
-
-

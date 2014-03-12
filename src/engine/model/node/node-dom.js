@@ -3,7 +3,8 @@ CTS.Node.Html = function(node, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
   this.kind = "HTML";
-  this.value = this._createJqueryNode(node);
+  this.value = CTS.Util.createJqueryNode(node);
+  this.value.data('ctsnode', this);
   this.ctsId = Fn.uniqueId().toString();
 
   this.value.data('ctsid', this.ctsId);
@@ -15,63 +16,7 @@ CTS.Node.Html = function(node, tree, opts) {
 };
 
 // ### Instance Methods
-CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
-
-  debugName: function() {
-    return CTS.Fn.map(this.siblings, function(node) {
-      return node[0].nodeName; }
-    ).join(', ');
-  },
-
-  stash: function() {
-    this.value.attr('data-ctsid', this.ctsId);
-    this.tree.nodeStash[this.ctsId] = this;
-  },
-
-  _subclass_shouldRunCtsOnInsertion: function() {
-    if (! this.value) return false;
-    if (this.value.hasClass('cts-ignore')) return false;
-  },
-
-  _subclass_getTreesheetLinks: function() {
-    return CTS.Util.getTreesheetLinks(this.value);
-  },
-
-  // Horrendously inefficient.
-  find: function(selector, ret) {
-    if (typeof ret == 'undefined') {
-      ret = [];
-    }
-    if (this.value.is(selector)) {
-      if (typeof ret == 'undefined') {
-        CTS.Log.Error("push");
-      }
-      ret.push(this);
-    }
-    for (var i = 0; i < this.children.length; i++) {
-      if (this.children[i] == null) {
-        CTS.Log.Error("Error: Child " + i + " of me is null (find:" + selector + ")", this);
-      } else {
-        if (typeof this.children[i] == 'undefined') {
-          CTS.Log.Error("Undefined child");
-        }
-        this.children[i].find(selector, ret);
-      }
-    }
-    return ret;
-  },
-
-  /************************************************************************
-   **
-   ** Required by Node base class
-   **
-   ************************************************************************/
-
-   //descendantOf: function(other) {
-   //  // jQuery trick
-   //  // this.value is a jQuery node
-   //  return this.value.closest(other.value).length != 0;
-   //},
+CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, CTS.Node.DomBase, {
 
    /*
     * Precondition: this.children.length == 0
@@ -177,59 +122,8 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
      ).done();
    },
 
-   /*
-    *  Removes this DOM node from the DOM tree it is in.
-    */
-   _subclass_destroy: function() {
-     this.value.remove();
-   },
-
-   _subclass_getInlineRelationSpecString: function() {
-     if (this.value !== null) {
-       var inline = this.value.attr('data-cts');
-       return inline;
-     }
-     return null;
-   },
-
    _subclass_beginClone: function($node) {
-     var $value = null;
-     if (typeof $node == "undefined") {
-       $value = this.value.clone();
-     } else {
-       $value = $node;
-     }
-
-     // Remove any inline CTS annotations, since we're going to
-     // manually copy in relations.
-     $value.attr('data-cts', null);
-     $value.find("*").attr('data-cts', null);
-
-     // NOTE: beginClone is allowed to directly create a Node
-     // without going through the factory because we already can be
-     // sure that all this node's trees have been realized
-     var clone = new CTS.Node.Html($value, this.tree, this.opts);
-
-     var cloneKids = clone.value.children();
-     if (this.children.length != cloneKids.length) {
-       CTS.Log.Error("Trying to clone CTS node that is out of sync with dom");
-     }
-     // We use THIS to set i
-     for (var i = 0; i < cloneKids.length; i++) {
-       var $child = CTS.$(cloneKids[i]);
-       var child = this.children[i]._subclass_beginClone($child);
-       child.parentNode = clone;
-       if (typeof child.children  == 'undefined') {
-         CTS.Log.Error("Kids undefined");
-       }
-       clone.children.push(child);
-     }
-
-     if (clone.relations.length > 0) {
-       CTS.Log.Error("After subclass clone, relations shouldn't be > 0");
-     }
-
-     return clone;
+     return this._subclass_beginClone_base($node, CTS.Node.Html);
    },
 
   /************************************************************************
@@ -240,11 +134,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
 
   getValue: function(opts) {
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
-      if (this.value.is("input")) {
-        return this.value.val();
-      } else {
-        return this.value.html();
-      }
+      return this.value.html();
     } else {
       return this.value.attr(opts.attribute);
     }
@@ -252,58 +142,13 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
 
   setValue: function(value, opts) {
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
-      if (this.value.is("input")) {
-        this.value.val(value);
-      } else {
-        this.value.html(value);
-      }
+      this.value.html(value);
     } else {
       if (opts.attribute != null) {
         this.value.attr(opts.attribute, value);
       }
     }
   },
-
-  _subclass_ensure_childless: function() {
-    if (this.value !== null) {
-      this.value.html("");
-    }
-  },
-
-  /************************************************************************
-   **
-   ** Utility Helpers
-   **
-   ************************************************************************/
-
-  _createJqueryNode: function(node) {
-    // A Node contains multiple DOM Nodes
-    var n = null;
-    if (typeof node == 'object') {
-      if (! CTS.Fn.isUndefined(node.jquery)) {
-        n = node;
-      } else if (node instanceof Array) {
-        n = node[0];
-      } else if (node instanceof Element) {
-        n = CTS.$(node);
-      } else {
-        n = null;
-      }
-    } else if (typeof node == 'string') {
-      n = $(node);
-    } else {
-      n = null;
-    }
-
-    if (n !== null) {
-      // n is now a jqnode.
-      // place a little link to us.
-      n.data('ctsnode', this);
-    }
-
-    return n;
-  },
-
 
   /************************************************************************
    **
@@ -333,7 +178,6 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
       this._subclass_proxy_handleDomChange = function(e) {
         self._subclass_handleDomChangeEvent(e);
       }
-      CTS.Log.Info("Observing", this);
       this._changeObserver = new MutationObserver(this._subclass_proxy_handleDomChange);
       var opts = {
 
@@ -371,6 +215,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
         this._maybeThrowDataEvent({
           eventName: "ValueChanged",
           node: $addedNode,
+          ctsNode: $addedNode.data('ctsnode')
         });
       }
 
@@ -379,20 +224,12 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, {
         var $changedNode = CTS.$(textNode.parentElement);
         this._maybeThrowDataEvent({
           eventName: "ValueChanged",
-          node: $changedNode
+          node: $changedNode,
+          ctsNode: $changedNode.data('ctsnode')
         });
       }
     }
 
-    // Don't fire the event if we just changed the node because of an
-    // event from a related node.
-    // var newValue = this.value.html();
-    // var ctsEvent = {
-    //   name: "ValueChanged",
-    //   newValue: this.value.html()
-    // }
-    // // On superclass.
-    // this._maybeThrowDataEvent(ctsEvent);
   }
 
 });

@@ -1,3 +1,0 @@
-CTS.registerNamespace('CTS.Util');
-
-

@@ -25,25 +25,26 @@ var sources = {
     // base and constants to be added by next step.
     "src/common/utilities.js",
     "src/engine/prologue.js",
-  
+
     "src/engine/util/fn.js",
-  
+
     "src/engine/debugging/log.js",
     "src/engine/debugging/debugging.js",
     "src/engine/debugging/tree-viz.js",
-  
+
     /* Misc */
     "src/engine/util/q.js",
     "src/engine/util/state-machine.js",
     "src/engine/util/events.js",
-    "src/engine/util/utilities.js",
     "src/engine/util/gapi.js",
     "src/engine/util/gsheet.js",
-  
+
     /* Node Containers */
     "src/engine/model/node/node.js",
     "src/engine/model/node/node-abstract.js",
+    "src/engine/model/node/node-dom-base.js",
     "src/engine/model/node/node-dom.js",
+    "src/engine/model/node/node-dom-input.js",
     "src/engine/model/node/node-glistfeedproperty.js",
     "src/engine/model/node/node-glistfeeditem.js",
     "src/engine/model/node/node-glistfeed.js",
@@ -52,7 +53,7 @@ var sources = {
     "src/engine/model/node/node-gcellfeed.js",
     "src/engine/model/node/node-gworksheet.js",
     "src/engine/model/node/node-gspreadsheet.js",
-  
+
     /* Relations */
     "src/engine/model/relation/relation-spec.js",
     "src/engine/model/relation/relation.js",
@@ -61,7 +62,7 @@ var sources = {
     "src/engine/model/relation/ifexist.js",
     "src/engine/model/relation/ifnexist.js",
     "src/engine/model/relation/graft.js",
-   
+
     /* Tree Model */
     "src/engine/model/tree/tree.js",
     "src/engine/model/tree/tree-spec.js",
@@ -72,20 +73,20 @@ var sources = {
     "src/engine/model/selection-spec.js",
     "src/engine/model/selection.js",
     "src/engine/model/dependency-spec.js",
-   
+
     /* For creating async stuff */
     "src/engine/model/factory.js",
-  
+
     /* Parser */
     "src/engine/parser/parser.js",
     "src/engine/parser/parser-json.js",
     "src/engine/parser/parser-cts.js",
     "src/engine/parser/parser-cts-impl.js",
     "src/engine/parser/html.js",
-  
+
     "src/engine/engine.js",
     "src/engine/epilogue.js",
-  
+
     /* Xtras */
     "src/engine/xtras/color-tree.js",
   ],
