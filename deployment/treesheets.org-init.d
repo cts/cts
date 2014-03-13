@@ -19,7 +19,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin # modify if you need
 
 # path to your node.js server/app
 # NB: don't use ~/ in path
-DAEMON_ARGS="/sites/treesheets.org/code/app/app"
+DAEMON_ARGS="/sites/treesheets.org/code/website/app"
 
 # whatever fancy description you like
 DESC="node.js http server"
@@ -47,41 +47,41 @@ DAEMON=/usr/local/bin/$NAME
 #                                                                              #
 #                   END </MODIFY TO REFLECT YOUR SETTINGS>                     #
 #                (Nothing else to modify from this point on...)                #
-# ------------------------------------------------------------------------------ 
- 
- 
- 
- 
- 
+# ------------------------------------------------------------------------------
+
+
+
+
+
 # Do NOT "set -e"
- 
+
 [ $UID -eq "0" ] && LOCAL_VAR_RUN=/var/run # in case this script is run by root, override user setting
 THIS_ARG=$0
 INIT_SCRIPT_NAME=`basename $THIS_ARG`
 [ -h $THIS_ARG ] && INIT_SCRIPT_NAME=`basename $(readlink $THIS_ARG)` # in case of symlink
-INIT_SCRIPT_NAME_NOEXT=${INIT_SCRIPT_NAME%.*}                            
+INIT_SCRIPT_NAME_NOEXT=${INIT_SCRIPT_NAME%.*}
 PIDFILE="$LOCAL_VAR_RUN/$INIT_SCRIPT_NAME_NOEXT.pid"
 SCRIPTNAME=/etc/init.d/$INIT_SCRIPT_NAME
- 
+
 # Exit if the package is not installed
 [ -x "$DAEMON" ] ||  { echo "can't find Node.js ($DAEMON)"  >&2; exit 0; }
- 
+
 # Exit if the 'run' folder is not present
 [ -d "$LOCAL_VAR_RUN" ] || { echo "Directory $LOCAL_VAR_RUN does not exist. Modify the '$INIT_SCRIPT_NAME_NOEXT' init.d script ($THIS_ARG) accordingly" >&2; exit 0; }
- 
+
 # Read configuration variable file if it is present
 [ -r /etc/default/$INIT_SCRIPT_NAME ] && . /etc/default/$INIT_SCRIPT_NAME
- 
+
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh
- 
+
 # Define LSB log_* functions.
 # Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
 . /lib/lsb/init-functions
- 
+
 # uncomment to override system setting
 # VERBOSE=yes
- 
+
 #
 # Function that starts the daemon/service
 #
@@ -101,7 +101,7 @@ do_start()
 	# on this one.  As a last resort, sleep for some time.
 	[ "$VERBOSE" != no ] && log_daemon_msg  "  --->  started $DESC" "$INIT_SCRIPT_NAME_NOEXT"
 }
- 
+
 #
 # Function that stops the daemon/service
 #
@@ -130,7 +130,7 @@ do_stop()
   [ "$VERBOSE" != no -a "$RETVAL" = 0 ] && log_daemon_msg "  --->  $DESC stopped" "$INIT_SCRIPT_NAME_NOEXT"
 	return "$RETVAL"
 }
- 
+
 #
 # Function that sends a SIGHUP to the daemon/service
 #
@@ -143,9 +143,9 @@ do_reload() {
 	start-stop-daemon --stop --quiet --signal 1 --pidfile $PIDFILE  --chuid $NODEUSER --name $NAME
 	return 0
 }
- 
+
 #
-# Function that returns the daemon 
+# Function that returns the daemon
 #
 do_status() {
   #
@@ -156,15 +156,15 @@ do_status() {
   # 3 program is not running
   # 4 program or service status is unknown
   RUNNING=$(running)
-  
+
   # $PIDFILE corresponds to a live $NAME process
   ispidactive=$(pidof $NAME | grep `cat $PIDFILE 2>&1` >/dev/null 2>&1)
   ISPIDACTIVE=$?
- 
+
   if [ -n "$RUNNING" ]; then
-    if [ $ISPIDACTIVE ]; then 
+    if [ $ISPIDACTIVE ]; then
       log_success_msg "$INIT_SCRIPT_NAME_NOEXT (launched by $USER) (--chuid $NODEUSER) is running"
-      exit 0      
+      exit 0
     fi
   else
     if [ -f $PIDFILE ]; then
@@ -175,18 +175,18 @@ do_status() {
       exit 3
     fi
   fi
-  
+
 }
- 
+
 running() {
   RUNSTAT=$(start-stop-daemon --start --quiet --pidfile $PIDFILE --chuid $NODEUSER --background --exec $DAEMON --test > /dev/null)
   if [ "$?" = 1 ]; then
     echo y
   fi
-  
+
 }
- 
- 
+
+
 case "$1" in
   start)
 	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$INIT_SCRIPT_NAME_NOEXT"
@@ -244,6 +244,5 @@ case "$1" in
 	exit 3
 	;;
 esac
- 
-exit 0
 
+exit 0
