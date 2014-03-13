@@ -13,12 +13,16 @@ var expressValidator = require('express-validator');
 /**
  * Load controllers.
  */
+var homeController = require('./controllers/home');
 var userController = require('./controllers/user');
 var contactController = require('./controllers/contact');
 var scratchController = require('./controllers/scratch');
 var widgetController = require('./controllers/widget');
 var docController = require('./controllers/documentation');
 var apiController = require('./controllers/api');
+var forgotController = require('./controllers/forgot');
+var resetController = require('./controllers/reset');
+
 /**
  * API keys + Passport configuration.
  */
@@ -110,16 +114,48 @@ app.use(function(req, res) {
 app.use(express.errorHandler());
 
 /**
- * Application routes.
+ * DOCUMENTATION ROUTES
+ * ======================================================================
  */
 app.get('/', docController.index);
-app.get('/web-scraping', docController.dscrape);
+app.get('/demos', docController.demos);
 app.get('/widgets', widgetController.index);
+app.get('/web-scraping', docController.dscrape);
 app.get('/widgets/:widget', widgetController.show);
 app.get('/scratch', scratchController.index);
 app.get('/scratch/:page', scratchController.other);
-
 app.post('/api/updatecell', apiController.updateCell);
+
+/**
+ * APPLICATION ROUTES
+ * ======================================================================
+ */
+
+app.get('/login', userController.getLogin);
+app.post('/login', userController.postLogin);
+app.get('/logout', userController.logout);
+app.get('/forgot', forgotController.getForgot);
+app.post('/forgot', forgotController.postForgot);
+app.get('/reset/:token', resetController.getReset);
+app.post('/reset/:token', resetController.postReset);
+app.get('/signup', userController.getSignup);
+app.post('/signup', userController.postSignup);
+app.get('/about', homeController.getAbout);
+
+app.get('/account', passportConf.isAuthenticated, userController.getAccount);
+app.post('/account/profile', passportConf.isAuthenticated, userController.postUpdateProfile);
+app.post('/account/password', passportConf.isAuthenticated, userController.postUpdatePassword);
+app.post('/account/delete', passportConf.isAuthenticated, userController.postDeleteAccount);
+app.get('/account/unlink/:provider', passportConf.isAuthenticated, userController.getOauthUnlink);
+
+app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'user_location'] }));
+app.get('/auth/facebook/callback', passport.authenticate('facebook', { successRedirect: '/', failureRedirect: '/login' }));
+app.get('/auth/github', passport.authenticate('github'));
+app.get('/auth/github/callback', passport.authenticate('github', { successRedirect: '/', failureRedirect: '/login' }));
+app.get('/auth/google', passport.authenticate('google', { scope: 'profile email' }));
+app.get('/auth/google/callback', passport.authenticate('google', { successRedirect: '/', failureRedirect: '/login' }));
+app.get('/auth/twitter', passport.authenticate('twitter'));
+app.get('/auth/twitter/callback', passport.authenticate('twitter', { successRedirect: '/', failureRedirect: '/login' }));
 
 /**
  * Start Express server.

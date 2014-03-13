@@ -1,18 +1,19 @@
 .navbar.navbar-default.navbar-fixed-top
-  .container
+  .container.col-md-6.col-md-offset-3
     .navbar-header
       button.navbar-toggle(type='button', data-toggle='collapse', data-target='.navbar-collapse')
-        span.sr-only Toggle navigation
-        span.icon-bar
-        span.icon-bar
-        span.icon-bar
-      a.navbar-brand(href='/') Project name
+        span.sr-only Toggle Nagivation
     .collapse.navbar-collapse
       ul.nav.navbar-nav
         li(class=title=='Home'?'active':undefined)
-          a(href='/') Home
-        li(class=title=='Contact'?'active':undefined)
-          a(href='/contact') Contact
+          a(style="font-size: 1.4em;", href='/') <b>CTS</b>
+        li(class=title=='Demos'?'active':undefined)
+          a(href='/demos') Demos
+        li(class=title=='Scratch'?'active':undefined)
+          a(href='/scratch') Scratch Pad
+        li(class=title=='About'?'active':undefined)
+          a(href='/about') About
+
       ul.nav.navbar-nav.navbar-right
         if !user
           li(class=title=='Login'?'active':undefined)

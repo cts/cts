@@ -8,3 +8,9 @@ exports.index = function(req, res) {
     title: 'Home'
   });
 };
+
+exports.getAbout = function(req, res) {
+  res.render('cts/about', {
+    title: 'About'
+  });
+};

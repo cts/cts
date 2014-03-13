@@ -9,10 +9,16 @@ html
     title #{title} - Starter Template for Bootstrap
     != css('styles')
     != js('application')
-  body
+  body.cts.cts-doc
+    include partials/navigation
+    main.ctsdoc-small(style="margin-bottom: 20px")
+      .left &nbsp;
+      .center
+        h1 Cascading Tree Sheets
+        h2 CSS for Structure
+      .right &nbsp;
+
     #wrap
-      include partials/navigation
       .container
         include partials/flash
         block content
-    include partials/footer
