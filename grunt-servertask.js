@@ -10,7 +10,7 @@ module.exports = function(arg1, arg2) {
   var path = require('path');
 
   // The web server on 3000
-  var server = child_process.exec('PORT=3000 node app.js', {
+  var server = child_process.exec('node app.js', {
     cwd: path.join(__dirname, 'website')
   });
   server.stdout.pipe(process.stdout);
