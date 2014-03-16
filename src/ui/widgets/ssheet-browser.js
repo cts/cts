@@ -102,6 +102,44 @@ CTS.UI.SSheetBrowser.prototype.buildWorksheet = function(ws) {
 CTS.UI.SSheetBrowser.prototype.showWorksheet = function(ws) {
   this.$tabs.find('li').removeClass('active');
   this.$tabs.find('li[data-name="' + ws.name + '"]').addClass('active');
+  var cellfeed = null;
+  var itemfeed = null;
+  for (var i = 0; i < ws.children.length; i++) {
+    if (ws.children[i].kind == 'GCellFeed') {
+      cellfeed = ws.children[i];
+    } else if (ws.children[i].kind == 'GListFeed') {
+      itemfeed = ws.children[i];
+    }
+  }
+  this.showTable(this.$ssheet, cellfeed);
+};
+
+
+CTS.UI.SSheetBrowser.prototype.showTable = function($node, cf) {
+  var row = 0;
+  var hadOne = true;
+  var html = "<table>";
+
+  while (hadOne) {
+    hadOne = false;
+    html += "<tr>";
+    console.log(html);
+    for (var col = 0; col < cf.children.length; col++) {
+      var rn = cf.children[col];
+      html += "<td>";
+      if (row < rn.children.length) {
+        hadOne = true;
+        var cell = rn.children[row];
+        html += cell.value;
+      }
+      html += "</td>";
+      row += 1;
+    }
+    html += "</tr>";
+    console.log(html);
+  }
+  html += "</table>";
+  $node.html(html);
 };
 
 
