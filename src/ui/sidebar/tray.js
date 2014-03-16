@@ -84,6 +84,14 @@ CTS.UI.Tray.prototype.invokeScraper = function(page) {
   this.pushPage(this._scraper);
 };
 
+CTS.UI.Tray.prototype.invokeConnector = function(page) {
+  var $page = CTS.$('<div class="cts-ui-page"></div>');
+  $page.hide();
+  $page.appendTo(this.$trayContents);
+  this._connector = new CTS.UI.Connectorator(this, $page);
+  this.pushPage(this._connector);
+};
+
 CTS.UI.Tray.prototype.pushPage = function(page) {
   this._pages[this._pages.length - 1].$page.hide();
   this._pages.push(page);

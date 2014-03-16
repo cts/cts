@@ -41,6 +41,7 @@ CTS.Fn.extend(CTS.UI.URLs, {
   Services: {
     switchboard: CTS.UI.Domains.Server + 'tree/switchboard',
     clipboard: CTS.UI.Domains.Server + 'widgets/ctsui/clipboard/clipboard.html',
+    proxy: CTS.UI.Domains.Server + 'api/proxy',
     zipFactory: CTS.UI.Domains.Server + 'zip'
   }
 });

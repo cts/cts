@@ -1,0 +1,13 @@
+extends ../layouts/scratchui
+
+block title
+  h1 CTS Proxy Browser
+
+block content
+
+  div#foo
+
+  script.
+    CTS.status.libraryLoaded.then(function() {
+      window.pb = new CTS.UI.ProxyBrowser(CTS.$, CTS.Q, CTS.$('#foo'));
+    });
