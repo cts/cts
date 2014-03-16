@@ -1,4 +1,4 @@
-extends ../layouts/scratchui
+extends ../layouts/scratchuiauto
 
 block head
   style.
@@ -26,7 +26,7 @@ block content
   script.
     CTS.status.libraryLoaded.then(function() {
       window.pb1 = new CTS.UI.ProxyBrowser(CTS.$, CTS.Q, CTS.$('#browser1'));
-      window.pb2 = new CTS.UI.ProxyBrowser(CTS.$, CTS.Q, CTS.$('#browser2'));
+      window.pb2 = new CTS.UI.SSheetBrowser(CTS.$, CTS.Q, CTS.$('#browser2'), false);
       CTS.$('#cts1udpate').on('click', function() {
         var cts = CTS.$('#cts1').val();
 

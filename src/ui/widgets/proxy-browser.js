@@ -7,11 +7,15 @@ CTS.registerNamespace('CTS.UI.ProxyBrowser');
  *  $ - jQuery (can be found at CTS.$ once CTS loads)
  *  q - The Q library (can be found at CTS.Q once CTS loads)
  */
-CTS.UI.ProxyBrowser = function($, q, $container) {
+CTS.UI.ProxyBrowser = function($, q, $container, proxy) {
   this._$ = $;
   this._q = q;
+  this.proxy = true;
+  if (typeof proxy != 'undefined') {
+    this.proxy = proxy;
+  }
   this.$container = $container;
-  this.$root = $('<div class="cts-ui-proxybrowser"></div>');
+  this.$root = $('<div class="cts-ui-proxybrowser cts-ignore"></div>');
   this.$container.append(this.$root);
   this.$container.on('resize', function() {
     this.onresize();
@@ -65,9 +69,17 @@ CTS.UI.ProxyBrowser.prototype.onresize = function() {
   this.$iframe.height(h - this.$urldiv.height());
 };
 
+CTS.UI.ProxyBrowser.prototype.document = function() {
+  return this.$iframe[0].contentDocument;
+};
+
 CTS.UI.ProxyBrowser.prototype.loadurl = function() {
   var url = this.$urlinput.val();
-  url = encodeURIComponent(url);
-  var proxy = CTS.UI.URLs.Services.proxy + "?url=" + url;
-  this.$iframe.attr('src', proxy);
+  if (this.proxy) {
+    url = encodeURIComponent(url);
+    var proxy = CTS.UI.URLs.Services.proxy + "?url=" + url;
+    this.$iframe.attr('src', proxy);
+  } else {
+    this.$iframe.attr('src', url);
+  }
 };
