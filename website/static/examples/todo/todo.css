@@ -1,0 +1,19 @@
+ul {
+  font-size: 18px;
+}
+
+ul li {
+  list-style-type: none;
+}
+
+ul li input[type="checkbox"] {
+  line-height: 18px;
+  vertical-align: top;
+  width: 18px;
+  height: 18px;
+}
+
+form {
+  font-size: 18px;
+  margin-left: 40px;
+}

@@ -33,9 +33,7 @@ CTS.UI.SSheetBrowser.prototype.setup = function() {
   this.$urlinput.css({
     border: '2px solid #777',
     position: 'relative',
-    width: 'calc(100% - 10px)',
-    'margin-left': '5px',
-    'margin-right': '5px',
+    width: '100%',
     'padding-left': '5px'
   });
   this.$urlinput.keyup(function (e) {
@@ -48,9 +46,8 @@ CTS.UI.SSheetBrowser.prototype.setup = function() {
 
   this.$ssheet = this._$('<div class="ssheet"></div>');
   this.$ssheet.css({
-    'margin-left': '5px',
-    'margin-right': '5px',
-    'border': 'none'
+    'border': '1px solid #ccc',
+    'border-top': 'none'
   });
   this.$root.append(this.$ssheet);
 

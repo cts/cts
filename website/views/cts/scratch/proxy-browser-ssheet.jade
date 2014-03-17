@@ -6,18 +6,38 @@ block head
       width: 90%;
       border: 3px solid #333;
       margin: 10px;
+      height: 80px;
+    }
+    #browser1 {
+      position: relative;
+      height: 100%;
+      margin-right: 5px;
+    }
+    #browser2 {
+      position: relative;
+      height: 100%;
+      margin-left: 5px;
+    }
+
+    .full {
+      padding-left: 30px;
+      padding-right: 30px;
+      padding-top: 20px;
+      height: calc(100% - 130px);
     }
 
 block title
   h1 CTS Proxy Browser
 
 block content
-  div.row(style="padding-left: 30px; padding-right: 30px;")
-    table(width="100%")
+  div.row.full
+    table(width="100%", height="100%")
       tr
-        td(width="50%")#browser1
-        td(width="50%")#browser2
-      tr
+        td(width="50%")
+          div#browser1
+        td(width="50%")
+          div#browser2
+      tr(style="height: 100px")
         td
           textarea.cts#cts1
           button#cts1udpate Update
