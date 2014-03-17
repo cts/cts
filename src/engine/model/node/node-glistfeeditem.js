@@ -35,7 +35,6 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
     selector = selector.trim();
     if (selector[0] == ".") {
       selector = selector.slice(1);
-      console.log("ListFeed find:", selector);
       for (var i = 0; i < this.children.length; i++) {
         var child = this.children[i];
         if (selector == child.key) {
@@ -44,7 +43,6 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
         }
       }
     }
-    console.log("Finished List Find", found);
     return ret;
   },
 

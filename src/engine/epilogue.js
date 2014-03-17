@@ -11,7 +11,7 @@ CTS.status._libraryLoaded = Q.defer();
 CTS.status.libraryLoaded = CTS.loaded = CTS.status.loaded = CTS.status._libraryLoaded.promise;
 
 CTS.status._defaultTreeReady = Q.defer();
-CTS.ready = CTS.status.defaultTreeReady = CTS.status._defaultTreeReady.promise; 
+CTS.ready = CTS.status.defaultTreeReady = CTS.status._defaultTreeReady.promise;
 
 CTS.Epilogue.ensureJquery = function() {
   var deferred = Q.defer();
@@ -43,6 +43,8 @@ CTS.Epilogue.maybeAutoload = function() {
     });
   }
 };
+
+CTS.Util.GSheet._loadGApi();
 
 CTS.Epilogue.ensureJquery().then(
   function(jQuery) {

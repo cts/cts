@@ -8,6 +8,13 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   _loginStateModified: null,
   _currentToken: null,
   _loginDefer: Q.defer(),
+  _gapiLoaded: Q.defer(),
+
+  _loadGApi: function() {
+    gapi.load("auth:client,drive-share", function() {
+      CTS.Util.GSheet._gapiLoaded.resolve();
+    });
+  },
 
   /*
    * Args:
@@ -91,11 +98,18 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   login: function() {
-    CTS.Log.Info("Trying to log into GDocs");
-    gapi.auth.authorize({
-      client_id: CTS.Util.GSheet._ctsApiClientId,
-      scope: CTS.Util.GSheet._ctsApiClientScopes},
-    CTS.Util.GSheet._authenticationResult);
+    CTS.Util.GSheet._gapiLoaded.promise.then(
+      function() {
+        gapi.auth.authorize(
+          {
+            client_id: CTS.Util.GSheet._ctsApiClientId,
+            scope: CTS.Util.GSheet._ctsApiClientScopes
+          },
+          CTS.Util.GSheet._authenticationResult
+        );
+      }
+    );
+    CTS.Log.Info("Done");
     return CTS.Util.GSheet._loginDefer.promise;
   },
 

@@ -77,6 +77,7 @@ CTS.Factory = {
   },
 
   GSpreadsheetTree: function(treespec, forrest) {
+    CTS.Log.Info("Trying to resolve GSheet Tree");
     var deferred = Q.defer();
     // For the GSheet.
     treespec.sskey = treespec.url;
@@ -89,9 +90,11 @@ CTS.Factory = {
 
     CTS.Util.GSheet.maybeLogin().then(
       function() {
+        CTS.Log.Info("GSheets Logged In");
         ss.realizeChildren().then(
           function() {
             if (ws) {
+              CTS.Log.Info("Looking for worksheed named ", ws);
               var found = false;
               for (var i = 0; i < ss.children.length; i++) {
                 var child = ss.children[i];
