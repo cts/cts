@@ -14,6 +14,7 @@ CTS.Factory = {
   },
 
   Tree: function(spec, forrest) {
+    console.log('New tree', spec);
     if ((spec.url == null) && (spec.name = 'body')) {
       return CTS.Factory.TreeWithJquery(CTS.$('body'), forrest, spec);
     } if ((spec.kind == "GSheet" || spec.kind == 'gsheet')) {
@@ -62,6 +63,10 @@ CTS.Factory = {
         ctsNode.realizeChildren().then(
           function() {
             tree.setRoot(ctsNode);
+            if (spec.receiveEvents) {
+              CTS.Log.Info("New tree should receive events", spec);
+              tree.toggleReceiveRelationEvents(true);
+            }
             deferred.resolve(tree);
           },
           function(reason) {
@@ -101,7 +106,9 @@ CTS.Factory = {
                 if ((! found) && (child.name == treespec.worksheet)) {
                   tree.root = child;
                   found = true;
-                  tree.toggleReceiveRelationEvents(true);
+                  if (treespec.receiveEvents) {
+                    tree.toggleReceiveRelationEvents(true);
+                  }
                   deferred.resolve(tree);
                 }
               }

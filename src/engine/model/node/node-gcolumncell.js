@@ -104,6 +104,7 @@ CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   setValue: function(value, opts) {
+    this.value = value;
     CTS.Log.Info("Column Cell setting to ", value, this);
     var promise = CTS.Util.GSheet.modifyCell(
       this.getSpreadsheetKey(),

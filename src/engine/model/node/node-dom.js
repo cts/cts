@@ -142,7 +142,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, CTS.Node.DomBa
 
   setValue: function(value, opts) {
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
-      this.value.html(value);
+      this.value.html("" + value);
     } else {
       if (opts.attribute != null) {
         this.value.attr(opts.attribute, value);
@@ -194,6 +194,14 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, CTS.Node.DomBa
       this._changeObserver = null;
       this._subclass_proxy_handleDomChange = null;
     }
+  },
+
+  click: function(fn) {
+    this.value.on('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      fn();
+    });
   },
 
   _subclass_handleDomChangeEvent: function(mrs) {

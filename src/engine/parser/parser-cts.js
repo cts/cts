@@ -80,15 +80,22 @@ CTS.Parser.Cts = {
     var f = new ForrestSpec();
     if (typeof json.headers != 'undefined') {
       for (i = 0; i < json.headers.length; i++) {
-        var h = json.headers[i];
+        var headerBlob = json.headers[i];
+        var h = headerBlob[0];
+        var headerOpts = headerBlob[1];
         var kind = h.shift().trim();
         if (kind == 'html') {
-          f.treeSpecs.push(new TreeSpec('html', {name: h[0], url: h[1]}));
+          headerOpts['name'] = h[0];
+          headerOpts['url'] = h[1];
+          f.treeSpecs.push(new TreeSpec('html', headerOpts));
         } else if (kind == 'gsheet') {
+          headerOpts['name'] = h[0];
+          headerOpts['url'] = h[1];
           if (h.length > 2) {
-            f.treeSpecs.push(new TreeSpec('gsheet', {name: h[0], url: h[1], worksheet: h[2]}));
+            headerOpts['worksheet'] = h[2];
+            f.treeSpecs.push(new TreeSpec('gsheet', headerOpts));
           } else {
-            f.treeSpecs.push(new TreeSpec('gsheet', {name: h[0], url: h[1]}));
+            f.treeSpecs.push(new TreeSpec('gsheet', headerOpts));
           }
         } else if (kind == 'css') {
           f.dependencySpecs.push(new DependencySpec('css', h[0]));

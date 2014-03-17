@@ -59,17 +59,36 @@ CTS.Parser.CtsImpl = {
     return inQuestion;
   },
 
+  /* Can take the form:
+   *   @string string2 string3 ... stringN { optional: args } ;
+   */
   AT: function(str, i) {
     var start = i;
+    var curly = -1;
     while ((i < str.length) && (str[i] != ';')) {
+      if (str[i] == "{") {
+        curly = i;
+      }
       i++;
     }
+    var s;
+    if (curly) {
+      s = str.substring(start, curly);
+    } else {
+      s = str.substring(start, i);
+    }
+    var opts = {};
+    if (curly) {
+      var optResults = CTS.Parser.CtsImpl.KV(str, curly+1);
+      opts = optResults[1];
+    }
+
     var s = str.substring(start, i);
     var parts = s.split(" ");
     for (var k = 0; i < parts.length; k++) {
       parts[k].trim();
     }
-    return [i+1, parts];
+    return [i+1, [parts, opts]];
   },
 
   RELATION: function(str, i) {
@@ -112,7 +131,7 @@ CTS.Parser.CtsImpl = {
       } else if ((str[i] == '|') && (bracket == 0) && (kv === null)) {
         treeName = str.substring(start, i).trim();
         start = i+1;
-      } else if (((!second) && spaceLast && (str[i] == ':')) 
+      } else if (((!second) && spaceLast && (str[i] == ':'))
                ||( second && (str[i] == ';'))) {
         if (kv === null) {
           selector = str.substring(start, i).trim();
@@ -179,4 +198,3 @@ CTS.Parser.CtsImpl = {
     return [i, [relator, kv]];
   }
 };
-

@@ -246,8 +246,10 @@ CTS.Fn.extend(CTS.Util.GSheet, {
               data[k] = CTS.Util.GSheet._parseGItem(json.feed.entry[i][key]);
             }
           }
+          var id = json.feed.entry[i].id;
           spec.items.push({
             title: title,
+            id: id,
             data: data
           });
         }
@@ -312,7 +314,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     // within the browser. For now we'll proxy via the CTS server. Ugh.
     var deferred = Q.defer();
     var request = CTS.$.ajax({
-      url: '/api/updatecell',
+      url: '/api/gsheet/updatecell',
       type: 'POST',
       data: {
         rowNum: rowNum,
@@ -332,5 +334,33 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     });
     return deferred.promise;
   },
+
+  modifyListItemProperty: function(ssKey, wsKey, item, property, value) {
+    // The Google Docs API incorrectly responds to OPTIONS preflights, so
+    // we are completely blocked from sending non-GET requests to it from
+    // within the browser. For now we'll proxy via the CTS server. Ugh.
+    var deferred = Q.defer();
+    var request = CTS.$.ajax({
+      url: '/api/gsheet/updatelistitemproperty',
+      type: 'POST',
+      data: {
+        item: item,
+        property: property,
+        ssKey: ssKey,
+        wsKey: wsKey,
+        value: value,
+        token: this._currentToken.access_token
+      }
+    });
+    request.done(function(json) {
+      deferred.resolve(res);
+    });
+    request.fail(function(jqxhr, textStatus) {
+      console.log(jqxhr, textStatus);
+      deferred.reject(textStatus);
+    });
+    return deferred.promise;
+  }
+
 
 });

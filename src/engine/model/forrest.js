@@ -319,6 +319,13 @@ CTS.Fn.extend(Forrest.prototype, {
       var alias = treeSpec.url.substring(6, treeSpec.url.length - 1);
       if (typeof self.trees[alias] != 'undefined') {
         self.trees[treeSpec.name] = self.trees[alias];
+        if (treeSpec.receiveEvents) {
+          // XXX: Potential bug here, depending on intent. The aliased tree is
+          // the same tree! That means we might intend one to receive and the
+          // other not to, but in reality they'll both be in lockstep.
+          CTS.Log.Info("New tree should receive events", treeSpec);
+          self.trees[treeSpec.name].toggleReceiveRelationEvents(true);
+        }
         deferred.resolve(self.trees[alias]);
       } else {
         deferred.reject("Trying to alias undefined tree");

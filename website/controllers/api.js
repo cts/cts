@@ -62,6 +62,45 @@ exports.updateCell = function(req, res) {
   });
 };
 
+exports.updateListItemProperty = function(req, res) {
+  var deferred = Q.defer();
+  var item = req.body.item;
+  var property = req.body.property;
+  var ssKey = req.body.ssKey;
+  var wsKey = req.body.wsKey;
+  var value = req.body.value;
+  var token = req.body.token;
+
+  var rowId = "https://spreadsheets.google.com/feeds/list/" + ssKey + "/" +
+        wsKey + "/private/full/" + item;
+
+  var url = "https://spreadsheets.google.com/feeds/list/" +
+        ssKey + "/" + wsKey + "/private/full?access_token=" + token;
+
+  var contentType = "application/atom+xml";
+  var xmlBody = '<entry xmlns="http://www.w3.org/2005/Atom"';
+  xmlBody += ' xmlns:gs="http://schemas.google.com/spreadsheets/2006">\n';
+  xmlBody += '\t<id>' + rowID + '</id>\n';
+  xmlBody += '\t<gsx:' + property + '>' + value + '</gsx:' + property + '>\n'
+  xmlBody += '</entry>';
+  console.log(xmlBody);
+  var verb = 'PUT';
+
+  request({
+    url: url,
+    method: verb,
+    body: xmlBody,
+    headers: {
+      'Content-Type': contentType,
+      'GData-Version': '3.0',
+      'If-Match': '*'
+    }},
+    function(err, resp, body) {
+
+      console.log(err, resp, body);
+  });
+};
+
 exports.getProxy = function(req, res) {
   var u = req.query.url;
   request(u, function(err, resp, body) {

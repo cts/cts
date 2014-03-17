@@ -7,9 +7,9 @@
     <script src="/js/lib/jquery.min.js"></script>
     <script src="/js/lib/bootstrap.min.js"></script>
     <link rel="stylesheet" href="todo.css" />
-    
+
     <script src="/release/cts.js"></script>
-    <link rel="treesheet" href="todo.cts" />
+    <link rel="treesheet" href="todo2.cts" />
 
   </head>
   <body>
@@ -26,13 +26,13 @@
 
           <ul id="todo-items">
             <li class="todo-item">
-              <input type="checkbox" />
+              <input class="done" type="checkbox" />
               <span class="title">Example ToDo Item Title</span>
             </li>
           </ul>
 
           <form>
-            <input class="input" label="Add a New Item" />
+            <input class="newItem input" label="Add a New Item" />
             <button class="btn btn-success">Add</button>
           </form>
 
@@ -40,6 +40,17 @@
       </div>
 
 
+    </div>
+
+    <div id="data" style="">
+      <div class="data-item">
+        <h2>Pick up Cheese</h2>
+        <span>true</span>
+      </div>
+      <div class="data-item">
+        <h2>Remember the Milk</h2>
+        <span>false</span>
+      </div>
     </div>
 
   </body>

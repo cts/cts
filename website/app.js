@@ -124,7 +124,6 @@ app.get('/web-scraping', docController.dscrape);
 app.get('/widgets/:widget', widgetController.show);
 app.get('/scratch', scratchController.index);
 app.get('/scratch/:page', scratchController.other);
-app.post('/api/updatecell', apiController.updateCell);
 
 /**
  * APPLICATION ROUTES
@@ -142,6 +141,8 @@ app.get('/signup', userController.getSignup);
 app.post('/signup', userController.postSignup);
 app.get('/about', homeController.getAbout);
 
+app.post('/api/gsheet/updatecell', apiController.updateCell);
+app.post('/api/gsheet/updatelistitemproperty', apiController.updateListItemProperty);
 app.get('/api/proxy', apiController.getProxy);
 
 app.get('/account', passportConf.isAuthenticated, userController.getAccount);

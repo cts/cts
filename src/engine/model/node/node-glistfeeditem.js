@@ -59,6 +59,10 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
     return ret;
   },
 
+  getItemId: function() {
+    return spec.id;
+  },
+
   _subclass_realizeChildren: function() {
      var deferred = Q.defer();
      this.children = [];

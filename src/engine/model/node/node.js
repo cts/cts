@@ -88,6 +88,18 @@ CTS.Node.Base = {
     return this.relations;
   },
 
+  markRelationsAsForCreation: function(val, recurse) {
+    var rs = this.getRelations();
+    for (var i = 0; i < rs.length; i++) {
+      rs.forCreationOnly(val);
+    }
+    if (recurse) {
+      for (var i = 0; i < this.children.length; i++) {
+        this.children[i].markRelationsAsForCreation(val, recurse);
+      }
+    }
+  },
+
   parseInlineRelationSpecs: function() {
     var deferred = Q.defer();
     var self = this;
@@ -547,8 +559,10 @@ CTS.Node.Base = {
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
     CTS.Log.Info("Event from relation", evt, this);
     if (this.shouldReceiveEvents) {
+      CTS.Log.Info("Should receive events!");
       if (evt.eventName == "ValueChanged") {
         if (fromRelation.name == "is") {
+          CTS.Log.Info("Setting my value to", evt.newValue);
           this.setValue(evt.newValue);
         }
       }

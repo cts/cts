@@ -24,8 +24,47 @@ CTS.Relation.Graft = function(node1, node2, spec) {
 
 CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
   execute: function(toward) {
-
+    if (this.forCreationOnly) {
+      return;
+    }
+    
     var opp = this.opposite(toward);
+    var towardOpts = this.optsFor(toward);
+    var fromOpts   = this.optsFor(opp);
+    if (typeof fromOpts.createNew != 'undefined') {
+      this._creationGraft(toward, towardOpts, opp, fromOpts);
+    } else {
+      this._regularGraft(toward, opp);
+    }
+  },
+
+  _creationGraft: function(toward, towardOpts, from, fromOpts) {
+    var createOn = null;
+    var self = this;
+    if (typeof towardOpts.createOn != 'undefined') {
+      createOn = toward.find(towardOpts.createOn);
+    } else {
+      createOn = toward.find('button');
+    }
+    CTS.Log.Info("Creating on", createOn);
+    if ((createOn != null) && (createOn.length> 0)) {
+      createOn[0].click(function() {
+        self._runCreation(toward, towardOpts, from, fromOpts);
+      });
+    }
+
+    for (var i = 0; i < toward.children.length; i++) {
+      var child = toward.children[i];
+      child.markRelationsAsForCreation(true, true);
+    }
+
+  },
+
+  _runCreation: function(toward, towardOpts, from, fromOpts) {
+    CTS.Log.Info("Run Creation");
+  },
+
+  _regularGraft: function(toward, opp) {
 
     //CTS.Log.Info("Graft from", opp.tree.name, "to", toward.tree.name);
     //CTS.Log.Info("Opp", opp.value.html());
@@ -73,7 +112,7 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
       relation: this
     });
   },
- 
+
   clone: function(n1, n2) {
     if (CTS.Fn.isUndefined(n1)) {
       n1 = this.node1;
@@ -85,4 +124,3 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
   }
 
 });
-

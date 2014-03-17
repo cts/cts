@@ -26,6 +26,10 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
   },
 
   execute: function(toward) {
+    if (this.forCreationOnly) {
+      return;
+    }
+    
     this._Are_AlignCardinalities(toward);
 //    toward.trigger('received-are', {
 //      target: toward,
@@ -60,7 +64,7 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
         CTS.Log.Debug("After prune to 1");
         CTS.Debugging.DumpTree(toward);
       }
-  
+
       // Now build it back up.
       if (otherIterables.length == 0) {
         myIterables[0].destroy();

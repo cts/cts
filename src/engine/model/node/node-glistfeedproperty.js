@@ -62,6 +62,14 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
      CTS.Log.Error("insertChild called (impossibly) on GListFeedProperty Node");
    },
 
+   getWorksheetKey: function() {
+     return this.parentNode.parentNode.getWorksheetKey();
+   },
+
+   getSpreadsheetKey: function() {
+     return this.parentNode.parentNode.getSpreadsheetKey();
+   },
+
    /*
     */
    _onChildInserted: function(child) {
@@ -99,6 +107,13 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
 
   setValue: function(value, opts) {
     this.value = value;
+    CTS.Log.Info("ItemProp setting to", value);
+    var promise = CTS.Util.GSheet.modifyListItemProperty(
+      this.getSpreadsheetKey(),
+      this.getWorksheetKey(),
+      this.parentNode.getItemId(),
+      this.key,
+      value);
   },
 
   getIfExistValue: function() {

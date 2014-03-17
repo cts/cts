@@ -9,6 +9,11 @@ CTS.Node.HtmlInput = function(node, tree, opts) {
   this.value.data('ctsid', this.ctsId);
   this.value.data('ctsnode', this);
 
+  this.subKind = "text";
+  if (this.value.is('[type="checkbox"]')) {
+    this.subKind = "checkbox";
+  }
+
   this.on('received-is', function() {
     this.value.trigger('cts-received-is');
   });
@@ -52,7 +57,11 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
 
   getValue: function(opts) {
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
-      return this.value.val();
+      if (this.subKind == "checkbox") {
+        return this.value.prop("checked");
+      } else {
+        return this.value.val();
+      }
     } else {
       return this.value.attr(opts.attribute);
     }
@@ -60,7 +69,18 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
 
   setValue: function(value, opts) {
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
-      this.value.val(value);
+      if (this.subKind == "checkbox") {
+        var checked = false;
+        if (value) {
+          checked = true;
+        }
+        if ((value == "false") || (value == "False") || (value == "0") || (value == 0)) {
+          checked = false;
+        }
+        this.value.prop('checked', checked);
+      } else {
+        this.value.val(value);
+      }
     } else {
       if (opts.attribute != null) {
         this.value.attr(opts.attribute, value);

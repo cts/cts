@@ -39,6 +39,14 @@ CTS.Fn.extend(CTS.Node.GListFeed.prototype, CTS.Node.Base, CTS.Events, {
     return ret;
   },
 
+  getWorksheetKey: function() {
+    return this.spec.wskey;
+  },
+
+  getSpreadsheetKey: function() {
+    return this.spec.sskey;
+  },
+
   isDescendantOf: function(other) {
     // This node is only below a worksheet or gsheet.
     var ret = false;

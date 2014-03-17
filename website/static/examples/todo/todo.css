@@ -17,3 +17,8 @@ form {
   font-size: 18px;
   margin-left: 40px;
 }
+
+input:checked + span {
+  text-decoration: line-through;
+  color: #aaa;
+}

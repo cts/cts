@@ -32,6 +32,7 @@ CTS.Relation.Base = {
     if (this.node2 != null) {
       this.node2.registerRelation(this);
     }
+    this.forCreationOnly = false;
     this.defaultOpts = this.getDefaultOpts();
   },
 
@@ -53,6 +54,18 @@ CTS.Relation.Base = {
 
   opposite: function(node) {
     return (node == this.node1) ? this.node2 : this.node1;
+  },
+
+  forCreationOnly: function(val) {
+    if (typeof val == 'undefined') {
+      return this.forCreationOnly;
+    } else if (val) {
+      this.forCreationOnly = true;
+      return true;
+    } else {
+      this.forCreationOnly = false;
+      return false;
+    }
   },
 
   handleEventFromNode: function(evt) {
