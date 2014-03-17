@@ -583,6 +583,13 @@ CTS.Node.Base = {
         if (fromRelation.name == "are") {
           // XXX: Make diff instead of redo! For efficiency!
           CTS.Log.Info("Executing are relation toward me", this.value.html());
+          // Clone one.
+          var afterIndex = evt.afterIndex;
+          var myIterables = fromRelation._getIterables(this);
+          var clone = myIterables[afterIndex].clone();
+          clone.pruneRelations(fromNode, fromNode);
+          clone._processIncoming();
+          this.insertChild(clone, afterIndex, false);
         }
       }
     }
