@@ -27,23 +27,24 @@ CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Base, {
   },
 
   execute: function(toward) {
-    if (! this.forCreationOnly) {
-      var other = this.opposite(toward);
-      var existed = false;
-      if (this.isEmpty(other)) {
-        existed = false;
-        toward.undestroy();
-      } else {
-        existed = true;
-        toward.destroy();
-      }
-      toward.trigger('received-if-exist', {
-        target: toward,
-        source: other,
-        relation: this,
-        existed: existed
-      });
+    if (this._forCreationOnly) {
+      return;
     }
+    var other = this.opposite(toward);
+    var existed = false;
+    if (this.isEmpty(other)) {
+      existed = false;
+      toward.undestroy();
+    } else {
+      existed = true;
+      toward.destroy();
+    }
+    toward.trigger('received-if-exist', {
+      target: toward,
+      source: other,
+      relation: this,
+      existed: existed
+    });
   },
 
   clone: function(n1, n2) {

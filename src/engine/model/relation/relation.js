@@ -32,7 +32,7 @@ CTS.Relation.Base = {
     if (this.node2 != null) {
       this.node2.registerRelation(this);
     }
-    this.forCreationOnly = false;
+    this._forCreationOnly = false;
     this.defaultOpts = this.getDefaultOpts();
   },
 
@@ -58,20 +58,26 @@ CTS.Relation.Base = {
 
   forCreationOnly: function(val) {
     if (typeof val == 'undefined') {
-      return this.forCreationOnly;
+      return this._forCreationOnly;
     } else if (val) {
-      this.forCreationOnly = true;
+      this._forCreationOnly = true;
       return true;
     } else {
-      this.forCreationOnly = false;
+      this._forCreationOnly = false;
       return false;
     }
   },
 
   handleEventFromNode: function(evt) {
+    if (this._forCreationOnly) {
+      // Otherwise modifications to the input elements of the
+      // form will set the entire collection that this is creation-mapped
+      // to!
+      return;
+    }
     // Pass it on over.
     evt.viaRelation = this;
-    if (evt.sourceNode = this.node1) {
+    if (evt.sourceNode == this.node1) {
       this.node2.handleEventFromRelation(evt, this, this.node1);
     } else {
       this.node1.handleEventFromRelation(evt, this, this.node2);
@@ -117,5 +123,21 @@ CTS.Relation.Base = {
 
   signature: function() {
     return "<" + this.name + " " + CTS.Fn.map(this.opts, function(v, k) { return k + ":" + v}).join(";") + ">";
+  },
+
+  _getIterables: function(node) {
+    var opts = this.optsFor(node);
+    var kids = node.getChildren();
+    var prefix = 0;
+    var suffix = 0;
+    if (opts.prefix) {
+      prefix = opts.prefix;
+    }
+    if (opts.suffix) {
+      suffix = opts.suffix;
+    }
+    var iterables = kids.slice(prefix, kids.length - suffix);
+    return iterables;
   }
+
 };

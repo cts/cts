@@ -26,10 +26,10 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
   },
 
   execute: function(toward) {
-    if (this.forCreationOnly) {
+    if (this._forCreationOnly) {
       return;
     }
-    
+
     this._Are_AlignCardinalities(toward);
 //    toward.trigger('received-are', {
 //      target: toward,
@@ -51,8 +51,8 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
   _Are_AlignCardinalities: function(toward) {
     var myOpts = this.optsFor(toward);
     var other = this.opposite(toward);
-    var otherIterables = this._Are_GetIterables(other);
-    var myIterables = this._Are_GetIterables(toward);
+    var otherIterables = this._getIterables(other);
+    var myIterables = this._getIterables(toward);
 
     if (myIterables.length > 0) {
       while (myIterables.length > 1) {
@@ -75,7 +75,7 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
         for (var i = 1; i < otherIterables.length; i++) {
           // Clone the iterable.
           var clone = myIterables[0].clone();
-          toward.insertChild(clone, lastIndex, true);
+          toward.insertChild(clone, lastIndex, false);
           clone.pruneRelations(otherIterables[i], other);
           lastIndex++;
         }
@@ -86,13 +86,6 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
       CTS.Log.Debug("After Align");
       CTS.Debugging.DumpTree(toward);
     }
-  },
-
-  _Are_GetIterables: function(node) {
-    var opts = this.optsFor(node);
-    var kids = node.getChildren();
-    var iterables = kids.slice(opts.prefix, kids.length - opts.suffix);
-    return iterables;
   },
 
   /*

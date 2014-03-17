@@ -19,17 +19,18 @@ CTS.Fn.extend(CTS.Relation.Is.prototype, CTS.Relation.Base, {
   /*
    */
   execute: function(toward) {
-    if (! this.forCreationOnly) {
-      var from = this.opposite(toward);
-      var content = from.getValue(this.optsFor(from));
-      toward.setValue(content, this.optsFor(toward));
-      toward.trigger('received-is', {
-        target: toward,
-        source: from,
-        relation: this
-      });
-      toward.setProvenance(from.tree, from);
+    if (this._forCreationOnly) {
+      return;
     }
+    var from = this.opposite(toward);
+    var content = from.getValue(this.optsFor(from));
+    toward.setValue(content, this.optsFor(toward));
+    toward.trigger('received-is', {
+      target: toward,
+      source: from,
+      relation: this
+    });
+    toward.setProvenance(from.tree, from);
   },
 
   clone: function(n1, n2) {

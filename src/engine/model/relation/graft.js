@@ -24,10 +24,10 @@ CTS.Relation.Graft = function(node1, node2, spec) {
 
 CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
   execute: function(toward) {
-    if (this.forCreationOnly) {
+    if (this._forCreationOnly) {
       return;
     }
-    
+
     var opp = this.opposite(toward);
     var towardOpts = this.optsFor(toward);
     var fromOpts   = this.optsFor(opp);
@@ -57,11 +57,30 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
       var child = toward.children[i];
       child.markRelationsAsForCreation(true, true);
     }
-
   },
 
   _runCreation: function(toward, towardOpts, from, fromOpts) {
     CTS.Log.Info("Run Creation");
+    // Step 1: Assume iterable on FROM side.
+    var iterables = this._getIterables(from);
+    // Create a new one.
+    var clone = iterables[iterables.length - 1].clone();
+
+    // Now set relations on to those coming to ME.
+    clone.pruneRelations(toward, toward);
+
+    // Now turn OFF creation only.
+    clone.markRelationsAsForCreation(false, true);
+
+    // Now RUN relations
+    clone._processIncoming();
+
+    // Turn back ON creation only.
+    clone.markRelationsAsForCreation(true, true);
+
+    // Now insert! The insertion handler on an enumerated node should cause
+    // any corresponding data structures to also be altered.
+    from.insertChild(clone, from.children.length - 1, true);
   },
 
   _regularGraft: function(toward, opp) {

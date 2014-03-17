@@ -68,11 +68,13 @@ CTS.Node.Base = {
     if (! CTS.Fn.contains(this.relations, relation)) {
       this.relations.push(relation);
       this.on('ValueChanged', relation.handleEventFromNode, relation);
+      this.on('ChildInserted', relation.handleEventFromNode, relation);
     }
   },
 
   unregisterRelation: function(relation) {
     this.off('ValueChanged', relation.handleEventFromNode, relation);
+    this.off('ChildInserted', relation.handleEventFromNode, relation);
     this.relations = CTS.Fn.filter(this.relations,
         function(r) { return r != relation; });
   },
@@ -91,7 +93,7 @@ CTS.Node.Base = {
   markRelationsAsForCreation: function(val, recurse) {
     var rs = this.getRelations();
     for (var i = 0; i < rs.length; i++) {
-      rs.forCreationOnly(val);
+      rs[i].forCreationOnly(val);
     }
     if (recurse) {
       for (var i = 0; i < this.children.length; i++) {
@@ -195,11 +197,10 @@ CTS.Node.Base = {
     */
   },
 
-  insertChild: function(node, afterIndex, log) {
+  insertChild: function(node, afterIndex, throwEvent) {
     if (typeof afterIndex == 'undefined') {
       afterIndex = this.children.length - 1;
     }
-
     this.children[this.children.length] = null;
     for (var i = this.children.length - 1; i > afterIndex; i--) {
       if (i == (afterIndex + 1)) {
@@ -213,6 +214,17 @@ CTS.Node.Base = {
 
     //TODO(eob) Have this be an event
     this._subclass_insertChild(node, afterIndex);
+
+    if (throwEvent) {
+      console.log("THROWING CHILD INSERTED");
+      this.trigger("ChildInserted", {
+        eventName: "ChildInserted",
+        ctsNode: node,
+        sourceNode: this,
+        sourceTree: this.tree,
+        afterIndex: afterIndex
+      });
+    }
   },
 
   isDescendantOf: function(other) {
@@ -517,7 +529,8 @@ CTS.Node.Base = {
 
   _maybeThrowDataEvent: function(evt) {
     if (this.shouldThrowEvents) {
-      console.log(evt.node);
+      CTS.Log.Info("Maybe Throw Event from this=", this);
+      CTS.Log.Info("evt is", evt);
       if (evt.ctsNode) {
         evt.newValue = evt.ctsNode.getValue();
         if (evt.eventName == 'ValueChanged') {
@@ -562,8 +575,14 @@ CTS.Node.Base = {
       CTS.Log.Info("Should receive events!");
       if (evt.eventName == "ValueChanged") {
         if (fromRelation.name == "is") {
-          CTS.Log.Info("Setting my value to", evt.newValue);
           this.setValue(evt.newValue);
+        }
+      } else if (evt.eventName == "ChildInserted") {
+        CTS.Log.Info("Received Child inserted", this.value.html());
+        // If the from relation is ARE...
+        if (fromRelation.name == "are") {
+          // XXX: Make diff instead of redo! For efficiency!
+          CTS.Log.Info("Executing are relation toward me", this.value.html());
         }
       }
     }

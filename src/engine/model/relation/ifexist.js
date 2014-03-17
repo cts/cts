@@ -26,10 +26,10 @@ CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Base, {
   },
 
   execute: function(toward) {
-    if (this.forCreationOnly) {
+    if (this._forCreationOnly) {
       return;
     }
-    
+
     var other = this.opposite(toward);
     var existed = false;
     if (this.isEmpty(other)) {
