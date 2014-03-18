@@ -1,4 +1,4 @@
-extends ../layouts/scratchuiauto
+extends ../layouts/userstudy
 
 block head
   style.
@@ -11,12 +11,12 @@ block head
     #browser1 {
       position: relative;
       height: 100%;
-      margin-right: 5px;
+      margin-right: 3px;
     }
     #browser2 {
+      margin-left: 3px;
       position: relative;
       height: 100%;
-      margin-left: 5px;
     }
 
     .full {
@@ -24,6 +24,78 @@ block head
       padding-right: 30px;
       padding-top: 20px;
       height: calc(100% - 130px);
+    }
+    td.editor {
+      vertical-align: top;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    h2.title {
+      color: #3887f3;
+      font-size: 24px;
+    }
+
+    h2.title img {
+      vertical-align: middle;
+      line-height: 24px;
+    }
+
+    span.draggable {
+      cursor: move;
+      height: 43px;
+      position: relative;
+      display: block;
+    }
+
+    span.draggable.yellow {
+      background: url(/img/userstudy/yellow-tag.png) no-repeat left top;
+    }
+    span.draggable.red {
+      background: url(/img/userstudy/red-tag.png) no-repeat left top;
+    }
+    span.draggable.green {
+      background: url(/img/userstudy/green-tag.png) no-repeat left top;
+    }
+    span.draggable.blue {
+      background: url(/img/userstudy/blue-tag.png) no-repeat left top;
+    }
+    span.draggable.yellow span {
+      background-color: #FCD862;
+      font-size: 20px;
+    }
+    span.draggable.red span {
+      background-color: #b95e58;
+      color: white;
+      font-size: 20px;
+    }
+    span.draggable.green span {
+      background-color: #007c1a;
+    }
+    span.draggable.blue span {
+      background-color: #3a5068;
+      color: white;
+      font-size: 20px;
+    }
+
+    span.draggable > span {
+      cursor: move;
+      display: block;
+      width: auto;
+      float: left;
+      padding-right: 10px;
+
+      line-height: 43px;
+      font-weight: bold;
+      margin-left: 28px;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
     }
 
 block title
@@ -33,15 +105,21 @@ block content
   div.row.full
     table(width="100%", height="100%")
       tr
-        td(width="50%")
+        td.editor(width="50%")
+          h2.title <img src="/img/userstudy/editor-icon.png" /> Editor
           div#browser1
-        td(width="50%")
+        td.editor(width="50%")
+          h2.title <img src="/img/userstudy/preview-icon.png" /> Preview
           div#browser2
       tr(style="height: 100px")
-        td
-          textarea.cts#cts1
-          button#cts1udpate Update
-        td Foo
+        td(colspan="2")#dragtray
+          span.draggable.yellow
+            span.all_rows Repeat for each Row
+          span.draggable.blue
+            span.property .name
+          span.draggable.red
+            span.newrow Create New Row
+
 
   script.
     CTS.status.libraryLoaded.then(function() {
@@ -59,4 +137,7 @@ block content
         s.setAttribute('type', 'text/javascript');
         window.pb1.document().getElementsByTagName('head')[0].appendChild(s);
       });
+
+      // Make the lozenges draggable
+      CTS.$('.draggable').draggable();
     });

@@ -9,5 +9,4 @@
 /* CREATION FORM */
 
 form {createOn: button} :graft data | #data {createNew: true};
-
 data | .data-item h2 :is .newItem ;

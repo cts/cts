@@ -1,0 +1,23 @@
+doctype html
+html
+  head
+    meta(charset='utf-8')
+    != css('styles')
+    script(src="/js/lib/jquery-2.1.0.min.js")
+    script(src="/js/lib/jquery-ui-1.10.4.custom.min.js")
+    link(rel="stylesheet", href="/css/lib/ui-lightness/jquery-ui-1.10.4.custom.min.css")
+    each source in sources
+      script(src='/' + source)
+    each source in uisources
+      script(src='/' + source)
+    script.
+      CTS.status.libraryLoaded.then(function() {
+        CTS.engine = new CTS.Engine();
+        CTS.engine.boot();
+      });
+
+    block head
+
+  body.cts-doc.cts
+
+    block content

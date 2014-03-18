@@ -56,7 +56,7 @@ CTS.UI.ProxyBrowser.prototype.setup = function() {
 };
 
 CTS.UI.ProxyBrowser.prototype.onresize = function() {
-  console.log("onresize");
+  console.log("proxy onresize");
   var w = this.$container.width();
   var h = this.$container.height();
   this.$root.height(h);
