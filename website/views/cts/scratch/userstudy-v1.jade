@@ -1,0 +1,17 @@
+extends ../layouts/userstudy
+
+block head
+  style.
+
+block title
+  h1 CTS Proxy Browser
+
+block content
+  div.row.full
+    div#harness
+      Foo
+
+  script.
+    CTS.status.libraryLoaded.then(function() {
+      window.editor = new CTS.UI.ProxyEditor(CTS.$, CTS.Q, CTS.$('#harness'));
+    });

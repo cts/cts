@@ -102,6 +102,7 @@ var sources = {
     "src/ui/widgets/modal.js",
     "src/ui/widgets/proxy-browser.js",
     "src/ui/widgets/ssheet-browser.js",
+    "src/ui/widgets/proxy-editor.js",
     "src/ui/util/clipboard.js",
     "src/ui/sidebar/theminator.js",
     "src/ui/sidebar/scraper.js",

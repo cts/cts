@@ -1,0 +1,117 @@
+textarea.cts {
+  width: 90%;
+  border: 3px solid #333;
+  margin: 10px;
+  height: 80px;
+}
+#harness {
+  height: 100%;
+  width: 100%;
+}
+
+.full {
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-top: 20px;
+  height: calc(100% - 130px);
+}
+td.editor {
+  vertical-align: top;
+}
+body {
+  margin: 0;
+  padding: 0;
+}
+
+h2.title {
+  color: #3887f3;
+  font-size: 24px;
+}
+
+h2.title img {
+  vertical-align: middle;
+  line-height: 24px;
+}
+
+span.draggable {
+  cursor: move;
+  height: 43px;
+  position: relative;
+  display: block;
+}
+
+span.draggable.yellow {
+  background: url(/img/userstudy/yellow-tag.png) no-repeat left top;
+}
+span.draggable.red {
+  background: url(/img/userstudy/red-tag.png) no-repeat left top;
+}
+span.draggable.green {
+  background: url(/img/userstudy/green-tag.png) no-repeat left top;
+}
+span.draggable.blue {
+  background: url(/img/userstudy/blue-tag.png) no-repeat left top;
+}
+span.draggable.yellow span {
+  background-color: #FCD862;
+  font-size: 20px;
+}
+span.draggable.red span {
+  background-color: #b95e58;
+  color: white;
+  font-size: 20px;
+}
+span.draggable.green span {
+  background-color: #007c1a;
+}
+span.draggable.blue span {
+  background-color: #3a5068;
+  color: white;
+  font-size: 20px;
+}
+
+span.draggable > span {
+  cursor: move;
+  display: block;
+  width: auto;
+  float: left;
+  padding-right: 10px;
+
+  line-height: 43px;
+  font-weight: bold;
+  margin-left: 28px;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+td.preview {
+  background-color: #f9f9f9;
+  padding: 10px;
+}
+
+.cts-ui-proxybrowser {
+  background-color: white;
+  border: 1px solid #d6d6d6;
+}
+
+tr.headerbar td {
+  -webkit-box-shadow: 0 10px 5px -5px rgba(233,233,233,0.5);
+  box-shadow: 0 10px 5px -5px rgba(233,233,233,0.5);
+}
+
+#harness {
+  height: 100%;
+  min-height: 600px;
+}
+
+tr.urlbar td, tr.urlbar {
+  height: 30px;
+}
+
+tr.headerbar td, tr.headerbar {
+  height: 50px;
+}
