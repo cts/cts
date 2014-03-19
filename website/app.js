@@ -150,6 +150,7 @@ app.get('/snippet', snippetController.getIndex);
 app.get('/snippet/new', passportConf.isAuthenticated, snippetController.createSnippet);
 app.get('/snippet/:snippet/json', snippetController.getSnippetJson);
 app.get('/snippet/:snippet', snippetController.getSnippet);
+app.post('/snippet/:snippet', snippetController.saveSnippet);
 
 app.get('/account', passportConf.isAuthenticated, userController.getAccount);
 app.post('/account/profile', passportConf.isAuthenticated, userController.postUpdateProfile);

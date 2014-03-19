@@ -180,7 +180,27 @@ main.ctsdoc-small {
   }
 }
 
-
+main.ctsdoc-mini {
+  display: table;
+  width: 100%;
+  .left, .center, .right {
+    display: table-cell;
+    height: 46px;
+  }
+  .center {
+    background-image: url('/img/doc/cts-header-blank-mini.png');
+    width: 921px;
+    h1, h2 {
+      display: none;
+    }
+  }
+  .left {
+    background-image: url('/img/doc/cts-header-small-left.png');
+  }
+  .right {
+    background-image: url('/img/doc/cts-header-small-right.png');
+  }
+}
 
 /* Share masthead with page headers */
 .docs-masthead,
@@ -323,5 +343,33 @@ body.cts-doc {
   }
 
   main.ctsdoc-small {
+  }
+}
+
+div.snippet-title {
+  height: 55px;
+  color: #666;
+  box-shadow: 0 0 4px #eee;
+  border-bottom: 1px solid #ddd;
+  padding: 0;
+
+  .snippet-name {
+    input {
+      font-size: 24px;
+      line-height: 24px;
+      padding: 5px;
+      margin-top: 5px;
+      color: #666;
+      border: 1px solid #aaa;
+      margin-left: 20px;
+      width: 400px;
+    }
+    button {
+      margin-left: 15px;
+      vertical-align: top;
+      margin-top: 10px;
+
+
+    }
   }
 }

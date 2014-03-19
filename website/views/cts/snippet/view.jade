@@ -7,10 +7,20 @@ block title
   h1 CTS Proxy Browser
 
 block content
+  div.row.snippet-title
+    .col-md-8.snippet-name
+      input#snippet-name(value=snippet.name)
+      button#save-btn.btn-primary.btn(data-csrf=token) Save
+
   div.row.full
     div#harness(data-snippetid=snippet.id)
 
   script.
     CTS.status.libraryLoaded.then(function() {
       window.editor = new CTS.UI.ProxyEditor(CTS.$, CTS.Q, CTS.$('#harness'));
+      CTS.$('#save-btn').on('click', function() {
+        window.editor.setName(CTS.$('#snippet-name').val());
+        var csrf = CTS.$('#save-btn').data('csrf');
+        window.editor.save(csrf);
+      });
     });

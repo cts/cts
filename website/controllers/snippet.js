@@ -1,14 +1,15 @@
 var Snippet = require('../models/Snippet');
 
 exports.getIndex = function(req, res) {
-  Snippet.find(function(err, snippets) {
+  Snippet.find({latestVersion: true}, function(err, snippets) {
     if (err) {
       res.write(500, "Database error");
       console.log(err);
       return;
     }
     res.render('cts/snippet/index', {
-      snippets: snippets
+      snippets: snippets,
+      name: 'Snippets'
     });
   });
 };
@@ -28,11 +29,58 @@ exports.getSnippet = function(req, res) {
       res.send(400, "Couldn't find snippet");
       return;
     }
+    var csrf = "";
     res.render('cts/snippet/view', {
       snippet: snippet,
       sources: sources,
       uisources: uisources
     });
+  });
+};
+
+
+exports.saveSnippet = function(req, res) {
+  Snippet.findById(req.params.snippet, function(err, snippet) {
+    if (err) {
+      res.send(500, "Error");
+      console.log(err);
+      return;
+    }
+    if (snippet == null) {
+      res.send(400, "Couldn't find snippet");
+      return;
+    }
+    if (snippet.user_id != req.user.id) {
+      // No problem. We'll create a new snippet.
+      snippet.duplicateForUser(req.user, req.body, function(err, newSnippet) {
+        if (err) {
+          res.send(500, err);
+          console.log(err);
+          return;
+        }
+        if (newSnippet == null) {
+          res.send(500, "Couldn't save");
+          console.log("Couldn't save");
+          return;
+        }
+        res.json({'redirect':  '/snippet/' + newSnippet.id});
+      });
+    } else {
+      // We own this snippet. Add to the version history.
+      snippet.advanceVersion(req.body, function(err, newSnippet) {
+        if (err) {
+          res.send(500, err);
+          console.log(err);
+          return;
+        }
+        if (newSnippet == null) {
+          res.send(500, "Couldn't save");
+          console.log("Couldn't save");
+          return;
+        }
+        res.send(200);
+      });
+    }
   });
 };
 

@@ -9,6 +9,7 @@ CTS.registerNamespace('CTS.UI.ProxyEditor');
 CTS.UI.ProxyEditor = function($, q, $container, proxy, config) {
   this._$ = $;
   this._q = q;
+  this.name = "";
   this.config = config || {};
   if (typeof this.config.sheet == 'undefined') {
     this.config.sheet = true;
@@ -215,12 +216,36 @@ CTS.UI.ProxyEditor.prototype.getCts = function() {
 
 CTS.UI.ProxyEditor.prototype.loadSnippet = function(snippet) {
   var self = this;
+  this.snippet = snippet;
   var url = "/snippet/" + snippet + "/json";
   this._$.getJSON(url).done(function(json, textStatus, jqXHR) {
     self.proxybrowser.loadhtml(json.html);
     self.createEditor(json.html);
   }).fail(function(jqXHR, textStatus, errorThrown) {
     console.log("Could not load snippet", snippet);
+  });
+};
+
+CTS.UI.ProxyEditor.prototype.setName = function(name) {
+  this.name = name;
+};
+
+CTS.UI.ProxyEditor.prototype.save = function(csrf) {
+  var data = {
+    name: this.name,
+    html: this.editor.getValue(),
+    cts: this.getCts(),
+    _csrf: csrf
+  }
+  var url = "/snippet/" + this.snippet;
+  this._$.post(url, data).done(function(json, textStatus, jqXHR) {
+    if (typeof json != 'undefined') {
+      if (typeof json.redirect != 'undefined') {
+        window.location.pathname = json.redirect;
+      }
+    }
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    Alertify.log.error("Snippet could not be saved");
   });
 };
 
