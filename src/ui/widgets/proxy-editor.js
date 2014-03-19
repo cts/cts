@@ -241,7 +241,10 @@ CTS.UI.ProxyEditor.prototype.save = function(csrf) {
   this._$.post(url, data).done(function(json, textStatus, jqXHR) {
     if (typeof json != 'undefined') {
       if (typeof json.redirect != 'undefined') {
+        Alertify.log.info("<b>New copy</b> forked for you.");
         window.location.pathname = json.redirect;
+      } else {
+        Alertify.log.success("Snippet saved.", 1500);
       }
     }
   }).fail(function(jqXHR, textStatus, errorThrown) {

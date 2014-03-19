@@ -11,7 +11,7 @@
  */
 (function (global, document, undefined) {
 var AlertifyProto = (function () {
-    
+
 
     var AlertifyProto,
         add,
@@ -83,7 +83,7 @@ var AlertifyProto = (function () {
     return AlertifyProto;
 }());
 var Alertify = (function () {
-    
+
 
     var Alertify = function () {};
     Alertify.prototype = AlertifyProto;
@@ -92,7 +92,7 @@ var Alertify = (function () {
     return Alertify;
 }());
 var validate = (function () {
-    
+
 
     var _checkValidation,
         validate;
@@ -148,7 +148,7 @@ var validate = (function () {
     return validate;
 }());
 var element = (function () {
-    
+
 
     var element = {},
         setAttributes;
@@ -214,7 +214,7 @@ var element = (function () {
     return element;
 }());
 var transition = (function () {
-    
+
 
     var transition;
 
@@ -254,7 +254,7 @@ var transition = (function () {
     return transition();
 }());
 var keys = (function () {
-    
+
 
     var keys = {
         ENTER : 13,
@@ -265,7 +265,7 @@ var keys = (function () {
     return keys;
 }());
 var Dialog = (function () {
-    
+
 
     var dialog,
         _dialog = {};
@@ -628,7 +628,7 @@ var Dialog = (function () {
                 throw new Error(validate.messages.invalidArguments);
             }
             dialog.el = dialog.el || init();
-            dialog.el.className = dialog.el.className + " " + "cts-ignore"; 
+            dialog.el.className = dialog.el.className + " " + "cts-ignore";
             elCallee = document.activeElement;
 
             queue.push({
@@ -684,7 +684,7 @@ var Dialog = (function () {
     return new Dialog();
 }());
 var Log = (function () {
-    
+
 
     var Log,
         onTransitionEnd,
@@ -821,7 +821,7 @@ var Log = (function () {
     return Log;
 }());
 var logs = (function () {
-    
+
 
     var init,
         createLog,
