@@ -25,28 +25,27 @@ CTS.UI.SSheetBrowser = function($, q, $container, proxy) {
 
 CTS.UI.SSheetBrowser.prototype.setup = function() {
   var self = this;
-  this.$urldiv = this._$('<div class="cts-ui-SSheetBrowser-url"></div>');
-  this.$urldiv.css({
-    'padding-bottom': '10px;'
-  });
-  this.$urlinput = this._$('<input placeholder="URL" />');
-  this.$urlinput.css({
-    border: '2px solid #777',
-    position: 'relative',
-    width: '100%',
-    'padding-left': '5px'
-  });
-  this.$urlinput.keyup(function (e) {
-    if (e.keyCode == 13) {
-      self.loadurl();
-    }
-  });
-  this.$urldiv.append(this.$urlinput);
+  // this.$urldiv = this._$('<div class="cts-ui-SSheetBrowser-url"></div>');
+  // this.$urldiv.css({
+  //   'padding-bottom': '10px;'
+  // });
+  // this.$urlinput = this._$('<input placeholder="URL" />');
+  // this.$urlinput.css({
+  //   border: '2px solid #777',
+  //   position: 'relative',
+  //   width: '100%',
+  //   'padding-left': '5px'
+  // });
+  // this.$urlinput.keyup(function (e) {
+  //   if (e.keyCode == 13) {
+  //     self.loadurl();
+  //   }
+  // });
+  // this.$urldiv.append(this.$urlinput);
   this.$root.append(this.$urldiv);
 
   this.$ssheet = this._$('<div class="ssheet"></div>');
   this.$ssheet.css({
-    'border': '1px solid #ccc',
     'border-top': 'none'
   });
   this.$root.append(this.$ssheet);
@@ -59,13 +58,13 @@ CTS.UI.SSheetBrowser.prototype.setup = function() {
 
 CTS.UI.SSheetBrowser.prototype.onresize = function() {
   console.log("Ssheet resize");
-  var w = this.$container.width();
-  var h = this.$container.height();
-  this.$root.height(h);
-  this.$root.width(w);
-  this.$urldiv.width(w);
-  this.$ssheet.width(w);
-  this.$ssheet.height(h - this.$urldiv.height() - this.$tabs.height());
+  // var w = this.$container.width();
+  // var h = this.$container.height();
+  // this.$root.height(h);
+  // this.$root.width(w);
+  // // this.$urldiv.width(w);
+  // this.$ssheet.width(w);
+  // this.$ssheet.height(h - this.$tabs.height());
 };
 
 
@@ -140,8 +139,7 @@ CTS.UI.SSheetBrowser.prototype.showTable = function($node, cf) {
 };
 
 
-CTS.UI.SSheetBrowser.prototype.loadurl = function() {
-  var url = this.$urlinput.val();
+CTS.UI.SSheetBrowser.prototype.loadurl = function(url) {
   // https://docs.google.com/spreadsheet/ccc?key=0Arj8lnBW4_tZdDNKQmtyd0w4LU5MTFZYMXJ2aG5KMHc&usp=drive_web
   // Let's assume it's the key.
   var spec = {

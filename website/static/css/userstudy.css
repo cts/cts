@@ -26,6 +26,8 @@ body {
 h2.title {
   color: #3887f3;
   font-size: 24px;
+  margin: 0;
+  margin-right: 25px;
 }
 
 h2.title img {
@@ -90,7 +92,8 @@ span.draggable > span {
 
 td.preview {
   background-color: #f9f9f9;
-  padding: 10px;
+  padding: 10px !important;
+  border-left: 1px solid #ccc;
 }
 
 .cts-ui-proxybrowser {
@@ -98,9 +101,11 @@ td.preview {
   border: 1px solid #d6d6d6;
 }
 
-tr.headerbar td {
+tr.headerbar > td {
   -webkit-box-shadow: 0 10px 5px -5px rgba(233,233,233,0.5);
   box-shadow: 0 10px 5px -5px rgba(233,233,233,0.5);
+  margin: 0;
+  padding: 0;
 }
 
 #harness {
@@ -114,4 +119,25 @@ tr.urlbar td, tr.urlbar {
 
 tr.headerbar td, tr.headerbar {
   height: 50px;
+}
+
+td.editor {
+  font-size: 14px;
+}
+
+table.harness {
+  border-spacing: 0;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table.harness td, table.harness th, table.harness tr {
+  border-spacing: 0;
+  border-collapse: collapse;
+  padding: 0;
+  margin: 0;
+}
+
+table.harness tr.bigbox td {
+  vertical-align: top;
 }
