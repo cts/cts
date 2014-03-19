@@ -25,6 +25,13 @@ CTS.Util.shouldAutoload = function() {
   if (CTS.Util.getUrlParameter('autoload') == 'false') {
     return false;
   }
+  if (typeof document.body.dataset != 'undefined') {
+    if (typeof document.body.dataset.ctsautoload != 'undefined') {
+      if (document.body.dataset.ctsautoload == 'false') {
+        return false;
+      }
+    }
+  }
   return true;
 };
 
@@ -44,4 +51,3 @@ CTS.Util.hideDocumentBody = function() {
 CTS.Util.showDocumentBody = function($e) {
   CTS.$('body').show();
 };
-

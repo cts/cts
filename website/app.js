@@ -22,6 +22,7 @@ var docController = require('./controllers/documentation');
 var apiController = require('./controllers/api');
 var forgotController = require('./controllers/forgot');
 var resetController = require('./controllers/reset');
+var snippetController = require('./controllers/snippet');
 
 /**
  * API keys + Passport configuration.
@@ -144,6 +145,11 @@ app.get('/about', homeController.getAbout);
 app.post('/api/gsheet/updatecell', apiController.updateCell);
 app.post('/api/gsheet/updatelistitemproperty', apiController.updateListItemProperty);
 app.get('/api/proxy', apiController.getProxy);
+
+app.get('/snippet', snippetController.getIndex);
+app.get('/snippet/new', passportConf.isAuthenticated, snippetController.createSnippet);
+app.get('/snippet/:snippet/json', snippetController.getSnippetJson);
+app.get('/snippet/:snippet', snippetController.getSnippet);
 
 app.get('/account', passportConf.isAuthenticated, userController.getAccount);
 app.post('/account/profile', passportConf.isAuthenticated, userController.postUpdateProfile);

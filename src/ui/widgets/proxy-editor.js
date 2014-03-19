@@ -3,8 +3,7 @@ CTS.registerNamespace('CTS.UI.ProxyEditor');
 /**
  * Proxy Browser
  *
- * Args:
- *  $ - jQuery (can be found at CTS.$ once CTS loads)
+ * Args: *  $ - jQuery (can be found at CTS.$ once CTS loads)
  *  q - The Q library (can be found at CTS.Q once CTS loads)
  */
 CTS.UI.ProxyEditor = function($, q, $container, proxy, config) {
@@ -66,6 +65,12 @@ CTS.UI.ProxyEditor.prototype.setup = function() {
   }
 
   this.onresize();
+
+  var snippet = this.$container.attr('data-snippetid');
+  if (snippet != null) {
+    console.log("Trying to load snippet", snippet);
+    this.loadSnippet(snippet);
+  }
 };
 
 CTS.UI.ProxyEditor.prototype.createURLBar = function(appendTo, callback) {
@@ -155,6 +160,13 @@ CTS.UI.ProxyEditor.prototype.setupCts = function(row) {
     this.headerrows[row].append(editorHeader);
     var editor = this._$('<td width="' + this.pct[row] + '%" id="ctseditor" class="ctseditor"></td>');
     this.rows[row].append(editor);
+
+    if (typeof this.ctseditor == 'undefined') {
+      this.ctseditor = ace.edit("ctseditor");
+      this.ctseditor.getSession().setMode("ace/mode/css");
+    }
+    this.ctseditor.setValue('');
+    this.ctseditor.clearSelection();
   }
 };
 
@@ -188,7 +200,28 @@ CTS.UI.ProxyEditor.prototype.loadsheet = function(url) {
 
 CTS.UI.ProxyEditor.prototype.transferHtml = function() {
   var html = this.editor.getValue();
+
+  // Now we load in the CTS.
+  var cts = "<style type='text/cts'>" + this.getCts() + "</style>";
+  var ctsLink = "<script src='http://localhost:3000/release/cts.js'></script>";
+  var head = cts + ctsLink;
+  html = html.replace("</head>", head + "</head>");
   this.proxybrowser.loadhtml(html);
+};
+
+CTS.UI.ProxyEditor.prototype.getCts = function() {
+  return this.ctseditor.getValue();
+};
+
+CTS.UI.ProxyEditor.prototype.loadSnippet = function(snippet) {
+  var self = this;
+  var url = "/snippet/" + snippet + "/json";
+  this._$.getJSON(url).done(function(json, textStatus, jqXHR) {
+    self.proxybrowser.loadhtml(json.html);
+    self.createEditor(json.html);
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    console.log("Could not load snippet", snippet);
+  });
 };
 
 CTS.UI.ProxyEditor.prototype.createEditor = function(html) {

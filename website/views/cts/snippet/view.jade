@@ -1,0 +1,16 @@
+extends ../layouts/snippet
+
+block head
+  style.
+
+block title
+  h1 CTS Proxy Browser
+
+block content
+  div.row.full
+    div#harness(data-snippetid=snippet.id)
+
+  script.
+    CTS.status.libraryLoaded.then(function() {
+      window.editor = new CTS.UI.ProxyEditor(CTS.$, CTS.Q, CTS.$('#harness'));
+    });
