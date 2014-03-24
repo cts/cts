@@ -4,10 +4,6 @@ textarea.cts {
   margin: 10px;
   height: 80px;
 }
-#harness {
-  height: 100%;
-  width: 100%;
-}
 
 .full {
   padding-left: 30px;
@@ -109,8 +105,11 @@ tr.headerbar > td {
 }
 
 #harness {
-  height: 100%;
-  min-height: 600px;
+  width: 100%;
+  height: calc(100% - 100px);
+  border-bottom: 3px solid #ccc;
+  margin-left: 5px;
+  margin-right: 5px;
 }
 
 tr.urlbar td, tr.urlbar {
@@ -140,4 +139,44 @@ table.harness td, table.harness th, table.harness tr {
 
 table.harness tr.bigbox td {
   vertical-align: top;
+}
+
+table.sheet {
+  min-width: 100%;
+  overflow: scroll;
+  margin: 5px;
+}
+
+table.sheet td.rowhead,  table.sheet td.colhead {
+  background-color: #eee;
+  vertical-align: middle;
+  text-align: center;
+}
+
+table.sheet td.rowhead {
+  margin-left: 5px;
+  min-width: 20px;
+}
+
+table.sheet td.colhead {
+  min-height: 20px;
+}
+
+table.sheet td.itemhead {
+  font-weight: bold;
+}
+
+table.sheet td div.wrapper {
+  padding: 3px;
+}
+
+table.sheet td.firstrow div.wrapper {
+  border-top: 3px solid #dadfe9;
+}
+
+table.sheet td {
+  border: 1px solid #ccc;
+}
+
+table.sheet td.rowhead {
 }

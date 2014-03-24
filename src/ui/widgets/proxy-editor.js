@@ -26,11 +26,11 @@ CTS.UI.ProxyEditor = function($, q, $container, proxy, config) {
     this.proxy = proxy;
   }
   this.$container = $container;
-  this.$root = $('<div class="cts-ui-ProxyEditor cts-ignore"></div>');
-  this.$container.append(this.$root);
   this.$container.on('resize', function() {
     this.onresize();
   });
+  this.$root = $('<div class="cts-ui-ProxyEditor cts-ignore"></div>');
+  this.$container.append(this.$root);
   this.setup();
 };
 
@@ -39,31 +39,31 @@ CTS.UI.ProxyEditor.prototype.setup = function() {
   this.$table = this._$('<table cellspacing=0 cellpadding=0 class="harness">' +
     '<tr class="headerbar headerbar1"></tr>' +
     '<tr class="bigbox bigbox1"></tr>' +
-    '<tr class="headerbar headerbar2"></tr>' +
-    '<tr class="bigbox bigbox2"></tr>' +
+  //  '<tr class="headerbar headerbar2"></tr>' +
+  //  '<tr class="bigbox bigbox2"></tr>' +
     '</table>');
   this.$root.append(this.$table);
   this.$headerrow = this.$table.find('tr.headerbar1');
-  this.$secondheaderrow = this.$table.find('tr.headerbar2');
+  //this.$secondheaderrow = this.$table.find('tr.headerbar2');
   this.$mainrow = this.$table.find('tr.bigbox1');
-  this.$secondrow = this.$table.find('tr.bigbox2');
+  //this.$secondrow = this.$table.find('tr.bigbox2');
 
-  this.headerrows = [this.$headerrow, this.$secondheaderrow];
-  this.rows = [this.$mainrow, this.$secondrow];
-  this.firstRow = [this.setupSheet, this.setupHtml];
-  this.secondRow = [this.setupCts, this.setupPreview];
+  this.headerrows = [this.$headerrow];//, this.$secondheaderrow];
+  this.rows = [this.$mainrow];//, this.$secondrow];
+  this.firstRow = [this.setupSheet, this.setupHtml, this.setupPreview];
+  //this.secondRow = [];//this.setupCts, this.setupPreview];
 
   this.pct = [
-    parseInt(100.0 / this.firstRow.length),
-    parseInt(100.0 / this.secondRow.length)
+    parseInt(100.0 / this.firstRow.length)//,
+    //parseInt(100.0 / this.secondRow.length)
   ];
 
   for (var i = 0; i < this.firstRow.length; i++) {
     this.firstRow[i].call(this, 0);
   }
-  for (var i = 0; i < this.secondRow.length; i++) {
-    this.secondRow[i].call(this, 1);
-  }
+  //for (var i = 0; i < this.secondRow.length; i++) {
+  //  this.secondRow[i].call(this, 1);
+  //}
 
   this.onresize();
 
@@ -90,7 +90,6 @@ CTS.UI.ProxyEditor.prototype.createURLBar = function(appendTo, callback) {
 };
 
 CTS.UI.ProxyEditor.prototype.setupSheet = function(row) {
-  console.log("Setup sheet");
   if (this.config.sheet) {
     // HEADER
     var sheetHeader = this._$('<td width="' + this.pct[row] + '%" class="sheet-head"></td>');
@@ -104,13 +103,13 @@ CTS.UI.ProxyEditor.prototype.setupSheet = function(row) {
 
     // BODY
     var main = this._$('<td width="' + this.pct[row] + '%"></td>');
+    main.css({'border-right': '3px solid #ccc', 'border-left': '3px solid #ccc'});
     this.rows[row].append(main);
     this.sheetbrowser = new CTS.UI.SSheetBrowser(this._$, this._q, main, this.proxy, false);
   }
 };
 
 CTS.UI.ProxyEditor.prototype.setupPreview = function(row) {
-  console.log("Setup preview");
   if (this.config.preview) {
     var previewHeader = this._$('<td width="' + (this.pct[row] + 1) + '%" class="preview-head"></td>');
     previewHeader.html('<table><tr><td><h2 class="title">' +
@@ -126,6 +125,7 @@ CTS.UI.ProxyEditor.prototype.setupPreview = function(row) {
 
     // Body
     var main = this._$('<td width="' + (this.pct[row] + 1) + '%" class="preview"></td>');
+    main.css({'border-left': '3px solid #ccc', 'border-right': '3px solid #ccc'});
     this.rows[row].append(main);
     this.proxybrowser = new CTS.UI.ProxyBrowser(this._$, this._q, main, this.proxy, false);
   }
@@ -133,19 +133,16 @@ CTS.UI.ProxyEditor.prototype.setupPreview = function(row) {
 };
 
 CTS.UI.ProxyEditor.prototype.setupHtml = function(row) {
-  console.log("Setup HTML");
   if (this.config.html) {
     // HEADER
     var editorHeader = this._$('<td width="' + this.pct[row] + '%" class="editor-head"></td>');
     editorHeader.html('<table><tr><td><h2 class="title">' +
-      '<img src="/img/userstudy/editor-icon.png" /> Editor</h2></td><td id="htmlurl"></td></tr></table>');
+      '<img src="/img/userstudy/editor-icon.png" /> HTML</h2></td><td id="htmlurl"></td></tr></table>');
     this.headerrows[row].append(editorHeader);
-
     var self = this;
     this.createURLBar(editorHeader.find("#htmlurl"), function(url) {
       self.loadurl(url);
     });
-
     var editor = this._$('<td width="' + this.pct[row] + '%" id="editor" class="editor"></td>');
     this.rows[row].append(editor);
   }
@@ -241,8 +238,13 @@ CTS.UI.ProxyEditor.prototype.save = function(csrf) {
   this._$.post(url, data).done(function(json, textStatus, jqXHR) {
     if (typeof json != 'undefined') {
       if (typeof json.redirect != 'undefined') {
-        Alertify.log.info("<b>New copy</b> forked for you.");
-        window.location.pathname = json.redirect;
+        if (json.success) {
+          Alertify.log.info("<b>New copy</b> forked for you.");
+          window.location.pathname = json.redirect;
+        } else {
+          Alertify.log.error(json.message);
+          window.location.pathname = json.redirect;
+        }
       } else {
         Alertify.log.success("Snippet saved.", 1500);
       }

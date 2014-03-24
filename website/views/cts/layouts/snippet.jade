@@ -6,6 +6,7 @@ html
     script(src="/js/lib/ace-noconflict/ace.js")
     script(src="/js/lib/jquery-2.1.0.min.js")
     script(src="/js/lib/jquery-ui-1.10.4.custom.min.js")
+    script(src="/js/lib/bootstrap.min.js")
     link(rel="stylesheet", href="/css/lib/ui-lightness/jquery-ui-1.10.4.custom.min.css")
     link(rel="stylesheet", href="/css/userstudy.css")
     link(rel="stylesheet", href="/widgets/ctsui/css/modal.css")
@@ -16,11 +17,4 @@ html
     block head
 
   body.cts-doc.cts(data-ctsautoload="false")
-    include ../partials/navigation
-    main.ctsdoc-mini
-      .left &nbsp;
-      .center
-        h1 Cascading Tree Sheets
-        h2 CSS for Structure
-      .right &nbsp;
     block content

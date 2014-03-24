@@ -96,6 +96,7 @@ CTS.UI.SSheetBrowser.prototype.buildWorksheet = function(ws) {
 };
 
 CTS.UI.SSheetBrowser.prototype.showWorksheet = function(ws) {
+  /*
   this.$tabs.find('li').removeClass('active');
   this.$tabs.find('li[data-name="' + ws.name + '"]').addClass('active');
   var cellfeed = null;
@@ -108,31 +109,53 @@ CTS.UI.SSheetBrowser.prototype.showWorksheet = function(ws) {
     }
   }
   this.showTable(this.$ssheet, cellfeed);
+  */
+  this.showTable(this.$ssheet, [
+    ['FirstName', 'LastName', 'Phone', 'Something'],
+    ['Ted', 'Benson', '8628148', 'Something'],
+    ['Grace', 'Benson', 'sdf', 'Else'],
+    ['Robin', 'Ricketts', 'df', 'Here'],
+  ], 4);
 };
 
+CTS.UI.SSheetBrowser.ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-CTS.UI.SSheetBrowser.prototype.showTable = function($node, cf) {
-  var row = 0;
-  var hadOne = true;
-  var html = "<table>";
-
-  while (hadOne) {
-    hadOne = false;
+CTS.UI.SSheetBrowser.prototype.showTable = function($node, rows, cols) {
+  var html = "<table class='sheet'>";
+  // Build top header
+  html += "</tr>";
+  // Now the rows
+  var colName = '';
+  for (var i = 0; i < rows.length + 1; i++) {
     html += "<tr>";
-    console.log(html);
-    for (var col = 0; col < cf.children.length; col++) {
-      var rn = cf.children[col];
-      html += "<td>";
-      if (row < rn.children.length) {
-        hadOne = true;
-        var cell = rn.children[row];
-        html += cell.value;
+    if (i == 0) {
+      for (var j = 0; j < cols+1; j++) {
+        if (j == 0) {
+          html += "<td class='colhead rowhead'><div class='wrapper'></div></td>";
+        } else {
+          var colName = CTS.UI.SSheetBrowser.ALPHABET[(j-1)%26];
+          html += "<td class='colhead'><div class='wrapper'>" + colName + "</div></td>";
+        }
       }
-      html += "</td>";
-      row += 1;
+    } else {
+      for (var j = 0; j < rows[i-1].length + 1; j++) {
+        var cellName = '';
+        if (j > 0) {
+          var colName = CTS.UI.SSheetBrowser.ALPHABET[(j-1)%26];
+          cellName = colName + j;
+        }
+        if (j == 0) {
+          html += "<td class='rowhead'><div class='wrapper'>" + i + "</div></td>";
+        } else if (i == 1) {
+          html += "<td class='itemhead " + cellName + "'><div class='wrapper'>" + rows[i-1][j-1] + "</div></td>";
+        } else if (i == 2) {
+          html += "<td class='firstrow " + cellName + "'><div class='wrapper'>" + rows[i-1][j-1] + "</div></td>";
+        } else {
+          html += "<td> <div class='wrapper " + cellName + "'>" + rows[i-1][j-1] + "</div></td>";
+        }
+      }
     }
     html += "</tr>";
-    console.log(html);
   }
   html += "</table>";
   $node.html(html);
@@ -142,6 +165,10 @@ CTS.UI.SSheetBrowser.prototype.showTable = function($node, cf) {
 CTS.UI.SSheetBrowser.prototype.loadurl = function(url) {
   // https://docs.google.com/spreadsheet/ccc?key=0Arj8lnBW4_tZdDNKQmtyd0w4LU5MTFZYMXJ2aG5KMHc&usp=drive_web
   // Let's assume it's the key.
+
+  this.showWorksheet();
+  return;
+
   var spec = {
     kind: 'gsheet',
     url: url

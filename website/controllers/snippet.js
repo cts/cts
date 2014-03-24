@@ -38,8 +38,13 @@ exports.getSnippet = function(req, res) {
   });
 };
 
-
 exports.saveSnippet = function(req, res) {
+  // Soft login requirement.
+  if (! req.user) {
+    res.json({'redirect':  '/login', 'success': false, 'message': 'Please Log In'});
+    return;
+  }
+
   Snippet.findById(req.params.snippet, function(err, snippet) {
     if (err) {
       res.send(500, "Error");
@@ -63,7 +68,7 @@ exports.saveSnippet = function(req, res) {
           console.log("Couldn't save");
           return;
         }
-        res.json({'redirect':  '/snippet/' + newSnippet.id});
+        res.json({'redirect':  '/snippet/' + newSnippet.id, success: true});
       });
     } else {
       // We own this snippet. Add to the version history.

@@ -95,7 +95,23 @@ CTS.Node.DomBase = {
   _subclass_getInlineRelationSpecString: function() {
     if (this.value !== null) {
       var inline = this.value.attr('data-cts');
-      return inline;
+      if (inline) {
+        return inline;
+      } else {
+        // Temporary spreadsheet case.
+        inline = this.value.attr('data-bind-to');
+        if (inline) {
+          if (inline.indexOf('rows') > -1) {
+            if (this.value.is("form")) {
+              return "this :graft " + inline + ' {createNew: true};';
+            } else {
+              return "this :are " + inline + ";";
+            }
+          } else {
+            return "this :is " + inline + ';';
+          }
+        }
+      }
     }
     return null;
   },

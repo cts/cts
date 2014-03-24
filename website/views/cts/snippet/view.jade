@@ -7,13 +7,81 @@ block title
   h1 CTS Proxy Browser
 
 block content
+  h1 test sheet
+  table.sheet
+    tr
+      td.colhead.rowhead
+      td.colhead
+        div.wrapper A
+      td.colhead
+        div.wrapper B
+      td.colhead
+        div.wrapper C
+      td.colhead
+        div.wrapper D
+    tr
+      td.rowhead
+        div.wrapper 1
+      td.itemhead
+        div.wrapper FirstName
+      td.itemhead
+        div.wrapper LastName
+      td.itemhead
+        div.wrapper Phone
+      td.itemhead
+        div.wrapper Address
+    tr
+      td.rowhead
+        div.wrapper 2
+      td.firstrow
+        div.wrapper Ted
+      td.firstrow
+        div.wrapper Benson
+      td.firstrow
+        div.wrapper 8628148
+      td.firstrow
+        div.wrapper 26 Antrim
+    tr
+      td.rowhead
+        div.wrapper 2
+      td
+        div.wrapper Grace
+      td
+        div.wrapper Benson
+      td
+        div.wrapper 3363238
+      td
+        div.wrapper 26 Antrim
+
+  h1 thing
   div.row.snippet-title
     .col-md-8.snippet-name
       input#snippet-name(value=snippet.name)
       button#save-btn.btn-primary.btn(data-csrf=token) Save
+    .col-md-4
+      ul.nav.navbar-nav.navbar-right(style="margin-right: 10px")
+        if !user
+          li(class=title=='Login'?'active':undefined)
+            a(href='/login') Login
+          if secrets.localAuth
+            li(class=title=='Create Account'?'active':undefined)
+              a(href='/signup') Create Account
+        else
+          li.dropdown(class=title=='Account Management'?'active':undefined)
+            a.dropdown-toggle(href='#', data-toggle='dropdown')
+              if user.profile.picture
+                img.profile-image(src='#{user.profile.picture}')
+              else
+                img.profile-image(src='#{user.gravatar(60)}')
+              | #{user.profile.name || user.email || user.id}&nbsp;
+              i.caret
+            ul.dropdown-menu
+              li: a(href='/account') My Account
+              li.divider
+              li: a(href='/logout') Logout
 
-  div.row.full
-    div#harness(data-snippetid=snippet.id)
+
+  div.row.full#harness(data-snippetid=snippet.id)
 
   script.
     CTS.status.libraryLoaded.then(function() {
