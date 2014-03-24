@@ -26,8 +26,9 @@ CTS.UI.ProxyEditor = function($, q, $container, proxy, config) {
     this.proxy = proxy;
   }
   this.$container = $container;
-  this.$container.on('resize', function() {
-    this.onresize();
+  var self = this;
+  this._$(window).on('resize', function() {
+    self.onresize();
   });
   this.$root = $('<div class="cts-ui-ProxyEditor cts-ignore"></div>');
   this.$container.append(this.$root);
@@ -75,7 +76,7 @@ CTS.UI.ProxyEditor.prototype.setup = function() {
 };
 
 CTS.UI.ProxyEditor.prototype.createURLBar = function(appendTo, callback) {
-  urlinput = this._$('<input placeholder="URL" />');
+  var urlinput = this._$('<input placeholder="URL" />');
   urlinput.css({
     border: '2px solid #777',
     'padding-left': '5px',
@@ -170,6 +171,8 @@ CTS.UI.ProxyEditor.prototype.setupCts = function(row) {
 
 CTS.UI.ProxyEditor.prototype.onresize = function() {
   console.log("proxy onresize");
+  this.proxybrowser.onresize();
+  this.sheetbrowser.onresize();
   var w = this.$container.width();
   var h = this.$container.height();
   this.$table.height(h);

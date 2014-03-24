@@ -144,7 +144,19 @@ table.harness tr.bigbox td {
 table.sheet {
   min-width: 100%;
   overflow: scroll;
-  margin: 5px;
+}
+
+table.ssheet-ui {
+  width: 100%;
+  height: 100%;
+}
+
+table.ssheet-ui tr.one td {
+  height: 100%
+}
+
+table.ssheet-ui tr.two td {
+  height: 100px;
 }
 
 table.sheet td.rowhead,  table.sheet td.colhead {
@@ -179,4 +191,27 @@ table.sheet td {
 }
 
 table.sheet td.rowhead {
+}
+
+ul.worksheets-list.nav.nav-pills {
+  position: relative;
+  background-color: #eee;
+  border-top: 1px solid #aaa;
+  margin: 0;
+  width: 100%;
+  padding: 0px 8px 4px 8px;
+}
+
+ul.worksheets-list.nav.nav-pills li.ws-tab a {
+  background-color: #e9e9e9;
+  color: #666;
+  border-top-color: #aaa;
+  padding: 4px 6px;
+}
+
+ul.worksheets-list.nav.nav-pills li.ws-tab.active a {
+  background-color: #fff;
+  color: #222;
+  border-radius: 0;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.15);
 }

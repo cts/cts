@@ -85,7 +85,17 @@ CTS.Factory = {
     CTS.Log.Info("Trying to resolve GSheet Tree");
     var deferred = Q.defer();
     // For the GSheet.
-    treespec.sskey = treespec.url;
+    // https://docs.google.com/spreadsheet/ccc?key=0Arj8lnBW4_tZdC1rVlAzQXFhWmFaLU1DY2RsMzVtUkE&usp=drive_web#gid=0
+    if (treespec.url.indexOf('http') == 0) {
+      var pat = "key=([^&]+)(&|$)";
+      var match = treespec.url.match(pat);
+      if (match && (match.length > 1)) {
+        treespec.sskey = match[1];
+      }
+    } else {
+      treespec.sskey = treespec.url;
+    }
+
     var tree = new CTS.Tree.GSpreadsheet(forrest, treespec);
     var ss = new CTS.Node.GSpreadsheet(treespec, tree);
     var ws = false;

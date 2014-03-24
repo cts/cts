@@ -278,24 +278,26 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       spec.id = CTS.Util.GSheet._parseGItem(json.feed.id);
       spec.rows = {};
 
-      for (var i = 0; i < json.feed.entry.length; i++) {
-        var cell = CTS.Util.GSheet._parseGItem(json.feed.entry[i].title);
-        var content = CTS.Util.GSheet._parseGItem(json.feed.entry[i].content);
-        var letterIdx = 0;
-        while (isNaN(parseInt(cell[letterIdx]))) {
-          letterIdx++;
-        }
-        var row = cell.slice(0, letterIdx);
-        var col = parseInt(cell.slice(letterIdx));
-        var colNum = parseInt(json.feed.entry[i]['gs$cell']['col'])
+      if (json.feed.entry) {
+        for (var i = 0; i < json.feed.entry.length; i++) {
+          var cell = CTS.Util.GSheet._parseGItem(json.feed.entry[i].title);
+          var content = CTS.Util.GSheet._parseGItem(json.feed.entry[i].content);
+          var letterIdx = 0;
+          while (isNaN(parseInt(cell[letterIdx]))) {
+            letterIdx++;
+          }
+          var row = cell.slice(0, letterIdx);
+          var col = parseInt(cell.slice(letterIdx));
+          var colNum = parseInt(json.feed.entry[i]['gs$cell']['col'])
 
-        if (typeof spec.rows[row] == "undefined") {
-          spec.rows[row] = {};
+          if (typeof spec.rows[row] == "undefined") {
+            spec.rows[row] = {};
+          }
+          spec.rows[row][col] = {
+            content: content,
+            colNum: colNum
+          };
         }
-        spec.rows[row][col] = {
-          content: content,
-          colNum: colNum
-        };
       }
       deferred.resolve(spec);
     });
@@ -361,6 +363,5 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     });
     return deferred.promise;
   }
-
 
 });

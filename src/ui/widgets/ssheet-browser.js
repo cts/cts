@@ -17,54 +17,43 @@ CTS.UI.SSheetBrowser = function($, q, $container, proxy) {
   this.$container = $container;
   this.$root = $('<div class="cts-ui-SSheetBrowser cts-ignore"></div>');
   this.$container.append(this.$root);
-  this.$container.on('resize', function() {
-    this.onresize();
-  });
   this.setup();
 };
 
 CTS.UI.SSheetBrowser.prototype.setup = function() {
   var self = this;
-  // this.$urldiv = this._$('<div class="cts-ui-SSheetBrowser-url"></div>');
-  // this.$urldiv.css({
-  //   'padding-bottom': '10px;'
-  // });
-  // this.$urlinput = this._$('<input placeholder="URL" />');
-  // this.$urlinput.css({
-  //   border: '2px solid #777',
-  //   position: 'relative',
-  //   width: '100%',
-  //   'padding-left': '5px'
-  // });
-  // this.$urlinput.keyup(function (e) {
-  //   if (e.keyCode == 13) {
-  //     self.loadurl();
-  //   }
-  // });
-  // this.$urldiv.append(this.$urlinput);
-  this.$root.append(this.$urldiv);
+
+  this.$table = this._$('<table class="ssheet-ui"></table>');
+  this.$tableone = this._$('<tr class="one"></tr>');
+  this.$tabletwo = this._$('<tr class="two"></tr>');
+  this.$tableonetd = this._$('<td></td>');
+  this.$tabletwotd = this._$('<td></td>');
+  this.$tableone.append(this.$tableonetd);
+  this.$tabletwo.append(this.$tabletwotd);
 
   this.$ssheet = this._$('<div class="ssheet"></div>');
   this.$ssheet.css({
     'border-top': 'none'
   });
-  this.$root.append(this.$ssheet);
 
-  this.$tabs = this._$('<ul class="nav nav-pills"></ul>');
-  this.$root.append(this.$tabs);
+  this.$tabs = this._$('<ul class="worksheets-list nav nav-pills"></ul>');
+
+  this.$root.append(this.$table);
+  this.$table.append(this.$tableone);
+  this.$table.append(this.$tabletwo);
+
+  this.$tableonetd.append(this.$ssheet);
+  this.$tabletwotd.append(this.$tabs);
 
   this.onresize();
 };
 
 CTS.UI.SSheetBrowser.prototype.onresize = function() {
-  console.log("Ssheet resize");
-  // var w = this.$container.width();
-  // var h = this.$container.height();
-  // this.$root.height(h);
-  // this.$root.width(w);
-  // // this.$urldiv.width(w);
-  // this.$ssheet.width(w);
-  // this.$ssheet.height(h - this.$tabs.height());
+  var w = this.$container.width();
+  var h = this.$container.height();
+  console.log("container height", h);
+  this.$tableonetd.height(h - 30);
+  this.$tabletwotd.height(25);
 };
 
 
@@ -96,7 +85,6 @@ CTS.UI.SSheetBrowser.prototype.buildWorksheet = function(ws) {
 };
 
 CTS.UI.SSheetBrowser.prototype.showWorksheet = function(ws) {
-  /*
   this.$tabs.find('li').removeClass('active');
   this.$tabs.find('li[data-name="' + ws.name + '"]').addClass('active');
   var cellfeed = null;
@@ -108,19 +96,45 @@ CTS.UI.SSheetBrowser.prototype.showWorksheet = function(ws) {
       itemfeed = ws.children[i];
     }
   }
-  this.showTable(this.$ssheet, cellfeed);
-  */
-  this.showTable(this.$ssheet, [
-    ['FirstName', 'LastName', 'Phone', 'Something'],
-    ['Ted', 'Benson', '8628148', 'Something'],
-    ['Grace', 'Benson', 'sdf', 'Else'],
-    ['Robin', 'Ricketts', 'df', 'Here'],
-  ], 4);
+  this.showTable(this.$ssheet, this.makeTable(cellfeed));
+};
+
+CTS.UI.SSheetBrowser.prototype.makeTable = function(cf) {
+  var ret = [];
+  for (var i = 0; i < cf.children.length; i++) {
+    var column = cf.children[i];
+    for (var j = 0; j < column.children.length; j++) {
+      var cell = column.children[j];
+      var row = parseInt(cell.row);
+      var col = parseInt(cell.colNum);
+      var val = cell.value;
+      while (ret.length < row) {
+        ret.push([]);
+      }
+      if (ret[row-1].length < (col-1)) {
+        ret[row-1][col-1] = val;
+      } else {
+        while (ret[row-1].length < col-1) {
+          ret[row-1].push("");
+        }
+        ret[row-1][col-1] = val;
+      }
+    }
+  }
+  return ret;
 };
 
 CTS.UI.SSheetBrowser.ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 CTS.UI.SSheetBrowser.prototype.showTable = function($node, rows, cols) {
+  if (typeof cols == 'undefined') {
+    var cols = 0;
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].length > cols) {
+        cols = rows[i].length;
+      }
+    }
+  }
   var html = "<table class='sheet'>";
   // Build top header
   html += "</tr>";
@@ -166,9 +180,6 @@ CTS.UI.SSheetBrowser.prototype.loadurl = function(url) {
   // https://docs.google.com/spreadsheet/ccc?key=0Arj8lnBW4_tZdDNKQmtyd0w4LU5MTFZYMXJ2aG5KMHc&usp=drive_web
   // Let's assume it's the key.
 
-  this.showWorksheet();
-  return;
-
   var spec = {
     kind: 'gsheet',
     url: url
@@ -181,8 +192,9 @@ CTS.UI.SSheetBrowser.prototype.loadurl = function(url) {
       self.root = tree.root;
       self.buildSheets();
     },
-    function(err) {
-      CTS.Log.Error(error);
+    function(e) {
+      console.log(e);
+      CTS.Log.Error(e);
     }
   ).done();
 };
