@@ -56,7 +56,6 @@ CTS.UI.SSheetBrowser.prototype.onresize = function() {
   this.$tabletwotd.height(25);
 };
 
-
 CTS.UI.SSheetBrowser.prototype.clearSheets = function() {
   this.$tabs.html("");
 };
@@ -128,7 +127,7 @@ CTS.UI.SSheetBrowser.ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 CTS.UI.SSheetBrowser.prototype.showTable = function($node, rows, cols) {
   if (typeof cols == 'undefined') {
-    var cols = 0;
+    cols = 0;
     for (var i = 0; i < rows.length; i++) {
       if (rows[i].length > cols) {
         cols = rows[i].length;
@@ -152,7 +151,7 @@ CTS.UI.SSheetBrowser.prototype.showTable = function($node, rows, cols) {
         }
       }
     } else {
-      for (var j = 0; j < rows[i-1].length + 1; j++) {
+      for (var j = 0; j < cols + 1; j++) {
         var cellName = '';
         if (j > 0) {
           var colName = CTS.UI.SSheetBrowser.ALPHABET[(j-1)%26];
@@ -160,12 +159,18 @@ CTS.UI.SSheetBrowser.prototype.showTable = function($node, rows, cols) {
         }
         if (j == 0) {
           html += "<td class='rowhead'><div class='wrapper'>" + i + "</div></td>";
-        } else if (i == 1) {
-          html += "<td class='itemhead " + cellName + "'><div class='wrapper'>" + rows[i-1][j-1] + "</div></td>";
-        } else if (i == 2) {
-          html += "<td class='firstrow " + cellName + "'><div class='wrapper'>" + rows[i-1][j-1] + "</div></td>";
         } else {
-          html += "<td> <div class='wrapper " + cellName + "'>" + rows[i-1][j-1] + "</div></td>";
+          var val = '';
+          var klass = '';
+          if ((j-1) < rows[i-1].length) {
+            val = rows[i-1][j-1];
+          }
+          if (i == 1) {
+            klass = 'itemhead'
+          } else if (i == 1) {
+            klass = 'firstrow';
+          }
+          html += "<td class='" + klass + " " + cellName + "'><div class='wrapper'>" + val + "</div></td>";
         }
       }
     }
