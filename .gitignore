@@ -6,3 +6,5 @@ node_modules
 release/*
 mongodb
 log
+website/static/assets/*
+website/builtAsssets/*

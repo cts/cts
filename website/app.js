@@ -59,8 +59,9 @@ app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 app.use(require('connect-assets')({
-  src: 'static',
-  helperContext: app.locals
+  paths: ['assets/css', 'assets/js'],
+  buildDir: 'static/assets',
+  helperContext: app.locals,
 }));
 app.use(express.compress());
 app.use(express.favicon());
