@@ -259,6 +259,16 @@ for (var project in variants) {
   }
 }
 
+// Now we add the website stuff into the less task.
+gruntConfig['less']['webserver'] = {
+  options: {
+  },
+  files: {
+    "website/static/css/gen/styles.css": "website/assets/css/styles.less"
+  }
+}
+
+
 /*
  * Min Task
  * -----------
