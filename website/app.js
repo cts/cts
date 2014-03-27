@@ -9,13 +9,11 @@ var mongoose = require('mongoose');
 var passport = require('passport');
 var expressValidator = require('express-validator');
 
-
 /**
  * Load controllers.
  */
 var homeController = require('./controllers/home');
 var userController = require('./controllers/user');
-var contactController = require('./controllers/contact');
 var scratchController = require('./controllers/scratch');
 var widgetController = require('./controllers/widget');
 var docController = require('./controllers/documentation');

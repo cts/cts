@@ -1,3 +1,12 @@
+.todo-app {
+  background: url(clipboard.jpg);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 400px;
+  height: 600px;
+}
+
 .header {
   margin-left: 15px;
   margin-top: 80px;
@@ -5,11 +14,6 @@
   margin-bottom: 10px;
 }
 
-.todo-app {
-  background: url(clipboard.jpg);
-  width: 400px;
-  height: 600px;
-}
 
 .header h1 {
   font-size: 36px;

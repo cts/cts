@@ -82,7 +82,6 @@ CTS.Factory = {
   },
 
   GSpreadsheetTree: function(treespec, forrest) {
-    CTS.Log.Info("Trying to resolve GSheet Tree");
     var deferred = Q.defer();
     // For the GSheet.
     // https://docs.google.com/spreadsheet/ccc?key=0Arj8lnBW4_tZdC1rVlAzQXFhWmFaLU1DY2RsMzVtUkE&usp=drive_web#gid=0
@@ -95,6 +94,7 @@ CTS.Factory = {
     } else {
       treespec.sskey = treespec.url;
     }
+    CTS.Log.Info("Trying to resolve GSheet Tree:", treespec.sskey);
 
     var tree = new CTS.Tree.GSpreadsheet(forrest, treespec);
     var ss = new CTS.Node.GSpreadsheet(treespec, tree);

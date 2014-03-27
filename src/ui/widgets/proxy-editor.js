@@ -203,15 +203,21 @@ CTS.UI.ProxyEditor.prototype.transferHtml = function() {
   var html = this.editor.getValue();
 
   // Now we load in the CTS.
-  var cts = "<style type='text/cts'>" + this.getCts() + "</style>";
-  var ctsLink = "<script src='http://localhost:3000/release/cts.js'></script>";
-  var head = cts + ctsLink;
-  html = html.replace("</head>", head + "</head>");
+  if (html.indexOf('cts.js') == -1) {
+    var cts = "<style type='text/cts'>" + this.getCts() + "</style>";
+    var ctsLink = "<script src='http://localhost:3000/release/cts.js'></script>";
+    var head = cts + ctsLink;
+    html = html.replace("</head>", head + "</head>");
+  }
   this.proxybrowser.loadhtml(html);
 };
 
 CTS.UI.ProxyEditor.prototype.getCts = function() {
-  return this.ctseditor.getValue();
+  if (typeof this.ctseditor == 'undefined') {
+    return '';
+  } else {
+    return this.ctseditor.getValue();
+  }
 };
 
 CTS.UI.ProxyEditor.prototype.loadSnippet = function(snippet) {

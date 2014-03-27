@@ -52,7 +52,7 @@ CTS.UI.SSheetBrowser.prototype.onresize = function() {
   var w = this.$container.width();
   var h = this.$container.height();
   console.log("container height", h);
-  this.$tableonetd.height(h - 30);
+  this.$tableonetd.height(h - 35);
   this.$tabletwotd.height(25);
 };
 
