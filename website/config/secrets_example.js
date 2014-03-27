@@ -8,7 +8,7 @@ module.exports = {
   facebook: {
     clientID: 'Your App ID',
     clientSecret: 'Your App Secret',
-    callbackURL: '/auth/facebook/callback',
+    callbackURL: 'http://127.0.0.1/auth/facebook/callback',
     passReqToCallback: true
   },
 
@@ -16,7 +16,7 @@ module.exports = {
   github: {
     clientID: 'Your Client ID',
     clientSecret: 'Your Client Secret',
-    callbackURL: '/auth/github/callback',
+    callbackURL: 'http://127.0.0.1/auth/github/callback',
     passReqToCallback: true
   },
 
@@ -24,7 +24,7 @@ module.exports = {
   twitter: {
     consumerKey: 'Your Consumer Key',
     consumerSecret: 'Your Consumer Secret',
-    callbackURL: '/auth/twitter/callback',
+    callbackURL: 'http://127.0.0.1/auth/twitter/callback',
     passReqToCallback: true
   },
 
@@ -32,7 +32,7 @@ module.exports = {
   google: {
     clientID: 'Your Client ID',
     clientSecret: 'Your Client Secret',
-    callbackURL: '/auth/google/callback',
+    callbackURL: 'http://127.0.0.1/auth/google/callback',
     passReqToCallback: true
   }
 

@@ -7,10 +7,6 @@ block content
       input(type='hidden', name='_csrf', value=token)
       .form-group
         .btn-group.btn-group-justified
-          if secrets.facebookAuth
-            a.btn.btn-facebook(href='/auth/facebook')
-              i.fa.fa-facebook
-              | Facebook
           if secrets.twitterAuth
             a.btn.btn-twitter(href='/auth/twitter')
               i.fa.fa-twitter

@@ -8,3 +8,4 @@ mongodb
 log
 website/static/assets/*
 website/builtAsssets/*
+website/config/secrets.js
