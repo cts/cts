@@ -1,0 +1,35 @@
+body {
+  background: url(clipboard.jpg) 10px 10px no-repeat !important;
+  margin: 10px !important;
+  padding: 120px 45px !important;
+  left: 0;
+  top: 0;
+  width: 400px;
+  height: 600px;
+}
+
+ul {
+  font-size: 18px;
+}
+
+ul li {
+  list-style-type: none;
+}
+
+ul li input[type="checkbox"] {
+  line-height: 18px;
+  vertical-align: top;
+  width: 18px;
+  height: 18px;
+}
+
+form {
+  font-size: 18px;
+  margin-left: 40px;
+  margin-top: 10px;
+}
+
+input:checked + span {
+  text-decoration: line-through;
+  color: #aaa;
+}
