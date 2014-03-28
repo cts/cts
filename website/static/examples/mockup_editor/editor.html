@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+<title>CTS Mockup Editor</title>
+
+<script type="text/javascript" src="js/jquery-1.9.0.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#btn-load-content").click(function() {
+            $('#content').load('content.html',function(){
+               $(":header").click(function() {
+                  $(this).css({"border":"solid 1px","border-color":"red"});
+                  $(this).attr("class","selected");
+              });
+            });
+            
+        });
+
+        $("#btn-load-mockup").click(function() {
+          $('#mockup').attr('src','mockup.html');
+          var iframe = $('#mockup')[0];
+          $('#mockup').hover(function(){
+          var doc = iframe.document;
+          if(iframe.contentDocument){
+            doc = iframe.contentDocument;
+          }else if(iframe.contentWindow) {
+            doc = iframe.contentWindow.document;
+          }
+          var htmlString = '<html><head></head><body><p>iframe content injection</p></body></html>';
+          var ibody;
+          if(doc){
+          //doc.open();
+          //doc.body.style.backgroundColor="red";
+          //doc.close();
+          //ibody = doc.find("body")[0];
+          }else{
+            alert("shit");
+          }
+          
+          if(ibody){
+            ibody.css("background-color","red");
+          }else{
+            alert("crap");
+          {
+         });
+        });
+        
+        $("#btn-make-cts").click(function() {
+           $("#cts").append("mockup | #catch h1    :is      body > h1");
+           $(".selected").css("border","none");
+           $(".selected").removeClass();
+           
+        });
+        
+    });
+</script>
+<style>
+   #content-mockup div{
+      float:left;
+   }
+   
+   #content {
+      width:360px;
+   }
+</style>
+</head>
+
+<body>
+
+
+<div id="load-buttons"> 
+   <td><input id="btn-load-content" type="button" value="Load Content"/></td>
+   <td><input id="btn-load-mockup" type="button" value="Load Mockup"/></td>
+   <td><input id="btn-make-cts" type="button" value="Make CTS"/></td>
+</div>
+<div id="content-mockup">
+  <div id="content">
+    
+  </div>
+
+  <div >
+   <iframe id="mockup" width="1000px" height="800px">Your browser doesn't support iframes :[</iframe>
+  </div>
+  <div id="cts">
+   
+  </div>
+</div>
+<div id="output">
+   
+</div>
+
+
+
+</body>
+
+</html>
