@@ -8,18 +8,27 @@ CTS.Fn.extend(CTS.Node.Abstract.prototype,
     CTS.Node.Base, {
 
    _subclass_beginClone: function() {
+     var d = Q.defer();
      var n = new CTS.Node.Abstract();
      n.setValue(this.getValue());
-
-     for (var i = 0; i < this.children.length; i++) {
-       var k = this.children[i].clone();
-       n.insertChild(k);
-     }
-
-     return n;
+     var kidPromises = CTS.Fn.map(this.children, function(kid) {
+       return kid.clone();
+     });
+     Q.all(kidPromises).then(
+       function(kids) {
+         for (var i = 0; i < kids.length; i++) {
+           kids[i].parentNode = n;
+           n.insertChild(kids[i]);
+         }
+         deferred.resolve(n);
+       },
+       function(reason) {
+         d.reject(reason);
+       }
+     )
+     return d.promise;
    }
 
 });
 
 CTS.NonExistantNode = new CTS.Node.Abstract();
-

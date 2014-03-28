@@ -103,6 +103,7 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
    },
 
    _subclass_beginClone: function(node) {
+     return null;
    },
 
   /************************************************************************

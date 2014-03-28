@@ -109,7 +109,7 @@ CTS.Fn.extend(CTS.Node.Html.prototype, CTS.Node.Base, CTS.Events, CTS.Node.DomBa
            function() {
              //  Now run any rules.
              CTS.Log.Info("Running CTS Rules on new node");
-             ctsChild._processIncoming();
+             ctsChild._processIncoming().done();
            },
            function(reason) {
              CTS.Log.Error("Could not realize children of new CTS node", ctsChild);

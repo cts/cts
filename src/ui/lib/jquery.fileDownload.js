@@ -1,5 +1,5 @@
 /*
-* jQuery File Download Plugin v1.4.2 
+* jQuery File Download Plugin v1.4.2
 * http://www.johnculviner.com
 * Copyright (c) 2013 - John Culviner
 * Licensed under the MIT license:
@@ -117,7 +117,7 @@ $.extend({
             //It is recommended that on the server, htmlentity decoding is done irrespective.
             //
             encodeHTMLEntities: true
-            
+
         }, options);
 
         var deferred = new $.Deferred();
@@ -196,7 +196,7 @@ $.extend({
                 }
 
                 settings.failCallback(responseHtml, url);
-                
+
                 deferred.reject(responseHtml, url);
             }
         };
@@ -395,7 +395,7 @@ $.extend({
                         }
                     }
                 }
-                
+
                 //iframe cleanup appears to randomly cause the download to fail
                 //not doing it seems better than failure...
                 //if ($iframe) {
@@ -412,7 +412,7 @@ $.extend({
         	});
         }
 
-        return deferred.promise();
+        return deferred.promise;
     }
 });
 })(CTS.$, this);

@@ -53,7 +53,7 @@ CTS.Debugging = {
     if (typeof dir == 'undefined') {
       dir = {};
     }
-    
+
     var v = node.getValue();
     if (typeof dir[v] == 'undefined') {
       dir[v] = 1;
@@ -251,7 +251,7 @@ CTS.Debugging = {
       // XXX(eob): Note: ordering is random! Testers take note!
       var r = node.relations[i];
       var rstr = r.node1.getValue() + " "
-               + r.name + " " 
+               + r.name + " "
                + r.node2.getValue();
       ret.push(rstr);
     }
@@ -285,7 +285,7 @@ CTS.Debugging = {
 
     CTS.Log.Info("Beginning Forrest Test")
     CTS.Debugging.DumpTree(primary);
-    primary._processIncoming();
+    primary._processIncoming().done();
     primary = CTS.Debugging.RenameTree(primary);
     CTS.Log.Info("Finished Forrest Test")
     CTS.Debugging.DumpTree(primary);
@@ -329,7 +329,7 @@ function removeCommonSegments(baseSegments, segments) {
   for(var i = 1; i < segments.length; i++) {
     if (segments[i] !== baseSegments[i]) {
       return segments.slice(i);
-    }    
+    }
   }
   // everything in common
   return [segments[segments.length - 1]];
@@ -349,7 +349,7 @@ function description(callsite) {
 function FileFilter() {
   this.inQ = false;
 }
- 
+
 FileFilter.showSystem = false;
 FileFilter.reQ = /q\/q\.js$/;
 FileFilter.reNative = /^native\s/;
@@ -373,7 +373,7 @@ function filterAndCount(error, arrayOfCallSite) {
   error.fileNameColumns = 0;
   error.largestLineNumber = 0;
   var baseSegments = window.location.toString().split('/');
-  
+
   var filteredStack = [];
   var fileFilter = new FileFilter();
   for (var i = 0; i < arrayOfCallSite.length; i++) {
@@ -399,7 +399,7 @@ function filterAndCount(error, arrayOfCallSite) {
 function formatStack(error, stackArray) {
   var lineNumberColumns = error.lineNumberColumns || 0;
   var fileNameColumns = error.fileNameColumns || 0;
-  
+
   var textArray = stackArray.map(function toString(callsite, index) {
     // https://gist.github.com/312a55532fac0296f2ab P. Mueller
     //WeinreTargetCommands.coffee  21 - WeinreTargetCommands.registerTarget()
@@ -422,7 +422,7 @@ function formatStack(error, stackArray) {
       text += " ";
     };
     text += line + ' - ';
-    
+
     text += callsite.description;
     return text;
   });
@@ -451,7 +451,7 @@ function reformatStack(error, stack) {
     } else {
       lineNumberShift = error.lineNumberColumns - lineNumberFormatted.length;
     }
-  
+
     if (lineNumberShift || fileNameShift) {
       var fileNamePadding = "";
       while (fileNameShift--) {
@@ -461,7 +461,7 @@ function reformatStack(error, stack) {
       while (lineNumberShift--) {
         lineNumberPadding += ' ';
       }
-      
+
       var oldFileNameColumns = fileNameFormatted.length;
       var frames = frameStrings.map(function splitter(frameString) {
         var fileName = frameString.substr(0, oldFileNameColumns);
@@ -485,7 +485,7 @@ Error.prepareStackTrace = function(error, structuredStackTrace) {
 
   var filteredStack = filterAndCount(error, structuredStackTrace);
 
-  var reformattedCauseStack = ""; 
+  var reformattedCauseStack = "";
   if (error instanceof Cause || (error.prev && error.prev.cause)) {
     if (error.prev && error.prev.cause) {
       var cause = error.prev.cause;
@@ -498,9 +498,9 @@ Error.prepareStackTrace = function(error, structuredStackTrace) {
   // don't move this up, the reformat may change the error.fileNameColumns values
   var formattedStack = formatStack(error, filteredStack);
   if (formattedStack) {
-    if (reformattedCauseStack) {  
+    if (reformattedCauseStack) {
       formattedStack = formattedStack + '\n' + reformattedCauseStack;
-    }  
+    }
   } else { //  all got filtered
     formattedStack = reformattedCauseStack;
   }

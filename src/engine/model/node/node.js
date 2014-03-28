@@ -319,21 +319,31 @@ CTS.Node.Base = {
   },
 
   clone: function() {
-    var c = this._subclass_beginClone();
-    if (c.relations.length > 0) {
-      CTS.Log.Error("Clone shouldn't have relations yet");
-    }
-    if (typeof c == 'undefined') {
-      CTS.Log.Fatal("Subclass did not clone itself when asked.");
-      debugger;
-    }
-
-    this.recursivelyCloneRelations(c);
-    // Note that we DON'T wire up any parent-child relationships
-    // because that would result in more than just cloning the node
-    // but also modifying other structures, such as the tree which
-    // contained the source.
-    return c;
+    var deferred = Q.defer();
+    var self = this;
+    var p = this._subclass_beginClone();
+    p.then(
+      function(clone) {
+        if (typeof clone == 'undefined') {
+          CTS.Log.Fatal("Subclass did not clone itself when asked.");
+          deferred.reject("Subclass did not clone itself when asked");
+        } else {
+          if (clone.relations.length > 0) {
+            CTS.Log.Error("Clone shouldn't have relations yet, but does", clone);
+          }
+          // Note that we DON'T wire up any parent-child relationships
+          // because that would result in more than just cloning the node
+          // but also modifying other structures, such as the tree which
+          // contained the source.
+          self.recursivelyCloneRelations(clone);
+          deferred.resolve(clone);
+        }
+      },
+      function(reason) {
+        deferred.reject(reason);
+      }
+    );
+    return deferred.promise;
   },
 
   recursivelyCloneRelations: function(to) {
@@ -369,7 +379,6 @@ CTS.Node.Base = {
       var otherKid = to.children[j];
       if (typeof otherKid == 'undefined') {
         CTS.Log.Error("Cloned children out of sync with origin children.");
-        debugger;
       }
       myKid.recursivelyCloneRelations(otherKid);
     }
@@ -429,32 +438,63 @@ CTS.Node.Base = {
   },
 
   _processIncoming: function() {
+    console.log("PI!");
     // Do incoming nodes except graft
+    var d = Q.defer();
     var self = this;
     var r = this.getRelations();
     self._processIncomingRelations(r, 'if-exist');
     self._processIncomingRelations(r, 'if-nexist');
     self._processIncomingRelations(r, 'is');
-    self._processIncomingRelations(r, 'are');
-
-    for (var i = 0; i < self.children.length; i++) {
-      self.children[i]._processIncoming();
-    }
-
-    // Do graft
-    self._processIncomingRelations(r, 'graft', true);
+    self._processIncomingRelations(r, 'are', true, true).then(
+      function() {
+        Q.all(CTS.Fn.map(self.children,
+          function(child) {
+            return child._processIncoming();
+        })).then(
+          function() {
+            self._processIncomingRelations(r, 'graft', true, true).then(
+              function() {
+                d.resolve();
+              },
+              function(reason) {
+                d.reject(reason);
+              }
+            )
+          },
+          function(reason) {
+            d.reject(reason);
+          }
+        ); // After processing kids.
+      },
+      function(reason) {
+        d.reject(reason);
+      }
+    );
+    return d.promise;
   },
 
-  _processIncomingRelations: function(relations, name, once) {
+  _processIncomingRelations: function(relations, name, once, defer) {
+    var promises;
+    if (defer) {
+      promises = [];
+    }
     for (var i = 0; i < relations.length; i++) {
       if (relations[i].name == name) {
         if (relations[i].node1.equals(this)) {
-          relations[i].execute(this);
+          if (defer) {
+            promises.push(relations[i].execute(this));
+          } else {
+            relations[i].execute(this);
+          }
           if (once) {
             break;
           }
         }
       }
+    }
+    if (defer) {
+      return Q.all(promises);
     }
   },
 
@@ -585,6 +625,7 @@ CTS.Node.Base = {
 
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
     CTS.Log.Info("Event from relation", evt, this);
+    var self = this;
     if (this.shouldReceiveEvents) {
       CTS.Log.Info("Should receive events!");
       if (evt.eventName == "ValueChanged") {
@@ -600,10 +641,22 @@ CTS.Node.Base = {
           // Clone one.
           var afterIndex = evt.afterIndex;
           var myIterables = fromRelation._getIterables(this);
-          var clone = myIterables[afterIndex].clone();
-          clone.pruneRelations(fromNode, fromNode);
-          clone._processIncoming();
-          this.insertChild(clone, afterIndex, false);
+          myIterables[afterIndex].clone().then(
+            function(clone) {
+              clone.pruneRelations(fromNode, fromNode);
+              clone._processIncoming().then(
+                function() {
+                  self.insertChild(clone, afterIndex, false);
+                },
+                function(reason) {
+                  CTS.Log.Error(reason);
+                }
+              ).done();
+            },
+            function(reason) {
+              CTS.Log.Error(reason);
+            }
+          );
         }
       }
     }

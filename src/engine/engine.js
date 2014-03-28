@@ -42,9 +42,16 @@ CTS.Fn.extend(Engine.prototype, Events, {
    */
   render: function(opts) {
     var pt = this.forrest.getPrimaryTree();
-    CTS.Log.Info("CTS::Engine::render called on Primary Tree", pt);
+    CTS.Log.Info("CTS::Engine::render called on Primary Tree");
     var options = CTS.Fn.extend({}, opts);
-    pt.root._processIncoming();
+    pt.root._processIncoming().then(
+      function() {
+        CTS.Log.Info("CTS::Engine::render finished on Primary Tree");
+      },
+      function(reason) {
+        CTS.Log.Error(reason);
+      }
+    ).done();
   },
 
   boot: function() {

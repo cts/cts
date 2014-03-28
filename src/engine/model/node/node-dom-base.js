@@ -44,6 +44,7 @@ CTS.Node.DomBase = {
   },
 
   _subclass_beginClone_base: function($node, klass) {
+    var d = Q.defer();
     var $value = null;
     if (typeof $node == "undefined") {
       $value = this.value.clone();
@@ -60,27 +61,35 @@ CTS.Node.DomBase = {
     // without going through the factory because we already can be
     // sure that all this node's trees have been realized
     var clone = new klass($value, this.tree, this.opts);
-
     var cloneKids = clone.value.children();
+
     if (this.children.length != cloneKids.length) {
       CTS.Log.Error("Trying to clone CTS node that is out of sync with dom");
     }
     // We use THIS to set i
+    var kidPromises = [];
     for (var i = 0; i < cloneKids.length; i++) {
       var $child = CTS.$(cloneKids[i]);
-      var child = this.children[i]._subclass_beginClone($child);
-      child.parentNode = clone;
-      if (typeof child.children  == 'undefined') {
-        CTS.Log.Error("Kids undefined");
-      }
-      clone.children.push(child);
+      kidPromises.push(this.children[i]._subclass_beginClone($child));
     }
 
-    if (clone.relations.length > 0) {
-      CTS.Log.Error("After subclass clone, relations shouldn't be > 0");
+    if (kidPromises.length == 0) {
+      d.resolve(clone);
+    } else {
+      Q.all(kidPromises).then(
+        function(kids) {
+          for (var i = 0; i < kids.length; i++) {
+            kids[i].parentNode = clone;
+            clone.children.push(kids[i]);
+          }
+          d.resolve(clone);
+        },
+        function(reason) {
+          d.reject(reason);
+        }
+      );
     }
-
-    return clone;
+    return d.promise;
   },
 
 

@@ -27,10 +27,12 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
 
   execute: function(toward) {
     if (this._forCreationOnly) {
-      return;
+      var d = Q.defer();
+      d.resolve();
+      return d.promise;
     }
 
-    this._Are_AlignCardinalities(toward);
+    return this._Are_AlignCardinalities(toward);
 //    toward.trigger('received-are', {
 //      target: toward,
 //      source: this.opposite(toward),
@@ -53,6 +55,8 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
     var other = this.opposite(toward);
     var otherIterables = this._getIterables(other);
     var myIterables = this._getIterables(toward);
+    console.log("ARED");
+    var d = Q.defer();
 
     if (myIterables.length > 0) {
       while (myIterables.length > 1) {
@@ -68,24 +72,41 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
       // Now build it back up.
       if (otherIterables.length == 0) {
         myIterables[0].destroy();
+        d.resolve();
       } else if (otherIterables.length > 1) {
         var lastIndex = myOpts.prefix;
         // WARNING: Note that i starts at 1
-
+        var promises = [];
         for (var i = 1; i < otherIterables.length; i++) {
           // Clone the iterable.
-          var clone = myIterables[0].clone();
-          toward.insertChild(clone, lastIndex, false);
-          clone.pruneRelations(otherIterables[i], other);
-          lastIndex++;
+          console.log("pushing", myIterables[0]);
+          promises.push(myIterables[0].clone());
         }
-        myIterables[0].pruneRelations(otherIterables[0], other);
+        Q.all(promises).then(
+          function(clones) {
+            myIterables[0].pruneRelations(otherIterables[0], other);
+            for (var i = 0; i < clones.length; i++) {
+              var clone = clones[i];
+              toward.insertChild(clone, lastIndex, false);
+              // the ith clone here is the i+1th element! (because 0th is the clone origin)
+              clone.pruneRelations(otherIterables[i+1], other);
+              lastIndex++;
+            }
+            if (CTS.LogLevel.Debug()) {
+              CTS.Log.Debug("After Align");
+              CTS.Debugging.DumpTree(toward);
+            }
+            d.resolve();
+          },
+          function(reason) {
+            d.reject(reason);
+          }
+        );
       }
+    } else {
+      d.resolve();
     }
-    if (CTS.LogLevel.Debug()) {
-      CTS.Log.Debug("After Align");
-      CTS.Debugging.DumpTree(toward);
-    }
+    return d.promise;
   },
 
   /*

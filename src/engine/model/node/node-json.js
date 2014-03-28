@@ -13,7 +13,7 @@ CTS.Node.Json = function(node, tree, opts) {
     this.updateDataType();
   }
 };
- 
+
 CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
 
   updateDataType: function() {
@@ -74,14 +74,14 @@ CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
     this.children = [];
   },
 
-  /* 
+  /*
    * Inserts this DOM node after the child at the specified index.
    */
   _subclass_insertChild: function(child, afterIndex) {
     var leftSibling = this.getChildren()[afterIndex];
   },
 
-  /* 
+  /*
    *  Removes this DOM node from the DOM tree it is in.
    */
   _subclass_destroy: function() {
@@ -93,10 +93,12 @@ CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
   },
 
   _subclass_beginClone: function() {
+    var d = Q.defer();
     var c = this.originalJson;
-    var d = new JsonNode(c, this.tree, this.opts);
-    d.realizeChildren();
-    return d;
+    var n = new JsonNode(c, this.tree, this.opts);
+    n.realizeChildren();
+    d.resolve(n);
+    return d.promise;
   },
 
  /************************************************************************
@@ -123,7 +125,7 @@ CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
     }
     this.value = value;
   }
-  
+
   /************************************************************************
    **
    ** Utility Helpers
@@ -131,4 +133,3 @@ CTS.Fn.extend(CTS.Node.Json.prototype, CTS.Events, CTS.Node.Base, {
    ************************************************************************/
 
 });
-
