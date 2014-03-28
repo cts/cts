@@ -323,6 +323,10 @@ CTS.Node.Base = {
     if (c.relations.length > 0) {
       CTS.Log.Error("Clone shouldn't have relations yet");
     }
+    if (typeof c == 'undefined') {
+      CTS.Log.Fatal("Subclass did not clone itself when asked.");
+      debugger;
+    }
 
     this.recursivelyCloneRelations(c);
     // Note that we DON'T wire up any parent-child relationships
@@ -333,8 +337,14 @@ CTS.Node.Base = {
   },
 
   recursivelyCloneRelations: function(to) {
+    if (typeof to == 'undefined') {
+      debugger;
+    }
+    CTS.Debugging.DumpStack();
     var r = this.getRelations();
-    if (to.relations.length > 0) {
+
+    console.log(this, to);
+    if (to.relations && (to.relations.length > 0)) {
       CTS.Log.Error("Clone relations to non-empty relation container. Blowing away");
       while (to.relations.length > 0) {
         to.relations[0].destroy();
@@ -357,6 +367,10 @@ CTS.Node.Base = {
     for (var j = 0; j < this.getChildren().length; j++) {
       var myKid = this.children[j];
       var otherKid = to.children[j];
+      if (typeof otherKid == 'undefined') {
+        CTS.Log.Error("Cloned children out of sync with origin children.");
+        debugger;
+      }
       myKid.recursivelyCloneRelations(otherKid);
     }
   },

@@ -137,6 +137,7 @@ CTS.Relation.Base = {
       suffix = opts.suffix;
     }
     var iterables = kids.slice(prefix, kids.length - suffix);
+    console.log("iterables for ", node, iterables);
     return iterables;
   }
 

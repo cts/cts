@@ -3,3 +3,5 @@
 ul           :are    sheet | items ;
 li span      :is     sheet | .todo ;
 .done        :is     sheet | .done ;
+
+form         :graft  sheet | items {createNew: true};
