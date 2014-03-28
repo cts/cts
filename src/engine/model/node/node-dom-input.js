@@ -74,7 +74,7 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
         if (value) {
           checked = true;
         }
-        if ((value == "false") || (value == "False") || (value == "0") || (value == 0)) {
+        if ((value == "false") || (value == "FALSE") || (value == "False") || (value == "0") || (value == 0)) {
           checked = false;
         }
         this.value.prop('checked', checked);
