@@ -81,7 +81,7 @@ var csrf = express.csrf();
 
 var conditionalCSRF = function (req, res, next) {
   var needCSRF = true;
-  if (req.url.indexOf("/api/updatecell") != -1) {
+  if (req.url.indexOf("/api/gsheet/") != -1) {
     needCSRF = false;
   }
   if (needCSRF) {
@@ -142,7 +142,7 @@ app.post('/signup', userController.postSignup);
 app.get('/about', homeController.getAbout);
 
 app.post('/api/gsheet/updatecell', apiController.updateCell);
-app.post('/api/gsheet/updatelistitemproperty', apiController.updateListItemProperty);
+app.post('/api/gsheet/updatelistitem', apiController.updateListItem);
 app.get('/api/proxy', apiController.getProxy);
 
 app.get('/snippet', snippetController.getIndex);

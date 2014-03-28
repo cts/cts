@@ -36,13 +36,16 @@ exports.updateCell = function(req, res) {
         ssKey + "/" + wsKey + "/private/full/" + cell +
         "?access_token=" + token;
 
+    var url = editLink;
+
   var contentType = "application/atom+xml";
-  var xmlBody = '<entry xmlns="http://www.w3.org/2005/Atom"';
-  xmlBody += ' xmlns:gs="http://schemas.google.com/spreadsheets/2006">\n';
+  var xmlBody = "<?xml version='1.0' ?>";
+  xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
+  xmlBody += ' xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">\n';
   xmlBody += '\t<id>' + url + '</id>\n';
   xmlBody += '\t<link rel="edit" type="application/atom+xml" ';
   xmlBody += 'href="' + url + '" />\n';
-  xmlBody += '\t<gs:cell row="' + rowNum + '" col="' + colNum + '" ';
+  xmlBody += '\t<gsx:cell row="' + rowNum + '" col="' + colNum + '" ';
   xmlBody += 'inputValue="' + value + '"/>\n</entry>';
   console.log(xmlBody);
   var verb = 'PUT';
@@ -62,14 +65,14 @@ exports.updateCell = function(req, res) {
   });
 };
 
-exports.updateListItemProperty = function(req, res) {
+exports.updateListItem = function(req, res) {
   var deferred = Q.defer();
   var item = req.body.item;
-  var property = req.body.property;
+  var properties = req.body.properties;
   var ssKey = req.body.ssKey;
   var wsKey = req.body.wsKey;
-  var value = req.body.value;
   var token = req.body.token;
+  var editLink = req.body.editLink;
 
   var rowId = "https://spreadsheets.google.com/feeds/list/" + ssKey + "/" +
         wsKey + "/private/full/" + item;
@@ -77,11 +80,25 @@ exports.updateListItemProperty = function(req, res) {
   var url = "https://spreadsheets.google.com/feeds/list/" +
         ssKey + "/" + wsKey + "/private/full?access_token=" + token;
 
+  //https://spreadsheets.google.com/feeds/worksheets/key/private/full/worksheetId/version
+  var url = "https://spreadsheets.google.com/feeds/worksheets/" + ssKey +
+            "/private/full/" + wsKey + "?access_token=" + token;
+
+  var url = item;
+
+  console.log("REQUEST URL", url);
+
   var contentType = "application/atom+xml";
-  var xmlBody = '<entry xmlns="http://www.w3.org/2005/Atom"';
-  xmlBody += ' xmlns:gs="http://schemas.google.com/spreadsheets/2006">\n';
-  xmlBody += '\t<id>' + rowID + '</id>\n';
-  xmlBody += '\t<gsx:' + property + '>' + value + '</gsx:' + property + '>\n'
+  var xmlBody = "<?xml version='1.0' ?>";
+  xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
+  xmlBody += ' xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">\n';
+  xmlBody += '\t<link rel="edit" type="application/atom+xml" ';
+  xmlBody += 'href="' + editLink + '" />\n';
+  xmlBody += '\t<id>' + item + '</id>\n';
+  for (var property in properties) {
+    var value = properties[property];
+    xmlBody += '\t<gsx:' + property + '>' + value + '</gsx:' + property + '>\n'
+  }
   xmlBody += '</entry>';
   console.log(xmlBody);
   var verb = 'PUT';
@@ -93,10 +110,10 @@ exports.updateListItemProperty = function(req, res) {
     headers: {
       'Content-Type': contentType,
       'GData-Version': '3.0',
-      'If-Match': '*'
+      'If-Match': '*',
+      'Authorization': 'AuthSub token="' + token + '"'
     }},
     function(err, resp, body) {
-
       console.log(err, resp, body);
   });
 };

@@ -20,6 +20,7 @@ CTS.Node.GListFeedProperty = function(key, value, tree, opts) {
   this.on('received-is', function() {
     this.value.trigger('cts-received-is');
   });
+  this.shouldReceiveEvents = true;
 };
 
 // ### Instance Methods
@@ -107,13 +108,8 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
 
   setValue: function(value, opts) {
     this.value = value;
-    CTS.Log.Info("ItemProp setting to", value);
-    var promise = CTS.Util.GSheet.modifyListItemProperty(
-      this.getSpreadsheetKey(),
-      this.getWorksheetKey(),
-      this.parentNode.getItemId(),
-      this.key,
-      value);
+    CTS.Log.Info("ItemProp setting to", value, "and asking item node to save.");
+    this.parentNode._saveUpdates();
   },
 
   getIfExistValue: function() {

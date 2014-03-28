@@ -60,7 +60,15 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   getItemId: function() {
-    return spec.id;
+    return this.spec.id;
+  },
+
+  getWorksheetKey: function() {
+    return this.parentNode.getWorksheetKey();
+  },
+
+  getSpreadsheetKey: function() {
+    return this.parentNode.getSpreadsheetKey();
   },
 
   _subclass_realizeChildren: function() {
@@ -119,6 +127,14 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
 
   setValue: function(value, opts) {
     // noop.
+  },
+
+  _saveUpdates: function() {
+    CTS.Log.Info("Saving update to Item Node", this);
+    var promise = CTS.Util.GSheet.modifyListItem(
+      this.getSpreadsheetKey(),
+      this.getWorksheetKey(),
+      this);
   },
 
   _subclass_ensure_childless: function() {
