@@ -113,8 +113,14 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
          function(spec) {
            console.log(spec);
            var clone = new CTS.Node.GListFeedItem(value, spec, this.tree, this.opts);
-           // there are no children, so no need to do anything there.
-           d.resolve(clone);
+           clone.realizeChildren().then(
+             function() {
+               d.resolve(clone);
+             },
+             function(reason) {
+               d.reject(reason);
+             }
+           );
          },
          function(reason) {
            d.reject(reason);

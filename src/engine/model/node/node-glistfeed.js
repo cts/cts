@@ -86,13 +86,18 @@ CTS.Fn.extend(CTS.Node.GListFeed.prototype, CTS.Node.Base, CTS.Events, {
    },
 
    _subclass_insertChild: function(child, afterIndex) {
-     CTS.Log.Error("insertChild called (impossibly) on GListFeedItem");
+     // Sure, no problem.
+     // TODO: What if the child has no spec? Then we have to actually insert it!
+     // Right now, it's the GRAFT::CREATE that handles this!
+     if (typeof child.spec.id == 'undefined') {
+       CTS.Log.Fatal("Please fix: add to sheet.");
+     }
    },
 
    /*
     */
    _onChildInserted: function(child) {
-     CTS.Log.Error("onChildInserted called (impossibly) on GListFeedItem Node");
+     CTS.Log.Error("onChildInserted called (impossibly) on GListFeed Node");
    },
 
    /*

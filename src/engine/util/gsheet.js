@@ -224,6 +224,28 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     return item['$t'];
   },
 
+  _getItemData: function(entry) {
+    var data = {};
+    for (var key in entry) {
+      if ((key.length > 4) && (key.substring(0,4) == 'gsx$')) {
+        var k = key.substring(4);
+        data[k] = CTS.Util.GSheet._parseGItem(entry[key]);
+      }
+    }
+    return data;
+  },
+
+  _getItemSpec: function(entry) {
+    var itemSpec = {
+      title: CTS.Util.GSheet._parseGItem(entry.title),
+      id: CTS.Util.GSheet._parseGItem(entry.id),
+      data: CTS.Util.GSheet._getItemData(entry),
+      editLink: entry.link[1].href,
+      json: entry
+    };
+    return itemSpec;
+  },
+
   getListFeed: function(spreadsheetKey, worksheetKey) {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
@@ -238,22 +260,8 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       spec.items = [];
       if (typeof json.feed.entry != 'undefined') {
         for (var i = 0; i < json.feed.entry.length; i++) {
-          var title = CTS.Util.GSheet._parseGItem(json.feed.entry[i].title);
-          var data = {};
-          for (var key in json.feed.entry[i]) {
-            if ((key.length > 4) && (key.substring(0,4) == 'gsx$')) {
-              var k = key.substring(4);
-              data[k] = CTS.Util.GSheet._parseGItem(json.feed.entry[i][key]);
-            }
-          }
-          var id = CTS.Util.GSheet._parseGItem(json.feed.entry[i].id);
-          spec.items.push({
-            title: title,
-            id: id,
-            data: data,
-            editLink: json.feed.entry[i].link[1].href,
-            json: json.feed.entry[i]
-          });
+          var itemSpec = CTS.Util.GSheet._getItemSpec(json.feed.entry[i]);
+          spec.items.push(itemSpec);
         }
       }
       deferred.resolve(spec);
@@ -395,20 +403,16 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     var request = CTS.$.ajax({
       url: '/api/gsheet/appendlistitem',
       type: 'POST',
-      data: data
+      data: data,
+      dataType: 'json'
     });
     request.done(function(json) {
-      // I need to get back the spec.
-      var spec = {
-        title: null,
-        id: null,
-        data: null,
-        editLink: null
-      };
-      deferred.resolve(spec);
+      console.log("Request Succeeded", json);
+      var itemSpec = CTS.Util.GSheet._getItemSpec(json.entry);
+      deferred.resolve(itemSpec);
     });
     request.fail(function(jqxhr, textStatus) {
-      console.log(jqxhr, textStatus);
+      console.log("Request Failed");
       deferred.reject(textStatus);
     });
     return deferred.promise;

@@ -126,7 +126,7 @@ exports.appendListItem = function(req, res) {
   var wsKey = req.body.wsKey;
   var token = req.body.token;
   var url = "https://spreadsheets.google.com/feeds/list/" + ssKey +
-            "/" + wsKey + "/private/full?access_token=" + token;
+            "/" + wsKey + "/private/full?alt=json-in-script&access_token=" + token;
             console.log(url);
   var contentType = "application/atom+xml";
   var xmlBody = "<?xml version='1.0' ?>";
@@ -137,7 +137,6 @@ exports.appendListItem = function(req, res) {
     xmlBody += '\t<gsx:' + property + '>' + value + '</gsx:' + property + '>\n'
   }
   xmlBody += '</entry>';
-  console.log(xmlBody);
   var verb = 'POST';
 
   request({
@@ -150,7 +149,17 @@ exports.appendListItem = function(req, res) {
       'Authorization': 'AuthSub token="' + token + '"'
     }},
     function(err, resp, body) {
-      console.log(err, resp, body);
+      if (err) {
+        console.log("Request Failed", err);
+      } else {
+        if (body.indexOf("gdata.io.handleScriptLoaded(") == 0) {
+          body = body.replace("gdata.io.handleScriptLoaded(", "");
+        }
+        if (body.indexOf(");") == body.length - 2) {
+          body = body.substring(0, body.length - 2);
+        }
+        res.send(200, body);
+      }
   });
 };
 
