@@ -118,6 +118,42 @@ exports.updateListItem = function(req, res) {
   });
 };
 
+
+exports.appendListItem = function(req, res) {
+  var deferred = Q.defer();
+  var properties = req.body.properties;
+  var ssKey = req.body.ssKey;
+  var wsKey = req.body.wsKey;
+  var token = req.body.token;
+  var url = "https://spreadsheets.google.com/feeds/list/" + ssKey +
+            "/" + wsKey + "/private/full?access_token=" + token;
+            console.log(url);
+  var contentType = "application/atom+xml";
+  var xmlBody = "<?xml version='1.0' ?>";
+  xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
+  xmlBody += ' xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">\n';
+  for (var property in properties) {
+    var value = properties[property];
+    xmlBody += '\t<gsx:' + property + '>' + value + '</gsx:' + property + '>\n'
+  }
+  xmlBody += '</entry>';
+  console.log(xmlBody);
+  var verb = 'POST';
+
+  request({
+    url: url,
+    method: verb,
+    body: xmlBody,
+    headers: {
+      'Content-Type': contentType,
+      'GData-Version': '3.0',
+      'Authorization': 'AuthSub token="' + token + '"'
+    }},
+    function(err, resp, body) {
+      console.log(err, resp, body);
+  });
+};
+
 exports.getProxy = function(req, res) {
   var u = req.query.url;
   request(u, function(err, resp, body) {

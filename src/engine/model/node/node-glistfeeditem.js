@@ -108,12 +108,18 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
    _subclass_beginClone: function(node) {
      var d = Q.defer();
      var value = this.value;
-     // TODO: Need to generate a NEW id for insertion. And beginClone here
-     // will neeed to be deferred!
-     var spec = this.spec;
-     var clone = new CTS.Node.GListFeedItem(value, spec, this.tree, this.opts);
-     // there are no children, so no need to do anything there.
-     d.resolve(clone);
+     CTS.Util.GSheet.cloneListItem(
+       this.getSpreadsheetKey(), this.getWorksheetKey(), this).then(
+         function(spec) {
+           console.log(spec);
+           var clone = new CTS.Node.GListFeedItem(value, spec, this.tree, this.opts);
+           // there are no children, so no need to do anything there.
+           d.resolve(clone);
+         },
+         function(reason) {
+           d.reject(reason);
+         }
+    );
      return d.promise;
    },
 

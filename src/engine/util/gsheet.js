@@ -251,6 +251,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
             title: title,
             id: id,
             data: data,
+            editLink: json.feed.entry[i].link[1].href,
             json: json.feed.entry[i]
           });
         }
@@ -356,7 +357,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       ssKey: ssKey,
       wsKey: wsKey,
       token: this._currentToken.access_token,
-      editLink: itemNode.spec.json.link[1].href
+      editLink: itemNode.spec.editLink
     };
     console.log(data);
     var request = CTS.$.ajax({
@@ -366,6 +367,45 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     });
     request.done(function(json) {
       deferred.resolve(res);
+    });
+    request.fail(function(jqxhr, textStatus) {
+      console.log(jqxhr, textStatus);
+      deferred.reject(textStatus);
+    });
+    return deferred.promise;
+  },
+
+  cloneListItem: function(ssKey, wsKey, itemNode) {
+    // The Google Docs API incorrectly responds to OPTIONS preflights, so
+    // we are completely blocked from sending non-GET requests to it from
+    // within the browser. For now we'll proxy via the CTS server. Ugh.
+    var deferred = Q.defer();
+
+    var properties = {};
+    for (var i = 0; i < itemNode.children.length; i++) {
+      var child = itemNode.children[i];
+      properties[child.key] = child.value;
+    }
+    var data = {
+      properties: properties,
+      ssKey: ssKey,
+      wsKey: wsKey,
+      token: this._currentToken.access_token
+    };
+    var request = CTS.$.ajax({
+      url: '/api/gsheet/appendlistitem',
+      type: 'POST',
+      data: data
+    });
+    request.done(function(json) {
+      // I need to get back the spec.
+      var spec = {
+        title: null,
+        id: null,
+        data: null,
+        editLink: null
+      };
+      deferred.resolve(spec);
     });
     request.fail(function(jqxhr, textStatus) {
       console.log(jqxhr, textStatus);
