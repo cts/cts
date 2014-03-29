@@ -75,14 +75,10 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
         var form = self.opposite(from);
         clone.pruneRelations(form);
         // Now turn OFF creation only.
-        console.log("We've pruned it");
         clone.markRelationsAsForCreation(false, true);
         // Now RUN relations
-        console.log("We've marked it");
         clone._processIncoming().then(
           function() {
-            console.log("Processed Incoming");
-            debugger;
             // Turn back ON creation only.
             clone.markRelationsAsForCreation(true, true);
             // Now insert! The insertion handler on an enumerated node should cause

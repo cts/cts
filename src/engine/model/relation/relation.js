@@ -70,9 +70,6 @@ CTS.Relation.Base = {
 
   handleEventFromNode: function(evt) {
     CTS.Log.Info("Got Event", this, evt);
-    if (this.name == "are") {
-      debugger;
-    }
     if (this._forCreationOnly) {
       // Otherwise modifications to the input elements of the
       // form will set the entire collection that this is creation-mapped
