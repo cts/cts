@@ -209,14 +209,14 @@ CTS.Node.Base = {
         this.children[i] = this.children[i - 1];
       }
     }
-
     node.parentNode = this;
+
+    // Now we need to realize relations for this node.
 
     //TODO(eob) Have this be an event
     this._subclass_insertChild(node, afterIndex);
 
     if (throwEvent) {
-      console.log("THROWING CHILD INSERTED");
       this.trigger("ChildInserted", {
         eventName: "ChildInserted",
         ctsNode: node,
@@ -391,12 +391,16 @@ CTS.Node.Base = {
       // If the rule ISN'T subtree of this iterable
       // But it IS inside the other container
       // Remove it
-      var otherCheck = ((typeof otherContainer == 'undefined') || other.isDescendantOf(otherContainer));
-      var thisCheck = (! (other.equals(otherParent) || other.isDescendantOf(otherParent)));
-      if (CTS.LogLevel.Debug()) {
-        CTS.Log.Debug("Prune relations", thisCheck, otherCheck, this, otherParent, otherContainer);
+      var insideOtherContainer = false;
+      if (typeof otherContainer == 'undefined') {
+        // They didn't specify, so anything fits.
+        insideOtherContainer = true;
+      } else if (other.equals(otherContainer) || other.isDescendantOf(otherContainer)) {
+        insideOtherContainer = true;
       }
-      if (thisCheck && otherCheck) {
+      var insideOtherParent = (other.equals(otherParent) || other.isDescendantOf(otherParent));
+
+      if ((! insideOtherParent) && (insideOtherContainer)) {
         r.destroy();
         return false;
       } else {
@@ -438,44 +442,29 @@ CTS.Node.Base = {
   },
 
   _processIncoming: function() {
-    console.log("PI!");
     // Do incoming nodes except graft
     var d = Q.defer();
     var self = this;
     var r = this.getRelations();
     self._processIncomingRelations(r, 'if-exist');
     self._processIncomingRelations(r, 'if-nexist');
-    self._processIncomingRelations(r, 'is');
-    self._processIncomingRelations(r, 'are', true, true).then(
-      function() {
-        Q.all(CTS.Fn.map(self.children,
-          function(child) {
-            return child._processIncoming();
-        })).then(
-          function() {
-            self._processIncomingRelations(r, 'graft', true, true).then(
-              function() {
-                d.resolve();
-              },
-              function(reason) {
-                d.reject(reason);
-              }
-            )
-          },
-          function(reason) {
-            d.reject(reason);
-          }
-        ); // After processing kids.
-      },
-      function(reason) {
-        d.reject(reason);
-      }
-    );
+    self._processIncomingRelations(r, 'is', false, true).then(function() {
+      return self._processIncomingRelations(r, 'are', true, true)
+    }).then(function() {
+      return Q.all(CTS.Fn.map(self.getChildren(), function(child) {
+        return child._processIncoming();
+      }));
+    }).then(function() {
+      return self._processIncomingRelations(r, 'graft', true, true);
+    }).then(function() {
+      d.resolve();
+    }, function(reason) {
+      d.reject(reason);
+    })
     return d.promise;
   },
 
   _processIncomingRelations: function(relations, name, once, defer) {
-    var promises;
     if (defer) {
       promises = [];
     }
@@ -483,7 +472,10 @@ CTS.Node.Base = {
       if (relations[i].name == name) {
         if (relations[i].node1.equals(this)) {
           if (defer) {
-            promises.push(relations[i].execute(this));
+            var res = relations[i].execute(this);
+            if (res) {
+              promises.push(res);
+            }
           } else {
             relations[i].execute(this);
           }
@@ -598,7 +590,6 @@ CTS.Node.Base = {
             this._lastValueChangedValue = evt.newValue;
             evt.sourceNode = this;
             evt.sourceTree = this.tree;
-            CTS.Log.Info("Throwing Event", evt);
             this.trigger(evt.eventName, evt);
             this.tree.trigger(evt.eventName, evt); // Throw it for the tree, too.
           }

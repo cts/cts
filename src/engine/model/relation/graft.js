@@ -67,16 +67,22 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
     CTS.Log.Info("Run Creation");
     // Step 1: Assume iterable on FROM side.
     var iterables = this._getIterables(from);
+    var self = this;
     // Create a new one.
     iterables[iterables.length - 1].clone().then(
       function(clone) {
         // Now set relations on to those coming to ME.
-        clone.pruneRelations(toward, toward);
+        var form = self.opposite(from);
+        clone.pruneRelations(form);
         // Now turn OFF creation only.
+        console.log("We've pruned it");
         clone.markRelationsAsForCreation(false, true);
         // Now RUN relations
+        console.log("We've marked it");
         clone._processIncoming().then(
           function() {
+            console.log("Processed Incoming");
+            debugger;
             // Turn back ON creation only.
             clone.markRelationsAsForCreation(true, true);
             // Now insert! The insertion handler on an enumerated node should cause
@@ -91,7 +97,7 @@ CTS.Fn.extend(CTS.Relation.Graft.prototype, CTS.Relation.Base, {
       function(reason) {
         d.reject(reason);
       }
-    );
+    ).done();
 
     return d.promise;
   },

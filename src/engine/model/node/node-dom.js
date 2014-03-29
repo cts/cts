@@ -9,7 +9,9 @@ CTS.Node.Html = function(node, tree, opts) {
 
   this.value.data('ctsid', this.ctsId);
   this.value.data('ctsnode', this);
+
   this.shouldReceiveEvents = true;
+  this.shouldThrowEvents = true;
 
   this.on('received-is', function() {
     this.value.trigger('cts-received-is');

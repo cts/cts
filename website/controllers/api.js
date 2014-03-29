@@ -73,21 +73,8 @@ exports.updateListItem = function(req, res) {
   var wsKey = req.body.wsKey;
   var token = req.body.token;
   var editLink = req.body.editLink;
-
-  var rowId = "https://spreadsheets.google.com/feeds/list/" + ssKey + "/" +
-        wsKey + "/private/full/" + item;
-
-  var url = "https://spreadsheets.google.com/feeds/list/" +
-        ssKey + "/" + wsKey + "/private/full?access_token=" + token;
-
-  //https://spreadsheets.google.com/feeds/worksheets/key/private/full/worksheetId/version
-  var url = "https://spreadsheets.google.com/feeds/worksheets/" + ssKey +
-            "/private/full/" + wsKey + "?access_token=" + token;
-
-  var url = item;
-
+  var url = editLink;
   console.log("REQUEST URL", url);
-
   var contentType = "application/atom+xml";
   var xmlBody = "<?xml version='1.0' ?>";
   xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
@@ -102,7 +89,6 @@ exports.updateListItem = function(req, res) {
   xmlBody += '</entry>';
   console.log(xmlBody);
   var verb = 'PUT';
-
   request({
     url: url,
     method: verb,
@@ -114,7 +100,13 @@ exports.updateListItem = function(req, res) {
       'Authorization': 'AuthSub token="' + token + '"'
     }},
     function(err, resp, body) {
-      console.log(err, resp, body);
+      if (err) {
+        console.log("Item Modification Fail", err);
+        res.send(500, err);
+      } else {
+        console.log("Item Modification Success");
+        res.send(200);
+      }
   });
 };
 
@@ -152,6 +144,7 @@ exports.appendListItem = function(req, res) {
       if (err) {
         console.log("Request Failed", err);
       } else {
+        console.log("Row Creation Success");
         if (body.indexOf("gdata.io.handleScriptLoaded(") == 0) {
           body = body.replace("gdata.io.handleScriptLoaded(", "");
         }

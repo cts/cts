@@ -111,7 +111,7 @@ CTS.Fn.extend(CTS.Node.GListFeedProperty.prototype, CTS.Node.Base, CTS.Events, {
   setValue: function(value, opts) {
     this.value = value;
     CTS.Log.Info("ItemProp setting to", value, "and asking item node to save.");
-    this.parentNode._saveUpdates();
+    return this.parentNode._saveUpdates();
   },
 
   getIfExistValue: function() {

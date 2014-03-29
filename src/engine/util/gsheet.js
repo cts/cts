@@ -235,7 +235,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     return data;
   },
 
-  _getItemSpec: function(entry) {
+  _getItemSpec: function(entry, sskey, wskey) {
     var itemSpec = {
       title: CTS.Util.GSheet._parseGItem(entry.title),
       id: CTS.Util.GSheet._parseGItem(entry.id),
@@ -243,6 +243,12 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       editLink: entry.link[1].href,
       json: entry
     };
+    if (sskey) {
+      itemSpec.sskey = sskey;
+    }
+    if (wskey) {
+      itemSpec.wskey = wskey;
+    }
     return itemSpec;
   },
 
@@ -352,13 +358,11 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     // we are completely blocked from sending non-GET requests to it from
     // within the browser. For now we'll proxy via the CTS server. Ugh.
     var deferred = Q.defer();
-
     var properties = {};
     for (var i = 0; i < itemNode.children.length; i++) {
       var child = itemNode.children[i];
       properties[child.key] = child.value;
     }
-    console.log("MODIFYING", itemNode.spec.json);
     var data = {
       item: itemNode.getItemId(),
       properties: properties,
@@ -367,17 +371,17 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       token: this._currentToken.access_token,
       editLink: itemNode.spec.editLink
     };
-    console.log(data);
     var request = CTS.$.ajax({
       url: '/api/gsheet/updatelistitem',
       type: 'POST',
       data: data
     });
     request.done(function(json) {
-      deferred.resolve(res);
+      CTS.Log.Info("Update Success!");
+      deferred.resolve();
     });
     request.fail(function(jqxhr, textStatus) {
-      console.log(jqxhr, textStatus);
+      CTS.Log.Info("Update Fail!");
       deferred.reject(textStatus);
     });
     return deferred.promise;
@@ -408,7 +412,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     });
     request.done(function(json) {
       console.log("Request Succeeded", json);
-      var itemSpec = CTS.Util.GSheet._getItemSpec(json.entry);
+      var itemSpec = CTS.Util.GSheet._getItemSpec(json.entry, ssKey, wsKey);
       deferred.resolve(itemSpec);
     });
     request.fail(function(jqxhr, textStatus) {

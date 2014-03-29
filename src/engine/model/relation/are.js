@@ -55,7 +55,6 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
     var other = this.opposite(toward);
     var otherIterables = this._getIterables(other);
     var myIterables = this._getIterables(toward);
-    console.log("ARED");
     var d = Q.defer();
 
     if (myIterables.length > 0) {
@@ -79,7 +78,6 @@ CTS.Fn.extend(CTS.Relation.Are.prototype, CTS.Relation.Base, {
         var promises = [];
         for (var i = 1; i < otherIterables.length; i++) {
           // Clone the iterable.
-          console.log("pushing", myIterables[0]);
           promises.push(myIterables[0].clone());
         }
         Q.all(promises).then(

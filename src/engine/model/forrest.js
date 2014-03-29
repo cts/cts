@@ -356,9 +356,9 @@ CTS.Fn.extend(Forrest.prototype, {
     return deferred.promise;
   },
 
-  realizeRelations: function() {
+  realizeRelations: function(subtree) {
     for (var i = 0; i < this.relationSpecs.length; i++) {
-      this.realizeRelation(this.relationSpecs[i]);
+      this.realizeRelation(this.relationSpecs[i], subtree);
     }
   },
 
@@ -391,7 +391,10 @@ CTS.Fn.extend(Forrest.prototype, {
   //  return ret;
   //},
 
-  realizeRelation: function(spec) {
+  realizeRelation: function(spec, subtree) {
+    if (typeof subtree == 'undefined') {
+      subtree = false;
+    }
     var s1 = spec.selectionSpec1;
     var s2 = spec.selectionSpec2;
 
@@ -419,8 +422,16 @@ CTS.Fn.extend(Forrest.prototype, {
     // Now we find all the nodes that this spec matches on each side and
     // take the cross product of all combinations.
 
-    var nodes1 = this.trees[s1.treeName].nodesForSelectionSpec(s1);
-    var nodes2 = this.trees[s2.treeName].nodesForSelectionSpec(s2);
+    var tree1 = this.trees[s1.treeName];
+    var tree2 = this.trees[s2.treeName];
+
+    if (subtree && (subtree.tree != tree) && (subtree.tree != tree2)) {
+      // not relevant to us.
+      return;
+    }
+
+    var nodes1 = tree1.nodesForSelectionSpec(s1);
+    var nodes2 = tree2.nodesForSelectionSpec(s2);
 
     if (nodes1.length == 0) {
       nodes1 = [CTS.NonExistantNode];
@@ -435,18 +446,17 @@ CTS.Fn.extend(Forrest.prototype, {
       for (var j = 0; j < nodes2.length; j++) {
         // Realize a relation between i and j. Creating the relation adds
         // a pointer back to the nodes.
-        var relation = new CTS.Relation.CreateFromSpec(nodes1[i], nodes2[j], spec);
-        // Tell nodes1 and nodes2 that inline specs have been realized
-        nodes1[i].realizedInlineRelationSpecs = true;
-        nodes2[j].realizedInlineRelationSpecs = true;
-
-        // Add the relation to the forrest
-       if (typeof this.relations == 'undefined') {
-         CTS.Log.Error("relations undefined");
-       }
-
-
-        this.relations.push(relation);
+        if ((!subtree) || (nodes1[i].descendantOf(subtree) || (nodes2[j].descendantOf(subtree)))) {
+          var relation = new CTS.Relation.CreateFromSpec(nodes1[i], nodes2[j], spec);
+          // Tell nodes1 and nodes2 that inline specs have been realized
+          nodes1[i].realizedInlineRelationSpecs = true;
+          nodes2[j].realizedInlineRelationSpecs = true;
+          // Add the relation to the forrest
+          if (typeof this.relations == 'undefined') {
+           CTS.Log.Error("relations undefined");
+          }
+          this.relations.push(relation);
+        }
       }
     }
   },

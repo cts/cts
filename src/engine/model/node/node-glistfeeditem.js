@@ -64,11 +64,19 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   getWorksheetKey: function() {
-    return this.parentNode.getWorksheetKey();
+    if (typeof this.spec.wskey != 'undefined') {
+      return this.spec.wskey;
+    } else {
+     return this.parentNode.getWorksheetKey();
+   }
   },
 
   getSpreadsheetKey: function() {
-    return this.parentNode.getSpreadsheetKey();
+    if (typeof this.spec.sskey != 'undefined') {
+      return this.spec.sskey;
+    } else {
+      return this.parentNode.getSpreadsheetKey();
+    }
   },
 
   _subclass_realizeChildren: function() {
@@ -111,10 +119,12 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
      CTS.Util.GSheet.cloneListItem(
        this.getSpreadsheetKey(), this.getWorksheetKey(), this).then(
          function(spec) {
-           console.log(spec);
+           console.log("Got spec for new list feed item", spec);
            var clone = new CTS.Node.GListFeedItem(value, spec, this.tree, this.opts);
+           console.log("Created new list feed item.");
            clone.realizeChildren().then(
              function() {
+               console.log("Realized children");
                d.resolve(clone);
              },
              function(reason) {
@@ -144,8 +154,9 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _saveUpdates: function() {
-    CTS.Log.Info("Saving update to Item Node", this);
-    var promise = CTS.Util.GSheet.modifyListItem(
+    var sskey = this.getSpreadsheetKey();
+    var wskey = this.getWorksheetKey();
+    return CTS.Util.GSheet.modifyListItem(
       this.getSpreadsheetKey(),
       this.getWorksheetKey(),
       this);
