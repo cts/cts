@@ -153,7 +153,7 @@ CTS.Fn.extend(CTS.Util, {
       var sub = CTS.$(elem).attr('data-subtheme');
       if (str != null) {
         var urls = CTS.Util.themeUrls(str, sub);
-        console.log("Loading theme", urls);
+        CTS.Log.Info("Loading theme", urls);
         for (var k = 0; k < urls.length; k++) {
           var block = {
             type: 'link',

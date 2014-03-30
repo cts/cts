@@ -356,9 +356,18 @@ CTS.Fn.extend(Forrest.prototype, {
     return deferred.promise;
   },
 
-  realizeRelations: function(subtree) {
+  /*
+   * ButOnto exists for the received ARE case: we want to clone the last
+   * of an iterable and then set up the proper relations before we add the new
+   * iterable to the tree. proble is some relations may be wired based on tree
+   * position. But that's OK: since this only happens during an iteration, we can
+   * use the existant node to scan for relations that are appropriate, but then
+   * add them to the new node. Then filter (see node.js :: handleEventFromRelation).
+   * then add.
+   */
+  realizeRelations: function(subtree, butOnto) {
     for (var i = 0; i < this.relationSpecs.length; i++) {
-      this.realizeRelation(this.relationSpecs[i], subtree);
+      this.realizeRelation(this.relationSpecs[i], subtree, butOnto);
     }
   },
 
@@ -391,7 +400,7 @@ CTS.Fn.extend(Forrest.prototype, {
   //  return ret;
   //},
 
-  realizeRelation: function(spec, subtree) {
+  realizeRelation: function(spec, subtree, butOnto) {
     if (typeof subtree == 'undefined') {
       subtree = false;
     }
@@ -425,7 +434,7 @@ CTS.Fn.extend(Forrest.prototype, {
     var tree1 = this.trees[s1.treeName];
     var tree2 = this.trees[s2.treeName];
 
-    if (subtree && (subtree.tree != tree) && (subtree.tree != tree2)) {
+    if (subtree && (subtree.tree != tree1) && (subtree.tree != tree2)) {
       // not relevant to us.
       return;
     }
@@ -446,16 +455,60 @@ CTS.Fn.extend(Forrest.prototype, {
       for (var j = 0; j < nodes2.length; j++) {
         // Realize a relation between i and j. Creating the relation adds
         // a pointer back to the nodes.
-        if ((!subtree) || (nodes1[i].descendantOf(subtree) || (nodes2[j].descendantOf(subtree)))) {
-          var relation = new CTS.Relation.CreateFromSpec(nodes1[i], nodes2[j], spec);
-          // Tell nodes1 and nodes2 that inline specs have been realized
-          nodes1[i].realizedInlineRelationSpecs = true;
-          nodes2[j].realizedInlineRelationSpecs = true;
+        if ((!subtree) ||
+            ((nodes1[i].isDescendantOf(subtree) || nodes1[i] == subtree)) ||
+            ((nodes2[j].isDescendantOf(subtree) || nodes2[j] == subtree))) {
+          var node1 = nodes1[i];
+          var node2 = nodes2[j];
+
+          if (subtree && butOnto) {
+            // we have to positionally remap on to the butOnto node!
+            // because either node1 or node2 might be anywhere inside `subtree`
+            // but we know thet butOnto is a clone of subtree, so we can use
+            // positional math to do the trick!
+            var keyPath1 = null;
+            var keyPath2 = null;
+            var buildKP = function(node, parent) {
+              kp = [];
+              var n = node;
+              while (n != parent) {
+                kp.unshift(n.parentNode.children.indexOf(n));
+                n = n.parentNode;
+                if (n == null) {
+                  CTS.Log.Error("Uh oh. Reached null parent.");
+                }
+              }
+              return kp;
+            }
+            var adjustNode = function(orig, onto, kp) {
+              if (kp == null) {
+                return orig;
+              }
+              var ret = onto;
+              for (var i = 0; i < kp.length; i++) {
+                ret = ret.children[kp[i]];
+              }
+              return ret;
+            };
+            if (nodes1[i].isDescendantOf(subtree) || nodes1[i] == subtree) {
+              keyPath1 = buildKP(nodes1[i], subtree);
+            }
+            if (nodes2[j].isDescendantOf(subtree) || nodes2[j] == subtree) {
+              keyPath2 = buildKP(nodes2[j], subtree);
+            }
+            node1 = adjustNode(node1, butOnto, keyPath1);
+            node2 = adjustNode(node2, butOnto, keyPath2);
+          }
+          var relation = new CTS.Relation.CreateFromSpec(node1, node2, spec);
+          // This is necessary but I can't remember why. But it's necessary here.
+          node1.realizedInlineRelationSpecs = true;
+          node2.realizedInlineRelationSpecs = true;
           // Add the relation to the forrest
           if (typeof this.relations == 'undefined') {
            CTS.Log.Error("relations undefined");
           }
           this.relations.push(relation);
+        } else {
         }
       }
     }

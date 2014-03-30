@@ -151,7 +151,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       'body': multipartRequestBody});
     request.execute(function(resp) {
       if (typeof resp.error != 'undefined') {
-        console.log('create error', resp.error);
+        CTS.Log.Error('create error', resp.error);
         deferred.reject(resp.error);
       } else {
         deferred.resolve(resp);
@@ -274,7 +274,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     });
 
     request.fail(function(jqxhr, textStatus) {
-      console.log(jqxhr, textStatus);
+      CTS.Log.Error(jqxhr, textStatus);
       deferred.reject(textStatus);
     });
 
@@ -319,7 +319,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     });
 
     request.fail(function(jqxhr, textStatus) {
-      console.log(jqxhr, textStatus);
+      CTS.Log.Error(jqxhr, textStatus);
       deferred.reject(textStatus);
     });
 
@@ -347,7 +347,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       deferred.resolve(res);
     });
     request.fail(function(jqxhr, textStatus) {
-      console.log(jqxhr, textStatus);
+      CTS.Log.Error(jqxhr, textStatus);
       deferred.reject(textStatus);
     });
     return deferred.promise;
@@ -411,12 +411,11 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       dataType: 'json'
     });
     request.done(function(json) {
-      console.log("Request Succeeded", json);
       var itemSpec = CTS.Util.GSheet._getItemSpec(json.entry, ssKey, wsKey);
       deferred.resolve(itemSpec);
     });
     request.fail(function(jqxhr, textStatus) {
-      console.log("Request Failed");
+      CTS.Log.Error("Request Failed");
       deferred.reject(textStatus);
     });
     return deferred.promise;

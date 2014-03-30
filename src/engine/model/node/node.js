@@ -353,7 +353,6 @@ CTS.Node.Base = {
     CTS.Debugging.DumpStack();
     var r = this.getRelations();
 
-    console.log(this, to);
     if (to.relations && (to.relations.length > 0)) {
       CTS.Log.Error("Clone relations to non-empty relation container. Blowing away");
       while (to.relations.length > 0) {
@@ -624,7 +623,8 @@ CTS.Node.Base = {
           this.setValue(evt.newValue);
         }
       } else if (evt.eventName == "ChildInserted") {
-        CTS.Log.Info("Received Child inserted", this.value.html());
+        var otherContainer = evt.sourceNode;
+        var otherItem = evt.ctsNode;
         // If the from relation is ARE...
         if (fromRelation.name == "are") {
           // XXX: Make diff instead of redo! For efficiency!
@@ -632,11 +632,14 @@ CTS.Node.Base = {
           // Clone one.
           var afterIndex = evt.afterIndex;
           var myIterables = fromRelation._getIterables(this);
+          // TODO YAY!
           myIterables[afterIndex].clone().then(
             function(clone) {
-              clone.pruneRelations(fromNode, fromNode);
+              self.tree.forrest.realizeRelations(myIterables[afterIndex], clone);
+              clone.pruneRelations(otherItem, otherContainer);
               clone._processIncoming().then(
                 function() {
+                  window.hooga = clone; // xxx
                   self.insertChild(clone, afterIndex, false);
                 },
                 function(reason) {

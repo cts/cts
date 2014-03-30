@@ -2,7 +2,7 @@
  * This is only to be run once we're sure CTS is present.
  */
 CTS.UI.load = function() {
-  console.log("CTS Loaded");
+  CTS.Log.Info("CTS Loaded");
   CTS.$(function() {
     CTS.UI.clipboard = new CTS.UI.Clipboard();
     CTS.UI.switchboard = new CTS.UI.Switchboard(CTS.$, CTS.Q);
@@ -16,7 +16,7 @@ CTS.UI.load = function() {
  *
  */
 CTS.UI.autoload = function() {
-  console.log("CTS.UI.autoload");
+  CTS.Log.Info("CTS.UI.autoload");
 
   /* See if the CTS Library is loaded
    * -----------------------------------------------------
