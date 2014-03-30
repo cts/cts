@@ -249,6 +249,12 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     if (wskey) {
       itemSpec.wskey = wskey;
     }
+
+    // Fix the edit link to remove the trailing version, which appears to be
+    // causing problems.
+    if (itemSpec.editLink.indexOf(itemSpec.id) != -1) {
+      itemSpec.editLink = itemSpec.id;
+    }
     return itemSpec;
   },
 
@@ -397,6 +403,10 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     for (var i = 0; i < itemNode.children.length; i++) {
       var child = itemNode.children[i];
       properties[child.key] = child.value;
+      // XXX TEMPORARY FIX FOR BOOLEAN DEFAULTING! 
+      if ((child.value == true) || (child.value == "TRUE") || (child.value == "True") || (child.value == "true")) {
+        properties[child.key] = false;
+      }
     }
     var data = {
       properties: properties,
@@ -420,5 +430,4 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     });
     return deferred.promise;
   }
-
 });

@@ -46,7 +46,19 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
    },
 
   _subclass_beginClone: function($node) {
-    return this._subclass_beginClone_base($node, CTS.Node.HtmlInput);
+    var d = Q.defer();
+    this._subclass_beginClone_base($node, CTS.Node.HtmlInput).then(
+      function(clone) {
+        if (clone.value.is('[type="checkbox"]')) {
+          clone.setValue(false);
+        }
+        d.resolve(clone);
+      },
+      function(reason) {
+        d.reject(reason);
+      }
+    );
+    return d.promise;
   },
 
   /************************************************************************
