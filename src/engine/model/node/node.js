@@ -113,24 +113,22 @@ CTS.Node.Base = {
       return deferred.promise;
     }
 
+    self.parsedInlineRelationSpecs = true;
     var specStr = this._subclass_getInlineRelationSpecString();
 
     // No inline spec
     if (! specStr) {
       deferred.resolve();
-      self.parsedInlineRelationSpecs = true;
       return deferred.promise;
     }
 
     if (typeof this.tree == 'undefined') {
       deferred.reject("Undefined tree");
-      self.parsedInlineRelationSpecs = true;
       return deferred.promise;
     }
 
     if (typeof this.tree.forrest == 'undefined') {
       deferred.reject("Undefined forrest");
-      self.parsedInlineRelationSpecs = true;
       return deferred.promise;
     }
 
@@ -139,7 +137,6 @@ CTS.Node.Base = {
     CTS.Parser.parseInlineSpecs(specStr, self, self.tree.forrest, true).then(
       function(forrestSpecs) {
         Fn.each(forrestSpecs, function(forrestSpec) {
-          self.parsedInlineRelationSpecs = true;
           if (typeof forrestSpec.relationSpecs != 'undefined') {
             self.inlineRelationSpecs = forrestSpec.relationSpecs;
           }
@@ -147,12 +144,32 @@ CTS.Node.Base = {
         deferred.resolve();
       },
       function(reason) {
-        self.parsedInlineRelationSpecs = true;
         deferred.reject(reason);
       }
     );
 
     return deferred.promise;
+  },
+
+  parseInlineRelationSpecsRecursive: function() {
+    var d = Q.defer();
+    var self = this;
+    this.parseInlineRelationSpecs().then(
+      function() {
+        Q.all(CTS.Fn.map(self.children, function(kid) {
+           return kid.parseInlineRelationSpecsRecursive();
+        })).then(function() {
+          d.resolve();
+        }, function(reason) {
+          d.reject(reason);
+        });
+      },
+      function(reason) {
+        d.reject(reason);
+      }
+    );
+    return d.promise;
+
   },
 
   getSubtreeRelations: function() {
@@ -614,7 +631,7 @@ CTS.Node.Base = {
   },
 
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
-    CTS.Log.Info("Event from relation", evt, this);
+    CTS.Log.Error("Event from relation", evt, fromRelation, this);
     var self = this;
     if (this.shouldReceiveEvents) {
       CTS.Log.Info("Should receive events!");
@@ -635,17 +652,22 @@ CTS.Node.Base = {
           // TODO YAY!
           myIterables[afterIndex].clone().then(
             function(clone) {
-              self.tree.forrest.realizeRelations(myIterables[afterIndex], clone);
-              clone.pruneRelations(otherItem, otherContainer);
-              clone._processIncoming().then(
+              // This will force realization of inline specs.
+              clone.parseInlineRelationSpecsRecursive().then(
                 function() {
-                  window.hooga = clone; // xxx
-                  self.insertChild(clone, afterIndex, false);
-                },
-                function(reason) {
-                  CTS.Log.Error(reason);
+                  self.tree.forrest.realizeRelations(myIterables[afterIndex], clone);
+                  clone.pruneRelations(otherItem, otherContainer);
+                  clone._processIncoming().then(
+                    function() {
+                      window.hooga = clone; // xxx
+                      self.insertChild(clone, afterIndex, false);
+                    },
+                    function(reason) {
+                      CTS.Log.Error(reason);
+                    }
+                  ).done();
                 }
-              ).done();
+              )
             },
             function(reason) {
               CTS.Log.Error(reason);

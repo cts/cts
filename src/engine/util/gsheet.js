@@ -403,7 +403,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     for (var i = 0; i < itemNode.children.length; i++) {
       var child = itemNode.children[i];
       properties[child.key] = child.value;
-      // XXX TEMPORARY FIX FOR BOOLEAN DEFAULTING! 
+      // XXX TEMPORARY FIX FOR BOOLEAN DEFAULTING!
       if ((child.value == true) || (child.value == "TRUE") || (child.value == "True") || (child.value == "true")) {
         properties[child.key] = false;
       }

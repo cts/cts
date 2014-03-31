@@ -76,12 +76,21 @@ CTS.Relation.Base = {
       // to!
       return;
     }
-    // Pass it on over.
-    evt.viaRelation = this;
-    if (evt.sourceNode == this.node1) {
-      this.node2.handleEventFromRelation(evt, this, this.node1);
-    } else {
-      this.node1.handleEventFromRelation(evt, this, this.node2);
+    // Shoule we throw it?
+    var shouldPass = false;
+    if (evt.eventName == 'ChildInserted' && this.name == 'are') {
+      shouldPass = true;
+    } else if ((evt.eventName == 'ValueChanged') && (this.name == 'is')) {
+      shouldPass = true;
+    }
+    if (shouldPass) {
+      // Pass it on over.
+      evt.viaRelation = this;
+      if (evt.sourceNode == this.node1) {
+        this.node2.handleEventFromRelation(evt, this, this.node1);
+      } else {
+        this.node1.handleEventFromRelation(evt, this, this.node2);
+      }
     }
   },
 

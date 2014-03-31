@@ -108,16 +108,19 @@ CTS.Node.DomBase = {
         return inline;
       } else {
         // Temporary spreadsheet case.
-        inline = this.value.attr('data-bind-to');
+        inline = this.value.attr('data-stitch');
         if (inline) {
           if (inline.indexOf('rows') > -1) {
             if (this.value.is("form")) {
-              return "this :graft " + inline + ' {createNew: true};';
+              return "this :graft sheet | items {createNew: true};";
             } else {
-              return "this :are " + inline + ";";
+              console.log("this :are sheet | items;");
+              return "this :are sheet | items;";
             }
+          } else if (this.value.closest('form').length > 0) {
+            return "sheet | " + inline + " :is this;";
           } else {
-            return "this :is " + inline + ';';
+            return "this :is sheet | " + inline + ';';
           }
         }
       }

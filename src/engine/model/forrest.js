@@ -114,6 +114,7 @@ CTS.Fn.extend(Forrest.prototype, {
    *
    * -------------------------------------------------------- */
   addSpec: function(forrestSpec) {
+    console.log("add spec", forrestSpec);
     var self = this;
     if (typeof this.forrestSpecs == 'undefined') {
       CTS.Log.Error("forrest spec undef");
@@ -381,24 +382,6 @@ CTS.Fn.extend(Forrest.prototype, {
    * The outer array (lines 1 and 5) are optional if you only have a single rule.
    *
    */
-
-  //incorporateInlineJson: function(json, node) {
-  //  if (json.length == 0) {
-  //    return [];
-  //  }
-  //  if (! CTS.Fn.isArray(json[0])) {
-  //    json = [json];
-  //  }
-  //  var ret = [];
-  //  for (var i = 0; i < json.length; i++) {
-  //    var s1 = CTS.Parser.Json.parseSelectorSpec(json[i][0], node);
-  //    var s2 = CTS.Parser.Json.parseSelectorSpec(json[i][2], node);
-  //    var rule = CTS.Parser.Json.parseRelationSpec(json[i][1], s1, s2);
-  //    this.relationSpecs.push(rule);
-  //    ret.push(rule);
-  //  }
-  //  return ret;
-  //},
 
   realizeRelation: function(spec, subtree, butOnto) {
     if (typeof subtree == 'undefined') {
