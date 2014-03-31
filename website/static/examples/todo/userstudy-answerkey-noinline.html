@@ -6,22 +6,20 @@
     <script src="userstudy.js"></script>
     <script src="/release/cts.js"></script>
     <link rel="stylesheet" href="userstudy.css" />
-    <style type="text/cts">
-    @gsheet sheet 0Arj8lnBW4_tZdC1rVlAzQXFhWmFaLU1DY2RsMzVtUkE Todos;
-    </style>
+    <link rel="treesheet" href="userstudy-answerkey.cts" />
   </head>
   <body>
     <h1>My To-Do List</h1>
 
-    <ul stitch="rows">
+    <ul>
       <li>
-        <input stitch="done" type="checkbox" />
-        <span hide-if="done" stitch="task">Example Task</span>
+        <input class="done" type="checkbox" />
+        <span class="title">Example ToDo Item Title</span>
       </li>
     </ul>
 
-    <form stitch="rows">
-      <input stitch="task" />
+    <form>
+      <input class="newItem input" label="Add a New Item" />
       <button class="btn btn-success">Add</button>
     </form>
 

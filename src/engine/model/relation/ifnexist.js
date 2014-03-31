@@ -34,17 +34,11 @@ CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Base, {
     var existed = false;
     if (this.isEmpty(other)) {
       existed = false;
-      toward.undestroy();
+      toward.unhide();
     } else {
       existed = true;
-      toward.destroy();
+      toward.hide();
     }
-    toward.trigger('received-if-exist', {
-      target: toward,
-      source: other,
-      relation: this,
-      existed: existed
-    });
   },
 
   clone: function(n1, n2) {

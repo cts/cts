@@ -274,6 +274,14 @@ CTS.Node.Base = {
     return this == other;
   },
 
+  hide: function() {
+
+  },
+
+  unhide: function() {
+
+  },
+
   destroy: function(destroyValueToo) {
     var gotIt = false;
     if (typeof destroyValueToo == 'undefined') {

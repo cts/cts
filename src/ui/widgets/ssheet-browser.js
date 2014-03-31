@@ -10,6 +10,7 @@ CTS.registerNamespace('CTS.UI.SSheetBrowser');
 CTS.UI.SSheetBrowser = function($, q, $container, proxy) {
   this._$ = $;
   this._q = q;
+  this.iframe = true;
   this.proxy = true;
   if (typeof proxy != 'undefined') {
     this.proxy = proxy;
@@ -23,27 +24,31 @@ CTS.UI.SSheetBrowser = function($, q, $container, proxy) {
 CTS.UI.SSheetBrowser.prototype.setup = function() {
   var self = this;
 
-  this.$table = this._$('<table class="ssheet-ui"></table>');
-  this.$tableone = this._$('<tr class="one"></tr>');
-  this.$tabletwo = this._$('<tr class="two"></tr>');
-  this.$tableonetd = this._$('<td></td>');
-  this.$tabletwotd = this._$('<td></td>');
-  this.$tableone.append(this.$tableonetd);
-  this.$tabletwo.append(this.$tabletwotd);
+  if (this.iframe) {
 
-  this.$ssheet = this._$('<div class="ssheet"></div>');
-  this.$ssheet.css({
-    'border-top': 'none'
-  });
+  } else {
+    this.$table = this._$('<table class="ssheet-ui"></table>');
+    this.$tableone = this._$('<tr class="one"></tr>');
+    this.$tabletwo = this._$('<tr class="two"></tr>');
+    this.$tableonetd = this._$('<td></td>');
+    this.$tabletwotd = this._$('<td></td>');
+    this.$tableone.append(this.$tableonetd);
+    this.$tabletwo.append(this.$tabletwotd);
 
-  this.$tabs = this._$('<ul class="worksheets-list nav nav-pills"></ul>');
+    this.$ssheet = this._$('<div class="ssheet"></div>');
+    this.$ssheet.css({
+      'border-top': 'none'
+    });
 
-  this.$root.append(this.$table);
-  this.$table.append(this.$tableone);
-  this.$table.append(this.$tabletwo);
+    this.$tabs = this._$('<ul class="worksheets-list nav nav-pills"></ul>');
 
-  this.$tableonetd.append(this.$ssheet);
-  this.$tabletwotd.append(this.$tabs);
+    this.$root.append(this.$table);
+    this.$table.append(this.$tableone);
+    this.$table.append(this.$tabletwo);
+
+    this.$tableonetd.append(this.$ssheet);
+    this.$tabletwotd.append(this.$tabs);
+  }
 
   this.onresize();
 };
@@ -51,9 +56,16 @@ CTS.UI.SSheetBrowser.prototype.setup = function() {
 CTS.UI.SSheetBrowser.prototype.onresize = function() {
   var w = this.$container.width();
   var h = this.$container.height();
-  console.log("container height", h);
-  this.$tableonetd.height(h - 35);
-  this.$tabletwotd.height(25);
+  if (this.iframe) {
+    if (this.$iframe) {
+      this.$iframe.height(h - 35);
+      this.$iframe.width(w);
+    }
+  } else {
+    console.log("container height", h);
+    this.$tableonetd.height(h - 35);
+    this.$tabletwotd.height(25);
+  }
 };
 
 CTS.UI.SSheetBrowser.prototype.clearSheets = function() {
@@ -180,10 +192,20 @@ CTS.UI.SSheetBrowser.prototype.showTable = function($node, rows, cols) {
   $node.html(html);
 };
 
+CTS.UI.SSheetBrowser.prototype.loadIframe = function(url) {
+  var src = "https://docs.google.com/spreadsheet/ccc?key=" + url + "&usp=drive_web#gid=0";
+  this.$iframe = this._$('<iframe src="' + src + '"></iframe>');
+  this.$root.append(this.$iframe);
+  this.onresize();
+};
 
 CTS.UI.SSheetBrowser.prototype.loadurl = function(url) {
   // https://docs.google.com/spreadsheet/ccc?key=0Arj8lnBW4_tZdDNKQmtyd0w4LU5MTFZYMXJ2aG5KMHc&usp=drive_web
   // Let's assume it's the key.
+  if (this.iframe) {
+    this.loadIframe(url);
+    return;
+  }
 
   var spec = {
     kind: 'gsheet',

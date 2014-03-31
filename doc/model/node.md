@@ -1,6 +1,7 @@
 Events
 ======
 
+
 Events are a bit tricky.
 
      A--------------+   relation   B--------------+
@@ -31,5 +32,3 @@ The case of moving DOM event in C to a modification in D looks like this:
 So the CTS node should have to event listeners. Perhaps the events are the
 same, but the listener is different: one from the data structure and one from
 the relation.
-
-

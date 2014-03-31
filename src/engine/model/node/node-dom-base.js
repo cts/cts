@@ -100,6 +100,19 @@ CTS.Node.DomBase = {
     this.value.remove();
   },
 
+  _fixSpreadSheetRef: function(ref) {
+    ref = ref.replace(/\s+/g, "");
+    if (ref.match(/[A-Za-z]+[0-9]+/)) {
+      return ref;
+    } else {
+      ref = ref.toLowerCase();
+      if (ref[0] == '.') {
+        return ref;
+      } else {
+        return "." + ref;
+      }
+    }
+  },
 
   _subclass_getInlineRelationSpecString: function() {
     if (this.value !== null) {
@@ -108,7 +121,7 @@ CTS.Node.DomBase = {
         return inline;
       } else {
         // Temporary spreadsheet case.
-        inline = this.value.attr('data-stitch');
+        inline = this.value.attr('stitch');
         if (inline) {
           if (inline.indexOf('rows') > -1) {
             if (this.value.is("form")) {
@@ -118,14 +131,32 @@ CTS.Node.DomBase = {
               return "this :are sheet | items;";
             }
           } else if (this.value.closest('form').length > 0) {
-            return "sheet | " + inline + " :is this;";
+            return "sheet | " + this._fixSpreadSheetRef(inline) + " :is this;";
           } else {
-            return "this :is sheet | " + inline + ';';
+            return "this :is sheet | " + this._fixSpreadSheetRef(inline) + ';';
+          }
+        } else {
+          inline = this.value.attr('show-if');
+          if (inline) {
+            return "this :if-exist sheet | " + this._fixSpreadSheetRef(inline) + ';';
+          } else {
+            inline = this.value.attr('hide-if');
+            if (inline) {
+              return "this :if-nexist sheet | " + this._fixSpreadSheetRef(inline) + ';';
+            }
           }
         }
       }
     }
     return null;
+  },
+
+  hide: function() {
+    this.value.hide();
+  },
+
+  unhide: function() {
+    this.value.show();
   },
 
   _subclass_ensure_childless: function() {
