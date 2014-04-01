@@ -56,6 +56,32 @@ CTS.Relation.Base = {
     return (node == this.node1) ? this.node2 : this.node1;
   },
 
+  truthyOrFalsy: function(node) {
+    if ((node == CTS.NonExistantNode) || (node == null) || CTS.Fn.isUndefined(node)) {
+      return false;
+    }
+    var val = node.getIfExistValue();
+
+    if (typeof val == 'undefined') {
+      return false;
+    } else if (typeof val == 'boolean') {
+      return val;
+    } else if (typeof val == 'object') {
+      return true;
+    } else if (typeof val == 'string') {
+      var v = val.trim().toLowerCase();
+      if ((v == '') || (v == '0') || (v == 'false') || (v == 'no')) {
+        return false;
+      } else {
+        return true;
+      }
+    } else if (typeof val == 'number') {
+      return (val != 0);
+    } else {
+      return false;
+    }
+  },
+
   forCreationOnly: function(val) {
     if (typeof val == 'undefined') {
       return this._forCreationOnly;
@@ -91,6 +117,11 @@ CTS.Relation.Base = {
       } else {
         this.node1.handleEventFromRelation(evt, this, this.node2);
       }
+    }
+    if ((evt.eventName == 'ValueChanged') &&
+        ((this.name == 'if-exist') || (this.name == 'if-nexist'))) {
+      // Recompute!
+      this.execute(this.node1);
     }
   },
 

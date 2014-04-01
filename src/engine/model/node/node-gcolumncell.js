@@ -129,10 +129,6 @@ CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
     return this.value; // no value.
   },
 
-  getIfExistValue: function() {
-    return ((this.value != null) && (this.value != ""));
-  },
-
   setValue: function(value, opts) {
     this.value = value;
     var self = this;

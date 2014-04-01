@@ -9845,13 +9845,22 @@ body {
 h1 {
   margin-top: 8px;
   margin-left: 80px;
-  padding-top: 0;
+  padding: 0 !important;
+  display: block;
+  padding-right: 0 !important;
 }
-
+table {
+  margin-left: 80px;
+}
 table tr td {
   padding: 5px;
 }
 
-table tr:last-child td {
+table tr:nth-child(4) td {
+  font-weight: bold;
+}
+
+table tr:nth-child(5) td span {
+  color: red !important;
   font-weight: bold;
 }

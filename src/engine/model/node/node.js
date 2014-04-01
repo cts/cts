@@ -526,7 +526,7 @@ CTS.Node.Base = {
 
   getIfExistValue: function() {
     // The node's existence is enough by default.
-    return true;
+    return this.value;
   },
 
   setValue: function(v, opts) {
@@ -615,8 +615,8 @@ CTS.Node.Base = {
             evt.sourceNode = this;
             evt.sourceTree = this.tree;
             this.trigger(evt.eventName, evt);
-            if (this.tree) {
-              this.tree.trigger(evt.eventName, evt); // Throw it for the tree, too.              
+            if (this.tree && this.tree.trigger) {
+              this.tree.trigger(evt.eventName, evt); // Throw it for the tree, too.
             }
           }
         }

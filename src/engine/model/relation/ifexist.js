@@ -17,13 +17,6 @@ CTS.Relation.IfExist = function(node1, node2, spec) {
 };
 
 CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Base, {
-  isEmpty: function(node) {
-    return (
-      (node == CTS.NonExistantNode) ||
-      (node == null) ||
-      (! node.getIfExistValue())
-    );
-  },
 
   execute: function(toward) {
     if (this._forCreationOnly) {
@@ -31,14 +24,10 @@ CTS.Fn.extend(CTS.Relation.IfExist.prototype, CTS.Relation.Base, {
     }
 
     var other = this.opposite(toward);
-    var existed = false;
-    if (this.isEmpty(other)) {
-      alert("hiding" + toward.value.html());
-      toward.hide();
-      existed = false;
-    } else {
+    if (this.truthyOrFalsy(other)) {
       toward.unhide();
-      existed = true;
+    } else {
+      toward.hide();
     }
   },
 

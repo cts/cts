@@ -17,27 +17,16 @@ CTS.Relation.IfNexist = function(node1, node2, spec) {
 };
 
 CTS.Fn.extend(CTS.Relation.IfNexist.prototype, CTS.Relation.Base, {
-  isEmpty: function(node) {
-    return (
-      (node == CTS.NonExistantNode) ||
-      (node == null) ||
-      (CTS.Fn.isUndefined(node)) ||
-      (! node.getIfExistValue())
-    );
-  },
 
   execute: function(toward) {
     if (this._forCreationOnly) {
       return;
     }
     var other = this.opposite(toward);
-    var existed = false;
-    if (this.isEmpty(other)) {
-      existed = false;
-      toward.unhide();
-    } else {
-      existed = true;
+    if (this.truthyOrFalsy(other)) {
       toward.hide();
+    } else {
+      toward.unhide();
     }
   },
 
