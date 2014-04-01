@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Mortgage Calculator</title>
+    <script src="../../userstudy.js"></script>
+    <script src="../../cts.js"></script>
+    <link rel="stylesheet" href="userstudy.css" />
+    <style type="text/cts">
+    @gsheet sheet 0Arj8lnBW4_tZdHlaQ0c1Y0ZCWWw2TVhHMFVUTWJXN0E Sheet1;
+    </style>
+  </head>
+
+  <body>
+    <h1>Cities - Connecting Cells</h1>
+    <table>
+      <tr>
+        <td>New York City Name</td>
+        <td><span connect="A4">placeholder</span></td>
+      </tr>
+
+      <tr>
+        <td>Is New York Cold?</td>
+        <td><span connect="C4">placeholder</span></td>
+      </tr>
+
+      <tr>
+        <td>New York Temperature</td>
+        <td><input connect="B4"/></td>
+      </tr>
+
+      <tr>
+        <td>Make this message conditional:</td>
+        <td><span show-if="C4">Go play in the snow!<span></td>
+      </tr>
+    </table>
+
+
+    <h1>Cities - Table</h1>
+    <table connect="rows">
+      <tr>
+        <td connect=".City">City Name</td>
+        <td connect=".Temp">Temperature</td>
+      </tr>
+    </table>
+
+    <h1>Add a new City!</h1>
+    <form connect="rows">
+      City Name: <input connect=".City" />
+      Temperature: <input connect=".Temp" />
+      <button>Add</button>
+    </form>
+
+  </body>
+</html>
