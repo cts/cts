@@ -36,16 +36,14 @@ exports.updateCell = function(req, res) {
         ssKey + "/" + wsKey + "/private/full/" + cell +
         "?access_token=" + token;
 
-    var url = editLink;
-
   var contentType = "application/atom+xml";
   var xmlBody = "<?xml version='1.0' ?>";
   xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
-  xmlBody += ' xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">\n';
+  xmlBody += ' xmlns:gs="http://schemas.google.com/spreadsheets/2006">\n';
   xmlBody += '\t<id>' + url + '</id>\n';
   xmlBody += '\t<link rel="edit" type="application/atom+xml" ';
   xmlBody += 'href="' + url + '" />\n';
-  xmlBody += '\t<gsx:cell row="' + rowNum + '" col="' + colNum + '" ';
+  xmlBody += '\t<gs:cell row="' + rowNum + '" col="' + colNum + '" ';
   xmlBody += 'inputValue="' + value + '"/>\n</entry>';
   console.log(xmlBody);
   var verb = 'PUT';
@@ -60,8 +58,12 @@ exports.updateCell = function(req, res) {
       'If-Match': '*'
     }},
     function(err, resp, body) {
-
-      console.log(err, resp, body);
+      if (err) {
+        console.log("Error", err);
+        res.send(500, err);
+      } else {
+        res.send(200, body);
+      }
   });
 };
 
