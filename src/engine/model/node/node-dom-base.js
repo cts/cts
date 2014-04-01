@@ -121,7 +121,7 @@ CTS.Node.DomBase = {
         return inline;
       } else {
         // Temporary spreadsheet case.
-        inline = this.value.attr('stitch');
+        inline = this.value.attr('connect');
         if (inline) {
           if (inline.indexOf('rows') > -1) {
             if (this.value.is("form")) {
