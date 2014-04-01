@@ -74,6 +74,13 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
     return false;
   },
 
+  updateComputedNodes: function() {
+    for (var i = 0; i < this.children.length; i++) {
+      console.log("PLZ if COMP");
+      this.children[i].updateComputedNodes();
+    }
+  },
+
   _subclass_realizeChildren: function() {
      var deferred = Q.defer();
      this.children = [];

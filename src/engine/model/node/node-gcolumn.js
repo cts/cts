@@ -57,14 +57,19 @@ CTS.Fn.extend(CTS.Node.GColumn.prototype, CTS.Node.Base, CTS.Events, {
     return false;
   },
 
+  updateComputedNodes: function() {
+    for (var i = 0; i < this.children.length; i++) {
+      this.children[i].updateIfComputed();
+    }
+  },
+
   _subclass_realizeChildren: function() {
     CTS.Log.Debug("GColumn Realize Children");
      var deferred = Q.defer();
      this.children = [];
      for (var rowName in this.columns) {
-       var cellValue = this.columns[rowName];
-       CTS.Log.Debug("Realize Cell Value", this.value, rowName, cellValue);
-       var child = new CTS.Node.GColumnCell(rowName, cellValue, this.tree, this.opts);
+       var spec = this.columns[rowName];
+       var child = new CTS.Node.GColumnCell(rowName, spec, this.tree, this.opts);
        child.parentNode = this;
        this.children.push(child);
      }

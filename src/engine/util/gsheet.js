@@ -305,6 +305,8 @@ CTS.Fn.extend(CTS.Util.GSheet, {
           var cell = CTS.Util.GSheet._parseGItem(json.feed.entry[i].title);
           var content = CTS.Util.GSheet._parseGItem(json.feed.entry[i].content);
           var letterIdx = 0;
+          // This might be a formula!
+          var inputValue = json.feed.entry[i]['gs$cell'].inputValue;
           while (isNaN(parseInt(cell[letterIdx]))) {
             letterIdx++;
           }
@@ -317,13 +319,37 @@ CTS.Fn.extend(CTS.Util.GSheet, {
           }
           spec.rows[row][col] = {
             content: content,
-            colNum: colNum
+            colNum: colNum,
+            inputValue: inputValue,
+            isComputed: (inputValue != content)
           };
         }
       }
       deferred.resolve(spec);
     });
 
+    request.fail(function(jqxhr, textStatus) {
+      CTS.Log.Error(jqxhr, textStatus);
+      deferred.reject(textStatus);
+    });
+
+    return deferred.promise;
+  },
+
+
+  getCell: function(spreadsheetKey, worksheetKey, row, col) {
+    var deferred = Q.defer();
+    var url = CTS.Util.GSheet._gSheetUrl('cells', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
+    url = url + '&min-row=' + row + '&max-row=' + row + '&min-col=' + col + '&max-col=' + col;
+    var request = CTS.$.getJSON(url);
+
+    request.done(function(json) {
+      if ((typeof json.feed.entry != 'undefined') && (json.feed.entry.length == 1)) {
+        deferred.resolve(CTS.Util.GSheet._parseGItem(json.feed.entry[0].content));
+      } else {
+        deferred.reject("Cell entry didn't return");
+      }
+    });
     request.fail(function(jqxhr, textStatus) {
       CTS.Log.Error(jqxhr, textStatus);
       deferred.reject(textStatus);
@@ -350,7 +376,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       }
     });
     request.done(function(json) {
-      deferred.resolve(res);
+      deferred.resolve();
     });
     request.fail(function(jqxhr, textStatus) {
       CTS.Log.Error(jqxhr, textStatus);

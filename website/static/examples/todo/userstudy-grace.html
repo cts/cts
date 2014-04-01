@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><base href='http://localhost:3000/examples/todo/userstudy.html' />
+    <meta charset="utf-8">
+    <title>Todo List</title>
+    <script src="userstudy.js"></script>
+    <script src="/release/cts.js"></script>
+    <link rel="stylesheet" href="userstudy.css" />
+    <style type="text/cts">
+    @gsheet sheet 0Arj8lnBW4_tZdC1rVlAzQXFhWmFaLU1DY2RsMzVtUkE Todos;
+    </style>
+  </head>
+
+  <body>
+    <h1>Grace's To-Do List</h1>
+
+    <ul stitch="rows">
+      <li hide-if=".done">
+        <input type="checkbox" stitch=".done"/>
+        <span stitch=".task">Example Task</span>
+      </li>
+    </ul>
+
+    <form stitch="rows">
+      <input stitch=".task"/>
+      <button class="btn btn-success">Add</button>
+    </form>
+
+  </body>
+</html>

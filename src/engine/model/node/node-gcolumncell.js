@@ -2,15 +2,17 @@
  *
  */
 
-CTS.Node.GColumnCell = function(row, value, tree, opts) {
+CTS.Node.GColumnCell = function(row, spec, tree, opts) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
-  this.value = value.content;
   this.row = row;
-  this.colNum = value.colNum;
+  this.spec = spec;
+  this.value = spec.content;
+  this.colNum = spec.colNum;
   this.ctsId = Fn.uniqueId().toString();
   this.kind = 'GColumnCell';
   this.shouldReceiveEvents = true;
+  this.shouldThrowEvents = true;
 };
 
 // ### Instance Methods
@@ -54,6 +56,34 @@ CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
 
   getSpreadsheetKey: function() {
     return this.parentNode.parentNode.getSpreadsheetKey();
+  },
+
+  isFormulaCell: function() {
+    return this.spec.isComputed;
+  },
+
+  updateIfComputed: function() {
+    var self = this;
+    if (this.isFormulaCell()) {
+      return CTS.Util.GSheet.getCell(
+        this.getSpreadsheetKey(),
+        this.getWorksheetKey(),
+        this.getRowNum(),
+        this.getColNum()).then(
+          function(newVal) {
+            var oldVal = self.value;
+            self.value = newVal;
+            if (oldVal != newVal) {
+              self._maybeThrowDataEvent({
+                eventName: "ValueChanged",
+                ctsNode: self
+              });
+            }
+          }, function(reason) {
+            CTS.Log.Error(reason);
+          }
+        ).done();
+    }
   },
 
   _subclass_realizeChildren: function() {
@@ -105,13 +135,21 @@ CTS.Fn.extend(CTS.Node.GColumnCell.prototype, CTS.Node.Base, CTS.Events, {
 
   setValue: function(value, opts) {
     this.value = value;
+    var self = this;
     CTS.Log.Info("Column Cell setting to ", value, this);
     var promise = CTS.Util.GSheet.modifyCell(
       this.getSpreadsheetKey(),
       this.getWorksheetKey(),
       this.getRowNum(),
       this.getColNum(),
-      value);
+      value).then(
+        function() {
+          self.parentNode.parentNode.updateComputedNodes();
+        },
+        function(reason) {
+          CTS.Log.Error("Cell update failed", reason);
+        }
+      ).done();
   },
 
   _subclass_ensure_childless: function() {

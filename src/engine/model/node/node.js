@@ -615,7 +615,9 @@ CTS.Node.Base = {
             evt.sourceNode = this;
             evt.sourceTree = this.tree;
             this.trigger(evt.eventName, evt);
-            this.tree.trigger(evt.eventName, evt); // Throw it for the tree, too.
+            if (this.tree) {
+              this.tree.trigger(evt.eventName, evt); // Throw it for the tree, too.              
+            }
           }
         }
       }
