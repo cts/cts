@@ -21,6 +21,8 @@ var Engine = CTS.Engine = function(opts, args) {
 
   this._booted = Q.defer();
   this.booted = this._booted.promise;
+  this._rendered = Q.defer();
+  this.rendered = this._rendered.promise;
 
   // The main tree.
   this.forrest = null;
@@ -41,15 +43,18 @@ CTS.Fn.extend(Engine.prototype, Events, {
    *  3:
    */
   render: function(opts) {
+    var self = this;
     var pt = this.forrest.getPrimaryTree();
     CTS.Log.Info("CTS::Engine::render called on Primary Tree");
     var options = CTS.Fn.extend({}, opts);
     pt.root._processIncoming().then(
       function() {
         CTS.Log.Info("CTS::Engine::render finished on Primary Tree");
+        self._rendered.resolve();
       },
       function(reason) {
         CTS.Log.Error(reason);
+        self._rendered.reject(reason);
       }
     ).done();
   },

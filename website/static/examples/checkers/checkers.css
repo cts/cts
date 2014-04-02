@@ -1,0 +1,42 @@
+.piece {
+  width: 56px;
+  height: 56px;
+}
+
+.square {
+  width: 60px;
+  height: 60px;
+  padding: 2px;
+}
+
+td {
+  line-height: 0;
+}
+
+.red {
+  position: relative;
+  z-index: 100;
+  top: 2px;
+  left: 2px;
+  background-image: url(red.png);
+}
+
+.black {
+  position: relative;
+  z-index: 100;
+  top: 2px;
+  left: 2px;
+  background-image: url(black.png);
+}
+
+.even {
+  background-color: white;
+}
+
+.odd {
+  background-color: #ccc;
+}
+
+.square {
+  color: rgba(0,0,0,0);
+}

@@ -27,6 +27,10 @@ CTS.Fn.extend(CTS.Node.Abstract.prototype,
        }
      )
      return d.promise;
+   },
+
+   getValue: function() {
+     return "";
    }
 
 });
