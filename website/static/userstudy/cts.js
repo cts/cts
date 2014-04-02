@@ -562,7 +562,7 @@ CTS.Fn.extend(CTS.Fn, {
     });
     return results;
   },
-  
+
   without: function(array) {
     return CTS.Fn.difference(array, Array.prototype.slice.call(arguments, 1));
   },
@@ -619,9 +619,30 @@ CTS.Fn.extend(CTS.Fn, {
     });
     return result.value;
   },
-  
+
   pluck: function(obj, key) {
     return CTS.Fn.map(obj, function(value){ return value[key]; });
+  },
+
+  truthyOrFalsy: function(val) {
+    if (typeof val == 'undefined') {
+      return false;
+    } else if (typeof val == 'boolean') {
+      return val;
+    } else if (typeof val == 'object') {
+      return true;
+    } else if (typeof val == 'string') {
+      var v = val.trim().toLowerCase();
+      if ((v == '') || (v == '0') || (v == 'false') || (v == 'no')) {
+        return false;
+      } else {
+        return true;
+      }
+    } else if (typeof val == 'number') {
+      return (val != 0);
+    } else {
+      return false;
+    }
   }
 
 });
@@ -650,7 +671,6 @@ if (typeof (/./) !== 'function') {
 }
 
 CTS.Fn.idCounter = 0;
-
 
 /* 
  * To avoid processing costly things only not to log them, you can
@@ -4295,7 +4315,6 @@ CTS.Node.Base = {
     if (typeof to == 'undefined') {
       debugger;
     }
-    CTS.Debugging.DumpStack();
     var r = this.getRelations();
 
     if (to.relations && (to.relations.length > 0)) {
@@ -4519,8 +4538,6 @@ CTS.Node.Base = {
 
   _maybeThrowDataEvent: function(evt) {
     if (this.shouldThrowEvents) {
-      CTS.Log.Info("Maybe Throw Event from this=", this);
-      CTS.Log.Info("evt is", evt);
       if (evt.ctsNode) {
         evt.newValue = evt.ctsNode.getValue();
         if (evt.eventName == 'ValueChanged') {
@@ -4561,10 +4578,8 @@ CTS.Node.Base = {
   },
 
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
-    CTS.Log.Error("Event from relation", evt, fromRelation, this);
     var self = this;
     if (this.shouldReceiveEvents) {
-      CTS.Log.Info("Should receive events!");
       if (evt.eventName == "ValueChanged") {
         if (fromRelation.name == "is") {
           this.setValue(evt.newValue);
@@ -4575,7 +4590,6 @@ CTS.Node.Base = {
         // If the from relation is ARE...
         if (fromRelation.name == "are") {
           // XXX: Make diff instead of redo! For efficiency!
-          CTS.Log.Info("Executing are relation toward me", this.value.html());
           // Clone one.
           var afterIndex = evt.afterIndex;
           var myIterables = fromRelation._getIterables(this);
@@ -4787,7 +4801,6 @@ CTS.Node.DomBase = {
             if (this.value.is("form")) {
               return "this :graft sheet | items {createNew: true};";
             } else {
-              console.log("this :are sheet | items;");
               return "this :are sheet | items;";
             }
           } else if (this.value.closest('form').length > 0) {
@@ -5094,6 +5107,7 @@ CTS.Node.HtmlInput = function(node, tree, opts) {
   });
 
   this.toggleThrowDataEvents(true);
+  this.shouldReceiveEvents = true;
 };
 
 // ### Instance Methods
@@ -5157,13 +5171,7 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
   setValue: function(value, opts) {
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
       if (this.subKind == "checkbox") {
-        var checked = false;
-        if (value) {
-          checked = true;
-        }
-        if ((value == "false") || (value == "FALSE") || (value == "False") || (value == "0") || (value == 0)) {
-          checked = false;
-        }
+        var checked = CTS.Fn.truthyOrFalsy(value);
         this.value.prop('checked', checked);
       } else {
         this.value.val(value);
@@ -5217,6 +5225,7 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
       node: this.value,
       ctsNode: this
     });
+    this._lastValueChangedValue = this.value;
   }
 
 });
@@ -6093,7 +6102,6 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
 
   updateComputedNodes: function() {
     for (var i = 0; i < this.children.length; i++) {
-      console.log("PLZ if COMP");
       this.children[i].updateComputedNodes();
     }
   },
@@ -6559,25 +6567,7 @@ CTS.Relation.Base = {
       return false;
     }
     var val = node.getIfExistValue();
-
-    if (typeof val == 'undefined') {
-      return false;
-    } else if (typeof val == 'boolean') {
-      return val;
-    } else if (typeof val == 'object') {
-      return true;
-    } else if (typeof val == 'string') {
-      var v = val.trim().toLowerCase();
-      if ((v == '') || (v == '0') || (v == 'false') || (v == 'no')) {
-        return false;
-      } else {
-        return true;
-      }
-    } else if (typeof val == 'number') {
-      return (val != 0);
-    } else {
-      return false;
-    }
+    return CTS.Fn.truthyOrFalsy(val);
   },
 
   forCreationOnly: function(val) {
@@ -6593,7 +6583,6 @@ CTS.Relation.Base = {
   },
 
   handleEventFromNode: function(evt) {
-    CTS.Log.Info("Got Event", this, evt);
     if (this._forCreationOnly) {
       // Otherwise modifications to the input elements of the
       // form will set the entire collection that this is creation-mapped
@@ -6676,7 +6665,6 @@ CTS.Relation.Base = {
       suffix = opts.suffix;
     }
     var iterables = kids.slice(prefix, kids.length - suffix);
-    console.log("iterables for ", node, iterables);
     return iterables;
   }
 
@@ -7385,7 +7373,6 @@ CTS.Fn.extend(Forrest.prototype, {
    *
    * -------------------------------------------------------- */
   addSpec: function(forrestSpec) {
-    console.log("add spec", forrestSpec);
     var self = this;
     if (typeof this.forrestSpecs == 'undefined') {
       CTS.Log.Error("forrest spec undef");
@@ -7595,7 +7582,6 @@ CTS.Fn.extend(Forrest.prototype, {
           // XXX: Potential bug here, depending on intent. The aliased tree is
           // the same tree! That means we might intend one to receive and the
           // other not to, but in reality they'll both be in lockstep.
-          CTS.Log.Info("New tree should receive events", treeSpec);
           self.trees[treeSpec.name].toggleReceiveRelationEvents(true);
         }
         deferred.resolve(self.trees[alias]);
@@ -8071,7 +8057,6 @@ CTS.Factory = {
   },
 
   Tree: function(spec, forrest) {
-    console.log('New tree', spec);
     if ((spec.url == null) && (spec.name = 'body')) {
       return CTS.Factory.TreeWithJquery(CTS.$('body'), forrest, spec);
     } if ((spec.kind == "GSheet" || spec.kind == 'gsheet')) {
@@ -8121,7 +8106,6 @@ CTS.Factory = {
           function() {
             tree.setRoot(ctsNode);
             if (spec.receiveEvents) {
-              CTS.Log.Info("New tree should receive events", spec);
               tree.toggleReceiveRelationEvents(true);
             }
             deferred.resolve(tree);

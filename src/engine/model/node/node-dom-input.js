@@ -19,6 +19,7 @@ CTS.Node.HtmlInput = function(node, tree, opts) {
   });
 
   this.toggleThrowDataEvents(true);
+  this.shouldReceiveEvents = true;
 };
 
 // ### Instance Methods
@@ -82,13 +83,7 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
   setValue: function(value, opts) {
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
       if (this.subKind == "checkbox") {
-        var checked = false;
-        if (value) {
-          checked = true;
-        }
-        if ((value == "false") || (value == "FALSE") || (value == "False") || (value == "0") || (value == 0)) {
-          checked = false;
-        }
+        var checked = CTS.Fn.truthyOrFalsy(value);
         this.value.prop('checked', checked);
       } else {
         this.value.val(value);

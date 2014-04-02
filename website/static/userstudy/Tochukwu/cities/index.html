@@ -7,7 +7,7 @@
     <script src="../../cts.js"></script>
     <link rel="stylesheet" href="userstudy.css" />
     <style type="text/cts">
-    @gsheet sheet 0Arj8lnBW4_tZdEVXSFVaemVGSXhudGdTVi1OLW5KekE Sheet1;
+    @gsheet sheet 0Arj8lnBW4_tZdGVQbkp5SjZXTnVDc29DMl83Z0ZkWXc Sheet1;
     </style>
   </head>
 
@@ -16,37 +16,39 @@
     <table>
       <tr>
         <td>City Name</td>
-        <td><span>placeholder</span></td>
+        <td><span connect="A4"></span></td>
       </tr>
 
       <tr>
         <td>Is NYC Cold?</td>
-        <td><input type="checkbox" disabled=true /></td>
+        <td><input type="checkbox" disabled=true connect="C4" /></td>
       </tr>
 
       <tr>
         <td>New York Temperature</td>
-        <td><input /></td>
+        <td><input connect="B4"/></td>
       </tr>
 
       <tr>
         <td>Make this message conditional:</td>
-        <td><span>Go play in the snow!<span></td>
+        <td><span show-if="C4">Go play in the snow!<span></td>
       </tr>
     </table>
 
 
     <h1>Cities - Table</h1>
-    <table>
+    <table connect="rows">
       <tr>
-        <td>City Name</td>
-        <td>Temperature</td>
+        <td connect=".City">City Name</td>
+        <td connect=".Temp">Temperature</td>
       </tr>
+
     </table>
 
+
     <h1>Add a new City!</h1>
-    <form>
-      City Name: <input />
+    <form connect="rows">
+      City Name: <input connect=".City" />
       <button>Add</button>
     </form>
 

@@ -375,7 +375,6 @@ CTS.Node.Base = {
     if (typeof to == 'undefined') {
       debugger;
     }
-    CTS.Debugging.DumpStack();
     var r = this.getRelations();
 
     if (to.relations && (to.relations.length > 0)) {
@@ -599,8 +598,6 @@ CTS.Node.Base = {
 
   _maybeThrowDataEvent: function(evt) {
     if (this.shouldThrowEvents) {
-      CTS.Log.Info("Maybe Throw Event from this=", this);
-      CTS.Log.Info("evt is", evt);
       if (evt.ctsNode) {
         evt.newValue = evt.ctsNode.getValue();
         if (evt.eventName == 'ValueChanged') {
@@ -641,10 +638,8 @@ CTS.Node.Base = {
   },
 
   handleEventFromRelation: function(evt, fromRelation, fromNode) {
-    CTS.Log.Error("Event from relation", evt, fromRelation, this);
     var self = this;
     if (this.shouldReceiveEvents) {
-      CTS.Log.Info("Should receive events!");
       if (evt.eventName == "ValueChanged") {
         if (fromRelation.name == "is") {
           this.setValue(evt.newValue);
@@ -655,7 +650,6 @@ CTS.Node.Base = {
         // If the from relation is ARE...
         if (fromRelation.name == "are") {
           // XXX: Make diff instead of redo! For efficiency!
-          CTS.Log.Info("Executing are relation toward me", this.value.html());
           // Clone one.
           var afterIndex = evt.afterIndex;
           var myIterables = fromRelation._getIterables(this);

@@ -127,7 +127,6 @@ CTS.Node.DomBase = {
             if (this.value.is("form")) {
               return "this :graft sheet | items {createNew: true};";
             } else {
-              console.log("this :are sheet | items;");
               return "this :are sheet | items;";
             }
           } else if (this.value.closest('form').length > 0) {

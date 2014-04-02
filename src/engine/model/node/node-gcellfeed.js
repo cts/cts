@@ -76,7 +76,6 @@ CTS.Fn.extend(CTS.Node.GCellFeed.prototype, CTS.Node.Base, CTS.Events, {
 
   updateComputedNodes: function() {
     for (var i = 0; i < this.children.length; i++) {
-      console.log("PLZ if COMP");
       this.children[i].updateComputedNodes();
     }
   },

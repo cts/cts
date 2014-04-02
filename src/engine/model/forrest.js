@@ -114,7 +114,6 @@ CTS.Fn.extend(Forrest.prototype, {
    *
    * -------------------------------------------------------- */
   addSpec: function(forrestSpec) {
-    console.log("add spec", forrestSpec);
     var self = this;
     if (typeof this.forrestSpecs == 'undefined') {
       CTS.Log.Error("forrest spec undef");
@@ -324,7 +323,6 @@ CTS.Fn.extend(Forrest.prototype, {
           // XXX: Potential bug here, depending on intent. The aliased tree is
           // the same tree! That means we might intend one to receive and the
           // other not to, but in reality they'll both be in lockstep.
-          CTS.Log.Info("New tree should receive events", treeSpec);
           self.trees[treeSpec.name].toggleReceiveRelationEvents(true);
         }
         deferred.resolve(self.trees[alias]);

@@ -125,7 +125,7 @@ CTS.Fn.extend(CTS.Fn, {
     });
     return results;
   },
-  
+
   without: function(array) {
     return CTS.Fn.difference(array, Array.prototype.slice.call(arguments, 1));
   },
@@ -182,9 +182,30 @@ CTS.Fn.extend(CTS.Fn, {
     });
     return result.value;
   },
-  
+
   pluck: function(obj, key) {
     return CTS.Fn.map(obj, function(value){ return value[key]; });
+  },
+
+  truthyOrFalsy: function(val) {
+    if (typeof val == 'undefined') {
+      return false;
+    } else if (typeof val == 'boolean') {
+      return val;
+    } else if (typeof val == 'object') {
+      return true;
+    } else if (typeof val == 'string') {
+      var v = val.trim().toLowerCase();
+      if ((v == '') || (v == '0') || (v == 'false') || (v == 'no')) {
+        return false;
+      } else {
+        return true;
+      }
+    } else if (typeof val == 'number') {
+      return (val != 0);
+    } else {
+      return false;
+    }
   }
 
 });
@@ -213,4 +234,3 @@ if (typeof (/./) !== 'function') {
 }
 
 CTS.Fn.idCounter = 0;
-

@@ -61,25 +61,7 @@ CTS.Relation.Base = {
       return false;
     }
     var val = node.getIfExistValue();
-
-    if (typeof val == 'undefined') {
-      return false;
-    } else if (typeof val == 'boolean') {
-      return val;
-    } else if (typeof val == 'object') {
-      return true;
-    } else if (typeof val == 'string') {
-      var v = val.trim().toLowerCase();
-      if ((v == '') || (v == '0') || (v == 'false') || (v == 'no')) {
-        return false;
-      } else {
-        return true;
-      }
-    } else if (typeof val == 'number') {
-      return (val != 0);
-    } else {
-      return false;
-    }
+    return CTS.Fn.truthyOrFalsy(val);
   },
 
   forCreationOnly: function(val) {
@@ -95,7 +77,6 @@ CTS.Relation.Base = {
   },
 
   handleEventFromNode: function(evt) {
-    CTS.Log.Info("Got Event", this, evt);
     if (this._forCreationOnly) {
       // Otherwise modifications to the input elements of the
       // form will set the entire collection that this is creation-mapped
@@ -178,7 +159,6 @@ CTS.Relation.Base = {
       suffix = opts.suffix;
     }
     var iterables = kids.slice(prefix, kids.length - suffix);
-    console.log("iterables for ", node, iterables);
     return iterables;
   }
 
