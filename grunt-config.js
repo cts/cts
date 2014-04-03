@@ -68,6 +68,7 @@ var sources = {
     "src/engine/model/tree/tree-spec.js",
     "src/engine/model/tree/tree-dom.js",
     "src/engine/model/tree/tree-gspreadsheet.js",
+    "src/engine/model/tree/tree-firebase.js",
     "src/engine/model/forrest-spec.js",
     "src/engine/model/forrest.js",
     "src/engine/model/selection-spec.js",

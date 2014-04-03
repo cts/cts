@@ -97,6 +97,10 @@ CTS.Parser.Cts = {
           } else {
             f.treeSpecs.push(new TreeSpec('gsheet', headerOpts));
           }
+        } else if (kind == 'firebase') {
+          headerOpts['name'] = h[0];
+          headerOpts['url'] = h[1];
+          f.treeSpecs.push(new TreeSpec('firebase', headerOpts));
         } else if (kind == 'css') {
           f.dependencySpecs.push(new DependencySpec('css', h[0]));
         } else if (kind == 'cts') {

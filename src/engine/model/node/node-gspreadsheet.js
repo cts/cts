@@ -54,7 +54,7 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   isDescendantOf: function(other) {
-    false;
+    return false;
   },
 
   _subclass_realizeChildren: function() {

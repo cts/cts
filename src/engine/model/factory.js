@@ -19,6 +19,8 @@ CTS.Factory = {
       return CTS.Factory.TreeWithJquery(CTS.$('body'), forrest, spec);
     } if ((spec.kind == "GSheet" || spec.kind == 'gsheet')) {
       return CTS.Factory.GSpreadsheetTree(spec, forrest);
+    } else if ((spec.kind == "Firebase" || spec.kind == 'firebase')) {
+      return CTS.Factory.FirebaseTree(spec, forrest);
     } else if (typeof spec.url == "string") {
       var deferred = Q.defer();
       CTS.Util.fetchString(spec).then(
@@ -141,6 +143,12 @@ CTS.Factory = {
         deferred.reject(reason);
       }
     );
+    return deferred.promise;
+  },
+
+  FirebaseTree: function(treespec, forrest) {
+    var deferred = Q.defer();
+    deferred.resolve(new CTS.Tree.Firebase(forrest, treespec));
     return deferred.promise;
   }
 }

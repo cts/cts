@@ -1,0 +1,11 @@
+extends ../layouts/scratch
+
+block head
+  title CTS Firebase Test
+  script(src="https://cdn.firebase.com/v0/firebase.js")
+
+block content
+  div.
+    <style type="text/cts">
+      @firebase cts https://blazing-fire-787.firebaseio.com/;
+    </style>
