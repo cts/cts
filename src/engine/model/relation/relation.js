@@ -159,6 +159,21 @@ CTS.Relation.Base = {
       suffix = opts.suffix;
     }
     var iterables = kids.slice(prefix, kids.length - suffix);
+    if (opts.item) {
+      if (CTS.Fn.isUndefined(parseInt(opts.item))) {
+        if (opts.item.toLowerCase() == 'random') {
+          var item = iterables[Math.floor(Math.random()*iterables.length)];
+          iterables = [item];
+        }
+      } else {
+        // We're one-indexed
+        var index = parseInt(opts.item)
+        iterables = iterables.slice(index, 1);
+      }
+    }
+    if (opts.limit) {
+      iterables = iterables.slice(0, limit);
+    }
     return iterables;
   }
 

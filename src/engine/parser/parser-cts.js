@@ -91,7 +91,11 @@ CTS.Parser.Cts = {
         } else if (kind == 'gsheet') {
           headerOpts['name'] = h[0];
           headerOpts['url'] = h[1];
-          if (h.length > 2) {
+          if (h.length > 3) {
+            headerOpts['worksheet'] = h[2];
+            f.treeSpecs.push(new TreeSpec('gsheet', headerOpts));
+          }
+          else if (h.length > 2) {
             headerOpts['worksheet'] = h[2];
             f.treeSpecs.push(new TreeSpec('gsheet', headerOpts));
           } else {

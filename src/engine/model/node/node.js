@@ -654,7 +654,7 @@ CTS.Node.Base = {
           var afterIndex = evt.afterIndex;
           var myIterables = fromRelation._getIterables(this);
           // TODO YAY!
-          myIterables[afterIndex].clone().then(
+          my`[afterIndex].clone().then(
             function(clone) {
               // This will force realization of inline specs.
               clone.parseInlineRelationSpecsRecursive().then(
