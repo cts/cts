@@ -9,3 +9,4 @@ log
 website/static/assets/*
 website/builtAsssets/*
 website/config/secrets.js
+website/static/userstudy/user
