@@ -364,7 +364,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     // within the browser. For now we'll proxy via the CTS server. Ugh.
     var deferred = Q.defer();
     var request = CTS.$.ajax({
-      url: '/api/gsheet/updatecell',
+      url: CTS.Constants.quiltBase + 'api/gsheet/updatecell',
       type: 'POST',
       data: {
         rowNum: rowNum,
@@ -404,7 +404,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       editLink: itemNode.spec.editLink
     };
     var request = CTS.$.ajax({
-      url: '/api/gsheet/updatelistitem',
+      url: CTS.Constants.quiltBase + 'api/gsheet/updatelistitem',
       type: 'POST',
       data: data
     });
@@ -441,7 +441,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       token: this._currentToken.access_token
     };
     var request = CTS.$.ajax({
-      url: '/api/gsheet/appendlistitem',
+      url: CTS.Constants.quiltBase + 'api/gsheet/appendlistitem',
       type: 'POST',
       data: data,
       dataType: 'json'
