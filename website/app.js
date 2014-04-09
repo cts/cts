@@ -144,6 +144,8 @@ app.get('/about', homeController.getAbout);
 app.post('/api/gsheet/updatecell', apiController.updateCell);
 app.post('/api/gsheet/updatelistitem', apiController.updateListItem);
 app.post('/api/gsheet/appendlistitem', apiController.appendListItem);
+app.get('/api/gsheet/login', apiController.googleLogin);
+
 app.get('/api/proxy', apiController.getProxy);
 
 app.get('/snippet', snippetController.getIndex);

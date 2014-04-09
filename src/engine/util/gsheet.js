@@ -2,8 +2,6 @@ CTS.registerNamespace('CTS.Util.GSheet');
 
 CTS.Fn.extend(CTS.Util.GSheet, {
   // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiauthauthorize
-  _ctsApiClientId: '459454183971-3rhp3qnfrdane1hnoa23eom28qoo146f.apps.googleusercontent.com',
-  _ctsApiKey: 'AIzaSyBpNbbqKrk21n6rI8Nw2R6JSz6faN7OiWc',
   _ctsApiClientScopes: 'https://www.googleapis.com/auth/plus.me http://spreadsheets.google.com/feeds/ https://www.googleapis.com/auth/drive',
   _loginStateModified: null,
   _currentToken: null,
@@ -73,12 +71,17 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   _registerCtsCredentials: function() {
-    gapi.client.setApiKey(CTS.Util.GSheet._ctsApiKey);
+    gapi.client.setApiKey(CTS.Constants.Google.ApiKey);
   },
 
-  _authenticationResult: function(authResult) {
+  _authenticationResult: function(authResult, token) {
    if (authResult && !authResult.error) {
-     CTS.Util.GSheet._currentToken = gapi.auth.getToken();
+     if (typeof token == 'undefined') {
+       CTS.Util.GSheet._currentToken = gapi.auth.getToken();
+     } else {
+       CTS.Util.GSheet._currentToken = token;
+       gapi.auth.setToken(token);
+     }
      CTS.Util.GSheet._loginDefer.resolve();
    } else {
      CTS.Util.GSheet._currentToken = null;
@@ -98,19 +101,28 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   login: function() {
-    CTS.Util.GSheet._gapiLoaded.promise.then(
-      function() {
-        gapi.auth.authorize(
-          {
-            client_id: CTS.Util.GSheet._ctsApiClientId,
-            scope: CTS.Util.GSheet._ctsApiClientScopes
-          },
-          CTS.Util.GSheet._authenticationResult
-        );
-      }
-    );
-    CTS.Log.Info("Done");
-    return CTS.Util.GSheet._loginDefer.promise;
+    // Load API via IFRAME to Treesheets server. Unfortunate but required.
+    debugger;
+    CTS.Util.GSheet.loginIframe = CTS.$('<iframe style="display:none;" src="' +
+      CTS.Constants.quiltBase + 'api/gsheet/login"></iframe>');
+    CTS.$('body').append(CTS.Util.GSheet.loginIframe);
+
+    //
+    //
+    //
+    // CTS.Util.GSheet._gapiLoaded.promise.then(
+    //   function() {
+    //     gapi.auth.authorize(
+    //       {
+    //         client_id: CTS.Constants.Google.ClientId,
+    //         scope: CTS.Util.GSheet._ctsApiClientScopes
+    //       },
+    //       CTS.Util.GSheet._authenticationResult
+    //     );
+    //   }
+    // );
+    // CTS.Log.Info("Done");
+    // return CTS.Util.GSheet._loginDefer.promise;
   },
 
   isLoggedIn: function() {

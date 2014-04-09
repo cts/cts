@@ -1,0 +1,16 @@
+html
+  head
+    script(src='/js/lib/gapi.js')
+  body
+    script.
+      gapi.load("auth:client,drive-share", function() {
+        gapi.auth.authorize(
+          {
+            client_id: '459454183971-3rhp3qnfrdane1hnoa23eom28qoo146f.apps.googleusercontent.com',
+            scope: 'https://www.googleapis.com/auth/plus.me http://spreadsheets.google.com/feeds/ https://www.googleapis.com/auth/drive'
+          },
+          function(result) {
+            parent.CTS.Util.GSheet._authenticationResult(result, gapi.auth.getToken())
+          }
+        );
+      });

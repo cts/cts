@@ -190,3 +190,7 @@ exports.getGithub = function(req, res) {
   });
 
 };
+
+exports.googleLogin = function(req, res) {
+  res.render('api/google-login', {});
+};
