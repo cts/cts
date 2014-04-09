@@ -102,7 +102,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
 
   login: function() {
     // Load API via IFRAME to Treesheets server. Unfortunate but required.
-    debugger;
     CTS.Util.GSheet.loginIframe = CTS.$('<iframe style="display:none;" src="' +
       CTS.Constants.quiltBase + 'api/gsheet/login"></iframe>');
     CTS.$('body').append(CTS.Util.GSheet.loginIframe);
