@@ -10,6 +10,7 @@ var Github = require('github-api');
 var Twit = require('twit');
 var url = require('url');
 var Q = require('q');
+var cors = require('../helpers/cors');
 
 /**
  * GET /api
@@ -192,5 +193,6 @@ exports.getGithub = function(req, res) {
 };
 
 exports.googleLogin = function(req, res) {
+  cors.addCORSHeaders(req, res);
   res.render('api/google-login', {});
 };
