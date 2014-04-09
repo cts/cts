@@ -102,8 +102,20 @@ CTS.Fn.extend(CTS.Util.GSheet, {
 
   login: function() {
     // Load API via IFRAME to Treesheets server. Unfortunate but required.
+    var source = CTS.Constants.quiltBase + 'api/gsheet/login';
     CTS.Util.GSheet.loginIframe = CTS.$('<iframe style="display:none;" src="' +
-      CTS.Constants.quiltBase + 'api/gsheet/login"></iframe>');
+      source + '"></iframe>');
+    var catchLogin = function(evt) {
+      if (typeof(evt) != "undefined") {
+        if (evt.source == source) {
+          window.removeEventListener("message", returnData);
+          var data = evt.data;
+          console.log("got data", data);
+        }
+      }
+    };
+
+    window.addEventListener("message", catchLogin, false);
     CTS.$('body').append(CTS.Util.GSheet.loginIframe);
 
     //

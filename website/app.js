@@ -167,6 +167,7 @@ app.get('/auth/google/callback', passport.authenticate('google', { successRedire
 app.get('/auth/twitter', passport.authenticate('twitter'));
 app.get('/auth/twitter/callback', passport.authenticate('twitter', { successRedirect: '/', failureRedirect: '/login' }));
 
+
 /**
  * Start Express server.
  */
@@ -178,7 +179,16 @@ var banner = "" +
 "  ____/ /_/  /____/     ____/\\___|_|     \\_/ \\___|_|   \n\n" +
 "               Cascading Tree Sheets Server \n";
 
-app.listen(app.get('port'), function() {
+// SSL HACK
+var https = require('https');
+var fs = require('fs');
+var privateKey = fs.readFileSync('./config/server.key-example').toString();
+var certificate = fs.readFileSync('./config/server.crt-example').toString();
+var options = {key: privateKey, cert: certificate};
+var server = https.createServer(options, app);
+
+// was app.listen
+server.listen(app.get('port'), function() {
   console.log("\n" + banner);
   console.log("  ✔ Express server listening on port %d", app.get('port'));
   console.log("  ✔ Mode: %s ", app.settings.env);

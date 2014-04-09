@@ -10,7 +10,13 @@ html
             scope: 'https://www.googleapis.com/auth/plus.me http://spreadsheets.google.com/feeds/ https://www.googleapis.com/auth/drive'
           },
           function(result) {
-            parent.CTS.Util.GSheet._authenticationResult(result, gapi.auth.getToken())
+            if (window.parent !== window) {
+              if (result && !result.error) {
+                window.parent.postMessage(JSON.stringify(gapi.auth.getToken()),"*");
+              } else {
+                window.parent.postMessage(JSON.stringify({'error': 'Oh No!'}),"*");
+              }
+            }
           }
         );
       });

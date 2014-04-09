@@ -38,7 +38,6 @@ CTS.UI.Clipboard.prototype.copy = function(text) {
   });
 };
 
-
 CTS.UI.Clipboard.prototype.paste = function(callback) {
   var self = this;
 
