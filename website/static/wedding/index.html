@@ -1,0 +1,41 @@
+<html>
+<head>
+<script src="cts.js"></script>
+<style type="text/cts">
+@gsheet sheet 1o8tUo5KHfWIXPixQO2p1saJwt0Y95i4JBhl2HEkL0kc;
+</style>
+<link rel="stylesheet" href="userstudy/todo.css" />
+<link rel="stylesheet" href="wedding.css" />
+</head>
+<body>
+  <h1>All RSVPs</h1>
+  <ul connect="RSVPs!rows">
+    <li connect="RSVPs!name"></li>
+  </ul>
+  <div class="foo">
+    <p>Only RSVPs that said
+    <select connect="Parameters!B1">
+    <option>Yes</option>
+    <option>No</option>
+  </select>
+  </p>
+  <ul connect="Attending!rows">
+    <li>
+      <span connect="Attending!name"></span> - Table <span connect="Attending!table"></span>
+    </li>
+  </ul>
+  </div>
+
+
+<div class="foo" style="margin-top: 15px">
+  <p>Gifts from the <input connect="Parameters!B2" /> family</p>
+  <ul connect="NameSearch!rows">
+    <li>
+      <span connect="NameSearch!name"></span> - <span connect="NameSearch!gift"></span>
+    </li>
+  </ul>
+</div>
+
+
+</body>
+</html>

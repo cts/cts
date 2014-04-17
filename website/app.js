@@ -21,6 +21,7 @@ var apiController = require('./controllers/api');
 var forgotController = require('./controllers/forgot');
 var resetController = require('./controllers/reset');
 var snippetController = require('./controllers/snippet');
+var gsheetproxy = require('./controllers/gsheet-proxy');
 
 /**
  * API keys + Passport configuration.
@@ -83,6 +84,8 @@ var conditionalCSRF = function (req, res, next) {
   var needCSRF = true;
   if (req.url.indexOf("/api/gsheet/") != -1) {
     needCSRF = false;
+  } else if (req.url.indexOf("/api/gdoc") != -1) {
+    needCSRF = false;
   }
   if (needCSRF) {
     csrf(req, res, next);
@@ -141,6 +144,11 @@ app.get('/signup', userController.getSignup);
 app.post('/signup', userController.postSignup);
 app.get('/about', homeController.getAbout);
 
+app.get('/api/gdoc/*', gsheetproxy.gdoc);
+app.post('/api/gdoc/*', gsheetproxy.gdoc);
+app.put('/api/gdoc/*', gsheetproxy.gdoc);
+app.options('/api/gdoc/*', gsheetproxy.returnOptions);
+
 app.post('/api/gsheet/updatecell', apiController.updateCell);
 app.post('/api/gsheet/updatelistitem', apiController.updateListItem);
 app.post('/api/gsheet/appendlistitem', apiController.appendListItem);
@@ -167,7 +175,6 @@ app.get('/auth/google/callback', passport.authenticate('google', { successRedire
 app.get('/auth/twitter', passport.authenticate('twitter'));
 app.get('/auth/twitter/callback', passport.authenticate('twitter', { successRedirect: '/', failureRedirect: '/login' }));
 
-
 /**
  * Start Express server.
  */
@@ -180,15 +187,15 @@ var banner = "" +
 "               Cascading Tree Sheets Server \n";
 
 // SSL HACK
-var https = require('https');
-var fs = require('fs');
-var privateKey = fs.readFileSync('./config/server.key-example').toString();
-var certificate = fs.readFileSync('./config/server.crt-example').toString();
-var options = {key: privateKey, cert: certificate};
-var server = https.createServer(options, app);
+// var https = require('https');
+// var fs = require('fs');
+// var privateKey = fs.readFileSync('./config/server.key-example').toString();
+// var certificate = fs.readFileSync('./config/server.crt-example').toString();
+// var options = {key: privateKey, cert: certificate};
+// var server = https.createServer(options, app);
 
-// was app.listen
-server.listen(app.get('port'), function() {
+// was app.listen (or server.listen)
+app.listen(app.get('port'), function() {
   console.log("\n" + banner);
   console.log("  ✔ Express server listening on port %d", app.get('port'));
   console.log("  ✔ Mode: %s ", app.settings.env);

@@ -102,38 +102,34 @@ CTS.Fn.extend(CTS.Util.GSheet, {
 
   login: function() {
     // Load API via IFRAME to Treesheets server. Unfortunate but required.
-    var source = CTS.Constants.quiltBase + 'api/gsheet/login';
-    CTS.Util.GSheet.loginIframe = CTS.$('<iframe style="display:none;" src="' +
-      source + '"></iframe>');
-    var catchLogin = function(evt) {
-      if (typeof(evt) != "undefined") {
-        if (evt.source == source) {
-          window.removeEventListener("message", returnData);
-          var data = evt.data;
-          console.log("got data", data);
-        }
-      }
-    };
-
-    window.addEventListener("message", catchLogin, false);
-    CTS.$('body').append(CTS.Util.GSheet.loginIframe);
-
-    //
-    //
-    //
-    // CTS.Util.GSheet._gapiLoaded.promise.then(
-    //   function() {
-    //     gapi.auth.authorize(
-    //       {
-    //         client_id: CTS.Constants.Google.ClientId,
-    //         scope: CTS.Util.GSheet._ctsApiClientScopes
-    //       },
-    //       CTS.Util.GSheet._authenticationResult
-    //     );
+    // var source = CTS.Constants.quiltBase + 'api/gsheet/login';
+    // CTS.Util.GSheet.loginIframe = CTS.$('<iframe style="display:none;" src="' +
+    //   source + '"></iframe>');
+    // var catchLogin = function(evt) {
+    //   if (typeof(evt) != "undefined") {
+    //     if (evt.source == source) {
+    //       window.removeEventListener("message", returnData);
+    //       var data = evt.data;
+    //       console.log("got data", data);
+    //     }
     //   }
-    // );
-    // CTS.Log.Info("Done");
-    // return CTS.Util.GSheet._loginDefer.promise;
+    // };
+    //
+    // window.addEventListener("message", catchLogin, false);
+    // CTS.$('body').append(CTS.Util.GSheet.loginIframe);
+    CTS.Util.GSheet._gapiLoaded.promise.then(
+      function() {
+        gapi.auth.authorize(
+          {
+            client_id: CTS.Constants.Google.ClientId,
+            scope: CTS.Util.GSheet._ctsApiClientScopes
+          },
+          CTS.Util.GSheet._authenticationResult
+        );
+      }
+    );
+    CTS.Log.Info("Done");
+    return CTS.Util.GSheet._loginDefer.promise;
   },
 
   isLoggedIn: function() {
@@ -183,10 +179,15 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     return deferred.promise;
   },
 
+  makeProxyUrl: function(url) {
+    return 'http:' + CTS.Constants.quiltBase + 'api/gdoc/' + url;
+  },
+
   getSpreadsheets: function() {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl(
         'spreadsheets', null, null, 'private', 'full', null, true, true);
+    url = CTS.Util.GSheet.makeProxyUrl(url);
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
@@ -215,6 +216,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   getWorksheets: function(key) {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('worksheets', key, null, 'private', 'full', null, true, true);
+    url = CTS.Util.GSheet.makeProxyUrl(url);
     var request = CTS.$.getJSON(url);
     request.done(function(json) {
       var ret = [];
@@ -284,7 +286,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   getListFeed: function(spreadsheetKey, worksheetKey) {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
-
+    url = CTS.Util.GSheet.makeProxyUrl(url);
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
@@ -313,7 +315,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   getCellFeed: function(spreadsheetKey, worksheetKey) {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('cells', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
-
+    url = CTS.Util.GSheet.makeProxyUrl(url);
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
@@ -364,6 +366,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('cells', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
     url = url + '&min-row=' + row + '&max-row=' + row + '&min-col=' + col + '&max-col=' + col;
+    url = CTS.Util.GSheet.makeProxyUrl(url);
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
@@ -382,22 +385,34 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   modifyCell: function(ssKey, wsKey, rowNum, colNum, value) {
-    // The Google Docs API incorrectly responds to OPTIONS preflights, so
-    // we are completely blocked from sending non-GET requests to it from
-    // within the browser. For now we'll proxy via the CTS server. Ugh.
     var deferred = Q.defer();
-    var request = CTS.$.ajax({
-      url: CTS.Constants.quiltBase + 'api/gsheet/updatecell',
-      type: 'POST',
-      data: {
-        rowNum: rowNum,
-        colNum: colNum,
-        ssKey: ssKey,
-        wsKey: wsKey,
-        value: value,
-        token: this._currentToken.access_token
-      }
+
+    var cell = 'R' + rowNum + 'C' + colNum;
+    var url = CTS.Util.GSheet._gSheetUrl('cells', ssKey, wsKey, 'private', 'full', cell, false, true);
+    url = CTS.Util.GSheet.makeProxyUrl(url);
+
+    var cellurl = "https://spreadsheets.google.com/feeds/cells/" +
+      ssKey + "/" + wsKey + "/private/full/" + cell;
+
+    var xmlBody = "<?xml version='1.0' ?>";
+    xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
+    xmlBody += ' xmlns:gs="http://schemas.google.com/spreadsheets/2006">\n';
+    xmlBody += '\t<id>' + cellurl + '</id>\n';
+    xmlBody += '\t<link rel="edit" type="application/atom+xml" ';
+    xmlBody += 'href="' + cellurl + '" />\n';
+    xmlBody += '\t<gs:cell row="' + rowNum + '" col="' + colNum + '" ';
+    xmlBody += 'inputValue="' + value + '"/>\n</entry>';
+
+    var request = CTS.$.ajax(url, {
+      type: 'PUT',
+      headers: {
+        'Content-Type': 'application/atom+xml',
+        'GData-Version': '3.0',
+        'If-Match': '*'
+      },
+      data: xmlBody
     });
+
     request.done(function(json) {
       deferred.resolve();
     });
@@ -405,7 +420,33 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       CTS.Log.Error(jqxhr, textStatus);
       deferred.reject(textStatus);
     });
+
     return deferred.promise;
+
+    // The Google Docs API incorrectly responds to OPTIONS preflights, so
+    // we are completely blocked from sending non-GET requests to it from
+    // within the browser. For now we'll proxy via the CTS server. Ugh.
+    // var deferred = Q.defer();
+    // var request = CTS.$.ajax({
+    //   url: CTS.Constants.quiltBase + 'api/gsheet/updatecell',
+    //   type: 'POST',
+    //   data: {
+    //     rowNum: rowNum,
+    //     colNum: colNum,
+    //     ssKey: ssKey,
+    //     wsKey: wsKey,
+    //     value: value,
+    //     token: this._currentToken.access_token
+    //   }
+    // });
+    // request.done(function(json) {
+    //   deferred.resolve();
+    // });
+    // request.fail(function(jqxhr, textStatus) {
+    //   CTS.Log.Error(jqxhr, textStatus);
+    //   deferred.reject(textStatus);
+    // });
+    // return deferred.promise;
   },
 
   modifyListItem: function(ssKey, wsKey, itemNode) {

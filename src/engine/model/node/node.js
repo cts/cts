@@ -14,11 +14,11 @@ CTS.Node.Factory = {
     var klass = CTS.Node.Html;
 
     if (! CTS.Fn.isUndefined(node.jquery)) {
-      if (node.is('input')) {
+      if (node.is('input') || node.is('select')) {
         klass = CTS.Node.HtmlInput;
       }
     } else if (node instanceof Element) {
-      if (node.nodeName == 'INPUT') {
+      if ((node.nodeName == 'INPUT') || (node.nodeName == 'SELECT')) {
         klass = CTS.Node.HtmlInput;
       }
     }

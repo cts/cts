@@ -12,15 +12,15 @@
   </head>
   <body>
     <h1>My To-Do List</h1>
-    <ul>
+    <ul connect="rows">
       <li>
-        <input type="checkbox" />
-        <span>Example Task</span>
+        <input connect="done" type="checkbox" />
+        <span connect="task">Example Task</span>
       </li>
     </ul>
 
-    <form>
-      <input />
+    <form connect="rows">
+      <input connect="task"/>
       <button>Add</button>
     </form>
 

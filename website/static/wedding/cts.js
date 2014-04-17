@@ -3954,11 +3954,11 @@ CTS.Node.Factory = {
     var klass = CTS.Node.Html;
 
     if (! CTS.Fn.isUndefined(node.jquery)) {
-      if (node.is('input')) {
+      if (node.is('input') || node.is('select')) {
         klass = CTS.Node.HtmlInput;
       }
     } else if (node instanceof Element) {
-      if (node.nodeName == 'INPUT') {
+      if ((node.nodeName == 'INPUT') || (node.nodeName == 'SELECT')) {
         klass = CTS.Node.HtmlInput;
       }
     }
@@ -4780,11 +4780,7 @@ CTS.Node.DomBase = {
       return ref;
     } else {
       ref = ref.toLowerCase();
-      if (ref[0] == '.') {
-        return ref;
-      } else {
-        return "." + ref;
-      }
+      return ref;
     }
   },
 
@@ -4801,7 +4797,8 @@ CTS.Node.DomBase = {
             if (this.value.is("form")) {
               return "this :graft sheet | items {createNew: true};";
             } else {
-              return "this :are sheet | items;";
+ inline = inline.replace(/rows/, 'items');
+              return "this :are sheet | " + inline + ";";
             }
           } else if (this.value.closest('form').length > 0) {
             return "sheet | " + this._fixSpreadSheetRef(inline) + " :is this;";
@@ -5100,6 +5097,8 @@ CTS.Node.HtmlInput = function(node, tree, opts) {
   this.subKind = "text";
   if (this.value.is('[type="checkbox"]')) {
     this.subKind = "checkbox";
+  } else if (this.value.is('select')) {
+    this.subKind = "select";
   }
 
   this.on('received-is', function() {
@@ -5160,6 +5159,8 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
       if (this.subKind == "checkbox") {
         return this.value.prop("checked");
+      } else if (this.subKind == "select") {
+        return this.value.val();
       } else {
         return this.value.val();
       }
@@ -5173,6 +5174,8 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
       if (this.subKind == "checkbox") {
         var checked = CTS.Fn.truthyOrFalsy(value);
         this.value.prop('checked', checked);
+      } else if (this.subKind == "select") {
+        this.value.val(value);
       } else {
         this.value.val(value);
       }
@@ -5406,8 +5409,8 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
     // If any of the properties match.
     var found = 0;
     selector = selector.trim();
-    if (selector[0] != "rows") {
-      selector = selector.slice(1);
+    if (selector != "rows") {
+      //selector = selector.slice(1);
       for (var i = 0; i < this.children.length; i++) {
         var child = this.children[i];
         if (selector == child.key) {
@@ -5586,13 +5589,15 @@ CTS.Fn.extend(CTS.Node.GListFeed.prototype, CTS.Node.Base, CTS.Events, {
     }
     // If any of the properties match.
     selector = selector.trim();
-    if (selector[0] == ".") {
+    if (!selector.match(/[A-Z]\d+/)) {
+      CTS.Log.Info("GListFeed find", selector);
       for (var i = 0; i < this.children.length; i++) {
         var child = this.children[i];
         child.find(selector, ret);
       }
+    } else {
+      CTS.Log.Info("Rejecting cell req")
     }
-    CTS.Log.Debug("GListFeed Finished Find");
     return ret;
   },
 
@@ -6236,7 +6241,7 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
     if ((typeof selector == 'undefined') || (selector == null)) {
       return ret;
     }
-
+    CTS.Log.Info(selector);
     if (selector.trim() == "items") {
       CTS.Log.Debug("Worksheet interpreting find request as ITEM enumeration");
       for (var i = 0; i < this.children.length; i++) {
@@ -6244,17 +6249,17 @@ CTS.Fn.extend(CTS.Node.GWorksheet.prototype, CTS.Node.Base, CTS.Events, {
           ret.push(this.children[i]);
         }
       }
-    } else if (selector.trim()[0] == ".") {
-      CTS.Log.Debug("Worksheet interpreting find request as ITEM PROPERTY search");
+    } else if (selector.match(/[A-Z]\d+/)) {
+      CTS.Log.Info("Worksheet interpreting find request as CELL query");
       for (var i = 0; i < this.children.length; i++) {
-        if (this.children[i].kind == "GListFeed") {
+        if (this.children[i].kind == "GCellFeed") {
           this.children[i].find(selector, ret);
         }
       }
     } else {
-      CTS.Log.Debug("Worksheet interpreting find request as CELL query");
+      CTS.Log.Info("Worksheet interpreting find request as ITEM PROPERTY search");
       for (var i = 0; i < this.children.length; i++) {
-        if (this.children[i].kind == "GCellFeed") {
+        if (this.children[i].kind == "GListFeed") {
           this.children[i].find(selector, ret);
         }
       }
@@ -6364,7 +6369,7 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   find: function(spec, ret) {
-    CTS.Log.Debug("SS find", spec);
+    CTS.Log.Info("SS find", spec);
     // Selector is spec.selectorString
     var selector;
     if (typeof spec == "string") {
@@ -6384,14 +6389,15 @@ CTS.Fn.extend(CTS.Node.GSpreadsheet.prototype, CTS.Node.Base, CTS.Events, {
     if (parts.length > 1) {
       CTS.Log.Debug("Addressing a particular worksheet!");
       subselector = parts.slice(1).join("!");
-      var worksheet = parts[0].trim();
+      var worksheet = parts[0].trim().toLowerCase();
+      CTS.Log.Info(worksheet);
       union = CTS.Fn.filter(this.children, function(kid) {
-        return kid.name == worksheet;
+        return kid.name.toLowerCase() == worksheet;
       });
     }
     for (var i = 0; i < union.length; i++) {
       var kid = union[i];
-      CTS.Log.Debug("Worksheet, please find ", subselector);
+      CTS.Log.Info("Worksheet", kid.name, ", please find ", subselector);
       var results = kid.find(subselector, ret);
     }
     CTS.Log.Debug("Finished SS Find", ret);
@@ -8766,292 +8772,292 @@ CTS.Parser.CtsImpl = {
 };
 
 CTS.Parser.Html = new (function(){
-	// Regular Expressions for parsing tags and attributes
-	var startTag = /^<([-A-Za-z0-9_]+)((?:\s+\w+(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/,
-		endTag = /^<\/([-A-Za-z0-9_]+)[^>]*>/,
-		attr = /([-A-Za-z0-9_]+)(?:\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))?/g;
+  // Regular Expressions for parsing tags and attributes
+  var startTag = /^<([-A-Za-z0-9_]+)((?:\s+\w+(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/,
+    endTag = /^<\/([-A-Za-z0-9_]+)[^>]*>/,
+    attr = /([-A-Za-z0-9_]+)(?:\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))?/g;
 
-	// Empty Elements - HTML 4.01
-	var empty = makeMap("area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed");
+  // Empty Elements - HTML 4.01
+  var empty = makeMap("area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed");
 
-	// Block Elements - HTML 4.01
-	var block = makeMap("address,applet,blockquote,button,center,dd,del,dir,div,dl,dt,fieldset,form,frameset,hr,iframe,ins,isindex,li,map,menu,noframes,noscript,object,ol,p,pre,script,table,tbody,td,tfoot,th,thead,tr,ul");
+  // Block Elements - HTML 4.01
+  var block = makeMap("address,applet,blockquote,button,center,dd,del,dir,div,dl,dt,fieldset,form,frameset,hr,iframe,ins,isindex,li,map,menu,noframes,noscript,object,ol,p,pre,script,table,tbody,td,tfoot,th,thead,tr,ul");
 
-	// Inline Elements - HTML 4.01
-	var inline = makeMap("a,abbr,acronym,applet,b,basefont,bdo,big,br,button,cite,code,del,dfn,em,font,i,iframe,img,input,ins,kbd,label,map,object,q,s,samp,script,select,small,span,strike,strong,sub,sup,textarea,tt,u,var");
+  // Inline Elements - HTML 4.01
+  var inline = makeMap("a,abbr,acronym,applet,b,basefont,bdo,big,br,button,cite,code,del,dfn,em,font,i,iframe,img,input,ins,kbd,label,map,object,q,s,samp,script,select,small,span,strike,strong,sub,sup,textarea,tt,u,var");
 
-	// Elements that you can, intentionally, leave open
-	// (and which close themselves)
-	var closeSelf = makeMap("colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr");
+  // Elements that you can, intentionally, leave open
+  // (and which close themselves)
+  var closeSelf = makeMap("colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr");
 
-	// Attributes that have their values filled in disabled="disabled"
-	var fillAttrs = makeMap("checked,compact,declare,defer,disabled,ismap,multiple,nohref,noresize,noshade,nowrap,readonly,selected");
+  // Attributes that have their values filled in disabled="disabled"
+  var fillAttrs = makeMap("checked,compact,declare,defer,disabled,ismap,multiple,nohref,noresize,noshade,nowrap,readonly,selected");
 
-	// Special Elements (can contain anything)
-	var special = makeMap("script,style");
+  // Special Elements (can contain anything)
+  var special = makeMap("script,style");
 
-	var HTMLParser = this.HTMLParser = function( html, handler ) {
-		var index, chars, match, stack = [], last = html;
-		stack.last = function(){
-			return this[ this.length - 1 ];
-		};
+  var HTMLParser = this.HTMLParser = function( html, handler ) {
+    var index, chars, match, stack = [], last = html;
+    stack.last = function(){
+      return this[ this.length - 1 ];
+    };
 
-		while ( html ) {
-			chars = true;
+    while ( html ) {
+      chars = true;
 
-			// Make sure we're not in a script or style element
-			if ( !stack.last() || !special[ stack.last() ] ) {
+      // Make sure we're not in a script or style element
+      if ( !stack.last() || !special[ stack.last() ] ) {
 
-				// Comment
-				if ( html.indexOf("<!--") == 0 ) {
-					index = html.indexOf("-->");
+        // Comment
+        if ( html.indexOf("<!--") == 0 ) {
+          index = html.indexOf("-->");
 
-					if ( index >= 0 ) {
-						if ( handler.comment )
-							handler.comment( html.substring( 4, index ) );
-						html = html.substring( index + 3 );
-						chars = false;
-					}
+          if ( index >= 0 ) {
+            if ( handler.comment )
+              handler.comment( html.substring( 4, index ) );
+            html = html.substring( index + 3 );
+            chars = false;
+          }
 
-				// end tag
-				} else if ( html.indexOf("</") == 0 ) {
-					match = html.match( endTag );
+        // end tag
+        } else if ( html.indexOf("</") == 0 ) {
+          match = html.match( endTag );
 
-					if ( match ) {
-						html = html.substring( match[0].length );
-						match[0].replace( endTag, parseEndTag );
-						chars = false;
-					}
+          if ( match ) {
+            html = html.substring( match[0].length );
+            match[0].replace( endTag, parseEndTag );
+            chars = false;
+          }
 
-				// start tag
-				} else if ( html.indexOf("<") == 0 ) {
-					match = html.match( startTag );
+        // start tag
+        } else if ( html.indexOf("<") == 0 ) {
+          match = html.match( startTag );
 
-					if ( match ) {
-						html = html.substring( match[0].length );
-						match[0].replace( startTag, parseStartTag );
-						chars = false;
-					}
-				}
+          if ( match ) {
+            html = html.substring( match[0].length );
+            match[0].replace( startTag, parseStartTag );
+            chars = false;
+          }
+        }
 
-				if ( chars ) {
-					index = html.indexOf("<");
+        if ( chars ) {
+          index = html.indexOf("<");
 
-					var text = index < 0 ? html : html.substring( 0, index );
-					html = index < 0 ? "" : html.substring( index );
+          var text = index < 0 ? html : html.substring( 0, index );
+          html = index < 0 ? "" : html.substring( index );
 
-					if ( handler.chars )
-						handler.chars( text );
-				}
+          if ( handler.chars )
+            handler.chars( text );
+        }
 
-			} else {
-				html = html.replace(new RegExp("(.*)<\/" + stack.last() + "[^>]*>"), function(all, text){
-					text = text.replace(/<!--(.*?)-->/g, "$1")
-						.replace(/<!\[CDATA\[(.*?)]]>/g, "$1");
+      } else {
+        html = html.replace(new RegExp("(.*)<\/" + stack.last() + "[^>]*>"), function(all, text){
+          text = text.replace(/<!--(.*?)-->/g, "$1")
+            .replace(/<!\[CDATA\[(.*?)]]>/g, "$1");
 
-					if ( handler.chars )
-						handler.chars( text );
+          if ( handler.chars )
+            handler.chars( text );
 
-					return "";
-				});
+          return "";
+        });
 
-				parseEndTag( "", stack.last() );
-			}
+        parseEndTag( "", stack.last() );
+      }
 
-			if ( html == last )
-				throw "Parse Error: " + html;
-			last = html;
-		}
+      if ( html == last )
+        throw "Parse Error: " + html;
+      last = html;
+    }
 
-		// Clean up any remaining tags
-		parseEndTag();
+    // Clean up any remaining tags
+    parseEndTag();
 
-		function parseStartTag( tag, tagName, rest, unary ) {
-			tagName = tagName.toLowerCase();
+    function parseStartTag( tag, tagName, rest, unary ) {
+      tagName = tagName.toLowerCase();
 
-			if ( block[ tagName ] ) {
-				while ( stack.last() && inline[ stack.last() ] ) {
-					parseEndTag( "", stack.last() );
-				}
-			}
+      if ( block[ tagName ] ) {
+        while ( stack.last() && inline[ stack.last() ] ) {
+          parseEndTag( "", stack.last() );
+        }
+      }
 
-			if ( closeSelf[ tagName ] && stack.last() == tagName ) {
-				parseEndTag( "", tagName );
-			}
+      if ( closeSelf[ tagName ] && stack.last() == tagName ) {
+        parseEndTag( "", tagName );
+      }
 
-			unary = empty[ tagName ] || !!unary;
+      unary = empty[ tagName ] || !!unary;
 
-			if ( !unary )
-				stack.push( tagName );
+      if ( !unary )
+        stack.push( tagName );
 
-			if ( handler.start ) {
-				var attrs = [];
+      if ( handler.start ) {
+        var attrs = [];
 
-				rest.replace(attr, function(match, name) {
-					var value = arguments[2] ? arguments[2] :
-						arguments[3] ? arguments[3] :
-						arguments[4] ? arguments[4] :
-						fillAttrs[name] ? name : "";
+        rest.replace(attr, function(match, name) {
+          var value = arguments[2] ? arguments[2] :
+            arguments[3] ? arguments[3] :
+            arguments[4] ? arguments[4] :
+            fillAttrs[name] ? name : "";
 
-					attrs.push({
-						name: name,
-						value: value,
-						escaped: value.replace(/(^|[^\\])"/g, '$1\\\"') //")
-					});
-				});
+          attrs.push({
+            name: name,
+            value: value,
+            escaped: value.replace(/(^|[^\\])"/g, '$1\\\"') //")
+          });
+        });
 
-				if ( handler.start )
-					handler.start( tagName, attrs, unary );
-			}
-		}
+        if ( handler.start )
+          handler.start( tagName, attrs, unary );
+      }
+    }
 
-		function parseEndTag( tag, tagName ) {
-			// If no tag name is provided, clean shop
-			if ( !tagName )
-				var pos = 0;
+    function parseEndTag( tag, tagName ) {
+      // If no tag name is provided, clean shop
+      if ( !tagName )
+        var pos = 0;
 
-			// Find the closest opened tag of the same type
-			else
-				for ( var pos = stack.length - 1; pos >= 0; pos-- )
-					if ( stack[ pos ] == tagName )
-						break;
+      // Find the closest opened tag of the same type
+      else
+        for ( var pos = stack.length - 1; pos >= 0; pos-- )
+          if ( stack[ pos ] == tagName )
+            break;
 
-			if ( pos >= 0 ) {
-				// Close all the open elements, up the stack
-				for ( var i = stack.length - 1; i >= pos; i-- )
-					if ( handler.end )
-						handler.end( stack[ i ] );
+      if ( pos >= 0 ) {
+        // Close all the open elements, up the stack
+        for ( var i = stack.length - 1; i >= pos; i-- )
+          if ( handler.end )
+            handler.end( stack[ i ] );
 
-				// Remove the open elements from the stack
-				stack.length = pos;
-			}
-		}
-	};
+        // Remove the open elements from the stack
+        stack.length = pos;
+      }
+    }
+  };
 
-	this.HTMLtoXML = function( html ) {
-		var results = "";
+  this.HTMLtoXML = function( html ) {
+    var results = "";
 
-		HTMLParser(html, {
-			start: function( tag, attrs, unary ) {
-				results += "<" + tag;
+    HTMLParser(html, {
+      start: function( tag, attrs, unary ) {
+        results += "<" + tag;
 
-				for ( var i = 0; i < attrs.length; i++ )
-					results += " " + attrs[i].name + '="' + attrs[i].escaped + '"';
+        for ( var i = 0; i < attrs.length; i++ )
+          results += " " + attrs[i].name + '="' + attrs[i].escaped + '"';
 
-				results += (unary ? "/" : "") + ">";
-			},
-			end: function( tag ) {
-				results += "</" + tag + ">";
-			},
-			chars: function( text ) {
-				results += text;
-			},
-			comment: function( text ) {
-				results += "<!--" + text + "-->";
-			}
-		});
+        results += (unary ? "/" : "") + ">";
+      },
+      end: function( tag ) {
+        results += "</" + tag + ">";
+      },
+      chars: function( text ) {
+        results += text;
+      },
+      comment: function( text ) {
+        results += "<!--" + text + "-->";
+      }
+    });
 
-		return results;
-	};
+    return results;
+  };
 
-	this.HTMLtoDOM = function( html, doc ) {
-		// There can be only one of these elements
-		var one = makeMap("html,head,body,title");
+  this.HTMLtoDOM = function( html, doc ) {
+    // There can be only one of these elements
+    var one = makeMap("html,head,body,title");
 
-		// Enforce a structure for the document
-		var structure = {
-			link: "head",
-			base: "head"
-		};
+    // Enforce a structure for the document
+    var structure = {
+      link: "head",
+      base: "head"
+    };
 
-		if ( !doc ) {
-			if ( typeof DOMDocument != "undefined" )
-				doc = new DOMDocument();
-			else if ( typeof document != "undefined" && document.implementation && document.implementation.createDocument )
-				doc = document.implementation.createDocument("", "", null);
-			else if ( typeof ActiveX != "undefined" )
-				doc = new ActiveXObject("Msxml.DOMDocument");
+    if ( !doc ) {
+      if ( typeof DOMDocument != "undefined" )
+        doc = new DOMDocument();
+      else if ( typeof document != "undefined" && document.implementation && document.implementation.createDocument )
+        doc = document.implementation.createDocument("", "", null);
+      else if ( typeof ActiveX != "undefined" )
+        doc = new ActiveXObject("Msxml.DOMDocument");
 
-		} else
-			doc = doc.ownerDocument ||
-				doc.getOwnerDocument && doc.getOwnerDocument() ||
-				doc;
+    } else
+      doc = doc.ownerDocument ||
+        doc.getOwnerDocument && doc.getOwnerDocument() ||
+        doc;
 
-		var elems = [],
-			documentElement = doc.documentElement ||
-				doc.getDocumentElement && doc.getDocumentElement();
+    var elems = [],
+      documentElement = doc.documentElement ||
+        doc.getDocumentElement && doc.getDocumentElement();
 
-		// If we're dealing with an empty document then we
-		// need to pre-populate it with the HTML document structure
-		if ( !documentElement && doc.createElement ) (function(){
-			var html = doc.createElement("html");
-			var head = doc.createElement("head");
-			head.appendChild( doc.createElement("title") );
-			html.appendChild( head );
-			html.appendChild( doc.createElement("body") );
-			doc.appendChild( html );
-		})();
+    // If we're dealing with an empty document then we
+    // need to pre-populate it with the HTML document structure
+    if ( !documentElement && doc.createElement ) (function(){
+      var html = doc.createElement("html");
+      var head = doc.createElement("head");
+      head.appendChild( doc.createElement("title") );
+      html.appendChild( head );
+      html.appendChild( doc.createElement("body") );
+      doc.appendChild( html );
+    })();
 
-		// Find all the unique elements
-		if ( doc.getElementsByTagName )
-			for ( var i in one )
-				one[ i ] = doc.getElementsByTagName( i )[0];
+    // Find all the unique elements
+    if ( doc.getElementsByTagName )
+      for ( var i in one )
+        one[ i ] = doc.getElementsByTagName( i )[0];
 
-		// If we're working with a document, inject contents into
-		// the body element
-		var curParentNode = one.body;
+    // If we're working with a document, inject contents into
+    // the body element
+    var curParentNode = one.body;
 
-		HTMLParser( html, {
-			start: function( tagName, attrs, unary ) {
-				// If it's a pre-built element, then we can ignore
-				// its construction
-				if ( one[ tagName ] ) {
-					curParentNode = one[ tagName ];
-					if ( !unary ) {
-						elems.push( curParentNode );
-					}
-					return;
-				}
+    HTMLParser( html, {
+      start: function( tagName, attrs, unary ) {
+        // If it's a pre-built element, then we can ignore
+        // its construction
+        if ( one[ tagName ] ) {
+          curParentNode = one[ tagName ];
+          if ( !unary ) {
+            elems.push( curParentNode );
+          }
+          return;
+        }
 
-				var elem = doc.createElement( tagName );
+        var elem = doc.createElement( tagName );
 
-				for ( var attr in attrs )
-					elem.setAttribute( attrs[ attr ].name, attrs[ attr ].value );
+        for ( var attr in attrs )
+          elem.setAttribute( attrs[ attr ].name, attrs[ attr ].value );
 
-				if ( structure[ tagName ] && typeof one[ structure[ tagName ] ] != "boolean" )
-					one[ structure[ tagName ] ].appendChild( elem );
+        if ( structure[ tagName ] && typeof one[ structure[ tagName ] ] != "boolean" )
+          one[ structure[ tagName ] ].appendChild( elem );
 
-				else if ( curParentNode && curParentNode.appendChild )
-					curParentNode.appendChild( elem );
+        else if ( curParentNode && curParentNode.appendChild )
+          curParentNode.appendChild( elem );
 
-				if ( !unary ) {
-					elems.push( elem );
-					curParentNode = elem;
-				}
-			},
-			end: function( tag ) {
-				elems.length -= 1;
+        if ( !unary ) {
+          elems.push( elem );
+          curParentNode = elem;
+        }
+      },
+      end: function( tag ) {
+        elems.length -= 1;
 
-				// Init the new parentNode
-				curParentNode = elems[ elems.length - 1 ];
-			},
-			chars: function( text ) {
-				curParentNode.appendChild( doc.createTextNode( text ) );
-			},
-			comment: function( text ) {
-				// create comment node
-			}
-		});
+        // Init the new parentNode
+        curParentNode = elems[ elems.length - 1 ];
+      },
+      chars: function( text ) {
+        curParentNode.appendChild( doc.createTextNode( text ) );
+      },
+      comment: function( text ) {
+        // create comment node
+      }
+    });
 
-		return doc;
-	};
+    return doc;
+  };
 
-	function makeMap(str){
-		var obj = {}, items = str.split(",");
-		for ( var i = 0; i < items.length; i++ )
-			obj[ items[i] ] = true;
-		return obj;
-	}
+  function makeMap(str){
+    var obj = {}, items = str.split(",");
+    for ( var i = 0; i < items.length; i++ )
+      obj[ items[i] ] = true;
+    return obj;
+  }
 })();
 
 // Engine
