@@ -3847,7 +3847,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     return deferred.promise;
   },
 
-
   getCell: function(spreadsheetKey, worksheetKey, row, col) {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('cells', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
@@ -3962,9 +3961,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
           "/" + wsKey + "/private/full?alt=json&callback=?&access_token=" +   CTS.Util.GSheet._currentToken.access_token;
     url = CTS.Util.GSheet.makeProxyUrl(url);
 
-
-
-
     var xmlBody = "<?xml version='1.0' ?>";
     xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
     xmlBody += ' xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">\n';
@@ -3991,9 +3987,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       },
       data: xmlBody
     });
-
     request.done(function(json) {
-      console.log("Resolved");
       var itemSpec = CTS.Util.GSheet._getItemSpec(json.entry, ssKey, wsKey);
       deferred.resolve(itemSpec);
     });
@@ -4662,7 +4656,7 @@ CTS.Node.Base = {
           var afterIndex = evt.afterIndex;
           var myIterables = fromRelation._getIterables(this);
           // TODO YAY!
-          my[afterIndex].clone().then(
+          myIterables[afterIndex].clone().then(
             function(clone) {
               // This will force realization of inline specs.
               clone.parseInlineRelationSpecsRecursive().then(
