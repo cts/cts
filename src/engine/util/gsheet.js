@@ -361,7 +361,6 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     return deferred.promise;
   },
 
-
   getCell: function(spreadsheetKey, worksheetKey, row, col) {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('cells', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
@@ -422,102 +421,95 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     });
 
     return deferred.promise;
-
-    // The Google Docs API incorrectly responds to OPTIONS preflights, so
-    // we are completely blocked from sending non-GET requests to it from
-    // within the browser. For now we'll proxy via the CTS server. Ugh.
-    // var deferred = Q.defer();
-    // var request = CTS.$.ajax({
-    //   url: CTS.Constants.quiltBase + 'api/gsheet/updatecell',
-    //   type: 'POST',
-    //   data: {
-    //     rowNum: rowNum,
-    //     colNum: colNum,
-    //     ssKey: ssKey,
-    //     wsKey: wsKey,
-    //     value: value,
-    //     token: this._currentToken.access_token
-    //   }
-    // });
-    // request.done(function(json) {
-    //   deferred.resolve();
-    // });
-    // request.fail(function(jqxhr, textStatus) {
-    //   CTS.Log.Error(jqxhr, textStatus);
-    //   deferred.reject(textStatus);
-    // });
-    // return deferred.promise;
   },
 
   modifyListItem: function(ssKey, wsKey, itemNode) {
-    // The Google Docs API incorrectly responds to OPTIONS preflights, so
-    // we are completely blocked from sending non-GET requests to it from
-    // within the browser. For now we'll proxy via the CTS server. Ugh.
+    console.log("Modify List Item");
     var deferred = Q.defer();
-    var properties = {};
+    var url = itemNode.spec.editLink;
+    if (CTS.Util.GSheet._currentToken != null) {
+      url += "?access_token=" + CTS.Util.GSheet._currentToken.access_token;
+    } else {
+      console.error("Asked for auth but current token null");
+    }
+    url = CTS.Util.GSheet.makeProxyUrl(url);
+
+    var xmlBody = "<?xml version='1.0' ?>";
+    xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
+    xmlBody += ' xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">\n';
+    xmlBody += '\t<link rel="edit" type="application/atom+xml" ';
+    xmlBody += 'href="' + itemNode.spec.editLink + '" />\n';
+    xmlBody += '\t<id>' + itemNode.getItemId() + '</id>\n';
     for (var i = 0; i < itemNode.children.length; i++) {
       var child = itemNode.children[i];
-      properties[child.key] = child.value;
+      xmlBody += '\t<gsx:' + child.key + '>' + child.value + '</gsx:' + child.key + '>\n'
     }
-    var data = {
-      item: itemNode.getItemId(),
-      properties: properties,
-      ssKey: ssKey,
-      wsKey: wsKey,
-      token: this._currentToken.access_token,
-      editLink: itemNode.spec.editLink
-    };
-    var request = CTS.$.ajax({
-      url: CTS.Constants.quiltBase + 'api/gsheet/updatelistitem',
-      type: 'POST',
-      data: data
+    xmlBody += '</entry>';
+
+    var request = CTS.$.ajax(url, {
+      type: 'PUT',
+      headers: {
+        'Content-Type': 'application/atom+xml',
+        'GData-Version': '3.0',
+        'If-Match': '*',
+        'Authorization': 'AuthSub token="' + CTS.Util.GSheet._currentToken.access_token + '"'
+      },
+      data: xmlBody
     });
+
     request.done(function(json) {
-      CTS.Log.Info("Update Success!");
       deferred.resolve();
     });
     request.fail(function(jqxhr, textStatus) {
-      CTS.Log.Info("Update Fail!");
+      CTS.Log.Error(jqxhr, textStatus);
       deferred.reject(textStatus);
     });
+
     return deferred.promise;
   },
 
   cloneListItem: function(ssKey, wsKey, itemNode) {
-    // The Google Docs API incorrectly responds to OPTIONS preflights, so
-    // we are completely blocked from sending non-GET requests to it from
-    // within the browser. For now we'll proxy via the CTS server. Ugh.
     var deferred = Q.defer();
 
-    var properties = {};
+    var url = "https://spreadsheets.google.com/feeds/list/" + ssKey +
+          "/" + wsKey + "/private/full?alt=json&callback=?&access_token=" +   CTS.Util.GSheet._currentToken.access_token;
+    url = CTS.Util.GSheet.makeProxyUrl(url);
+
+    var xmlBody = "<?xml version='1.0' ?>";
+    xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
+    xmlBody += ' xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">\n';
     for (var i = 0; i < itemNode.children.length; i++) {
       var child = itemNode.children[i];
-      properties[child.key] = child.value;
+      var value = child.value;
+      var key = child.key;
+
       // XXX TEMPORARY FIX FOR BOOLEAN DEFAULTING!
-      if ((child.value == true) || (child.value == "TRUE") || (child.value == "True") || (child.value == "true")) {
-        properties[child.key] = false;
+      if ((value == true) || (value == "TRUE") || (value == "True") || (value == "true")) {
+        key = false;
       }
+
+      xmlBody += '\t<gsx:' + child.key + '>' + child.value + '</gsx:' + child.key + '>\n'
     }
-    var data = {
-      properties: properties,
-      ssKey: ssKey,
-      wsKey: wsKey,
-      token: this._currentToken.access_token
-    };
-    var request = CTS.$.ajax({
-      url: CTS.Constants.quiltBase + 'api/gsheet/appendlistitem',
+    xmlBody += '</entry>';
+
+    var request = CTS.$.ajax(url, {
       type: 'POST',
-      data: data,
-      dataType: 'json'
+      headers: {
+        'Content-Type': 'application/atom+xml',
+        'GData-Version': '3.0',
+        'Authorization': 'AuthSub token="' + CTS.Util.GSheet._currentToken.access_token + '"'
+      },
+      data: xmlBody
     });
     request.done(function(json) {
       var itemSpec = CTS.Util.GSheet._getItemSpec(json.entry, ssKey, wsKey);
       deferred.resolve(itemSpec);
     });
     request.fail(function(jqxhr, textStatus) {
-      CTS.Log.Error("Request Failed");
+      CTS.Log.Error(jqxhr, textStatus);
       deferred.reject(textStatus);
     });
+
     return deferred.promise;
   }
 });

@@ -43,7 +43,6 @@ exports.gdoc = function(req, res) {
     auth: location.auth
   };
   delete options.headers.host;
-  console.log(options);
   var gReq = protocol.request(options, function (gRes) {
     res.writeHead(gRes.statusCode, gRes.headers);
     gRes.on("data", function(d) {
@@ -51,6 +50,7 @@ exports.gdoc = function(req, res) {
     });
     gRes.on("end", function () {
       res.addTrailers(gRes.trailers);
+      console.log("Ending");
       res.end();
     });
   });

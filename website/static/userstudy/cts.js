@@ -1,15 +1,15 @@
 /*  Cascading Tree Sheets
  *  ==========================================================================
- *
+ * 
  *  Assumption:
- *
+ * 
  *    This is the one file that must ALWAYS be loaded before any other CTS file
  *    has loaded. In other words, other files can count on
  *    `CTS.registerNamespace` being around.
  *
  *    This file is also designed to be able to load multiple times. So CTS-UI
  *    can load it if it loads before CTS.
- *
+ * 
  *  Set up CTS root object
  *  --------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ if (typeof CTS.Fn == 'undefined') {
       }
     }
   };
-
+  
   CTS.Fn.extend = function(obj) {
     CTS.Fn.each(Array.prototype.slice.call(arguments, 1), function(source) {
       if (source) {
@@ -86,9 +86,15 @@ if (typeof CTS.Fn == 'undefined') {
 
 CTS.registerNamespace('CTS.Constants');
 
-CTS.Constants.mockupBase = "http://www.treesheets.org/mockups/";
-CTS.Constants.jQuery = '//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js';
-CTS.Constants.longstackSupport = false;
+CTS.Constants.mockupBase = "//localhost:7878/"; // Run out of the mockups project.
+CTS.Constants.jQuery = "//localhost:3000/js/lib/jquery.min.js";
+CTS.Constants.longstackSupport = true;
+
+CTS.Constants.quiltBase = "//localhost:3000/";
+CTS.Constants.Google = {
+  ApiKey: 'AIzaSyBpNbbqKrk21n6rI8Nw2R6JSz6faN7OiWc',
+  ClientId: '459454183971-3rhp3qnfrdane1hnoa23eom28qoo146f.apps.googleusercontent.com'
+};
 
 CTS.registerNamespace('CTS.Util');
 
@@ -672,10 +678,10 @@ if (typeof (/./) !== 'function') {
 
 CTS.Fn.idCounter = 0;
 
-/*
+/* 
  * To avoid processing costly things only not to log them, you can
  * say:
- *
+ * 
  *     if (CTS.LogLevel.Warn()) {
  *       var b = computeExpensiveThing;
  *       CTS.Log.Warn("b's value is", b);
@@ -686,14 +692,14 @@ CTS.Fn.idCounter = 0;
  *
  */
 CTS.LogLevel = {
-
+  
   Level: 3,
 
   // 0: Fatal
   Fatal: function() {
     return CTS.LogLevel.Level >= 0;
   },
-
+   
   // 1: Error
   Error: function() {
     return CTS.LogLevel.Level >= 1;
@@ -709,7 +715,7 @@ CTS.LogLevel = {
     return CTS.LogLevel.Level >= 3;
   },
 
-  // 4: Debug
+  // 4: Debug 
   Debug: function() {
     return CTS.LogLevel.Level >= 4;
   }
@@ -1292,7 +1298,7 @@ CTS.Fn.extend(TreeViz.prototype, {
   write: function(html) {
     this.win.document.write(html);
   },
-
+  
   init:  function() {
     this.win = window.open(
         "",
@@ -1313,11 +1319,11 @@ CTS.Fn.extend(TreeViz.prototype, {
     this.write("</body><html>");
     this.win.document.close();
   },
-
+  
   writeTree: function(tree) {
     this.write("<script>");
     this.write("window.treeData = ");
-    this.writeNode(tree.root);
+    this.writeNode(tree.root); 
     this.write(";");
     this.write("</script>");
   },
@@ -3482,8 +3488,6 @@ CTS.registerNamespace('CTS.Util.GSheet');
 
 CTS.Fn.extend(CTS.Util.GSheet, {
   // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiauthauthorize
-  _ctsApiClientId: '459454183971-3rhp3qnfrdane1hnoa23eom28qoo146f.apps.googleusercontent.com',
-  _ctsApiKey: 'AIzaSyBpNbbqKrk21n6rI8Nw2R6JSz6faN7OiWc',
   _ctsApiClientScopes: 'https://www.googleapis.com/auth/plus.me http://spreadsheets.google.com/feeds/ https://www.googleapis.com/auth/drive',
   _loginStateModified: null,
   _currentToken: null,
@@ -3553,12 +3557,17 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   _registerCtsCredentials: function() {
-    gapi.client.setApiKey(CTS.Util.GSheet._ctsApiKey);
+    gapi.client.setApiKey(CTS.Constants.Google.ApiKey);
   },
 
-  _authenticationResult: function(authResult) {
+  _authenticationResult: function(authResult, token) {
    if (authResult && !authResult.error) {
-     CTS.Util.GSheet._currentToken = gapi.auth.getToken();
+     if (typeof token == 'undefined') {
+       CTS.Util.GSheet._currentToken = gapi.auth.getToken();
+     } else {
+       CTS.Util.GSheet._currentToken = token;
+       gapi.auth.setToken(token);
+     }
      CTS.Util.GSheet._loginDefer.resolve();
    } else {
      CTS.Util.GSheet._currentToken = null;
@@ -3578,11 +3587,27 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   login: function() {
+    // Load API via IFRAME to Treesheets server. Unfortunate but required.
+    // var source = CTS.Constants.quiltBase + 'api/gsheet/login';
+    // CTS.Util.GSheet.loginIframe = CTS.$('<iframe style="display:none;" src="' +
+    //   source + '"></iframe>');
+    // var catchLogin = function(evt) {
+    //   if (typeof(evt) != "undefined") {
+    //     if (evt.source == source) {
+    //       window.removeEventListener("message", returnData);
+    //       var data = evt.data;
+    //       console.log("got data", data);
+    //     }
+    //   }
+    // };
+    //
+    // window.addEventListener("message", catchLogin, false);
+    // CTS.$('body').append(CTS.Util.GSheet.loginIframe);
     CTS.Util.GSheet._gapiLoaded.promise.then(
       function() {
         gapi.auth.authorize(
           {
-            client_id: CTS.Util.GSheet._ctsApiClientId,
+            client_id: CTS.Constants.Google.ClientId,
             scope: CTS.Util.GSheet._ctsApiClientScopes
           },
           CTS.Util.GSheet._authenticationResult
@@ -3640,10 +3665,15 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     return deferred.promise;
   },
 
+  makeProxyUrl: function(url) {
+    return 'http:' + CTS.Constants.quiltBase + 'api/gdoc/' + url;
+  },
+
   getSpreadsheets: function() {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl(
         'spreadsheets', null, null, 'private', 'full', null, true, true);
+    url = CTS.Util.GSheet.makeProxyUrl(url);
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
@@ -3672,6 +3702,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   getWorksheets: function(key) {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('worksheets', key, null, 'private', 'full', null, true, true);
+    url = CTS.Util.GSheet.makeProxyUrl(url);
     var request = CTS.$.getJSON(url);
     request.done(function(json) {
       var ret = [];
@@ -3741,7 +3772,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   getListFeed: function(spreadsheetKey, worksheetKey) {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('list', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
-
+    url = CTS.Util.GSheet.makeProxyUrl(url);
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
@@ -3770,7 +3801,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   getCellFeed: function(spreadsheetKey, worksheetKey) {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('cells', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
-
+    url = CTS.Util.GSheet.makeProxyUrl(url);
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
@@ -3821,6 +3852,7 @@ CTS.Fn.extend(CTS.Util.GSheet, {
     var deferred = Q.defer();
     var url = CTS.Util.GSheet._gSheetUrl('cells', spreadsheetKey, worksheetKey, 'private', 'full', null, true, true);
     url = url + '&min-row=' + row + '&max-row=' + row + '&min-col=' + col + '&max-col=' + col;
+    url = CTS.Util.GSheet.makeProxyUrl(url);
     var request = CTS.$.getJSON(url);
 
     request.done(function(json) {
@@ -3839,22 +3871,34 @@ CTS.Fn.extend(CTS.Util.GSheet, {
   },
 
   modifyCell: function(ssKey, wsKey, rowNum, colNum, value) {
-    // The Google Docs API incorrectly responds to OPTIONS preflights, so
-    // we are completely blocked from sending non-GET requests to it from
-    // within the browser. For now we'll proxy via the CTS server. Ugh.
     var deferred = Q.defer();
-    var request = CTS.$.ajax({
-      url: '/api/gsheet/updatecell',
-      type: 'POST',
-      data: {
-        rowNum: rowNum,
-        colNum: colNum,
-        ssKey: ssKey,
-        wsKey: wsKey,
-        value: value,
-        token: this._currentToken.access_token
-      }
+
+    var cell = 'R' + rowNum + 'C' + colNum;
+    var url = CTS.Util.GSheet._gSheetUrl('cells', ssKey, wsKey, 'private', 'full', cell, false, true);
+    url = CTS.Util.GSheet.makeProxyUrl(url);
+
+    var cellurl = "https://spreadsheets.google.com/feeds/cells/" +
+      ssKey + "/" + wsKey + "/private/full/" + cell;
+
+    var xmlBody = "<?xml version='1.0' ?>";
+    xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
+    xmlBody += ' xmlns:gs="http://schemas.google.com/spreadsheets/2006">\n';
+    xmlBody += '\t<id>' + cellurl + '</id>\n';
+    xmlBody += '\t<link rel="edit" type="application/atom+xml" ';
+    xmlBody += 'href="' + cellurl + '" />\n';
+    xmlBody += '\t<gs:cell row="' + rowNum + '" col="' + colNum + '" ';
+    xmlBody += 'inputValue="' + value + '"/>\n</entry>';
+
+    var request = CTS.$.ajax(url, {
+      type: 'PUT',
+      headers: {
+        'Content-Type': 'application/atom+xml',
+        'GData-Version': '3.0',
+        'If-Match': '*'
+      },
+      data: xmlBody
     });
+
     request.done(function(json) {
       deferred.resolve();
     });
@@ -3862,78 +3906,102 @@ CTS.Fn.extend(CTS.Util.GSheet, {
       CTS.Log.Error(jqxhr, textStatus);
       deferred.reject(textStatus);
     });
+
     return deferred.promise;
   },
 
   modifyListItem: function(ssKey, wsKey, itemNode) {
-    // The Google Docs API incorrectly responds to OPTIONS preflights, so
-    // we are completely blocked from sending non-GET requests to it from
-    // within the browser. For now we'll proxy via the CTS server. Ugh.
+    console.log("Modify List Item");
     var deferred = Q.defer();
-    var properties = {};
+    var url = itemNode.spec.editLink;
+    if (CTS.Util.GSheet._currentToken != null) {
+      url += "?access_token=" + CTS.Util.GSheet._currentToken.access_token;
+    } else {
+      console.error("Asked for auth but current token null");
+    }
+    url = CTS.Util.GSheet.makeProxyUrl(url);
+
+    var xmlBody = "<?xml version='1.0' ?>";
+    xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
+    xmlBody += ' xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">\n';
+    xmlBody += '\t<link rel="edit" type="application/atom+xml" ';
+    xmlBody += 'href="' + itemNode.spec.editLink + '" />\n';
+    xmlBody += '\t<id>' + itemNode.getItemId() + '</id>\n';
     for (var i = 0; i < itemNode.children.length; i++) {
       var child = itemNode.children[i];
-      properties[child.key] = child.value;
+      xmlBody += '\t<gsx:' + child.key + '>' + child.value + '</gsx:' + child.key + '>\n'
     }
-    var data = {
-      item: itemNode.getItemId(),
-      properties: properties,
-      ssKey: ssKey,
-      wsKey: wsKey,
-      token: this._currentToken.access_token,
-      editLink: itemNode.spec.editLink
-    };
-    var request = CTS.$.ajax({
-      url: '/api/gsheet/updatelistitem',
-      type: 'POST',
-      data: data
+    xmlBody += '</entry>';
+
+    var request = CTS.$.ajax(url, {
+      type: 'PUT',
+      headers: {
+        'Content-Type': 'application/atom+xml',
+        'GData-Version': '3.0',
+        'If-Match': '*',
+        'Authorization': 'AuthSub token="' + CTS.Util.GSheet._currentToken.access_token + '"'
+      },
+      data: xmlBody
     });
+
     request.done(function(json) {
-      CTS.Log.Info("Update Success!");
       deferred.resolve();
     });
     request.fail(function(jqxhr, textStatus) {
-      CTS.Log.Info("Update Fail!");
+      CTS.Log.Error(jqxhr, textStatus);
       deferred.reject(textStatus);
     });
+
     return deferred.promise;
   },
 
   cloneListItem: function(ssKey, wsKey, itemNode) {
-    // The Google Docs API incorrectly responds to OPTIONS preflights, so
-    // we are completely blocked from sending non-GET requests to it from
-    // within the browser. For now we'll proxy via the CTS server. Ugh.
     var deferred = Q.defer();
 
-    var properties = {};
+    var url = "https://spreadsheets.google.com/feeds/list/" + ssKey +
+          "/" + wsKey + "/private/full?alt=json&callback=?&access_token=" +   CTS.Util.GSheet._currentToken.access_token;
+    url = CTS.Util.GSheet.makeProxyUrl(url);
+
+
+
+
+    var xmlBody = "<?xml version='1.0' ?>";
+    xmlBody += '<entry xmlns="http://www.w3.org/2005/Atom"';
+    xmlBody += ' xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">\n';
     for (var i = 0; i < itemNode.children.length; i++) {
       var child = itemNode.children[i];
-      properties[child.key] = child.value;
+      var value = child.value;
+      var key = child.key;
+
       // XXX TEMPORARY FIX FOR BOOLEAN DEFAULTING!
-      if ((child.value == true) || (child.value == "TRUE") || (child.value == "True") || (child.value == "true")) {
-        properties[child.key] = false;
+      if ((value == true) || (value == "TRUE") || (value == "True") || (value == "true")) {
+        key = false;
       }
+
+      xmlBody += '\t<gsx:' + child.key + '>' + child.value + '</gsx:' + child.key + '>\n'
     }
-    var data = {
-      properties: properties,
-      ssKey: ssKey,
-      wsKey: wsKey,
-      token: this._currentToken.access_token
-    };
-    var request = CTS.$.ajax({
-      url: '/api/gsheet/appendlistitem',
+    xmlBody += '</entry>';
+
+    var request = CTS.$.ajax(url, {
       type: 'POST',
-      data: data,
-      dataType: 'json'
+      headers: {
+        'Content-Type': 'application/atom+xml',
+        'GData-Version': '3.0',
+        'Authorization': 'AuthSub token="' + CTS.Util.GSheet._currentToken.access_token + '"'
+      },
+      data: xmlBody
     });
+
     request.done(function(json) {
+      console.log("Resolved");
       var itemSpec = CTS.Util.GSheet._getItemSpec(json.entry, ssKey, wsKey);
       deferred.resolve(itemSpec);
     });
     request.fail(function(jqxhr, textStatus) {
-      CTS.Log.Error("Request Failed");
+      CTS.Log.Error(jqxhr, textStatus);
       deferred.reject(textStatus);
     });
+
     return deferred.promise;
   }
 });
@@ -3954,11 +4022,11 @@ CTS.Node.Factory = {
     var klass = CTS.Node.Html;
 
     if (! CTS.Fn.isUndefined(node.jquery)) {
-      if (node.is('input')) {
+      if (node.is('input') || node.is('select')) {
         klass = CTS.Node.HtmlInput;
       }
     } else if (node instanceof Element) {
-      if (node.nodeName == 'INPUT') {
+      if ((node.nodeName == 'INPUT') || (node.nodeName == 'SELECT')) {
         klass = CTS.Node.HtmlInput;
       }
     }
@@ -4594,7 +4662,7 @@ CTS.Node.Base = {
           var afterIndex = evt.afterIndex;
           var myIterables = fromRelation._getIterables(this);
           // TODO YAY!
-          myIterables[afterIndex].clone().then(
+          my[afterIndex].clone().then(
             function(clone) {
               // This will force realization of inline specs.
               clone.parseInlineRelationSpecsRecursive().then(
@@ -4666,6 +4734,10 @@ CTS.Fn.extend(CTS.Node.Abstract.prototype,
        }
      )
      return d.promise;
+   },
+
+   getValue: function() {
+     return "";
    }
 
 });
@@ -5100,6 +5172,8 @@ CTS.Node.HtmlInput = function(node, tree, opts) {
   this.subKind = "text";
   if (this.value.is('[type="checkbox"]')) {
     this.subKind = "checkbox";
+  } else if (this.value.is('select')) {
+    this.subKind = "select";
   }
 
   this.on('received-is', function() {
@@ -5160,6 +5234,8 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
     if (Fn.isUndefined(opts) || Fn.isUndefined(opts.attribute)) {
       if (this.subKind == "checkbox") {
         return this.value.prop("checked");
+      } else if (this.subKind == "select") {
+        return this.value.val();
       } else {
         return this.value.val();
       }
@@ -5173,6 +5249,8 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
       if (this.subKind == "checkbox") {
         var checked = CTS.Fn.truthyOrFalsy(value);
         this.value.prop('checked', checked);
+      } else if (this.subKind == "select") {
+        this.value.val(value);
       } else {
         this.value.val(value);
       }
@@ -5225,7 +5303,6 @@ CTS.Fn.extend(CTS.Node.HtmlInput.prototype, CTS.Node.Base, CTS.Events, CTS.Node.
       node: this.value,
       ctsNode: this
     });
-    this._lastValueChangedValue = this.value;
   }
 
 });
@@ -5406,7 +5483,7 @@ CTS.Fn.extend(CTS.Node.GListFeedItem.prototype, CTS.Node.Base, CTS.Events, {
     // If any of the properties match.
     var found = 0;
     selector = selector.trim();
-    if (selector[0] != "rows") {
+    if (selector[0] == ".") {
       selector = selector.slice(1);
       for (var i = 0; i < this.children.length; i++) {
         var child = this.children[i];
@@ -6665,6 +6742,21 @@ CTS.Relation.Base = {
       suffix = opts.suffix;
     }
     var iterables = kids.slice(prefix, kids.length - suffix);
+    if (opts.item) {
+      if (CTS.Fn.isUndefined(parseInt(opts.item))) {
+        if (opts.item.toLowerCase() == 'random') {
+          var item = iterables[Math.floor(Math.random()*iterables.length)];
+          iterables = [item];
+        }
+      } else {
+        // We're one-indexed
+        var index = parseInt(opts.item)
+        iterables = iterables.slice(index, 1);
+      }
+    }
+    if (opts.limit) {
+      iterables = iterables.slice(0, limit);
+    }
     return iterables;
   }
 
@@ -7880,7 +7972,7 @@ CTS.Fn.extend(SelectionSpec.prototype, {
 
   matches: function(node) {
     if (CTS.Fn.isUndefined(node._kind)) {
-      CTS.Debugging.Error("Node has no kind", [node]);
+      CTS.Debugging.Error("Node has no kind", [node]); 
       return false;
     } else if (node._kind != this._kind) {
       CTS.Debugging.Error("Node has wrong kind", [node]);
@@ -7924,7 +8016,7 @@ CTS.Fn.extend(SelectionSpec.prototype, {
 
     if (parts[1] == "html") {
       selector = new DomSelector(parts[2]);
-    }
+    } 
 
     if (selector !== null) {
       selector.treeName = parts[0];
@@ -7969,7 +8061,7 @@ CTS.Fn.extend(Selection.prototype, {
     for (var i = 0; i < this.nodes.length; i++) {
       if (! CTS.Fn.contains(arr, this.nodes[i])) {
         if (backoffToAncestor) {
-          //
+          // 
         } else {
           return false;
         }
@@ -8187,7 +8279,7 @@ CTS.Factory = {
 }
 
 CTS.Parser = {
-  /* Helper function which wraps parseForrestSpec.
+  /* Helper function which wraps parseForrestSpec. 
    *
    * Args:
    *   - spec: the spec to parse
@@ -8202,7 +8294,7 @@ CTS.Parser = {
   },
 
   /* Parses a forrest (externally linked) CTS sheet.
-   *
+   * 
    * Args:
    *  - spec: the spec to parse
    *  - format: the format which encodes the spec
@@ -8240,7 +8332,7 @@ CTS.Parser = {
     var tup = CTS.Parser._typeAndBodyForInline(spec);
     var kind = tup[0];
     var body = tup[1];
-
+    
     if (kind == 'json') {
       return CTS.Parser.Json.parseInlineSpecs(body, node, intoForrest, realizeTrees);
     } else if (kind == 'string') {
@@ -8314,7 +8406,7 @@ CTS.Parser.Json = {
     return ret;
   },
 
-  /*
+  /* 
    * Returns a Forrest.
    *
    * Arguments:
@@ -8504,7 +8596,11 @@ CTS.Parser.Cts = {
         } else if (kind == 'gsheet') {
           headerOpts['name'] = h[0];
           headerOpts['url'] = h[1];
-          if (h.length > 2) {
+          if (h.length > 3) {
+            headerOpts['worksheet'] = h[2];
+            f.treeSpecs.push(new TreeSpec('gsheet', headerOpts));
+          }
+          else if (h.length > 2) {
             headerOpts['worksheet'] = h[2];
             f.treeSpecs.push(new TreeSpec('gsheet', headerOpts));
           } else {
@@ -8770,7 +8866,7 @@ CTS.Parser.Html = new (function(){
 	var startTag = /^<([-A-Za-z0-9_]+)((?:\s+\w+(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/,
 		endTag = /^<\/([-A-Za-z0-9_]+)[^>]*>/,
 		attr = /([-A-Za-z0-9_]+)(?:\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))?/g;
-
+		
 	// Empty Elements - HTML 4.01
 	var empty = makeMap("area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed");
 
@@ -8805,28 +8901,28 @@ CTS.Parser.Html = new (function(){
 				// Comment
 				if ( html.indexOf("<!--") == 0 ) {
 					index = html.indexOf("-->");
-
+	
 					if ( index >= 0 ) {
 						if ( handler.comment )
 							handler.comment( html.substring( 4, index ) );
 						html = html.substring( index + 3 );
 						chars = false;
 					}
-
+	
 				// end tag
 				} else if ( html.indexOf("</") == 0 ) {
 					match = html.match( endTag );
-
+	
 					if ( match ) {
 						html = html.substring( match[0].length );
 						match[0].replace( endTag, parseEndTag );
 						chars = false;
 					}
-
+	
 				// start tag
 				} else if ( html.indexOf("<") == 0 ) {
 					match = html.match( startTag );
-
+	
 					if ( match ) {
 						html = html.substring( match[0].length );
 						match[0].replace( startTag, parseStartTag );
@@ -8836,10 +8932,10 @@ CTS.Parser.Html = new (function(){
 
 				if ( chars ) {
 					index = html.indexOf("<");
-
+					
 					var text = index < 0 ? html : html.substring( 0, index );
 					html = index < 0 ? "" : html.substring( index );
-
+					
 					if ( handler.chars )
 						handler.chars( text );
 				}
@@ -8862,7 +8958,7 @@ CTS.Parser.Html = new (function(){
 				throw "Parse Error: " + html;
 			last = html;
 		}
-
+		
 		// Clean up any remaining tags
 		parseEndTag();
 
@@ -8883,23 +8979,23 @@ CTS.Parser.Html = new (function(){
 
 			if ( !unary )
 				stack.push( tagName );
-
+			
 			if ( handler.start ) {
 				var attrs = [];
-
+	
 				rest.replace(attr, function(match, name) {
 					var value = arguments[2] ? arguments[2] :
 						arguments[3] ? arguments[3] :
 						arguments[4] ? arguments[4] :
 						fillAttrs[name] ? name : "";
-
+					
 					attrs.push({
 						name: name,
 						value: value,
 						escaped: value.replace(/(^|[^\\])"/g, '$1\\\"') //")
 					});
 				});
-
+	
 				if ( handler.start )
 					handler.start( tagName, attrs, unary );
 			}
@@ -8909,35 +9005,35 @@ CTS.Parser.Html = new (function(){
 			// If no tag name is provided, clean shop
 			if ( !tagName )
 				var pos = 0;
-
+				
 			// Find the closest opened tag of the same type
 			else
 				for ( var pos = stack.length - 1; pos >= 0; pos-- )
 					if ( stack[ pos ] == tagName )
 						break;
-
+			
 			if ( pos >= 0 ) {
 				// Close all the open elements, up the stack
 				for ( var i = stack.length - 1; i >= pos; i-- )
 					if ( handler.end )
 						handler.end( stack[ i ] );
-
+				
 				// Remove the open elements from the stack
 				stack.length = pos;
 			}
 		}
 	};
-
+	
 	this.HTMLtoXML = function( html ) {
 		var results = "";
-
+		
 		HTMLParser(html, {
 			start: function( tag, attrs, unary ) {
 				results += "<" + tag;
-
+		
 				for ( var i = 0; i < attrs.length; i++ )
 					results += " " + attrs[i].name + '="' + attrs[i].escaped + '"';
-
+		
 				results += (unary ? "/" : "") + ">";
 			},
 			end: function( tag ) {
@@ -8950,20 +9046,20 @@ CTS.Parser.Html = new (function(){
 				results += "<!--" + text + "-->";
 			}
 		});
-
+		
 		return results;
 	};
-
+	
 	this.HTMLtoDOM = function( html, doc ) {
 		// There can be only one of these elements
 		var one = makeMap("html,head,body,title");
-
+		
 		// Enforce a structure for the document
 		var structure = {
 			link: "head",
 			base: "head"
 		};
-
+	
 		if ( !doc ) {
 			if ( typeof DOMDocument != "undefined" )
 				doc = new DOMDocument();
@@ -8971,16 +9067,16 @@ CTS.Parser.Html = new (function(){
 				doc = document.implementation.createDocument("", "", null);
 			else if ( typeof ActiveX != "undefined" )
 				doc = new ActiveXObject("Msxml.DOMDocument");
-
+			
 		} else
 			doc = doc.ownerDocument ||
 				doc.getOwnerDocument && doc.getOwnerDocument() ||
 				doc;
-
+		
 		var elems = [],
 			documentElement = doc.documentElement ||
 				doc.getDocumentElement && doc.getDocumentElement();
-
+				
 		// If we're dealing with an empty document then we
 		// need to pre-populate it with the HTML document structure
 		if ( !documentElement && doc.createElement ) (function(){
@@ -8991,16 +9087,16 @@ CTS.Parser.Html = new (function(){
 			html.appendChild( doc.createElement("body") );
 			doc.appendChild( html );
 		})();
-
+		
 		// Find all the unique elements
 		if ( doc.getElementsByTagName )
 			for ( var i in one )
 				one[ i ] = doc.getElementsByTagName( i )[0];
-
+		
 		// If we're working with a document, inject contents into
 		// the body element
 		var curParentNode = one.body;
-
+		
 		HTMLParser( html, {
 			start: function( tagName, attrs, unary ) {
 				// If it's a pre-built element, then we can ignore
@@ -9012,18 +9108,18 @@ CTS.Parser.Html = new (function(){
 					}
 					return;
 				}
-
+			
 				var elem = doc.createElement( tagName );
-
+				
 				for ( var attr in attrs )
 					elem.setAttribute( attrs[ attr ].name, attrs[ attr ].value );
-
+				
 				if ( structure[ tagName ] && typeof one[ structure[ tagName ] ] != "boolean" )
 					one[ structure[ tagName ] ].appendChild( elem );
-
+				
 				else if ( curParentNode && curParentNode.appendChild )
 					curParentNode.appendChild( elem );
-
+					
 				if ( !unary ) {
 					elems.push( elem );
 					curParentNode = elem;
@@ -9031,7 +9127,7 @@ CTS.Parser.Html = new (function(){
 			},
 			end: function( tag ) {
 				elems.length -= 1;
-
+				
 				// Init the new parentNode
 				curParentNode = elems[ elems.length - 1 ];
 			},
@@ -9042,7 +9138,7 @@ CTS.Parser.Html = new (function(){
 				// create comment node
 			}
 		});
-
+		
 		return doc;
 	};
 
@@ -9077,6 +9173,8 @@ var Engine = CTS.Engine = function(opts, args) {
 
   this._booted = Q.defer();
   this.booted = this._booted.promise;
+  this._rendered = Q.defer();
+  this.rendered = this._rendered.promise;
 
   // The main tree.
   this.forrest = null;
@@ -9097,15 +9195,18 @@ CTS.Fn.extend(Engine.prototype, Events, {
    *  3:
    */
   render: function(opts) {
+    var self = this;
     var pt = this.forrest.getPrimaryTree();
     CTS.Log.Info("CTS::Engine::render called on Primary Tree");
     var options = CTS.Fn.extend({}, opts);
     pt.root._processIncoming().then(
       function() {
         CTS.Log.Info("CTS::Engine::render finished on Primary Tree");
+        self._rendered.resolve();
       },
       function(reason) {
         CTS.Log.Error(reason);
+        self._rendered.reject(reason);
       }
     ).done();
   },
@@ -9302,12 +9403,12 @@ CTS.Xtras.Color = {
     } else {
         CTS.Log.Error("ColorTreeNode: Node has no provenance");
     }
-
+  
     // Now color all the children.
     Fn.each(node.getChildren(), function(kid) {
       treeToColor = CTS.Xtras.Color.ColorTreeNode(kid, treeToColor, colorSet);
     });
-
+  
     return treeToColor;
   },
 
@@ -9327,10 +9428,11 @@ CTS.Xtras.Color = {
         node.value.css('border', 'none');
         node.value.css('border-color', color);
         node.value.css('background-image', "");
-
+        
       }
     } else {
       CTS.Log.Error("Not sure how to color node of type", node.kind);
     }
   }
 };
+
