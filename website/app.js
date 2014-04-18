@@ -132,6 +132,8 @@ app.get('/scratch/:page', scratchController.other);
  * APPLICATION ROUTES
  * ======================================================================
  */
+app.get('/login-popup', userController.getLoginPopup);
+app.post('/login-popup', userController.postLoginPopup);
 
 app.get('/login', userController.getLogin);
 app.post('/login', userController.postLogin);
@@ -149,9 +151,6 @@ app.post('/api/gdoc/*', gsheetproxy.gdoc);
 app.put('/api/gdoc/*', gsheetproxy.gdoc);
 app.options('/api/gdoc/*', gsheetproxy.returnOptions);
 
-app.post('/api/gsheet/updatecell', apiController.updateCell);
-app.post('/api/gsheet/updatelistitem', apiController.updateListItem);
-app.post('/api/gsheet/appendlistitem', apiController.appendListItem);
 app.get('/api/gsheet/login', apiController.googleLogin);
 
 app.get('/api/proxy', apiController.getProxy);

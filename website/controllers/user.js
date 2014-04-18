@@ -14,6 +14,14 @@ exports.getLogin = function(req, res) {
   });
 };
 
+exports.getLoginPopup = function(req, res) {
+  if (req.user) return res.redirect('/');
+  res.render('account/login_popup', {
+    title: 'Login'
+  });
+};
+
+
 /**
  * POST /login
  * Sign in using email and password.
@@ -22,6 +30,34 @@ exports.getLogin = function(req, res) {
  */
 
 exports.postLogin = function(req, res, next) {
+  req.assert('email', 'Email is not valid').isEmail();
+  req.assert('password', 'Password cannot be blank').notEmpty();
+
+  var errors = req.validationErrors();
+
+  if (errors) {
+    req.flash('errors', errors);
+    return res.redirect('/login');
+  }
+
+  passport.authenticate('local', function(err, user, info) {
+    if (err) return next(err);
+
+    if (!user) {
+      req.flash('errors', { msg: info.message });
+      return res.redirect('/login');
+    }
+
+    req.logIn(user, function(err) {
+      if (err) return next(err);
+      req.flash('success', { msg: 'Success! You are logged in.' });
+      return res.redirect('/');
+    });
+  })(req, res, next);
+};
+
+
+exports.postLoginPopup = function(req, res, next) {
   req.assert('email', 'Email is not valid').isEmail();
   req.assert('password', 'Password cannot be blank').notEmpty();
 
