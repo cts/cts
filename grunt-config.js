@@ -53,6 +53,7 @@ var sources = {
     "src/engine/model/node/node-gcellfeed.js",
     "src/engine/model/node/node-gworksheet.js",
     "src/engine/model/node/node-gspreadsheet.js",
+    "src/engine/model/node/node-firebase.js",
 
     /* Relations */
     "src/engine/model/relation/relation-spec.js",

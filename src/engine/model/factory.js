@@ -117,8 +117,7 @@ CTS.Factory = {
                 var child = ss.children[i];
                 if ((! found) && (child.name == treespec.worksheet)) {
                   tree.root = child;
-                  found = true;
-                  if (treespec.receiveEvents) {
+                   if (treespec.receiveEvents) {
                     tree.toggleReceiveRelationEvents(true);
                   }
                   deferred.resolve(tree);
@@ -148,7 +147,11 @@ CTS.Factory = {
 
   FirebaseTree: function(treespec, forrest) {
     var deferred = Q.defer();
-    deferred.resolve(new CTS.Tree.Firebase(forrest, treespec));
+    var tree = new CTS.Tree.Firebase(forrest, treespec);
+    var ss = new CTS.Node.Firebase(treespec, tree);
+    ss.Ref = new Firebase(treespec.url);
+    tree.root = ss
+    deferred.resolve(tree);
     return deferred.promise;
   }
 }
