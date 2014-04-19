@@ -9829,3 +9829,6 @@ div.snippet-title .snippet-name button {
   vertical-align: top;
   margin-top: 10px;
 }
+div.popup h2 {
+  text-align: center;
+}

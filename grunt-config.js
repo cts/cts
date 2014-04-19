@@ -36,6 +36,7 @@ var sources = {
     "src/engine/util/q.js",
     "src/engine/util/state-machine.js",
     "src/engine/util/events.js",
+    "src/engine/util/server.js",
     "src/engine/util/gapi.js",
     "src/engine/util/gsheet.js",
 

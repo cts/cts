@@ -65,7 +65,7 @@ exports.postLoginPopup = function(req, res, next) {
 
   if (errors) {
     req.flash('errors', errors);
-    return res.redirect('/login');
+    return res.redirect('/login-popup');
   }
 
   passport.authenticate('local', function(err, user, info) {
@@ -73,13 +73,13 @@ exports.postLoginPopup = function(req, res, next) {
 
     if (!user) {
       req.flash('errors', { msg: info.message });
-      return res.redirect('/login');
+      return res.redirect('/login-popup');
     }
 
     req.logIn(user, function(err) {
       if (err) return next(err);
       req.flash('success', { msg: 'Success! You are logged in.' });
-      return res.redirect('/');
+      return res.redirect('/login-popup-success');
     });
   })(req, res, next);
 };

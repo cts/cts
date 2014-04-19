@@ -19,13 +19,19 @@ CTS.Fn.extend(CTS.Server, {
   },
 
   request: function(path, opts) {
-    
     CTS.Server._token = null;
     CTS.Server._loginDeferred = null;
   },
 
-
   _login: function() {
+    var loginurl = CTS.Constants.quiltBase + 'login-popup';
+    var popup = window.open(loginurl,'targetWindow',
+       'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,' +
+       'resizable=no,width=350,height=400');
+    window.addEventListener("message", CTS.Server._loginMessage, false);
+  },
+
+  _loginMessage: function(msg) {
 
   },
 
@@ -50,4 +56,5 @@ CTS.Fn.extend(CTS.Server, {
     gapi.load("auth:client,drive-share", function() {
       CTS.Util.GSheet._gapiLoaded.resolve();
     });
-  },
+  }
+});
