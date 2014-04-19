@@ -7,24 +7,12 @@ var User = require('../models/User');
  * Login page.
  */
 
-exports.getLogin = function(req, res, popup) {
-  var rootLocation = '/';
-  var signupLocation = 'account/login';
-  if (popup) {
-    rootLocation = '/check-gauth-popup';
-    signupLocation = 'account/login_popup';
-  }
-
-  if (req.user) return res.redirect(rootLocation);
-  res.render(signupLocation, {
+exports.getLogin = function(req, res) {
+  if (req.user) return res.redirect('/');
+  res.render('account/login', {
     title: 'Login'
   });
 };
-
-exports.getLoginPopup = function(req, res) {
-  exports.getLogin(req, res, true);
-};
-
 
 /**
  * POST /login
@@ -33,14 +21,7 @@ exports.getLoginPopup = function(req, res) {
  * @param password
  */
 
-exports.postLogin = function(req, res, next, popup) {
-  var rootLocation = '/';
-  var loginLocation = '/login';
-  if (popup) {
-    rootLocation = '/check-gauth-popup';
-    loginLocation = '/login-popup';
-  }
-
+exports.postLogin = function(req, res, next) {
   req.assert('email', 'Email is not valid').isEmail();
   req.assert('password', 'Password cannot be blank').notEmpty();
 
@@ -48,7 +29,7 @@ exports.postLogin = function(req, res, next, popup) {
 
   if (errors) {
     req.flash('errors', errors);
-    return res.redirect(loginLocation);
+    return res.redirect('/login');
   }
 
   passport.authenticate('local', function(err, user, info) {
@@ -56,20 +37,15 @@ exports.postLogin = function(req, res, next, popup) {
 
     if (!user) {
       req.flash('errors', { msg: info.message });
-      return res.redirect(loginLocation);
+      return res.redirect('/login');
     }
 
     req.logIn(user, function(err) {
       if (err) return next(err);
       req.flash('success', { msg: 'Success! You are logged in.' });
-      return res.redirect(rootLocation);
+      return res.redirect('/');
     });
   })(req, res, next);
-};
-
-
-exports.postLoginPopup = function(req, res, next) {
-  exports.postLogin(req, res, next, true);
 };
 
 /**
@@ -87,22 +63,11 @@ exports.logout = function(req, res) {
  * Signup page.
  */
 
-exports.getSignup = function(req, res, popup) {
-  var rootLocation = '/';
-  var signupLocation = 'account/signup';
-  if (popup) {
-    rootLocation = '/check-gauth-popup';
-    signupLocation = 'account/signup_popup';
-  }
-
-  if (req.user) return res.redirect(rootLocation);
-  res.render(signupLocation, {
+exports.getSignup = function(req, res) {
+  if (req.user) return res.redirect('/');
+  res.render('account/signup', {
     title: 'Create Account'
   });
-};
-
-exports.getSignupPopup = function(req, res) {
-  exports.getSignup(req, res, true);
 };
 
 /**
@@ -112,23 +77,16 @@ exports.getSignupPopup = function(req, res) {
  * @param password
  */
 
-exports.postSignup = function(req, res, next, popup) {
+exports.postSignup = function(req, res, next) {
   req.assert('email', 'Email is not valid').isEmail();
   req.assert('password', 'Password must be at least 4 characters long').len(4);
   req.assert('confirmPassword', 'Passwords do not match').equals(req.body.password);
 
   var errors = req.validationErrors();
 
-  var rootLocation = '/';
-  var signupLocation = '/signup';
-  if (popup) {
-    rootLocation = '/check-gauth-popup';
-    signupLocation = '/signup-popup';
-  }
-
   if (errors) {
     req.flash('errors', errors);
-    return res.redirect(signupLocation);
+    return res.redirect('/signup');
   }
 
   var user = new User({
@@ -141,31 +99,13 @@ exports.postSignup = function(req, res, next, popup) {
       if (err.code === 11000) {
         req.flash('errors', { msg: 'User with that email already exists.' });
       }
-      return res.redirect(signupLocation);
+      return res.redirect('/signup');
     }
     req.logIn(user, function(err) {
       if (err) return next(err);
-      res.redirect(rootLocation);
+      res.redirect('/');
     });
   });
-};
-
-exports.postSignupPopup = function(req, res, next) {
-  exports.postSignup(req, res, next, true);
-}
-
-exports.getCheckGauthPopup = function(req, res) {
-  var popup = true;
-
-  if (! req.user) return res.redirect('/login-popup');
-
-  if (req.user.google) {
-    res.render('account/gauth_success');
-  } else {
-    res.render('account/gauth_popup', {
-      title: 'GAuth'
-    });
-  }
 };
 
 /**
