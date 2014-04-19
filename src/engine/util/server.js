@@ -25,14 +25,25 @@ CTS.Fn.extend(CTS.Server, {
 
   _login: function() {
     var loginurl = CTS.Constants.quiltBase + 'login-popup';
-    var popup = window.open(loginurl,'targetWindow',
+    CTS.Server._popup = window.open(loginurl,'targetWindow',
        'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,' +
        'resizable=no,width=350,height=400');
-    window.addEventListener("message", CTS.Server._loginMessage, false);
+    // Now we poke it until it's ready to listen.
+    CTS.Server._popupInterval = setInterval(CTS.Server._callPopup, 500);
+    window.addEventListener('message', CTS.Server._loginMessage, false);
+  },
+
+  _callPopup: function() {
+    if (CTS.Server._popup != null) {
+      CTS.Server._popup.postMessage("CTS-Token-Request", "*");
+    } else {
+      clearInterval(CTS.Server._popupInterval);
+    }
   },
 
   _loginMessage: function(msg) {
-
+    console.log("GOT MSG", msg);
+    CTS.Server._popup = null;
   },
 
   _loginSuccess: function(token) {

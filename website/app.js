@@ -134,6 +134,9 @@ app.get('/scratch/:page', scratchController.other);
  */
 app.get('/login-popup', userController.getLoginPopup);
 app.post('/login-popup', userController.postLoginPopup);
+app.get('/signup-popup', userController.getSignupPopup);
+app.post('/signup-popup', userController.postSignupPopup);
+app.get('/check-gauth-popup', userController.getCheckGauthPopup);
 
 app.get('/login', userController.getLogin);
 app.post('/login', userController.postLogin);
@@ -171,6 +174,10 @@ app.get('/auth/github', passport.authenticate('github'));
 app.get('/auth/github/callback', passport.authenticate('github', { successRedirect: '/', failureRedirect: '/login' }));
 app.get('/auth/google', passport.authenticate('google', { scope: 'profile email' }));
 app.get('/auth/google/callback', passport.authenticate('google', { successRedirect: '/', failureRedirect: '/login' }));
+
+app.get('/auth/google-popup', passport.authenticate('google-popup', { scope: 'profile email https://www.googleapis.com/auth/plus.me http://spreadsheets.google.com/feeds/ https://www.googleapis.com/auth/drive' }));
+app.get('/auth/google/callback-popup', passport.authenticate('google-popup', { successRedirect: '/check-gauth-popup', failureRedirect: '/check-gauth-popup' }));
+
 app.get('/auth/twitter', passport.authenticate('twitter'));
 app.get('/auth/twitter/callback', passport.authenticate('twitter', { successRedirect: '/', failureRedirect: '/login' }));
 

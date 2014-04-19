@@ -135,7 +135,7 @@ passport.use(new TwitterStrategy(secrets.twitter, function(req, accessToken, tok
  * Sign in with Google.
  */
 
-passport.use(new GoogleStrategy(secrets.google, function(req, accessToken, refreshToken, profile, done) {
+var googleHandler = function(req, accessToken, refreshToken, profile, done) {
   if (req.user) {
     User.findOne({ $or: [{ google: profile.id }, { email: profile.email }] }, function(err, existingUser) {
       if (existingUser) {
@@ -177,7 +177,15 @@ passport.use(new GoogleStrategy(secrets.google, function(req, accessToken, refre
       });
     });
   }
-}));
+};
+
+passport.use(new GoogleStrategy(secrets.google, googleHandler));
+
+var googlePopup = new GoogleStrategy(secrets['google-popup'], googleHandler);
+googlePopup.name = 'google-popup';
+passport.use(googlePopup);
+
+
 
 
 /**

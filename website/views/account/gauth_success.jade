@@ -1,0 +1,18 @@
+extends ../layouts/popup-layout
+
+block content
+  div.popup
+    h2 Login Success
+    .col-sm-8.col-sm-offset-2
+      p Thank you.
+  script.
+    var listener = function(evt) {
+      if (evt.data == "CTS-Token-Request") {
+        console.log("Posting message");
+        console.log(evt);
+        evt.source.postMessage("Roger", evt.origin);
+      }
+    }
+    $(function() {
+      window.addEventListener("message", listener, false);
+    });
