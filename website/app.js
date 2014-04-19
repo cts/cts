@@ -175,9 +175,6 @@ app.get('/auth/github/callback', passport.authenticate('github', { successRedire
 app.get('/auth/google', passport.authenticate('google', { scope: 'profile email' }));
 app.get('/auth/google/callback', passport.authenticate('google', { successRedirect: '/', failureRedirect: '/login' }));
 
-app.get('/auth/google-popup', passport.authenticate('google-popup', { scope: 'profile email https://www.googleapis.com/auth/plus.me http://spreadsheets.google.com/feeds/ https://www.googleapis.com/auth/drive' }));
-app.get('/auth/google/callback-popup', passport.authenticate('google-popup', { successRedirect: '/check-gauth-popup', failureRedirect: '/check-gauth-popup' }));
-
 app.get('/auth/twitter', passport.authenticate('twitter'));
 app.get('/auth/twitter/callback', passport.authenticate('twitter', { successRedirect: '/', failureRedirect: '/login' }));
 
