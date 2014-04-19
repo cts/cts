@@ -181,13 +181,6 @@ var googleHandler = function(req, accessToken, refreshToken, profile, done) {
 
 passport.use(new GoogleStrategy(secrets.google, googleHandler));
 
-var googlePopup = new GoogleStrategy(secrets['google-popup'], googleHandler);
-googlePopup.name = 'google-popup';
-passport.use(googlePopup);
-
-
-
-
 /**
  * Login Required middleware.
  */
