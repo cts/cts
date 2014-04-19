@@ -5,12 +5,14 @@ block content
     h2 Login Success
     .col-sm-8.col-sm-offset-2
       p Thank you.
+      span.key(style="display: none;") KEY
   script.
     var listener = function(evt) {
       if (evt.data == "CTS-Token-Request") {
         console.log("Posting message");
         console.log(evt);
-        evt.source.postMessage("Roger", evt.origin);
+        var key = $('.key').html();
+        evt.source.postMessage(key, evt.origin);
       }
     }
     $(function() {
