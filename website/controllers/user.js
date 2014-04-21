@@ -9,7 +9,7 @@ var User = require('../models/User');
 
 exports.getLogin = function(req, res) {
   if (req.user) return res.redirect('/');
-  res.render('account/login', {
+  res.render('cts/account/login', {
     title: 'Login'
   });
 };
@@ -65,7 +65,7 @@ exports.logout = function(req, res) {
 
 exports.getSignup = function(req, res) {
   if (req.user) return res.redirect('/');
-  res.render('account/signup', {
+  res.render('cts/account/signup', {
     title: 'Create Account'
   });
 };
@@ -114,7 +114,7 @@ exports.postSignup = function(req, res, next) {
  */
 
 exports.getAccount = function(req, res) {
-  res.render('account/profile', {
+  res.render('cts/account/profile', {
     title: 'Account Management'
   });
 };
