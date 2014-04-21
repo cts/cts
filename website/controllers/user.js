@@ -1,6 +1,7 @@
 var passport = require('passport');
 var _ = require('underscore');
 var User = require('../models/User');
+var opts = require("../config/opts");
 
 /**
  * GET /login
@@ -9,7 +10,7 @@ var User = require('../models/User');
 
 exports.getLogin = function(req, res) {
   if (req.user) return res.redirect('/');
-  res.render('cts/account/login', {
+  res.render(opts.prefix + '/account/login', {
     title: 'Login'
   });
 };
@@ -65,7 +66,7 @@ exports.logout = function(req, res) {
 
 exports.getSignup = function(req, res) {
   if (req.user) return res.redirect('/');
-  res.render('cts/account/signup', {
+  res.render(opts.prefix + '/account/signup', {
     title: 'Create Account'
   });
 };
@@ -114,7 +115,7 @@ exports.postSignup = function(req, res, next) {
  */
 
 exports.getAccount = function(req, res) {
-  res.render('cts/account/profile', {
+  res.render(opts.prefix + '/account/profile', {
     title: 'Account Management'
   });
 };

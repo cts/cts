@@ -1,5 +1,7 @@
 var secrets = require('../config/secrets');
 var nodemailer = require("nodemailer");
+var opts = require("../config/opts");
+
 var smtpTransport = nodemailer.createTransport('SMTP', {
 //  service: 'Mailgun',
 //  auth: {
