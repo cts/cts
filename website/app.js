@@ -128,16 +128,6 @@ app.get('/widgets/:widget', widgetController.show);
 app.get('/scratch', scratchController.index);
 app.get('/scratch/:page', scratchController.other);
 
-/**
- * APPLICATION ROUTES
- * ======================================================================
- */
-app.get('/login-popup', userController.getLoginPopup);
-app.post('/login-popup', userController.postLoginPopup);
-app.get('/signup-popup', userController.getSignupPopup);
-app.post('/signup-popup', userController.postSignupPopup);
-app.get('/check-gauth-popup', userController.getCheckGauthPopup);
-
 app.get('/login', userController.getLogin);
 app.post('/login', userController.postLogin);
 app.get('/logout', userController.logout);
