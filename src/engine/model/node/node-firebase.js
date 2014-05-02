@@ -3,6 +3,7 @@ CTS.Node.Firebase = function(spec, tree, opts) {
   this.initializeNodeBase(tree, opts);
   this.spec = spec;
   this.kind = "Firebase";
+  this.key = null;
   this.value = null;
   this.ctsId = Fn.uniqueId().toString();
   this.Ref = null;
@@ -23,15 +24,21 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
     }
     // someone wants to find a key within this node
     // find all the children of this node
-    for(i=0;i<this.children.length;i++){
-      if
-    }
-    if (this.value !== null){
-      // this is a leaf, return its value
+    if(this.key == selectorString){
+      console.log('found it');
       ret.push(this.value);
-    } else {
-      // not a leaf, return node
-      ret.push(this)
+    }
+    for(i=0;i<this.children.length;i++){
+      // does key match any children?
+      if(this.children[i].key == selectorString){
+        if (this.children[i].value !== null){
+          // this is a leaf, return its value
+          ret.push(this.children[i].value);
+        } else {
+          // not a leaf, return node
+          ret.push(this.children[i])
+        }
+      }
     }
     return ret;
   },
@@ -68,8 +75,10 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
         data.forEach(function(datasnapshot) {
           var child = new CTS.Node.Firebase(self.spec, self.tree, self.opts);
           child.parentNode = self;
-          child.Ref = datasnapshot
-          self.children.push(child)
+          child.Ref = datasnapshot;
+          child.key = datasnapshot.name();
+          child.value = datasnapshot.val();
+          self.children.push(child);
           promises.push(child._subclass_realizeChildren())
         });
         Q.all(promises).then(function(){
