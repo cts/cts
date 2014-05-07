@@ -58,3 +58,8 @@ Testing
 -------
 
 I use [qUnit](http://qunitjs.com/), a jUnit-like testing framework for Javascript.
+
+License
+-------
+
+This software is made available under the GNU General Public License. See the LICENSE.txt file for more information.
