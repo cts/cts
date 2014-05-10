@@ -1,12 +1,16 @@
-CTS.Node.Firebase = function(spec, tree, opts) {
+CTS.Node.Firebase = function(spec, tree, opts, amiroot, key, value) {
   opts = opts || {};
   this.initializeNodeBase(tree, opts);
   this.spec = spec;
   this.kind = "Firebase";
-  this.key = null;
-  this.value = null;
+  this.key = key || null;
+  this.value = value || null;
   this.ctsId = Fn.uniqueId().toString();
   this.Ref = null;
+  if (typeof amiroot == 'undefined') {
+    amiroot = true;
+  }
+  this.amiroot = amiroot;
 };
 
 // ### Instance Methods
@@ -48,20 +52,39 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_realizeChildren: function() {
-    if (this.childrenDeferred) {
+    if (! this.amiroot) {
+      var d = Q.defer();
+      d.resolve();
+      this.children = [];
+      if (CTS.Fn.isObject(this.value)) {
+        for (key in this.value) {
+          var child = new CTS.Node.Firebase(
+            this.spec,
+            this.tree,
+            this.opts,
+            false,
+            key,
+            this.value[key]);
+          this.children.push(child);
+        }
+      }
+      return d.promise;
+    } else {
+      if (this.childrenDeferred) {
+        return this.childrenDeferred.promise;
+      }
+      CTS.Log.Info("Realizing children on FB Node");
+
+      this.childrenDeferred = Q.defer();
+      this.children = [];
+      this.realized = false;
+      var self = this;
+      // create the firebase nodes to represent children, add those to this.children
+      this.Ref.on('value', function(snapshot){
+        self.receivedFirebaseData(snapshot);
+      });
       return this.childrenDeferred.promise;
     }
-    CTS.Log.Info("Realizing children on FB Node");
-
-    this.childrenDeferred = Q.defer();
-    this.children = [];
-    this.realized = false;
-    var self = this;
-    // create the firebase nodes to represent children, add those to this.children
-    this.Ref.on('value', function(snapshot){
-      self.receivedFirebaseData(snapshot);
-    });
-    return this.childrenDeferred.promise;
   },
 
   receivedFirebaseData: function(snapshot){
@@ -69,7 +92,7 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
       CTS.Log.Error('This node has no children or value');
       this.childrenDeferred.reject("TODO: Figure out if this happens during non-err ops");
     } else {
-      if(this.realized){
+      if(this.realized) {
         // already realized, this must be a Pushed update from FB
         this._onValueChange(snapshot)
       } else {
@@ -77,19 +100,22 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
         var data = snapshot.val();
         CTS.Log.Info("I just got this new data", data);
         var self = this;
-        var promises = [];
-        data.forEach(function(datasnapshot) {
-          var child = new CTS.Node.Firebase(self.spec, self.tree, self.opts);
+        for (key in data) {
+          var child = new CTS.Node.Firebase(
+            this.spec,
+            this.tree,
+            this.opts,
+            false,
+            key,
+            data[key]);
           child.parentNode = self;
-          child.Ref = datasnapshot;
-          child.key = datasnapshot.name();
-          child.value = datasnapshot.val();
+        // child.realizeChildren();
+          // child.Ref = val;
+          // child.key = datasnapshot.name();
+          // child.value = datasnapshot.val();
           self.children.push(child);
-          promises.push(child._subclass_realizeChildren())
-        });
-        Q.all(promises).then(function(){
-          this.childrenDeferred.resolve();
-        });
+        }
+        this.childrenDeferred.resolve();
       }
     };
   },
