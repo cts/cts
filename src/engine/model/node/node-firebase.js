@@ -93,6 +93,7 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
             false,
             key,
             this.value[key]);
+            child.parentNode = this;
           this.children.push(child);
         }
       }
@@ -137,10 +138,6 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
             key,
             data[key]);
           child.parentNode = self;
-        // child.realizeChildren();
-          // child.Ref = val;
-          // child.key = datasnapshot.name();
-          // child.value = datasnapshot.val();
           self.children.push(child);
         }
         this.childrenDeferred.resolve();
@@ -153,13 +150,12 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   getValue: function(opts) {
-    this.Ref.on('value', function(snapshot){
-      return snapshot.val()[opts.key];
-    });
+    return this.value;
   },
 
   setValue: function(value, opts) {
     // call util function for write
+    CTS.Log.Info("TODO: Handle set value");
     this.Ref.child(opts.key).set(value);
     return;
   },

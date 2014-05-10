@@ -159,7 +159,6 @@ CTS.Factory = {
         deferred.reject(err);
       }
     );
-    deferred.resolve(tree);
     return deferred.promise;
   }
 }
