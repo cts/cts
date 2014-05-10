@@ -26,25 +26,53 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
       ret = [];
     }
 
-    // someone wants to find a key within this node
-    // find all the children of this node
-    if(this.key == selectorString){
-      console.log('found it');
-      ret.push(this.value);
-    }
-    for(i=0;i<this.children.length;i++){
-      // does key match any children?
-      if(this.children[i].key == selectorString){
-        if (this.children[i].value !== null){
-          // this is a leaf, return its value
-          ret.push(this.children[i].value);
-        } else {
-          // not a leaf, return node
-          ret.push(this.children[i])
+    // XXX MAYBE CHANGE
+    // assumption: selectorString is k1/k2/.../kn
+    if (this.amiroot) {
+      // ASSUMPTION: Root MUST be a dictionary. (is this true?)
+      for (var i = 0; i < this.children.length; i++) {
+        this.children[i].find(selectorString, ret);
+      }
+    } else {
+      var pieces = selectorString.split('/');
+      if (pieces.length == 1) {
+        // end of the road!
+        if (this.key == pieces[0]) {
+          ret.push(this);
+        }
+      } else {
+        // maybe recurse?
+        var newSelectorString = pieces.slice(1).join("/");
+        if (this.key == pieces[0] || this.amiroot) {
+          for (var i = 0; i < this.children.length; i++) {
+            this.children[i].find(newSelectorString, ret);
+          }
         }
       }
     }
+
     return ret;
+    // XXX END CHANGE
+
+    // someone wants to find a key within this node
+    // find all the children of this node
+    // if(this.key == selectorString){
+    //   console.log('found it');
+    //   ret.push(this.value);
+    // }
+    // for(i=0;i<this.children.length;i++){
+    //   // does key match any children?
+    //   if(this.children[i].key == selectorString){
+    //     if (this.children[i].value !== null){
+    //       // this is a leaf, return its value
+    //       ret.push(this.children[i].value);
+    //     } else {
+    //       // not a leaf, return node
+    //       ret.push(this.children[i])
+    //     }
+    //   }
+    // }
+    // return ret;
   },
 
   isDescendantOf: function(other) {
