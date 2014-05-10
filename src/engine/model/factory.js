@@ -151,6 +151,14 @@ CTS.Factory = {
     var ss = new CTS.Node.Firebase(treespec, tree);
     ss.Ref = new Firebase(treespec.url);
     tree.root = ss
+    tree.root.realizeChildren().then(
+      function() {
+        deferred.resolve(tree);
+      },
+      function(err) {
+        deferred.reject(err);
+      }
+    );
     deferred.resolve(tree);
     return deferred.promise;
   }

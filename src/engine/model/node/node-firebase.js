@@ -17,11 +17,11 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   find: function(selectorString, ret) {
-    console.log("find called");
-    console.log(selectorString);
+    console.log("find called", selectorString);
     if (typeof ret == "undefined"){
       ret = [];
     }
+
     // someone wants to find a key within this node
     // find all the children of this node
     if(this.key == selectorString){
@@ -48,12 +48,17 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
   },
 
   _subclass_realizeChildren: function() {
+    if (this.childrenDeferred) {
+      return this.childrenDeferred.promise;
+    }
+    CTS.Log.Info("Realizing children on FB Node");
+
     this.childrenDeferred = Q.defer();
     this.children = [];
     this.realized = false;
     var self = this;
     // create the firebase nodes to represent children, add those to this.children
-    this.roofRef.on('value', function(snapshot){
+    this.Ref.on('value', function(snapshot){
       self.receivedFirebaseData(snapshot);
     });
     return this.childrenDeferred.promise;
@@ -61,15 +66,16 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
 
   receivedFirebaseData: function(snapshot){
     if(snapshot.val() === null){
-      console.log('This node has no children or value');
+      CTS.Log.Error('This node has no children or value');
+      this.childrenDeferred.reject("TODO: Figure out if this happens during non-err ops");
     } else {
       if(this.realized){
         // already realized, this must be a Pushed update from FB
         this._onValueChange(snapshot)
       } else {
-        // just getting for first time
+        this.realized = true;
         var data = snapshot.val();
-        console.log(data);
+        CTS.Log.Info("I just got this new data", data);
         var self = this;
         var promises = [];
         data.forEach(function(datasnapshot) {
@@ -86,6 +92,10 @@ CTS.Fn.extend(CTS.Node.Firebase.prototype, CTS.Node.Base, CTS.Events, {
         });
       }
     };
+  },
+
+  _onValueChange: function(snapshot) {
+    CTS.Log.Warn("Handle value change for existing value", snapshot);
   },
 
   getValue: function(opts) {
