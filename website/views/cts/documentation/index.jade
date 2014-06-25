@@ -4,9 +4,15 @@ block title
   h1 Documentation
 
 block content
-  h2 Project Setup
+  h2 For Developers
+  h3 Setup
   ul
     li
       a(href="/documentation/setup") Installation and Configuration
     li
       a(href="/documentation/quilt-setup") Configuring Quilt (The Google Spreadsheets extension to CTS)
+
+  h3 Scratch Page
+  p There is a <a href="/scratch">Scratch Page</a> carved into the CTS Server to help testing and development.
+  p Any file added to <code>website/views/cts/scratch</code> will be automatically available from the <a href="/scratch">Scratch Page</a>. Unfortunately, the only template engine supported right now is <a href="http://jade-lang.com/">Jade</a>, which is a bit odd. Think of it as HTML written as if it were Python code.
+  p The best way to see how this all works is to copy an existing one (such as <code>website/views/cts/html-to-html-cts.jade</code> and modify it.
