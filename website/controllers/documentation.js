@@ -18,3 +18,15 @@ exports.demos = function(req, res) {
     title: 'Demos'
   });
 };
+
+exports.docindex = function(req, res) {
+  res.render('cts/documentation/index');
+};
+
+exports.setup = function(req, res) {
+  res.render('cts/documentation/setup');
+};
+
+exports.quiltsetup = function(req, res) {
+  res.render('cts/documentation/quilt-setup');
+};

@@ -7,32 +7,11 @@
       ul.nav.navbar-nav
         li(class=title=='Home'?'active':undefined)
           a(style="font-size: 1.4em;", href='/') <b>CTS</b>
+        li(class=title=='Documentation'?'active':undefined)
+          a(href='/documentation') Documentation
         li(class=title=='Demos'?'active':undefined)
           a(href='/demos') Demos
         li(class=title=='Scratch'?'active':undefined)
           a(href='/scratch') Scratch
-        li(class=title=='Snippets'?'active':undefined)
-          a(href='/snippet') Snippets
         li(class=title=='About'?'active':undefined)
           a(href='/about') About
-
-      ul.nav.navbar-nav.navbar-right
-        if !user
-          li(class=title=='Login'?'active':undefined)
-            a(href='/login') Login
-          if secrets.localAuth
-            li(class=title=='Create Account'?'active':undefined)
-              a(href='/signup') Create Account
-        else
-          li.dropdown(class=title=='Account Management'?'active':undefined)
-            a.dropdown-toggle(href='#', data-toggle='dropdown')
-              if user.profile.picture
-                img.profile-image(src='#{user.profile.picture}')
-              else
-                img.profile-image(src='#{user.gravatar(60)}')
-              | #{user.profile.name || user.email || user.id}&nbsp;
-              i.caret
-            ul.dropdown-menu
-              li: a(href='/account') My Account
-              li.divider
-              li: a(href='/logout') Logout

@@ -1,0 +1,57 @@
+extends ../layouts/basic
+
+block title
+  h1 Quilt Setup
+
+block content
+  style.
+    img.example {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid #ccc;
+      margin-top: 15px;
+      margin-bottom: 20px;
+    }
+  p Quilt is the Google Spreadsheets variant of CTS. Unlike the basic CTS library, it requires that this server be running to act as a middleman between web pages and the Google Spreadsheet API.
+  p To configure your CTS repository as a Quilt server, you only need a few extra steps.
+
+  h2 Register a new AppEngine Project with Google
+  p First, create a new project on <a href="http://developer.google.com/console">Google's Developer Console</a>.
+  img.example(src="/img/doc/setup/create-project.png")
+  p Give your project a name
+  img.example(src="/img/doc/setup/create-project-2.png")
+  p And wait a few seconds while Google creates it. Once that's done, open your project to view the settings and click on the <b>Credentials</b> tab in the <b>APIs and Auth</b> section.
+  img.example(src="/img/doc/setup/credentials.png")
+  p In the OAuth section, click <b>Create New Client ID</b>
+  img.example(src="/img/doc/setup/create-client-id.png")
+  p And then fill in the following settings:
+  ul
+    li
+      b Application Type:
+      pre
+        code Web Application
+    li
+      b Authorized Javascript Origins:
+      pre
+        code.
+          http://localhost:3000
+          https://localhost:3000
+    li
+      b Authorized Redirect URIs:
+      pre
+        code.
+          http://localhost:3000/auth/google/callback
+          http://localhost:3000/auth/google/callback-popup
+  p Once you've created this client ID, you should see it in the <b>Credentials</b> view along with the client ID and client secret, which you'll need in the next step.
+
+  h2 Configure the CTS server to talk to Google
+  p If you haven't already done so, create <b>secrets.js</b> file by running the following command from the project root:
+  pre
+    code cp website/config/secrets_example.js website/config/secrets.js
+  p Now open the new <code>secrets.js</code> file in a code editor and enter your new <b>clientID</b> and <b>clientSecret</b> data in the <code>google</code> section.
+  p Note that the callback URL is important: if you registered <code>localhost:3000</code> with Google, then the callback URL must also use the <code>localhost</code> domain. <code>localhost</code> and <code>127.0.0.1</code> are <b>different domains</b> even though they route to the same machine!
+
+  h2 That's it!
+  p Everything should be all wired up to use CTS+Quilt!
+  p Example app documentation forthcoming.

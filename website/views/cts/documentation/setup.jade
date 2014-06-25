@@ -1,0 +1,47 @@
+extends ../layouts/basic
+
+block title
+  h1 Project Setup
+
+block content
+  h2 Dependencies
+  p First install these packages:
+  ul
+    li NodeJS
+    li NPM
+    li MongoDB
+    li Grunt
+
+  h2 Cloning and Installing NPM Dependencies
+  p Next, clone the repository
+  pre
+    code git clone https://github.com/cts/cts.git
+  p And then from the root directory, load the NPM dependencies
+  pre
+    code npm install
+
+  h2 Building the CTS Library
+  p To build <code>cts.js</code>, just run <code>grunt</code> from the project root. Then look at the <code>release/</code> directory for output.
+
+  h2 Setting up the CTS Server
+  p Since CTS is a web library, it helps to have a development server running to load pre-packaged experiments and create your own.
+
+  p First you'll need to create a <code>opts</code> file and a <code>secrets</code> file to contain machine-specific configuration. These are blocked by the project's <code>.gitignore</code> file so you won't accidentally check them in.
+
+  p Run the following two commands from the project root:
+
+  pre
+    code.
+      cp website/config/secrets_example.js website/config/secrets.js
+      cp website/config/opts_example.js website/config/opts.js
+
+  h2 Running the development server
+  p To run the server, first make sure MongoDB is running (<code>sudo mongod</code> and then run:
+  pre
+    code grunt server
+  p This causes a number of processes to run in parallel:
+  ul
+    li Runs a server on <a href="http://localhost:3000">localhost:3000</a>. This is the server hosting the website you are viewing now.
+    li Runs a file server on <a href="http://localhost:3001">localhost:3001</a>. This helps you load the CTS files individually (instead of bundled) so that errors will report the proper source file and line number.
+    li Watches and recompiles upon file change.
+  p Alternatively, you could just run <code>node app.js</code> from the <code>website</code> directory to only run the server on port 3000.
