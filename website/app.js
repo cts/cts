@@ -151,6 +151,7 @@ app.get('/api/proxy', apiController.getProxy);
 app.get('/documentation', docController.docindex);
 app.get('/documentation/setup', docController.setup);
 app.get('/documentation/quilt-setup', docController.quiltsetup);
+app.get('/documentation/quilt-examples', docController.quiltexamples);
 
 
 // app.get('/snippet', snippetController.getIndex);

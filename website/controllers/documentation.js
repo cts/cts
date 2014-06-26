@@ -30,3 +30,7 @@ exports.setup = function(req, res) {
 exports.quiltsetup = function(req, res) {
   res.render('cts/documentation/quilt-setup');
 };
+
+exports.quiltexamples = function(req, res) {
+  res.render('cts/documentation/quilt-examples');
+};
