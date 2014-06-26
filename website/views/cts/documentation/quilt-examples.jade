@@ -28,4 +28,15 @@ block content
   p Next, copy the google document key to your clipboard. This is the URL parameter named <code>key</code>, shown highlighted in this picture:
   img.example(src="/img/doc/setup/todo-url")
   p Finally, head to the <code>/website/static/examples/todo/index.html</code> file and replace the document key you see in that file with the one you copied.
+
+  h2 Mortgage Calculator
+  p Create a Google spreadsheet that looks like this:
+  img.example(src="/img/doc/setup/mortgage-sheet.png")
+  p No special coloring or sheet design are necessary for this one. But if you want the example HTML to work as-is, you'll need to make sure the cell coordinates all match.
+  ul
+    li The formula used in <b>B7</b> is <code>=ROUND(-PMT(B3/12,B4*12,B2),2)</code>
+    li The formula used in <b>B8></b> is <code>=IF(LT(B3,5%), "TRUE")</code>
+  p Next, copy the google document key, as with the <b>Todo</b> example.
+  p Finally, head to the <code>/website/static/examples/mortgage/index.html</code> file and replace the document key you see in that file with the one you copied.
+
   
