@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Mortgage Calculator</title>
+    <link rel="stylesheet" href="userstudy.css" />
+
+    <!-- 
+      CTS Link
+      The path /release/current maps to the /release folder of project root.
+      As such this is the live code from the last `grunt` compilation.
+
+      The /website/static/release directory is intended as an archive for
+      checking in and publishing specific release snapshots.
+    -->
+    <script src="http://localhost:3000/release/current/cts.dev.js"></script>
+
+    <!-- 
+      Link to your Google Doc.
+      1. Change the key below to the one for your document.
+      2. Notice the "Sheet1" argument below. That's the worksheet name.
+      3. See http://treesheets.org/documentation/quilt-examples for more details.
+    -->
+    <style type="text/cts">
+      @gsheet sheet 0Arj8lnBW4_tZdGwtenpGRUk1Y29YNDhCa3RkbjliTEE Sheet1;
+    </style>
+
+  </head>
+  <body>
+    <h1>Mortgage Calculator</h1>
+    <table>
+      <tr>
+        <td>Loan Amount: </td>
+        <td><input connect="B2" /></td>
+      </tr>
+      <tr>
+        <td>Interest Rate</td>
+        <td><input connect="B3" /></td>
+      </tr>
+      <tr>
+        <td>Loan Period</td>
+        <td><input connect="B4" /></td>
+      </tr>
+      <tr class="result">
+        <td>Monthly Payment</td>
+        <td><span connect="B7">result</span></td>
+      </tr>
+      <tr class="result">
+        <td></td>
+        <td><span show-if="B8">Amazing Rate!</span></td>
+      </tr>
+
+    </table>
+
+  </body>
+</html>
