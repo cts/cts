@@ -12,44 +12,18 @@
 
   </head>
   <body>
-    <div class="container todo-app">
-      <div class="row header">
-        <div class="col-md-12">
-          <h1>My To-Do List</h1>
-        </div>
-      </div>
 
-      <div class="row">
-        <div class="col-md-12">
+    <ul connect="rows">
+      <li>
+        <input connect="done" type="checkbox" />
+        <span connect="task">Example Task</span>
+      </li>
+    </ul>
 
-          <ul id="todo-items">
-            <li class="todo-item">
-              <input class="done" type="checkbox" />
-              <span class="title">Example ToDo Item Title</span>
-            </li>
-          </ul>
-
-          <form>
-            <input class="newItem input" label="Add a New Item" />
-            <button class="btn btn-success">Add</button>
-          </form>
-
-        </div>
-      </div>
-
-
-    </div>
-
-    <div id="data" style="">
-      <div class="data-item">
-        <h2>Pick up Cheese</h2>
-        <span>true</span>
-      </div>
-      <div class="data-item">
-        <h2>Remember the Milk</h2>
-        <span>false</span>
-      </div>
-    </div>
+    <form connect="rows">
+      <input connect="task" />
+      <button class="btn btn-success">Add</button>
+    </form>
 
   </body>
 </html>
