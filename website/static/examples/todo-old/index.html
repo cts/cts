@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Todo List</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script src="/js/lib/jquery.min.js"></script>
+    <script src="/js/lib/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="todo.css" />
+    <script src="/release/cts.js"></script>
+    <link rel="treesheet" href="todo.cts" />
+
+  </head>
+  <body>
+
+    <ul connect="rows">
+      <li>
+        <input connect="done" type="checkbox" />
+        <span connect="task">Example Task</span>
+      </li>
+    </ul>
+
+    <form connect="rows">
+      <input connect="task" />
+      <button class="btn btn-success">Add</button>
+    </form>
+
+  </body>
+</html>

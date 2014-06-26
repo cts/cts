@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Todo List</title>
+    <link rel="stylesheet" href="../bootstrap.css" />
+    <link rel="stylesheet" href="todo.css" />
+
+    <!-- The Cloudstitch Library -->
+    <!-- // <script src="http://cloudstitch.io/release/cloudstitch.js" appkey="XXX"></script> -->
+
+    <!-- Development Link -->
+    <script src="http://local-cloudstitch.io:3000/release/cloudstitch.dev.js" appkey="14caf81a6318ef95abddc8338586c876"></script>
+
+    <!-- Link to your Google Doc -->
+    <link type="cts/gsheet" worksheet="Todos" name="sheet" href="auto" />
+
+  </head>
+
+  <body>
+    <h1>My To-Do List</h1>
+
+    <ul connect="rows">
+      <li>
+        <input type="checkbox" connect ="done"/>
+        <span connect="task">Example Task</span>
+      </li>
+    </ul>
+
+   <form connect="rows">
+     <input connect="task"/>
+     <button>Add</button>
+   </form>
+
+  </body>
+</html>

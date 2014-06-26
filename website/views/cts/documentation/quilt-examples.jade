@@ -1,0 +1,31 @@
+extends ../layouts/basic
+
+block title
+  h1 Setting up the Quilt Examples
+
+block content
+  style.
+    img.example {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid #ccc;
+      margin-top: 15px;
+      margin-bottom: 20px;
+    }
+  ol
+    li First, make sure you've performed all the setup steps for both the CTS server and the Quilt extension.
+    li The only next steps are to create your own Google Spreadsheets and modify the example HTML to link to them.
+
+  h2 Todo List
+  p Create a Google spreadsheet that looks like this:
+  img.example(src="/img/doc/setup/todo-sheet.png")
+  ul
+    li You must drag down the header bar to freeze the top row
+    li You must enter two rows of example data (this is due to a quirk of how the Google Spreadsheet API works when in table mode)
+    li The coloring of the cells does not matter
+    li For this example, leave the worksheet with it's default name
+  p Next, copy the google document key to your clipboard. This is the URL parameter named <code>key</code>, shown highlighted in this picture:
+  img.example(src="/img/doc/setup/todo-url")
+  p Finally, head to the <code>/website/static/examples/todo/index.html</code> file and replace the document key you see in that file with the one you copied.
+  

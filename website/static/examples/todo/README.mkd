@@ -1,0 +1,31 @@
+A Todo List using Cloudstitch
+==============================
+
+This is an example application that shows a Todo list that sync with a Google Spreadsheet.
+
+Running
+=======
+
+Check out this repository and then host it from a webserver. 
+
+To spin up a temporary webserver to experiment, execute the following command from the project directory:
+
+```bash
+$ python -m SimpleHTTPServer
+``` 
+
+Then visit `http://localhost:8000`.
+
+Note that simply double-clicking the `index.html` file to open from your hard drive will not work because browsers handle the `file://` scheme with a special set of security restrictions.
+
+FAQ
+===
+
+### What is the "AppKey" on the Cloudstitch Javascript link?
+
+### What happens when I load the web page for the first time?
+
+### How does it know which spreadsheet to connect to?
+
+### How do I create multiple copies of this app instead of one?
+
