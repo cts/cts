@@ -40,12 +40,38 @@ var sources = {
     "src/engine/util/gapi.js",
     "src/engine/util/gsheet.js",
 
-    /* Node Containers */
-    "src/engine/model/node/node.js",
-    "src/engine/model/node/node-abstract.js",
-    "src/engine/model/node/node-dom-base.js",
-    "src/engine/model/node/node-dom.js",
-    "src/engine/model/node/node-dom-input.js",
+    /* Core Model */
+    "../repos/engine/src/node.js",
+    "../repos/engine/src/tree.js",
+    "../repos/engine/src/specs/tree-spec.js",
+    "../repos/engine/src/forrest.js",
+    "../repos/engine/src/specs/forrest-spec.js",
+    "../repos/engine/src/selection.js",
+    "../repos/engine/src/specs/selection-spec.js",
+    "../repos/engine/src/specs/dependency-spec.js",
+    "../repos/engine/src/factory.js",
+
+    /* Relations */
+    "../repos/engine/src/specs/relation-spec.js",
+    "../repos/engine/src/relation.js",
+    "../repos/engine/src/relations/is.js",
+    "../repos/engine/src/relations/are.js",
+    "../repos/engine/src/relations/ifexist.js",
+    "../repos/engine/src/relations/ifnexist.js",
+    "../repos/engine/src/relations/graft.js",
+
+    /* Abstract Trees */
+    "../repos/abstract-adapter/src/abstract-node.js",
+
+    /* HTML Trees */
+    "../repos/html-adapter/src/dom-node-base.js",
+    "../repos/html-adapter/src/dom-node.js",
+    "../repos/html-adapter/src/dom-node-input.js",
+    "../repos/html-adapter/src/dom-tree.js",
+    "../repos/html-adapter/src/dom-factory.js",
+
+    /* GSheet */
+    "src/engine/model/tree/tree-gspreadsheet.js",
     "src/engine/model/node/node-glistfeedproperty.js",
     "src/engine/model/node/node-glistfeeditem.js",
     "src/engine/model/node/node-glistfeed.js",
@@ -54,29 +80,6 @@ var sources = {
     "src/engine/model/node/node-gcellfeed.js",
     "src/engine/model/node/node-gworksheet.js",
     "src/engine/model/node/node-gspreadsheet.js",
-
-    /* Relations */
-    "src/engine/model/relation/relation-spec.js",
-    "src/engine/model/relation/relation.js",
-    "src/engine/model/relation/is.js",
-    "src/engine/model/relation/are.js",
-    "src/engine/model/relation/ifexist.js",
-    "src/engine/model/relation/ifnexist.js",
-    "src/engine/model/relation/graft.js",
-
-    /* Tree Model */
-    "src/engine/model/tree/tree.js",
-    "src/engine/model/tree/tree-spec.js",
-    "src/engine/model/tree/tree-dom.js",
-    "src/engine/model/tree/tree-gspreadsheet.js",
-    "src/engine/model/forrest-spec.js",
-    "src/engine/model/forrest.js",
-    "src/engine/model/selection-spec.js",
-    "src/engine/model/selection.js",
-    "src/engine/model/dependency-spec.js",
-
-    /* For creating async stuff */
-    "src/engine/model/factory.js",
 
     /* Parser */
     "src/engine/parser/parser.js",

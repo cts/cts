@@ -9829,38 +9829,3 @@ div.snippet-title .snippet-name button {
   vertical-align: top;
   margin-top: 10px;
 }
-
-body {
-  background: url(TEMPLATE/mortgage/house.png) 10px 10px no-repeat !important;
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  margin: 10px !important;
-  padding: 0px 10px 0px 10px !important;
-  left: 0;
-  top: 0;
-  width: 400px;
-  height: 600px;
-}
-
-h1 {
-  margin-top: 8px;
-  margin-left: 80px;
-  padding: 0 !important;
-  display: block;
-  padding-right: 0 !important;
-}
-table {
-  margin-left: 80px;
-}
-table tr td {
-  padding: 5px;
-}
-
-table tr:nth-child(4) td {
-  font-weight: bold;
-}
-
-table tr:nth-child(5) td span {
-  color: red !important;
-  font-weight: bold;
-}
