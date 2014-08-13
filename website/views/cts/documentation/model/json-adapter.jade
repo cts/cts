@@ -1,0 +1,35 @@
+extends ../../layouts/basic-with-sidebar
+
+block title
+  h1 JSON Adapter
+
+block sidebar
+  include ../../partials/docsidebar
+
+block content
+  :markdown
+    The tree representation used for JSON mirrors JSON's natural structure but represents objects such as arrays and dictionaries using tree nodes:
+    
+    +   `Object` nodes represent JSON objects. Its children must be only `Key` nodes, and its value is *null*.
+    +   `Key` nodes represent keys on a JSON object. Their value represent the name of the key.
+    +   `Array` nodes represent a JSON array. Its children must be either `Item`, `Object`, or `Array` nodes, and its value is *null*.
+    +   `Item` nodes are wrappers around primitive value nodes. They exist only to act as containers to support lossless rendering by the CTS Engine (see Section~\ref{sec:lossless} for details).  
+    
+    Here is an example of this structure:
+
+    ![](/img/doc/model/cts-model-tree-json.png)
+
+    Both `Key` and `Array` nodes may have nodes representing primitive types as their children.
+
+    One requirement CTS imposes on JSON trees is that they are rooted in a dictionary. 
+    This simplifies the JSON Tree's selector language by ensuring that all primitive types have at least a string label (the dictionary key) that refers to them.
+
+    JSON trees use a slightly modified version of JSON's standard dot-path notation.
+    A wildcard character (`*`) can be used to reference all children of an `Array` node, in which case the selection proceeds into all children of that array.
+    For example, in figure above:
+    
+    +   The selector `title` would select the `Key` node with value *title*.
+    +   The selector `tags` would select the `Array` node that is the child of the `Key` node with value *tags*.
+    +   The selector `tags.*` would select all `Item` nodes of the `Array` node that is the child of the `Key` node with value *tags*
+    +   The selector `authors.*.name` would select all `Key` nodes with the value *name* in the figure.
+    

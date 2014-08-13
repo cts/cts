@@ -16,14 +16,14 @@ html
         h1 Cascading Tree Sheets
         h2 CSS for Structure
       .right &nbsp;
-
-    .col-md-3
-      block sidebar
-    .col-md-6
-      .row
-        block title
-      .row
-        block content
-    .col-md-2
+    .content-with-sidebar.row
+      .col-md-3.col-sm-3.col-lg-3.highlightsidebar
+        block sidebar
+      .col-md-8.col-sm-8.col-lg-8.maincol
+        .row.titlecontent
+          block title
+        .row.maincontent
+          block content
+      .col-md-2.col-sm-2.col-lg-2.highlightsidebar
 
     .footer(style="height:50px")

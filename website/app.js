@@ -148,6 +148,9 @@ app.get('/api/gsheet/login', apiController.googleLogin);
 
 app.get('/api/proxy', apiController.getProxy);
 
+app.get('/docs/:page', docController.docs);
+app.get('/docs/:page/:subpage', docController.docs);
+
 app.get('/documentation', docController.docindex);
 app.get('/documentation/setup', docController.setup);
 app.get('/documentation/quilt-setup', docController.quiltsetup);

@@ -1,0 +1,43 @@
+extends ../../layouts/basic-with-sidebar
+
+block title
+  h1 GSheet Adapter
+
+block sidebar
+  include ../../partials/docsidebar
+
+block content
+  :markdown 
+    The tree representation used for Google Spreadsheets redundantly projects each workbook in a spreadsheet multiple times for different styles of access.
+    This figure shows a partial example:
+
+    ![](/img/doc/model/cts-model-tree-gsheet.png)
+
+    In the figure above, the top level represents the entire spreadsheet document, followed by a level of nodes representing each worksheet in the document.
+    The third level contains nodes that represent various projections of the spreadsheet, in this case `CellView` and `TableView`.
+
+    The `CellView` is a projection useful for accessing individual cells in the spreadsheet.
+    The `TableView` is useful for addressing the spreadsheet as a row-oriented table of items.
+    It assumes that a header row provides the names of the attributes that each item has.
+    Each non-header row represents one item, and each column represents the cut of this attribute across all items.
+
+    While the CTS prototype only contains these two projections, many other useful projections are possible. 
+    A column-oriented table is one possibility.
+    Another would be a parameter-list style projection that searches a spreadsheet for blocks of cells that appear to be key-valued pairs.
+    For example, the inputs to a mortgage calculation.
+    The projection would expose the values (data cells) by enabling the CTS author to address them using the keys (label cells).
+
+    The Google Spreadsheet tree supports a different addressing scheme for each of the two projections.
+    The `Cell View` uses the spreadsheet's standard letter-number scheme, e.g. `A1` or `B24`.
+    The `Table View` allocates the special word `rows` to represent the set or row-oriented items.
+    Any other word used as a selector string is matched against the header row.
+    If there is a match, that word selects the attribute node for that attribute in all items.
+
+    Finally, the spreadsheet standard `WorksheetName !` prefix can begin a selector to denote it only applies to a particular worksheet in the spreadsheet.
+    Without such a prefix, the selectors applies to the union of its match across all worksheets.
+
+    For example, in the figure above:
+
+    +    The selector `A1` selects the `Row` cell with value `1`.
+    +    The selector `rows` selects the `TableView` cell.
+    +    The selector `First Name` selects both property nodes with the value `First Name`.

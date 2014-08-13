@@ -1,0 +1,24 @@
+extends ../../layouts/basic-with-sidebar
+
+block title
+  h1 HTML Adapter
+
+block sidebar
+  include ../../partials/docsidebar
+
+block content
+  :markdown
+    The CTS HTML adapter largely mirrors the browser's DOM representation with a few small changes related to attributes and children.
+    A DOM node in the browser has both attributes and children, but CTS nodes have no notion of attributes---only children---so the CTS representation of HTML must treat attributes as children.
+
+    To do this while still maintaining separate notions of attributes and children, CTS HTML nodes lazily maintain two special, fixed children: an *E* node, which represents the child container, and an $A$ node, which represents the attribute container.
+    Here is a photo with an example HTML fragment and the corresponding CTS tree.
+
+    ![](/img/doc/model/cts-model-tree-html.png)
+
+    CSS selectors are used to select nodes from HTML trees, but we adapt these selectors to acommodate attributes.
+
+    +  To select an *Element* node, use a CSS selector that would ordinarily corrrespond to this node. For example, the selector `li.active` selects the first `li` node in the diagram above.
+    +   To select an *Attribute* node for the attribute *X*, append the key-value `{"attribute": "X"}` to a selector which selects the corresponding *Element* node. For example, the selector `li.active {"attribute": "class"}` selects the class attribute of the first `li` node in the diagram above. 
+    +   To select all attributes of a node as a collection, append key-value `{"attribute": "*"}` to a selector which selects the corresponding •Element* node. For example, the selector `li.active {"attribute": "*"}` selects the *A* node (representing the attribute collection) of the first `li` node in the diagram above.
+    +   By default, when a relation addresses an element node as a collection, the collection used is the *E* node unless the attribute collection was explicitly specified in the selector which cast the relation in the diagram above.

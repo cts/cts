@@ -1,7 +1,10 @@
-extends ../layouts/basic
+extends ../layouts/basic-with-sidebar
 
 block title
   h1 Documentation
+
+block sidebar
+  include ../partials/docsidebar
 
 block content
   h2 For Developers
