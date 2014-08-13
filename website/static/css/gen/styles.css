@@ -9841,6 +9841,15 @@ body.cts-doc,
 .maincol {
   background-color: #fefefe;
 }
+body.cts-doc .highlightsidebar {
+  padding-top: 25px;
+}
+body.cts-doc .highlightsidebar h1 {
+  font-size: 18px;
+  padding-left: 60px;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 700;
+}
 body.cts-doc .maincontent {
   padding-left: 20px;
   padding-right: 20px;
@@ -9868,7 +9877,6 @@ body.cts-doc .titlecontent h1 {
   font-weight: 200;
 }
 ul.docs-nav {
-  padding-top: 25px;
   list-style-type: none;
 }
 ul.docs-nav > li > h2 {
