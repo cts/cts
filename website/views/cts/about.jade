@@ -29,25 +29,40 @@ block content
     .col-md-3
     .col-md-6(style="font-size: 18px;")
 
+      h2 About CTS
+
+      p CTS (pronounced "cats") is a new language for the web and an open-source Javascript runtime to interpret that language. There is a great need to bring better organization and reusability to web code. CTS takes what we believe is a principled approach to this problem, with three parts. First, CTS introduces a CSS-like layer of encapsulation and reuse to web content. Second, our runtime engine uses rendering algorithms that guarantee reactive applications out of the box. And finally, the language and system are designed to work with any data object with minimal adaptation, enabling databases, spreadsheets, and other types to be woven into the mix.
+
+      There are great many exciting web frameworks emerging today. CTS stands on its own as a experimental development framework, but the fundamental declarative language used by CTS could also be used as an input to all of these other frameworks.
+
       h2 People
 
       p
-      | <a href="http://www.edwardbenson.com">Ted Benson</a> created CTS as part of a Ph.D.
-      | thesis exploring declarative approaches to web application architecture.
+      | <a href="http://www.edwardbenson.com">Ted Benson</a> created CTS for his doctoral work at MIT exploring declarative approaches to web application architecture.
 
       p
       | <a href="http://people.csail.mit.edu/karger">David Karger</a> is the
-      | faculty advisor of the project.
+      | faculty advisor of the Cascading Treesheets Project.
 
       p
-      | We've been helped by some wonderful undergraduate researchers,
-      | including (in alphabetical order) Jessica Andersen, Adisa Kruayatidee,
-      | Sarah Scodel, Oliver Song, and John Wang.
+      | We've been helped by some wonderful <a href="http://web.mit.edu/urop/">undergraduate researchers</a>, including (in alphabetical order):
+      ul
+        li Jessica Andersen
+        li Adisa Kruayatidee
+        li Sarah Scodel
+        li Oliver Song
+        li John Wang
 
       h2 Papers
 
-      p Here are some papers we've published about CTS.
+      p Here are some papers we've published about CTS. Consider these papers snapshots, taken at the time of writing, of our thinking about a particular facet of the CTS language. Small details of the language change from paper to paper as the work evolves.
+
       ul.publications
+        li
+          a.paper(href="http://edwardbenson.com/papers/uist2014-spreadsheet-driven-web-apps.pdf") Spreadsheet Driven Web Applications
+          br
+          span.paper-details at UIST 2014.
+
         li
           a.paper(href="http://edwardbenson.com/papers/www2013-cascading-tree-sheets.pdf") Cascading Tree Sheets and Recombinant HTML: <br />Better Encapsulation and Retargeting of Web Content
           br
@@ -59,4 +74,4 @@ block content
         li
           a.paper(href="http://edwardbenson.com/papers/www2010-synckit.pdf") SyncKit: A Persistent Client-Side Database Caching Toolkit for Data Intensive Websites
           br
-          span.paper-details at WWW 2010. (Not directly related to CTS, but a precursor project.)
+          span.paper-details at WWW 2010. (The precursor project which sparked this line of inquiry.)
