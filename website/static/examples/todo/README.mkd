@@ -1,5 +1,5 @@
-A Todo List using Cloudstitch
-==============================
+A Todo List using CTS
+=====================
 
 This is an example application that shows a Todo list that sync with a Google Spreadsheet.
 
@@ -20,8 +20,6 @@ Note that simply double-clicking the `index.html` file to open from your hard dr
 
 FAQ
 ===
-
-### What is the "AppKey" on the Cloudstitch Javascript link?
 
 ### What happens when I load the web page for the first time?
 

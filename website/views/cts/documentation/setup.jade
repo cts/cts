@@ -10,18 +10,54 @@ block content
   h2 Dependencies
   p First install these packages:
   ul
-    li NodeJS
-    li NPM
     li MongoDB
-    li Grunt
+    li NodeJS
+    li NPM (with these packages)
+      ul
+        li Grunt
+        li Duo
 
-  h2 Cloning and Installing NPM Dependencies
-  p Next, clone the repository
+  h2 Set up project folder
+  p The CTS project is split up into several different git repositories. Make a directory called `cts`. *Within that* we are going to check out all the necessary repositories.
+
+  p From the CTS directory, run the following git commands:
+
   pre
     code git clone https://github.com/cts/cts.git
-  p And then from the root directory, load the NPM dependencies
+
+    code git clone https://github.com/cts/util.git
+
+    code git clone https://github.com/cts/model.git
+
+    code git clone https://github.com/cts/relations.git
+
+    code git clone https://github.com/cts/gsheet-adapter.git
+
+    code git clone https://github.com/cts/html-adapter.git
+
+    code git clone https://github.com/cts/json-adapter.git
+
+    code git clone https://github.com/cts/abstract-adapter.git
+
+    code git clone https://github.com/cts/engine.git
+
+    code git clone https://github.com/cts/parser.git
+
+  h2 Load NPM dependences of CTS
+
+  p From inside the `cts/cts` folder (the main repository), load the NPM dependencies
   pre
     code npm install
+
+  h2 Link in the other CTS repos for live development.
+
+  p Duo, the CTS dependency manager, is going to want to use the Github versions of the other packages (like `cts/model`) unless we use symlinks to trick it into using your development version. This way, you can make changes in any repository and immediately see the results without having to release a new version via Github.
+
+  p First, change to the `cts/cts` directory and run `grunt` (Think of `grunt` as `make` for Javascript).
+
+  p Next, change to the `tmp` directory.
+ 
+
 
   h2 Building the CTS Library
   p To build <code>cts.js</code>, just run <code>grunt</code> from the project root. Then look at the <code>release/</code> directory for output.
