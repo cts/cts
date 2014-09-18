@@ -56,10 +56,30 @@ block content
 
   p First, change to the `cts/cts` directory and run `grunt` (Think of `grunt` as `make` for Javascript).
 
-  p Next, change to the `tmp` directory.
- 
+  p Next, change to the `tmp/components directory` directory. Type `ls` to see all the packages that the `cts/cts` project depends upon.
+
+  p OK. Here is the not fun part, but you only have to do it once. Package for package, delete the folder in the `tmp/components` directory and create a symlink (using the same name as the one you just deleted) to the corresponding repository that you checked out in the parent `cts/` folder.
+
+  p For example, for the `model` package, you might do:
+  pre
+    code.
+      rm -rf cts-model@master
+      ln -s ../../../model cts-model@master
+
+  p Having done that, I can type `ls -l` to see that the link is set up correctly for the `cts/model` repository.
+
+  pre
+    code.
+      TedsMBP:components eob$ ls -l
+      (snip)
+      cts-model@master -> ../../../model
+      (snip)
+
+  p Do the same for the other repositories.
 
   h2 Building the CTS Library
+  p You're all set up to go now.
+  
   p To build <code>cts.js</code>, just run <code>grunt</code> from the project root. Then look at the <code>release/</code> directory for output.
 
   h2 Setting up the CTS Server
