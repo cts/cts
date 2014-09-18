@@ -4,6 +4,7 @@ var fs = require('fs');
 module.exports = function(grunt) {
 
   var duoFn = function() {
+    console.log('using duo %s', require('duo/package.json').version);
     var done = this.async();
     var target = this.target;
     var data = this.data;
@@ -15,11 +16,15 @@ module.exports = function(grunt) {
     var src = data.src;
     var dest = data.dest;
 
-    var duo = Duo(context);
-    if (data.development) {
-      duo.development();
-      duo.copy(true);
-    }
+    var duo = new Duo(context);
+    console.log('context', context);
+    console.log('op context', data.outputContext);
+    
+    // if (data.development) {
+    //   duo.development();
+    //   duo.copy(true);
+    // }
+    console.log('entry', src);
     duo.entry(src);
     duo.installTo('components'); // Install path for components
     duo.buildTo(data.outputContext); // Output path
