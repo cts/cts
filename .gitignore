@@ -11,3 +11,4 @@ website/builtAsssets/*
 website/config/secrets.js
 website/config/opts.js
 website/static/userstudy/user
+tmp
