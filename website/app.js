@@ -2,12 +2,13 @@
  * Module dependencies.
  */
 var express = require('express');
-var MongoStore = require('connect-mongo')(express);
+// var MongoStore = require('connect-mongo')(express);
 var flash = require('express-flash');
 var path = require('path');
-var mongoose = require('mongoose');
+// var mongoose = require('mongoose');
 var passport = require('passport');
 var expressValidator = require('express-validator');
+var csurf = require('csurf');
 
 /**
  * Load controllers.
@@ -40,10 +41,10 @@ var app = express();
  * Mongoose configuration.
  */
 
-mongoose.connect(secrets.db);
-mongoose.connection.on('error', function() {
-  console.error('✗ MongoDB Connection Error. Please make sure MongoDB is running.');
-});
+// mongoose.connect(secrets.db);
+// mongoose.connection.on('error', function() {
+//   console.error('✗ MongoDB Connection Error. Please make sure MongoDB is running.');
+// });
 
 /**
  * Express configuration.
@@ -57,11 +58,6 @@ var month = (day * 30);
 app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-app.use(require('connect-assets')({
-  paths: ['assets/css', 'assets/js'],
-  buildDir: 'static/assets',
-  helperContext: app.locals,
-}));
 app.use(express.compress());
 app.use(express.favicon());
 app.use(express.logger('dev'));
@@ -71,14 +67,12 @@ app.use(express.urlencoded());
 app.use(expressValidator());
 app.use(express.methodOverride());
 app.use(express.session({
-  secret: secrets.sessionSecret,
-  store: new MongoStore({
-    db: mongoose.connection.db,
-    auto_reconnect: true
-  })
+  secret: secrets.sessionSecret
 }));
 
-var csrf = express.csrf();
+
+
+var csrf = csurf();
 
 var conditionalCSRF = function (req, res, next) {
   var needCSRF = true;

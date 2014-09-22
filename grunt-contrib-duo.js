@@ -8,12 +8,12 @@ module.exports = function(grunt) {
     var done = this.async();
     var target = this.target;
     var data = this.data;
-    var context = '.';
+    var context = __dirname;
     if (data.inputContext) {
       context = data.inputContext;
     }
 
-    var src = data.src;
+    var src = data.src; 
     var dest = data.dest;
 
     var duo = new Duo(context);

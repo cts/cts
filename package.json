@@ -30,6 +30,7 @@
     "grunt-contrib-watch": "*",
     "grunt-web-server": "*",
     "url": "*",
+    "csurf": "*",
     "duo": "*",
     "jison": "*",
     "async": "~0.2.10",
