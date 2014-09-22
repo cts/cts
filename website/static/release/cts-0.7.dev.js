@@ -16327,7 +16327,7 @@ Util._.extend(Are.prototype, Model.Relation.Base, {
           promises.push(myIterables[0].clone());
         }
         Util.Promise.all(promises).then(
-          function(clones) {ww
+          function(clones) {
             myIterables[0].pruneRelations(otherIterables[0], other);
             for (var i = 0; i < clones.length; i++) {
               var clone = clones[i];
