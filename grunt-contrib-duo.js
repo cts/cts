@@ -1,5 +1,6 @@
 var Duo = require('duo');
 var fs = require('fs');
+var path = require('path');
 
 module.exports = function(grunt) {
 
@@ -24,7 +25,7 @@ module.exports = function(grunt) {
     //   duo.development();
     //   duo.copy(true);
     // }
-    console.log('entry', src);
+    console.log('entry', path.join(context, src));
     duo.entry(src);
     duo.installTo('components'); // Install path for components
     duo.buildTo(data.outputContext); // Output path
