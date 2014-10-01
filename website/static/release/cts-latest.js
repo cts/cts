@@ -15191,7 +15191,6 @@ Node.Base = {
     }
     if (! this.containsRelation(relation)) {
       this.relations.push(relation);
-      console.log("register reln", this, relation);
       this.on('ValueChanged', relation.handleEventFromNode, relation);
       this.on('ChildInserted', relation.handleEventFromNode, relation);
     }
@@ -15421,7 +15420,6 @@ Node.Base = {
 
   unrealize: function() {
     while (this.relations.length > 0) {
-      console.log("Destroying", this.relations[0]);
       this.relations[0].destroy();
     }
 
@@ -15502,7 +15500,6 @@ Node.Base = {
   },
 
   clone: function(runBeforeAnyPersistenceFn) {
-    console.log("CLONE", this);
     var deferred = Util.Promise.defer();
     var self = this;
     this._subclass_beginClone(runBeforeAnyPersistenceFn).then(
@@ -15531,8 +15528,6 @@ Node.Base = {
                   clone._subclass_endClone().then(
                     function() { 
 
- console.log("cloned", clone);
-
                       deferred.resolve(clone) },
                     function(reason) { deferred.reject(reason); }
                   );
@@ -15541,8 +15536,7 @@ Node.Base = {
               );
             } else {
               runBeforeAnyPersistenceFn.then(
-                function() {  console.log("cloned", clone);
-deferred.resolve(clone) },
+                function() { deferred.resolve(clone) },
                 function(reason) { deferred.reject(reason); }
               );
             }
@@ -15550,16 +15544,10 @@ deferred.resolve(clone) },
             if (clone._subclass_endClone) {
               clone._subclass_endClone().then(
                 function() { 
-
- console.log("cloned", clone);
-
-
                   deferred.resolve(clone) },
                 function(reason) { deferred.reject(reason); }
               );
             } else {
-               console.log("cloned", clone);
-
               deferred.resolve(clone);
             }
           }
@@ -15596,8 +15584,6 @@ deferred.resolve(clone) },
         Util.Log.Fatal("Clone failed");
       }
       var relationClone = r[i].clone(n1, n2);
-
-      console.log('made relation clone', relationClone);
     };
 
     for (var j = 0; j < this.getChildren().length; j++) {
@@ -15608,20 +15594,14 @@ deferred.resolve(clone) },
       }
       myKid.recursivelyCloneRelations(otherKid);
     }
-
-    console.log('cloned relns into', to.relations.length, to.value.html());
-
   },
 
   pruneRelations: function(otherParent, otherContainer) {
     var self = this;
     var l1 = this.relations.length;
     this.relations = Util._.filter(this.getRelations(), function(r) {
-      console.log("OTHER ONE", r);
       var other = r.opposite(self);
-      console.log(other);
       if ((other.kind == 'abstract') && (other.value == "NeN")) {
-          console.log("YAH");
         return true;
       }
 
@@ -15645,16 +15625,13 @@ deferred.resolve(clone) },
       }
     });
 
-        var l2 = this.relations.length;
-console.log("HEY", l1, l2);
-
     for (var i = 0; i < this.children.length; i++) {
       this.children[i].pruneRelations(otherParent, otherContainer);
     }
   },
 
-  trigger: function(eventName, eventData) {
-    this._subclass_trigger(eventName, eventData);
+  maybeTrigger: function(eventName, eventData) {
+    this._subclass_maybeTrigger(eventName, eventData);
   },
 
   getProvenance: function() {
@@ -15704,6 +15681,10 @@ console.log("HEY", l1, l2);
       d.reject(reason);
     });
     return d.promise;
+  },
+
+  maybeThrowReceivedGraftEvent: function() {
+    // override by subclass
   },
 
   _processIncomingRelations: function(relations, name, insideOtherSubtree, once, defer) {
@@ -16572,6 +16553,7 @@ Util._.extend(Graft.prototype, Model.Relation.Base, {
 
   _regularGraft: function(toward, opp) {
     var d = Util.Promise.defer();
+    var self = this;
 
     //Util.Log.Info("Graft from", opp.tree.name, "to", toward.tree.name);
     //Util.Log.Info("Opp", opp.value.html());
@@ -16631,7 +16613,7 @@ Util._.extend(Graft.prototype, Model.Relation.Base, {
           }
           toward.replaceChildrenWith(replacements);
           toward.setProvenance(opp.tree, opp);
-          toward.trigger('received-bind', {
+          toward.maybeTrigger('cts-received-graft', {
             target: toward,
             source: opp,
             relation: this
@@ -17025,6 +17007,12 @@ Util._.extend(HtmlNode.prototype, Model.Node.Base, Util.Events, HtmlNodeBase, {
       e.stopPropagation();
       fn();
     });
+  },
+
+  _subclass_maybeTrigger: function(eventName, eventData) {
+    console.log(1);
+    debugger;
+      this.value.trigger(eventName, [eventData]);
   },
 
   _subclass_handleDomChangeEvent: function(mrs) {
