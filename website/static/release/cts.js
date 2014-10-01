@@ -1,1 +1,0 @@
-../../../release/cts.js

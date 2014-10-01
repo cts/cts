@@ -15087,7 +15087,7 @@ module.exports = CtsParser;
 23: [function(require, module, exports) {
 var AbstractNode = require('./abstract-node');
 
-var nen = new AbstractNode();
+var nen = new AbstractNode('NeN');
 
 module.exports = nen;
 }, {"./abstract-node":31}],
@@ -15095,9 +15095,10 @@ module.exports = nen;
 var Node = require('./node');
 var Util = require('cts/util');
 
-var AbstractNode = function() {
+var AbstractNode = function(value) {
   this.initializeNodeBase();
-  this.value = null;
+  this.value = value || null;
+  this.kind = 'abstract';
 };
 
 Util._.extend(AbstractNode.prototype, Util.Events, Node.Base, {
@@ -15145,7 +15146,6 @@ module.exports = AbstractNode;
 
 var Util = require('cts/util');
 var Parser = require('cts/parser');
-
 var Node = {};
 
 Node.Base = {
@@ -15191,6 +15191,7 @@ Node.Base = {
     }
     if (! this.containsRelation(relation)) {
       this.relations.push(relation);
+      console.log("register reln", this, relation);
       this.on('ValueChanged', relation.handleEventFromNode, relation);
       this.on('ChildInserted', relation.handleEventFromNode, relation);
     }
@@ -15501,6 +15502,7 @@ Node.Base = {
   },
 
   clone: function(runBeforeAnyPersistenceFn) {
+    console.log("CLONE", this);
     var deferred = Util.Promise.defer();
     var self = this;
     this._subclass_beginClone(runBeforeAnyPersistenceFn).then(
@@ -15527,7 +15529,11 @@ Node.Base = {
               runBeforeAnyPersistenceFn(clone).then(
                 function() {
                   clone._subclass_endClone().then(
-                    function() { deferred.resolve(clone) },
+                    function() { 
+
+ console.log("cloned", clone);
+
+                      deferred.resolve(clone) },
                     function(reason) { deferred.reject(reason); }
                   );
                 },
@@ -15535,17 +15541,25 @@ Node.Base = {
               );
             } else {
               runBeforeAnyPersistenceFn.then(
-                function() { deferred.resolve(clone) },
+                function() {  console.log("cloned", clone);
+deferred.resolve(clone) },
                 function(reason) { deferred.reject(reason); }
               );
             }
           } else {
             if (clone._subclass_endClone) {
               clone._subclass_endClone().then(
-                function() { deferred.resolve(clone) },
+                function() { 
+
+ console.log("cloned", clone);
+
+
+                  deferred.resolve(clone) },
                 function(reason) { deferred.reject(reason); }
               );
             } else {
+               console.log("cloned", clone);
+
               deferred.resolve(clone);
             }
           }
@@ -15582,6 +15596,8 @@ Node.Base = {
         Util.Log.Fatal("Clone failed");
       }
       var relationClone = r[i].clone(n1, n2);
+
+      console.log('made relation clone', relationClone);
     };
 
     for (var j = 0; j < this.getChildren().length; j++) {
@@ -15592,12 +15608,23 @@ Node.Base = {
       }
       myKid.recursivelyCloneRelations(otherKid);
     }
+
+    console.log('cloned relns into', to.relations.length, to.value.html());
+
   },
 
   pruneRelations: function(otherParent, otherContainer) {
     var self = this;
+    var l1 = this.relations.length;
     this.relations = Util._.filter(this.getRelations(), function(r) {
+      console.log("OTHER ONE", r);
       var other = r.opposite(self);
+      console.log(other);
+      if ((other.kind == 'abstract') && (other.value == "NeN")) {
+          console.log("YAH");
+        return true;
+      }
+
       // If the rule ISN'T subtree of this iterable
       // But it IS inside the other container
       // Remove it
@@ -15617,6 +15644,9 @@ Node.Base = {
         return true;
       }
     });
+
+        var l2 = this.relations.length;
+console.log("HEY", l1, l2);
 
     for (var i = 0; i < this.children.length; i++) {
       this.children[i].pruneRelations(otherParent, otherContainer);
