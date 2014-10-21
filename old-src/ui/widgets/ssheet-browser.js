@@ -211,6 +211,7 @@ CTS.UI.SSheetBrowser.prototype.loadurl = function(url) {
     kind: 'gsheet',
     url: url
   };
+  
   this.forrest = new CTS.Forrest();
   var self = this;
   CTS.Factory.Tree(spec, this.forrest).then(
