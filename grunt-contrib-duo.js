@@ -1,61 +1,52 @@
 var Duo = require('duo');
 var fs = require('fs');
+var touch = require('touch');
 var path = require('path');
+
+var exec = require('child_process').exec;
 
 module.exports = function(grunt) {
 
   var duoFn = function() {
-    console.log('using duo %s', require('duo/package.json').version);
     var done = this.async();
     var target = this.target;
     var data = this.data;
-    var context = __dirname;
+    var context = '.';
     if (data.inputContext) {
       context = data.inputContext;
     }
 
-    var src = data.src; 
+    var src = data.src;
     var dest = data.dest;
 
-    var duo = new Duo(context);
-    console.log('context', context);
-    console.log('op context', data.outputContext);
-    
+    // var duo = Duo(context);
     // if (data.development) {
     //   duo.development();
     //   duo.copy(true);
     // }
-    console.log('entry', path.join(context, src));
-    duo.entry(src);
-    duo.installTo('components'); // Install path for components
-    duo.buildTo(data.outputContext); // Output path
-    duo.write(function(err) {
-      if (err) {
-        grunt.log.error(err);
-        done(); 
-      } else {
-        grunt.log.ok('Duo ' + src);// + ' -> ' + dest);
-        done();
-      }
+
+    process.nextTick(function() {
+        // For some bizarre reason, you have to touch the file
+        // Or duo will refuse to do anything..
+        var thePath = path.join(__dirname, data.inputContext);
+        var theFile = path.join(__dirname, data.inputContext, src);
+        var outputFile = path.join(data.outputContext, src);
+        touch.sync(theFile);
+        process.nextTick(function() {
+
+            exec('duo ' + theFile + ' > ' + outputFile, {
+                cwd: thePath
+            }, function (err, stdout, stderr) {
+              if (err) {
+                grunt.log.error(err);
+                done(); 
+              } else {
+                grunt.log.ok('Duo ' + src);// + ' -> ' + dest);
+                done();
+              }                
+            });
+        });
     });
-
-    // var data = duo.run(function(err, compiled) {
-    //     if (err) {
-    //       grunt.log.error(err);
-    //       done();
-    //     } else {
-    //       fs.writeFile(dest, compiled, function (err) {
-    //         if (err) {
-    //           grunt.log.error(err);
-    //           done(); 
-    //         } else {
-    //           grunt.log.ok('Duo ' + src + ' -> ' + dest);
-    //           done();
-    //         };
-    //       });
-    //     }
-    //   });
-
   };
 
   grunt.registerMultiTask('duo', 'Runs Duo', duoFn);

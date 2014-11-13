@@ -29,6 +29,7 @@
     "grunt-contrib-concat": "*",
     "grunt-contrib-watch": "*",
     "grunt-web-server": "*",
+    "touch": "*",
     "url": "*",
     "csurf": "*",
     "duo": "*",
