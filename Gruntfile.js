@@ -104,14 +104,14 @@ var gruntConfig = {
   duo: {
     development: {
       src: ASSETNAME + '.dev.js',
-      inputContext: path.join(__dirname, 'tmp'),
-      outputContext: path.join(__dirname, '..', 'release'),
+      inputContext: './build',
+      outputContext: '../website/static/release',
       development: true
     },
     production: {
-      src: ASSETNAME + '.js',
-      inputContext: path.join(__dirname, 'tmp'),
-      outputContext: path.join(__dirname, 'release')
+      src: ASSETNAME + '-HEAD.js',
+      inputContext: './build',
+      outputContext: '../website/static/release'
     }    
   },
   copy: {
