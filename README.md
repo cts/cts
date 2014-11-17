@@ -9,19 +9,15 @@ This is the Javascript implementation of [Cascading Tree Sheets
 Dependencies
 ------------
 
-You'll need:
+Before you get started, make sure you have installed the following tools:
 
    * NodeJS + NPM
-   * Duo
    * Grunt 
    
-Once you've cloned the repository, run `npm install` to get the required Node
-packages to build the project.
-
 Initial Development Setup
 -------------------------
 
-To set up a brand new install, perform the following steps:
+To set up a brand new CTS development environment, perform the following steps:
 
 1. Create a new, **empty** directory and from within it, run:
 
