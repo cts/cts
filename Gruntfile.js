@@ -160,30 +160,9 @@ gruntConfig['less']['webserver'] = {
   }
 }
 
-/*
- * Watch Task
- * -----------
- */
-
-gruntConfig['watch'] = {
-  scripts: {
-    files: "src/**/*.js",
-    tasks: ["default"]
-  },
-  less: {
-    files: "website/static/widgets/ctsui/less/*.less",
-    tasks: ["less"]
-  }
-};
-
-
-
 module.exports = function(grunt) {
-  grunt.loadNpmTasks('grunt-contrib-qunit');
-  grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-less');
-  grunt.loadNpmTasks('grunt-web-server');
   grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.task.registerTask('background_server',
      'Host AND Watch for changes.', serverTask);
