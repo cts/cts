@@ -28,8 +28,6 @@ module.exports = function(grunt) {
         var repoPath = path.join(repoDirectory, repo);
 
         if (fs.existsSync(repoPath)) {
-          grunt.log.ok('Remapped ' + file + ' -> ' + repoPath);
-
           fs.removeSync(path.join(componentDirectory, file));
           fs.symlinkSync(repoPath, path.join(componentDirectory, file), 'dir');
           grunt.log.ok('Remapped ' + file + ' -> ' + repoPath);

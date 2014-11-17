@@ -18,8 +18,8 @@ You'll need:
 Once you've cloned the repository, run `npm install` to get the required Node
 packages to build the project.
 
-Development Setup
-------------------
+Initial Development Setup
+-------------------------
 
 To set up a brand new install, perform the following steps:
 
@@ -28,6 +28,7 @@ To set up a brand new install, perform the following steps:
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/cts/cts/master/initial-setup.sh)"
 
 2. Change into the `cts` directory that was just created.
+2. Run `npm install`
 3. Run `grunt setup`
 
 This will link the dependencies of that project to the other repositories downloaded by the setup script.
