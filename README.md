@@ -24,7 +24,7 @@ Setup
 
 To set up a brand new install, create an EMPTY folder and run
 
-    bash -c "$(curl -fsSL https://raw.github.com/gist/4372049)"
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/cts/cts/master/initial-setup.sh)"
 
 License
 -------
