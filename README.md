@@ -19,6 +19,13 @@ Once you've cloned the repository, run `npm install` to get the required Node
 packages to build the project.
 
 
+Setup
+-----
+
+To set up a brand new install, create an EMPTY folder and run
+
+    bash -c "$(curl -fsSL https://raw.github.com/gist/4372049)"
+
 License
 -------
 

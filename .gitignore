@@ -4,6 +4,7 @@ node_modules
 *.swo
 *.swn
 build
+build-tmp
 log
 tmp
 build-options.js

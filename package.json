@@ -25,7 +25,8 @@
     "grunt-contrib-concat": "*",
     "grunt-contrib-watch": "*",
     "touch": "*",
-    "duo": "*",
+    "fs-extra": "*",
+    "duo": "*"
   },
   "engines": { "node": ">= 0.8.14" }
 }

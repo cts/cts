@@ -1,6 +1,9 @@
 /*
  * Build options
  */
+
+var path = require('path');
+
 module.exports = {
   banner: "/**\n" +
          "* Cascading Tree Sheets\n" +
@@ -10,6 +13,10 @@ module.exports = {
          " * @license MIT License\n" +
          " * @link http://www.treesheets.org\n" +
          " */",
+  componentDirectory: path.join('.', 'build-tmp', 'components'),
+  buildMidpointDirectory: path.join('.', 'build-tmp'),
+  buildOutputDirectory: path.join('.', 'build'),
+  repoDirectory: path.join('.', '..'),
   variants: {
     'cts-dev': {
       shortname: 'cts', 
@@ -24,4 +31,4 @@ module.exports = {
       duoDevelopment: false
     }
   }
-}
+};

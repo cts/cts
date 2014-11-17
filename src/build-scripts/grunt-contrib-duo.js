@@ -28,14 +28,12 @@ module.exports = function(grunt) {
     process.nextTick(function() {
         // For some bizarre reason, you have to touch the file
         // Or duo will refuse to do anything..
-        var thePath = path.join(__dirname, data.inputContext);
-        var theFile = path.join(__dirname, data.inputContext, src);
+        var theFile = path.join(data.inputContext, src);
         var outputFile = path.join(data.outputContext, src);
         touch.sync(theFile);
         process.nextTick(function() {
-
             exec('duo ' + theFile + ' > ' + outputFile, {
-                cwd: thePath
+                cwd: data.inputContext
             }, function (err, stdout, stderr) {
               if (err) {
                 grunt.log.error(err);
