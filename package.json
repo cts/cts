@@ -10,8 +10,8 @@
   "keywords": ["treesheets", "cts", "structure", "cascading tree sheets", "cascading treesheets", "tree"],
   "directories": {"release": "./release/"},
   "licenses": [{
-    "type":"MIT",
-    "url":"http://opensource.org/licenses/mit-license.php"
+    "type":"BSD",
+    "url":"http://opensource.org/licenses/bsd-license.php"
   }],
   "repository": {
     "type": "git",

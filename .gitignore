@@ -3,12 +3,7 @@
 node_modules
 *.swo
 *.swn
-release/*
-mongodb
+build
 log
-website/static/assets/*
-website/builtAsssets/*
-website/config/secrets.js
-website/config/opts.js
-website/static/userstudy/user
 tmp
+build-options.js
