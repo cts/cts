@@ -19,10 +19,10 @@ Initial Development Setup
 
 To set up a brand new CTS development environment, perform the following steps:
 
-1. Create a new, **empty** directory and from within it, run:
+1. Create a new, **empty** directory and from within it, run: 
 
-  bash -c "$(curl -fsSL https://raw.githubusercontent.com/cts/cts/master/initial-setup.sh)"
-
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/cts/cts/master/initial-setup.sh)"
+    
 2. Change into the `cts` directory that was just created.
 2. Run `npm install`
 3. Run `grunt setup`
