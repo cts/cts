@@ -1,10 +1,6 @@
 // // This part is loaded after the constants (part 2).
-
-var enginePackage = require('cts/engine');
-
 CTS.Engine = enginePackage.Engine;
 CTS.Factory = enginePackage.Factory;
-CTS.Util   = require('cts/util');
 
 // Set up bare minimum functionality that we want available for
 // all other files.
@@ -18,7 +14,6 @@ CTS.ready = CTS.status.defaultTreeReady = Util.Promise.defer();
 CTS.Epilogue = {};
 
 CTS.Epilogue.maybeAutoload = function() {
-  Util.Log.Info("CTS Epilogue: Autoload check...");
   if (Util.Helper.shouldAutoload()) {
     Util.$(function() {
       CTS.engine = new CTS.Engine();
@@ -43,5 +38,10 @@ CTS.on = function(evt, callback) {
 
 CTS.Epilogue.maybeAutoload();
 
-window.CTS = CTS;
-module.exports = CTS;
+if (typeof window != 'undefined') {
+  window.CTS = CTS;
+}
+
+if ((typeof module != 'undefined') && (typeof module.exports != 'undefined')) {
+  module.exports = CTS;  
+}

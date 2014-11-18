@@ -8,3 +8,5 @@ Util._.extend(CTS.Constants, {
     library: '//local-cloudstitch.io:3001/primus/primus.js'
   }
 });
+
+var enginePackage = require('cloudstitch/engine');

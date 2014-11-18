@@ -1,4 +1,5 @@
 var Util = require('cts/util');
+
 var CTS = function(selectorStr) {
   if (CTS.engine) {
     if (CTS.engine.forrest) {
@@ -15,3 +16,4 @@ var CTS = function(selectorStr) {
 
 CTS.VERSION = '0.9.1';
 CTS.Constants = {};
+CTS.Util = Util;

@@ -4,5 +4,8 @@ Util._.extend(CTS.Constants, {
     ClientId: '459454183971-3rhp3qnfrdane1hnoa23eom28qoo146f.apps.googleusercontent.com'
   },
   UI: {
+    Cirrus: {
+      webCss: CTS.Constants.Domains.static + "css/gen/cirrus.css"
+    },
   }
 });

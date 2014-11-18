@@ -3,3 +3,5 @@ Util._.extend(CTS.Constants, {
     server: '//treesheets.org/'
   }
 });
+
+var enginePackage = require('cts/engine');
