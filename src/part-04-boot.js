@@ -10,7 +10,7 @@ CTS.status = {};
 // Set some status bits.
 CTS.status.libraryLoaded = CTS.loaded = CTS.status.loaded = Util.Promise.defer();
 CTS.ready = CTS.status.defaultTreeReady = Util.Promise.defer();
-
+CTS.booted = Util.Promise.defer();
 CTS.Epilogue = {};
 
 CTS.Epilogue.maybeAutoload = function() {
@@ -25,6 +25,7 @@ CTS.Epilogue.maybeAutoload = function() {
 
       CTS.engine.boot().then(
         function() {
+          CTS.booted.resolve();
           Util.Helper.showDocumentBody();
         }
       ).done();
