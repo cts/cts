@@ -8,6 +8,7 @@ var options;
 if (fs.existsSync(path.join('.', 'build-options.js'))) {
   options = require('./build-options.js');
 } else {
+  console.log("Using EXAMPLE options");
   options = require('./build-options.example.js');
 }
 
@@ -16,6 +17,7 @@ var gruntConfig = {
   meta: { banner: options.banner },
   concat: {},
   duo: {},
+  release: {},
   projectsetup: {
     opts: {
       componentDirectory: path.resolve(options.componentDirectory),
@@ -44,12 +46,20 @@ for (var variant in options.variants) {
     outputContext: path.resolve(options.buildOutputDirectory),
     development: particulars.duoDevelopment
   };
+  gruntConfig.release[variant] = {
+    src: particulars.shortname + particulars.suffix,
+    inputContext: path.resolve(options.buildMidpointDirectory),
+    outputContext: path.resolve(options.buildOutputDirectory),
+    development: particulars.duoDevelopment
+  };
+
 }
 
 module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   require('./src/build-scripts/grunt-contrib-duo')(grunt);
   require('./src/build-scripts/grunt-contrib-projectsetup')(grunt);
+  require('./src/build-scripts/grunt-contrib-release')(grunt);
   grunt.initConfig(gruntConfig);
 
   grunt.file.mkdir( options.buildMidpointDirectory );
@@ -57,5 +67,4 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', ['concat', 'duo']);
   grunt.registerTask('setup', ['default', 'projectsetup']);
-
 };
