@@ -13,11 +13,15 @@ var Model = require('cts/model');
 var CTS = function(arg) {
   if (typeof arg == 'string') {
     if (CTS.engine) {
-      if (CTS.engine.forrest) {
-        return CTS.engine.forrest.find(arg);
+      if (CTS.engine.parseCommand) {
+        return CTS.engine.parseCommand(arg);
       } else {
-        Util.Log.Warn("Forrest is not loaded yet.");
-        return new Model.Selection([]);
+        if (CTS.engine.forrest) {
+          return CTS.engine.forrest.find(arg);
+        } else {
+          Util.Log.Warn("Forrest is not loaded yet.");
+          return new Model.Selection([]);
+        }
       }
     } else {
       Util.Log.Warn("Engine is not loaded yet.");
