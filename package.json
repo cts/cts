@@ -23,6 +23,8 @@
     "grunt-contrib-less": "*",
     "grunt-contrib-copy": "*",
     "grunt-contrib-concat": "*",
+    "grunt-aws-s3": "*",
+    "grunt-aws-s3-gzip": "*",
     "grunt-contrib-watch": "*",
     "touch": "*",
     "fs-extra": "*",

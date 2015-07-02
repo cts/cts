@@ -1,5 +1,6 @@
 /**
  * Grunt Buildfile for Cascading Tree Sheets
+ * node --harmony $(which grunt) task
  */
 var fs = require('fs');
 var path = require('path');
@@ -52,11 +53,39 @@ for (var variant in options.variants) {
     outputContext: path.resolve(options.buildOutputDirectory),
     development: particulars.duoDevelopment
   };
+  gruntConfig.copy = {
+    'variant': {
+      expand: true,
+      cwd: 'build-tmp/build',
+      src: ['*.js'],
+      dest: 'build/'
+    }
+  };
 
+  gruntConfig.aws_s3 = {
+    'deploy': {
+      options: {
+        region: 'us-west-2',
+        uploadConcurrency: 5, // 5 simultaneous uploads
+        downloadConcurrency: 5, // 5 simultaneous downloads
+        excludeFromGzip: ['*.png', '*.jpg', '*.jpeg'],        
+        bucket: 'static.cloudstitch.io',
+        params: {},
+        gzip: true,
+        differential: false
+      },
+      files: [
+        {expand: true, cwd: 'build', src: ['**'], dest: '', params: {CacheControl: '2000'}}
+      ]
+    }
+  };
 }
 
 module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-aws-s3');
+
   require('./src/build-scripts/grunt-contrib-duo')(grunt);
   require('./src/build-scripts/grunt-contrib-projectsetup')(grunt);
   require('./src/build-scripts/grunt-contrib-release')(grunt);
@@ -64,7 +93,8 @@ module.exports = function(grunt) {
 
   grunt.file.mkdir( options.buildMidpointDirectory );
   grunt.file.mkdir( options.buildOutputDirectory );
-
-  grunt.registerTask('default', ['concat', 'duo']);
+  
+  grunt.registerTask('default', ['concat', 'duo', 'copy']);
   grunt.registerTask('setup', ['default', 'projectsetup']);
+  grunt.registerTask('deploy', ['aws_s3:deploy'])
 };
