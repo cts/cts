@@ -5,5 +5,4 @@ git clone https://github.com/cts/gsheet-adapter.git cts-gsheet-adapter
 git clone https://github.com/cts/html-adapter.git cts-html-adapter
 git clone https://github.com/cts/parser.git cts-parser
 git clone https://github.com/cts/util.git cts-util
-git clone https://github.com/cts/relations.git cts-relations
 git clone https://github.com/cts/engine.git cts-engine
