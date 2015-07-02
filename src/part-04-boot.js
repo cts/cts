@@ -41,6 +41,7 @@ CTS.Epilogue.maybeAutoload();
 
 if (typeof window != 'undefined') {
   window.CTS = CTS;
+  window.Stitch = CTS;
 }
 
 if ((typeof module != 'undefined') && (typeof module.exports != 'undefined')) {
