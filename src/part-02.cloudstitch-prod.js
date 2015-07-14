@@ -1,8 +1,8 @@
 Util._.extend(CTS.Constants, {
   Domains: {
-    server: '//api.cloudstitch.io/',
-    static: '//static.cloudstitch.io/',
-    web: '//www.cloudstitch.io/',
+    server: '//api.cloudstitch.com/',
+    static: '//static.cloudstitch.com/',
+    web: '//www.cloudstitch.com/',
   },
   Socket: {
     library: '//api.cloudstitch.io/primus/primus.js'
